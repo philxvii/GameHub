@@ -7,258 +7,89 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0a0a;
-    --surface: #141414;
-    --surface2: #1e1e1e;
-    --border: rgba(255,255,255,0.08);
-    --border2: rgba(255,255,255,0.15);
-    --text: #f0ece4;
-    --muted: #888;
-    --accent: #e8d5a3;
-    --accent2: #c4a96b;
-    --civil: #4ade80;
-    --undercover: #f87171;
-    --mrwhite: #94a3b8;
-    --danger: #ef4444;
-    --r: 12px;
+    --bg: #0a0a0a; --surface: #141414; --surface2: #1e1e1e;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
+    --text: #f0ece4; --muted: #888; --accent: #e8d5a3; --accent2: #c4a96b;
+    --civil: #4ade80; --undercover: #f87171; --mrwhite: #94a3b8;
+    --danger: #ef4444; --r: 12px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 0;
-  }
-  .app {
-    width: 100%;
-    max-width: 480px;
-    min-height: 100vh;
-    padding: 2rem 1.25rem 3rem;
-    position: relative;
-  }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; }
+  .app { width: 100%; max-width: 480px; min-height: 100vh; padding: 2rem 1.25rem 3rem; }
   .screen { display: none; animation: fadeIn 0.25s ease; }
   .screen.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 
-  /* Typography */
-  .display { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 42px; line-height: 1; letter-spacing: -1px; color: var(--accent); }
-  .display small { font-size: 14px; font-weight: 400; color: var(--muted); font-family: 'DM Sans', sans-serif; letter-spacing: 0; display: block; margin-top: 6px; }
-  h2 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 22px; color: var(--text); margin-bottom: 0.75rem; }
-  p { font-size: 14px; color: var(--muted); line-height: 1.65; }
-  label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px; margin-top: 1rem; }
+  .display { font-family:'Syne',sans-serif; font-weight:800; font-size:42px; line-height:1; letter-spacing:-1px; color:var(--accent); }
+  .display small { font-size:14px; font-weight:400; color:var(--muted); font-family:'DM Sans',sans-serif; letter-spacing:0; display:block; margin-top:6px; }
+  h2 { font-family:'Syne',sans-serif; font-weight:700; font-size:22px; color:var(--text); margin-bottom:0.75rem; }
+  p { font-size:14px; color:var(--muted); line-height:1.65; }
+  label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; display:block; margin-bottom:6px; margin-top:1rem; }
 
-  /* Inputs */
-  input, select {
-    width: 100%;
-    padding: 12px 14px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    outline: none;
-    transition: border-color 0.2s;
-    appearance: none;
-  }
-  input:focus, select:focus { border-color: var(--border2); }
-  input::placeholder { color: var(--muted); }
-  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
-  select option { background: #1e1e1e; }
+  input, select { width:100%; padding:12px 14px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r); color:var(--text); font-family:'DM Sans',sans-serif; font-size:15px; outline:none; transition:border-color 0.2s; appearance:none; }
+  input:focus, select:focus { border-color:var(--border2); }
+  input::placeholder { color:var(--muted); }
+  select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; cursor:pointer; }
+  select option { background:#1e1e1e; }
 
-  /* Buttons */
-  .btn {
-    width: 100%;
-    padding: 13px;
-    border-radius: var(--r);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text);
-    transition: all 0.15s;
-    margin-top: 10px;
-  }
-  .btn:hover { background: var(--surface2); border-color: var(--border2); }
-  .btn:active { transform: scale(0.98); }
-  .btn-primary {
-    background: var(--accent);
-    color: #0a0a0a;
-    border-color: var(--accent);
-    font-weight: 700;
-  }
-  .btn-primary:hover { background: var(--accent2); border-color: var(--accent2); }
-  .btn-danger { border-color: rgba(239,68,68,0.3); color: var(--danger); }
-  .btn-danger:hover { background: rgba(239,68,68,0.08); }
+  .btn { width:100%; padding:13px; border-radius:var(--r); font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; cursor:pointer; border:1px solid var(--border); background:var(--surface); color:var(--text); transition:all 0.15s; margin-top:10px; }
+  .btn:hover { background:var(--surface2); border-color:var(--border2); }
+  .btn:active { transform:scale(0.98); }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn-primary { background:var(--accent); color:#0a0a0a; border-color:var(--accent); font-weight:700; }
+  .btn-primary:hover { background:var(--accent2); border-color:var(--accent2); }
+  .btn-danger { border-color:rgba(239,68,68,0.3); color:var(--danger); }
+  .btn-danger:hover { background:rgba(239,68,68,0.08); }
+  .btn-sm { width:auto; padding:7px 14px; font-size:13px; margin-top:0; }
 
-  /* Cards */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    padding: 1.25rem;
-    margin-top: 1rem;
-  }
-  .info-card {
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    padding: 1rem 1.25rem;
-    margin-top: 1rem;
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.7;
-  }
-  .info-card strong { color: var(--text); }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:1.25rem; margin-top:1rem; }
+  .info-card { background:transparent; border:1px solid var(--border); border-radius:var(--r); padding:1rem 1.25rem; margin-top:1rem; font-size:13px; color:var(--muted); line-height:1.7; }
+  .info-card strong { color:var(--text); }
 
-  /* Code display */
-  .code-display {
-    font-family: 'Syne', sans-serif;
-    font-size: 36px;
-    font-weight: 800;
-    letter-spacing: 6px;
-    text-align: center;
-    color: var(--accent);
-    padding: 1.5rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    margin: 1rem 0;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    position: relative;
-  }
-  .code-display:hover { border-color: var(--border2); }
-  .code-display .copy-hint { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--muted); letter-spacing: 0; font-weight: 400; display: block; margin-top: 6px; }
+  .code-display { font-family:'Syne',sans-serif; font-size:36px; font-weight:800; letter-spacing:6px; text-align:center; color:var(--accent); padding:1.5rem; background:var(--surface); border:1px solid var(--border); border-radius:var(--r); margin:1rem 0; cursor:pointer; transition:border-color 0.2s; }
+  .code-display:hover { border-color:var(--border2); }
+  .copy-hint { font-family:'DM Sans',sans-serif; font-size:11px; color:var(--muted); letter-spacing:0; font-weight:400; display:block; margin-top:6px; }
 
-  /* Player list */
-  .player-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .player-item:last-child { border-bottom: none; }
-  .avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 700;
-    font-family: 'Syne', sans-serif;
-    flex-shrink: 0;
-  }
-  .tag {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    margin-left: auto;
-  }
+  .player-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+  .player-item:last-child { border-bottom:none; }
+  .avatar { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; font-family:'Syne',sans-serif; flex-shrink:0; }
+  .tag { font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted); margin-left:auto; }
 
-  /* Role reveal */
-  .role-screen {
-    text-align: center;
-    padding: 2rem 0;
-  }
-  .role-type {
-    font-family: 'Syne', sans-serif;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-bottom: 1.5rem;
-    padding: 5px 14px;
-    border-radius: 999px;
-    display: inline-block;
-  }
-  .role-word-big {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 52px;
-    line-height: 1;
-    letter-spacing: -1px;
-    margin: 0.5rem 0;
-  }
-  .role-sub { font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; }
+  .role-screen { text-align:center; padding:2rem 0; }
+  .role-type { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:1.5rem; padding:5px 14px; border-radius:999px; display:inline-block; }
+  .role-word-big { font-family:'Syne',sans-serif; font-weight:800; font-size:52px; line-height:1; letter-spacing:-1px; margin:0.5rem 0; }
+  .role-sub { font-size:13px; color:var(--muted); margin-bottom:1.5rem; }
 
-  /* Loading */
-  .loading {
-    text-align: center;
-    padding: 3rem 0;
-    color: var(--muted);
-    font-size: 15px;
-  }
-  .spinner {
-    width: 28px;
-    height: 28px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 1rem;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading { text-align:center; padding:3rem 0; color:var(--muted); font-size:15px; }
+  .spinner { width:28px; height:28px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 1rem; }
+  @keyframes spin { to { transform:rotate(360deg); } }
 
-  /* Error */
-  .error-msg {
-    font-size: 13px;
-    color: var(--danger);
-    margin-top: 8px;
-    display: none;
-  }
-
-  /* Step dots */
-  .steps { display: flex; gap: 6px; margin-bottom: 2rem; }
-  .step-dot { height: 3px; flex: 1; border-radius: 2px; background: var(--border); }
-  .step-dot.on { background: var(--accent); }
-
-  /* Divider */
-  .sep { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
-
-  /* Waiting pulse */
-  .waiting-dot {
-    display: inline-block;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
-    animation: pulse 1.4s ease-in-out infinite;
-  }
+  .error-msg { font-size:13px; color:var(--danger); margin-top:8px; display:none; }
+  .sep { border:none; border-top:1px solid var(--border); margin:1.25rem 0; }
+  .waiting-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--accent); animation:pulse 1.4s ease-in-out infinite; }
   @keyframes pulse { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
 
-  .home-logo { margin-bottom: 2.5rem; padding-top: 1rem; }
-  .btn-row { display: flex; gap: 8px; margin-top: 10px; }
-  .btn-row .btn { margin-top: 0; }
+  .home-logo { margin-bottom:2.5rem; padding-top:1rem; }
+  .btn-row { display:flex; gap:8px; margin-top:10px; }
+  .btn-row .btn { margin-top:0; }
 
-  /* Toast */
-  .toast {
-    position: fixed;
-    bottom: 1.5rem;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--text);
-    color: var(--bg);
-    padding: 10px 18px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 500;
-    opacity: 0;
-    transition: all 0.25s;
-    pointer-events: none;
-    white-space: nowrap;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(20px); background:var(--text); color:var(--bg); padding:10px 18px; border-radius:999px; font-size:13px; font-weight:500; opacity:0; transition:all 0.25s; pointer-events:none; white-space:nowrap; z-index:999; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* Admin */
+  .admin-label { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.15em; color:var(--accent); text-transform:uppercase; margin-bottom:4px; }
+  .role-pill { display:inline-flex; align-items:center; font-size:12px; padding:4px 10px; border-radius:999px; font-weight:500; }
+  .role-pill.civil { background:rgba(74,222,128,0.12); color:var(--civil); border:1px solid rgba(74,222,128,0.25); }
+  .role-pill.undercover { background:rgba(248,113,113,0.12); color:var(--undercover); border:1px solid rgba(248,113,113,0.25); }
+  .role-pill.mrwhite { background:rgba(148,163,184,0.12); color:var(--mrwhite); border:1px solid rgba(148,163,184,0.25); }
+  .word-pill { font-size:13px; padding:6px 14px; border-radius:999px; font-weight:500; font-family:'Syne',sans-serif; }
+  .word-civil { background:rgba(74,222,128,0.12); color:var(--civil); border:1px solid rgba(74,222,128,0.2); }
+  .word-uc { background:rgba(248,113,113,0.12); color:var(--undercover); border:1px solid rgba(248,113,113,0.2); }
+  .admin-player-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
+  .admin-player-row:last-child { border-bottom:none; }
+  .admin-game-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:1rem; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; }
+  .admin-link { position:fixed; bottom:1rem; right:1rem; font-size:18px; color:var(--border2); cursor:pointer; padding:6px; user-select:none; transition:color 0.2s; z-index:10; }
+  .admin-link:hover { color:var(--muted); }
 </style>
 </head>
 <body>
@@ -275,31 +106,31 @@
     </div>
     <div class="info-card">
       <strong>Comment jouer</strong><br>
-      L'hôte crée une partie et partage le <strong>code</strong> à ses amis. Chaque joueur ouvre ce lien, entre le code et son prénom pour découvrir son rôle en secret.<br><br>
+      L'hôte crée une partie et partage le <strong>code</strong> à ses amis. Chaque joueur ouvre ce lien, entre le code et son prénom pour voir son rôle en secret.<br><br>
       Les <strong style="color:var(--civil)">civils</strong> ont le même mot. L'<strong style="color:var(--undercover)">undercover</strong> a un mot proche mais différent. <strong style="color:var(--mrwhite)">Mr. White</strong> n'a aucun mot — il doit deviner !
     </div>
   </div>
 
   <!-- CREATE -->
   <div class="screen" id="s-create">
-    <div class="steps">
-      <div class="step-dot on"></div>
-      <div class="step-dot"></div>
-      <div class="step-dot"></div>
-    </div>
     <h2>Nouvelle partie</h2>
     <label>Ton prénom</label>
     <input type="text" id="host-name" placeholder="Ton prénom" maxlength="20" />
     <label>Nombre de joueurs</label>
     <select id="player-count">
+      <option value="3">3 joueurs</option>
       <option value="4">4 joueurs</option>
       <option value="5" selected>5 joueurs</option>
       <option value="6">6 joueurs</option>
+      <option value="7">7 joueurs</option>
+      <option value="8">8 joueurs</option>
+      <option value="9">9 joueurs</option>
     </select>
     <label>Undercoverts</label>
     <select id="uc-count">
       <option value="1" selected>1 undercover</option>
       <option value="2">2 undercoverts</option>
+      <option value="3">3 undercoverts</option>
     </select>
     <label>Mr. White</label>
     <select id="mw-count">
@@ -320,13 +151,12 @@
     </div>
   </div>
 
-  <!-- LOBBY (host) -->
+  <!-- LOBBY -->
   <div class="screen" id="s-lobby">
     <h2>Partie créée !</h2>
     <p>Partage ce code à tes amis. Ils ouvrent ce même lien et entrent le code.</p>
     <div class="code-display" id="lobby-code" onclick="copyCode()">
-      —
-      <span class="copy-hint">Appuie pour copier</span>
+      —<span class="copy-hint">Appuie pour copier</span>
     </div>
     <div id="lobby-meta" style="font-size:13px;color:var(--muted);margin-bottom:0.5rem;"></div>
     <hr class="sep">
@@ -372,7 +202,7 @@
   <!-- WAITING -->
   <div class="screen" id="s-wait">
     <h2>En attente…</h2>
-    <p>Tu as vu ton rôle. Attends que tous les joueurs soient prêts pour commencer !</p>
+    <p>Tu as vu ton rôle. Attends que tous les joueurs soient prêts !</p>
     <div class="info-card" style="margin-top:1.5rem;">
       <span class="waiting-dot"></span> <strong style="margin-left:6px;">Ne révèle pas ton mot.</strong><br><br>
       Parle de ton mot de façon vague — assez pour prouver que tu le connais, pas assez pour aider l'undercover.
@@ -380,11 +210,83 @@
     <button class="btn" onclick="show('s-home')" style="margin-top:2rem;">Quitter</button>
   </div>
 
+  <!-- ADMIN LOGIN -->
+  <div class="screen" id="s-admin-login">
+    <div style="margin-bottom:1.5rem;">
+      <div class="admin-label">Accès restreint</div>
+      <h2>Panel Admin</h2>
+      <p>Réservé au créateur du jeu.</p>
+    </div>
+    <label>Mot de passe</label>
+    <input type="password" id="admin-pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()" />
+    <div class="error-msg" id="admin-err"></div>
+    <button class="btn btn-primary" onclick="adminLogin()" style="margin-top:1.25rem;">Entrer</button>
+    <button class="btn" onclick="show('s-home')">Retour</button>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div class="screen" id="s-admin">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+      <div>
+        <div class="admin-label">Admin</div>
+        <h2 style="margin-bottom:0;">Panel de test</h2>
+      </div>
+      <button class="btn btn-sm" onclick="show('s-home')">Quitter</button>
+    </div>
+
+    <div class="card" style="margin-top:0;">
+      <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:0.75rem;">Simuler une partie avec des robots</div>
+      <label style="margin-top:0;">Nombre de robots</label>
+      <select id="admin-bots">
+        <option value="2">2 robots</option>
+        <option value="3" selected>3 robots</option>
+        <option value="4">4 robots</option>
+        <option value="5">5 robots</option>
+        <option value="6">6 robots</option>
+        <option value="7">7 robots</option>
+        <option value="8">8 robots</option>
+      </select>
+      <label>Undercoverts</label>
+      <select id="admin-uc">
+        <option value="1" selected>1 undercover</option>
+        <option value="2">2 undercoverts</option>
+      </select>
+      <label>Mr. White</label>
+      <select id="admin-mw">
+        <option value="0" selected>Non</option>
+        <option value="1">Oui</option>
+      </select>
+      <div class="error-msg" id="admin-create-err"></div>
+      <button class="btn btn-primary" id="admin-create-btn" onclick="adminCreateGame()" style="margin-top:1rem;">Créer la partie test</button>
+    </div>
+
+    <!-- Résultat -->
+    <div id="admin-result" style="display:none;">
+      <hr class="sep">
+      <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:0.75rem;">Résultat de la simulation</div>
+      <div id="admin-code-display" style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:5px;color:var(--accent);text-align:center;padding:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:1rem;"></div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">Mots secrets</div>
+      <div id="admin-words" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;"></div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">Rôles attribués</div>
+      <div id="admin-roles-list" class="card" style="margin-top:0;padding:0 1.25rem;"></div>
+      <button class="btn btn-danger" onclick="adminDeleteGame()" style="margin-top:1rem;">Supprimer cette partie test</button>
+    </div>
+
+    <!-- Parties actives -->
+    <hr class="sep">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+      <div style="font-size:14px;font-weight:500;color:var(--text);">Parties actives en base</div>
+      <button class="btn btn-sm" onclick="adminLoadGames()">Rafraîchir</button>
+    </div>
+    <div id="admin-games-list"></div>
+  </div>
+
 </div>
 
+<!-- Bouton admin discret -->
+<div class="admin-link" onclick="show('s-admin-login')" title="Admin">⚙</div>
 <div class="toast" id="toast"></div>
 
-<!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -402,10 +304,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// ── State ──
+const ADMIN_PASSWORD = "XVIADMIN";
+const BOT_NAMES = ["Robot-Alpha","Robot-Beta","Robot-Gamma","Robot-Delta","Robot-Epsilon","Robot-Zeta","Robot-Eta","Robot-Theta"];
+const COLORS = ['#4ade8022','#f8717122','#94a3b822','#e8d5a322','#a78bfa22'];
+const TEXTS  = ['#4ade80','#f87171','#94a3b8','#e8d5a3','#a78bfa'];
+
 let currentCode = null;
 let currentPlayerIndex = null;
 let lobbyListener = null;
+let adminCurrentCode = null;
 
 window.show = (id) => {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -416,7 +323,7 @@ function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
+  setTimeout(() => t.classList.remove('show'), 2500);
 }
 
 window.copyCode = () => {
@@ -424,157 +331,106 @@ window.copyCode = () => {
   navigator.clipboard.writeText(currentCode).then(() => showToast('Code copié !'));
 };
 
-// ── Word generation ──
+// ── Words ──
 async function generateWords() {
   const fallback = [
-    {civil:'Coca-Cola',undercover:'Pepsi'},
-    {civil:'Pizza',undercover:'Calzone'},
-    {civil:'Requin',undercover:'Dauphin'},
-    {civil:'Château',undercover:'Manoir'},
-    {civil:'Guitare',undercover:'Basse'},
-    {civil:'Café',undercover:'Thé'},
-    {civil:'Ski',undercover:'Snowboard'},
-    {civil:'Lion',undercover:'Tigre'},
-    {civil:'Cinéma',undercover:'Théâtre'},
-    {civil:'Sushi',undercover:'Sashimi'},
+    {civil:'Coca-Cola',undercover:'Pepsi'},{civil:'Pizza',undercover:'Calzone'},
+    {civil:'Requin',undercover:'Dauphin'},{civil:'Château',undercover:'Manoir'},
+    {civil:'Guitare',undercover:'Basse'},{civil:'Café',undercover:'Thé'},
+    {civil:'Ski',undercover:'Snowboard'},{civil:'Lion',undercover:'Tigre'},
+    {civil:'Cinéma',undercover:'Théâtre'},{civil:'Sushi',undercover:'Sashimi'},
+    {civil:'Vélo',undercover:'Trottinette'},{civil:'Baguette',undercover:'Pain de mie'},
+    {civil:'Pompier',undercover:'Policier'},{civil:'Lune',undercover:'Soleil'},
   ];
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 150,
+        model: 'claude-sonnet-4-20250514', max_tokens: 150,
         system: 'Tu génères des paires de mots pour le jeu Undercover. Réponds UNIQUEMENT en JSON valide sans markdown: {"civil":"MOT1","undercover":"MOT2"}. Les deux mots doivent être proches mais clairement différents. Varie les catégories. Mots simples en français.',
         messages: [{ role: 'user', content: 'Génère une paire de mots pour Undercover.' }]
       })
     });
     const data = await res.json();
-    const text = data.content.map(b => b.text || '').join('').replace(/```json|```/g, '').trim();
+    const text = data.content.map(b => b.text||'').join('').replace(/```json|```/g,'').trim();
     return JSON.parse(text);
-  } catch (e) {
-    return fallback[Math.floor(Math.random() * fallback.length)];
-  }
+  } catch(e) { return fallback[Math.floor(Math.random()*fallback.length)]; }
 }
 
-// ── Role assignment ──
+// ── Roles ──
 function assignRoles(total, ucCount, mwCount) {
   const roles = [];
-  const civilCount = total - ucCount - mwCount;
-  for (let i = 0; i < civilCount; i++) roles.push('civil');
-  for (let i = 0; i < ucCount; i++) roles.push('undercover');
-  for (let i = 0; i < mwCount; i++) roles.push('mrwhite');
-  for (let i = roles.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [roles[i], roles[j]] = [roles[j], roles[i]];
-  }
+  for (let i=0;i<total-ucCount-mwCount;i++) roles.push('civil');
+  for (let i=0;i<ucCount;i++) roles.push('undercover');
+  for (let i=0;i<mwCount;i++) roles.push('mrwhite');
+  for (let i=roles.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [roles[i],roles[j]]=[roles[j],roles[i]]; }
   return roles;
 }
 
 function genCode() {
-  const words = ['LOUP','CHAT','ROSE','BLEU','NUIT','JAZZ','VENT','CIEL','FEUX','PARC'];
-  return words[Math.floor(Math.random() * words.length)] + '-' + Math.floor(10 + Math.random() * 90);
+  const words=['LOUP','CHAT','ROSE','BLEU','NUIT','JAZZ','VENT','CIEL','FEUX','PARC'];
+  return words[Math.floor(Math.random()*words.length)]+'-'+Math.floor(10+Math.random()*90);
 }
 
-// ── Create game ──
+// ── Create ──
 window.startCreation = async () => {
   const hostName = document.getElementById('host-name').value.trim();
   const playerCount = parseInt(document.getElementById('player-count').value);
   const ucCount = parseInt(document.getElementById('uc-count').value);
   const mwCount = parseInt(document.getElementById('mw-count').value);
   const errEl = document.getElementById('create-err');
-
-  if (!hostName) { errEl.style.display = 'block'; errEl.textContent = 'Entre ton prénom.'; return; }
-  if (ucCount + mwCount >= playerCount) { errEl.style.display = 'block'; errEl.textContent = 'Trop d\'imposteurs pour ce nombre de joueurs.'; return; }
-  errEl.style.display = 'none';
-
+  if (!hostName) { errEl.style.display='block'; errEl.textContent='Entre ton prénom.'; return; }
+  if (ucCount+mwCount>=playerCount) { errEl.style.display='block'; errEl.textContent='Trop d\'imposteurs pour ce nombre de joueurs.'; return; }
+  errEl.style.display='none';
   show('s-creating');
-
   const words = await generateWords();
   const code = genCode();
   const roles = assignRoles(playerCount, ucCount, mwCount);
-
-  const game = {
-    code,
-    hostName,
-    playerCount,
-    ucCount,
-    mwCount,
-    civilWord: words.civil,
-    undercoverWord: words.undercover,
-    roles,
-    players: [{ name: hostName }],
-    createdAt: Date.now()
-  };
-
-  await set(ref(db, `games/${code}`), game);
-
-  currentCode = code;
-  currentPlayerIndex = 0;
-
-  startLobbyListener(code);
-  renderLobby(game);
-  show('s-lobby');
+  const game = { code, hostName, playerCount, ucCount, mwCount, civilWord:words.civil, undercoverWord:words.undercover, roles, players:[{name:hostName}], createdAt:Date.now() };
+  await set(ref(db,`games/${code}`), game);
+  currentCode = code; currentPlayerIndex = 0;
+  startLobbyListener(code); renderLobby(game); show('s-lobby');
 };
 
 // ── Lobby ──
 function startLobbyListener(code) {
   if (lobbyListener) lobbyListener();
-  const gameRef = ref(db, `games/${code}`);
-  lobbyListener = onValue(gameRef, snapshot => {
-    const game = snapshot.val();
-    if (!game) return;
-    renderLobby(game);
-  });
+  lobbyListener = onValue(ref(db,`games/${code}`), snap => { const g=snap.val(); if(g) renderLobby(g); });
 }
 
 function renderLobby(game) {
-  document.getElementById('lobby-code').childNodes[0].textContent = game.code;
-  document.getElementById('lobby-meta').textContent =
-    `${game.playerCount} joueurs · ${game.ucCount} undercover${game.ucCount > 1 ? 's' : ''} · ${game.mwCount > 0 ? '1 Mr. White' : 'sans Mr. White'}`;
-
-  const players = game.players || [];
+  const codeEl = document.getElementById('lobby-code');
+  codeEl.childNodes[0].textContent = game.code;
+  document.getElementById('lobby-meta').textContent = `${game.playerCount} joueurs · ${game.ucCount} undercover${game.ucCount>1?'s':''} · ${game.mwCount>0?'1 Mr. White':'sans Mr. White'}`;
+  const players = game.players||[];
   document.getElementById('player-count-live').textContent = `${players.length}/${game.playerCount}`;
-
-  const COLORS = ['#4ade8022','#f8717122','#94a3b822','#e8d5a322','#a78bfa22'];
-  const TEXTS = ['#4ade80','#f87171','#94a3b8','#e8d5a3','#a78bfa'];
-
   const container = document.getElementById('lobby-players');
   container.innerHTML = '';
-  players.forEach((p, i) => {
-    const ci = i % COLORS.length;
-    const div = document.createElement('div');
-    div.className = 'player-item';
-    div.innerHTML = `
-      <div class="avatar" style="background:${COLORS[ci]};color:${TEXTS[ci]};">${p.name[0].toUpperCase()}</div>
-      <span style="font-size:15px;">${p.name}</span>
-      ${i === 0 ? '<span class="tag">Hôte</span>' : ''}
-    `;
+  players.forEach((p,i) => {
+    const ci=i%COLORS.length;
+    const div=document.createElement('div');
+    div.className='player-item';
+    div.innerHTML=`<div class="avatar" style="background:${COLORS[ci]};color:${TEXTS[ci]};">${p.name[0].toUpperCase()}</div><span style="font-size:15px;">${p.name}</span>${i===0?'<span class="tag">Hôte</span>':''}`;
     container.appendChild(div);
   });
-
   if (players.length < game.playerCount) {
-    const missing = game.playerCount - players.length;
-    const div = document.createElement('div');
-    div.style.cssText = 'font-size:13px;color:var(--muted);padding:10px 0;';
-    div.innerHTML = `<span class="waiting-dot"></span> En attente de ${missing} joueur${missing > 1 ? 's' : ''}…`;
+    const missing = game.playerCount-players.length;
+    const div=document.createElement('div');
+    div.style.cssText='font-size:13px;color:var(--muted);padding:10px 0;';
+    div.innerHTML=`<span class="waiting-dot"></span> En attente de ${missing} joueur${missing>1?'s':''}…`;
     container.appendChild(div);
   }
 }
 
 window.hostReveal = () => {
-  get(ref(db, `games/${currentCode}`)).then(snap => {
-    const game = snap.val();
-    if (game) showRole(game, 0);
-  });
+  get(ref(db,`games/${currentCode}`)).then(snap => { const g=snap.val(); if(g) showRole(g,0); });
 };
 
 window.deleteGame = async () => {
-  if (!confirm('Supprimer la partie ? Tous les joueurs seront déconnectés.')) return;
-  if (currentCode) await remove(ref(db, `games/${currentCode}`));
-  currentCode = null;
-  currentPlayerIndex = null;
-  show('s-home');
+  if (!confirm('Supprimer la partie ?')) return;
+  if (currentCode) await remove(ref(db,`games/${currentCode}`));
+  currentCode=null; show('s-home');
 };
 
 // ── Join ──
@@ -582,82 +438,165 @@ window.joinGame = async () => {
   const code = document.getElementById('join-code').value.trim().toUpperCase();
   const name = document.getElementById('join-name').value.trim();
   const errEl = document.getElementById('join-err');
-
-  if (!code) { errEl.style.display = 'block'; errEl.textContent = 'Entre le code de la partie.'; return; }
-  if (!name) { errEl.style.display = 'block'; errEl.textContent = 'Entre ton prénom.'; return; }
-  errEl.style.display = 'none';
-
+  if (!code) { errEl.style.display='block'; errEl.textContent='Entre le code de la partie.'; return; }
+  if (!name) { errEl.style.display='block'; errEl.textContent='Entre ton prénom.'; return; }
+  errEl.style.display='none';
   show('s-joining');
-
-  const snap = await get(ref(db, `games/${code}`));
-  if (!snap.exists()) {
-    show('s-join');
-    errEl.style.display = 'block';
-    errEl.textContent = 'Code introuvable. Vérifie avec l\'hôte.';
-    return;
-  }
-
-  const game = snap.val();
-  const players = game.players || [];
-
-  // Already joined?
-  const existing = players.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
-  if (existing !== -1) {
-    currentCode = code;
-    currentPlayerIndex = existing;
-    showRole(game, existing);
-    return;
-  }
-
-  if (players.length >= game.playerCount) {
-    show('s-join');
-    errEl.style.display = 'block';
-    errEl.textContent = 'La partie est complète.';
-    return;
-  }
-
-  const newIndex = players.length;
-  const updatedPlayers = [...players, { name }];
-  await update(ref(db, `games/${code}`), { players: updatedPlayers });
-
-  currentCode = code;
-  currentPlayerIndex = newIndex;
-  showRole(game, newIndex);
+  const snap = await get(ref(db,`games/${code}`));
+  if (!snap.exists()) { show('s-join'); errEl.style.display='block'; errEl.textContent='Code introuvable. Vérifie avec l\'hôte.'; return; }
+  const game=snap.val(); const players=game.players||[];
+  const existing=players.findIndex(p=>p.name.toLowerCase()===name.toLowerCase());
+  if (existing!==-1) { currentCode=code; currentPlayerIndex=existing; showRole(game,existing); return; }
+  if (players.length>=game.playerCount) { show('s-join'); errEl.style.display='block'; errEl.textContent='La partie est complète.'; return; }
+  const newIndex=players.length;
+  await update(ref(db,`games/${code}`),{players:[...players,{name}]});
+  currentCode=code; currentPlayerIndex=newIndex; showRole(game,newIndex);
 };
 
-// ── Role display ──
+// ── Role ──
 function showRole(game, index) {
-  const role = game.roles[index];
-  let word, sub, badgeHtml, info;
-
-  if (role === 'civil') {
-    word = game.civilWord;
-    sub = 'Ton mot secret';
-    badgeHtml = `<span class="role-type" style="background:rgba(74,222,128,0.12);color:var(--civil);border:1px solid rgba(74,222,128,0.25);">Civil</span>`;
-    info = 'Tu connais le vrai mot. Parle-en assez pour prouver que tu le sais — mais sans le révéler ! Repère l\'undercover parmi vos descriptions.';
-  } else if (role === 'undercover') {
-    word = game.undercoverWord;
-    sub = 'Ton mot (différent des civils !)';
-    badgeHtml = `<span class="role-type" style="background:rgba(248,113,113,0.12);color:var(--undercover);border:1px solid rgba(248,113,113,0.25);">Undercover</span>`;
-    info = 'Ton mot est proche mais différent de celui des civils. Écoute leurs descriptions pour deviner le vrai mot… et fais-toi passer pour un civil !';
+  const role=game.roles[index];
+  let word,sub,badgeHtml,info;
+  if (role==='civil') {
+    word=game.civilWord; sub='Ton mot secret';
+    badgeHtml=`<span class="role-type" style="background:rgba(74,222,128,0.12);color:var(--civil);border:1px solid rgba(74,222,128,0.25);">Civil</span>`;
+    info='Tu connais le vrai mot. Parle-en assez pour prouver que tu le sais — mais sans le révéler ! Repère l\'undercover parmi vos descriptions.';
+  } else if (role==='undercover') {
+    word=game.undercoverWord; sub='Ton mot (différent des civils !)';
+    badgeHtml=`<span class="role-type" style="background:rgba(248,113,113,0.12);color:var(--undercover);border:1px solid rgba(248,113,113,0.25);">Undercover</span>`;
+    info='Ton mot est proche mais différent. Écoute les descriptions pour deviner le vrai mot… et fais-toi passer pour un civil !';
   } else {
-    word = '???';
-    sub = 'Tu n\'as aucun mot';
-    badgeHtml = `<span class="role-type" style="background:rgba(148,163,184,0.12);color:var(--mrwhite);border:1px solid rgba(148,163,184,0.25);">Mr. White</span>`;
-    info = 'Tu ne connais aucun mot. Écoute les autres pour deviner le mot des civils. Si tu es éliminé, tu peux tenter de deviner le mot pour gagner !';
+    word='???'; sub='Tu n\'as aucun mot';
+    badgeHtml=`<span class="role-type" style="background:rgba(148,163,184,0.12);color:var(--mrwhite);border:1px solid rgba(148,163,184,0.25);">Mr. White</span>`;
+    info='Tu ne connais aucun mot. Écoute les autres pour deviner le mot des civils. Si tu es éliminé, tente de deviner le mot pour gagner !';
   }
-
-  document.getElementById('role-badge').innerHTML = badgeHtml;
-  document.getElementById('role-word').textContent = word;
-  document.getElementById('role-sub').textContent = sub;
-  document.getElementById('role-info').textContent = info;
-
-  if (role === 'civil') document.getElementById('role-word').style.color = 'var(--civil)';
-  else if (role === 'undercover') document.getElementById('role-word').style.color = 'var(--undercover)';
-  else document.getElementById('role-word').style.color = 'var(--mrwhite)';
-
+  document.getElementById('role-badge').innerHTML=badgeHtml;
+  document.getElementById('role-word').textContent=word;
+  document.getElementById('role-word').style.color=role==='civil'?'var(--civil)':role==='undercover'?'var(--undercover)':'var(--mrwhite)';
+  document.getElementById('role-sub').textContent=sub;
+  document.getElementById('role-info').textContent=info;
   show('s-role');
 }
+
+// ══════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════
+
+window.adminLogin = () => {
+  const pwd = document.getElementById('admin-pwd').value;
+  const errEl = document.getElementById('admin-err');
+  if (pwd !== ADMIN_PASSWORD) {
+    errEl.style.display='block'; errEl.textContent='Mot de passe incorrect.';
+    document.getElementById('admin-pwd').value='';
+    return;
+  }
+  errEl.style.display='none';
+  document.getElementById('admin-pwd').value='';
+  document.getElementById('admin-result').style.display='none';
+  adminLoadGames();
+  show('s-admin');
+};
+
+window.adminCreateGame = async () => {
+  const botCount = parseInt(document.getElementById('admin-bots').value);
+  const ucCount  = parseInt(document.getElementById('admin-uc').value);
+  const mwCount  = parseInt(document.getElementById('admin-mw').value);
+  const errEl = document.getElementById('admin-create-err');
+  const totalPlayers = botCount + 1;
+
+  if (ucCount+mwCount >= totalPlayers) {
+    errEl.style.display='block'; errEl.textContent='Trop d\'imposteurs pour ce nombre de joueurs.'; return;
+  }
+  errEl.style.display='none';
+
+  const btn = document.getElementById('admin-create-btn');
+  btn.textContent='Génération…'; btn.disabled=true;
+
+  const words = await generateWords();
+  const code = 'TEST-'+Math.floor(10+Math.random()*90);
+  const roles = assignRoles(totalPlayers, ucCount, mwCount);
+  const players = [{name:'Admin (toi)'}];
+  for (let i=0;i<botCount;i++) players.push({name:BOT_NAMES[i]});
+
+  const game = { code, hostName:'Admin', playerCount:totalPlayers, ucCount, mwCount, civilWord:words.civil, undercoverWord:words.undercover, roles, players, createdAt:Date.now(), isTest:true };
+  await set(ref(db,`games/${code}`), game);
+  adminCurrentCode = code;
+
+  btn.textContent='Créer la partie test'; btn.disabled=false;
+
+  document.getElementById('admin-code-display').textContent = code;
+
+  document.getElementById('admin-words').innerHTML = `
+    <span class="word-pill word-civil">Civil : ${words.civil}</span>
+    <span class="word-pill word-uc">Undercover : ${words.undercover}</span>
+  `;
+
+  const rolesEl = document.getElementById('admin-roles-list');
+  rolesEl.innerHTML='';
+  players.forEach((p,i) => {
+    const role=roles[i];
+    const ci=i%COLORS.length;
+    const roleLabel=role==='civil'?'Civil':role==='undercover'?'Undercover':'Mr. White';
+    const word=role==='civil'?words.civil:role==='undercover'?words.undercover:'???';
+    const div=document.createElement('div');
+    div.className='admin-player-row';
+    div.innerHTML=`
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="avatar" style="background:${COLORS[ci]};color:${TEXTS[ci]};width:30px;height:30px;font-size:12px;">${p.name[0].toUpperCase()}</div>
+        <div>
+          <div style="font-size:14px;color:var(--text);">${p.name}</div>
+          <div style="font-size:12px;color:var(--muted);">Mot : <strong style="color:var(--text);">${word}</strong></div>
+        </div>
+      </div>
+      <span class="role-pill ${role}">${roleLabel}</span>
+    `;
+    rolesEl.appendChild(div);
+  });
+
+  document.getElementById('admin-result').style.display='block';
+  adminLoadGames();
+  showToast('Partie test créée !');
+};
+
+window.adminDeleteGame = async () => {
+  if (!adminCurrentCode) return;
+  if (!confirm(`Supprimer la partie ${adminCurrentCode} ?`)) return;
+  await remove(ref(db,`games/${adminCurrentCode}`));
+  adminCurrentCode=null;
+  document.getElementById('admin-result').style.display='none';
+  adminLoadGames();
+  showToast('Partie supprimée.');
+};
+
+window.adminLoadGames = async () => {
+  const container = document.getElementById('admin-games-list');
+  container.innerHTML='<p style="font-size:13px;color:var(--muted);">Chargement…</p>';
+  const snap = await get(ref(db,'games'));
+  if (!snap.exists()) { container.innerHTML='<p style="font-size:13px;color:var(--muted);">Aucune partie active.</p>'; return; }
+  const games=snap.val();
+  container.innerHTML='';
+  Object.values(games).forEach(g => {
+    const players=g.players||[];
+    const div=document.createElement('div');
+    div.className='admin-game-item';
+    div.innerHTML=`
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--accent);letter-spacing:3px;">${g.code}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px;">${players.length}/${g.playerCount} joueurs · ${g.isTest?'<span style="color:var(--undercover);">Test</span>':'Normale'} · ${g.civilWord} / ${g.undercoverWord}</div>
+      </div>
+      <button class="btn btn-sm btn-danger" onclick="adminForceDelete('${g.code}')">Suppr.</button>
+    `;
+    container.appendChild(div);
+  });
+};
+
+window.adminForceDelete = async (code) => {
+  if (!confirm(`Supprimer la partie ${code} ?`)) return;
+  await remove(ref(db,`games/${code}`));
+  if (adminCurrentCode===code) { adminCurrentCode=null; document.getElementById('admin-result').style.display='none'; }
+  adminLoadGames();
+  showToast(`Partie ${code} supprimée.`);
+};
 </script>
 </body>
 </html>
