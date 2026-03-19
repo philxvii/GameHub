@@ -216,6 +216,18 @@
     <div class="loading"><div class="spinner"></div><div>Connexion…</div></div>
   </div>
 
+  <!-- BANNED NAME -->
+  <div class="screen" id="s-banned">
+    <div style="padding-top:2rem;">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px;color:var(--danger);margin-bottom:1.5rem;line-height:1.1;">🚫 ACCÈS<br>REFUSÉ</div>
+      <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:1.25rem;font-size:13px;color:#f0ece4;line-height:1.8;font-style:italic;">
+        En vertu des très éclairées dispositions de l'article 16 de la loi SREN, il est solennellement institué un dispositif de bannissement numérique destiné à frapper d'indignité digitale les personnes soupçonnées d'avoir commis, ou reconnues coupables d'avoir commis, certaines infractions en ligne ; étant en outre précisé, avec toute la rigueur que commande l'ordre public numérique, que toute référence, explicite ou implicite, à « speedy » sera tenue pour prohibée et pourra, le cas échéant, justifier l'édiction d'une mesure de bannissement à caractère permanent.
+      </div>
+      <div style="margin-top:1.5rem;font-size:14px;color:var(--muted);">Choisis un autre prénom et réessaie.</div>
+      <button class="btn" onclick="show('s-join')" style="margin-top:1rem;">Changer de prénom</button>
+    </div>
+  </div>
+
   <!-- ROLE REVEAL -->
   <div class="screen" id="s-role">
     <div class="role-screen">
@@ -229,10 +241,13 @@
 
   <!-- GAME WAIT (waiting for game to start / other players to see role) -->
   <div class="screen" id="s-game-wait">
-    <div class="loading">
-      <div class="spinner"></div>
-      <div id="game-wait-msg">En attente du début de la partie…</div>
-      <p style="margin-top:8px;font-size:13px;">Ne révèle pas ton mot !</p>
+    <div id="game-wait-msg" style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--text);margin-bottom:0.5rem;">Tu as rejoint la partie !</div>
+    <p style="margin-bottom:1.5rem;" id="game-wait-sub">En attente que tous les joueurs rejoignent…</p>
+    <h3>Joueurs connectés <span id="gwait-count" style="color:var(--muted);font-weight:400;font-size:14px;"></span></h3>
+    <div id="gwait-players" style="margin-top:0.75rem;"></div>
+    <div class="info-card" style="margin-top:1.5rem;">
+      <span class="waiting-dot"></span> <strong style="margin-left:6px;">Ne révèle pas ton mot !</strong><br>
+      La partie démarre automatiquement quand l'hôte lance.
     </div>
   </div>
 
@@ -430,6 +445,34 @@ function avatarBg(i) { return AVCOLORS[i % AVCOLORS.length]; }
 function avatarTxt(i) { return AVTEXTS[i % AVTEXTS.length]; }
 function avatarLetter(name) { return name[0].toUpperCase(); }
 
+// ── Render waiting lobby for non-host players ──
+function renderWaitingLobby(game) {
+  const players = game.players || [];
+  const el = document.getElementById('gwait-count');
+  if(el) el.textContent = `${players.length}/${game.playerCount}`;
+  const sub = document.getElementById('game-wait-sub');
+  if(sub){
+    if(players.length < game.playerCount){
+      const missing = game.playerCount - players.length;
+      sub.textContent = `En attente de ${missing} joueur${missing>1?'s':''} supplémentaire${missing>1?'s':''}…`;
+    } else {
+      sub.textContent = 'Tous les joueurs sont là ! En attente de l'hôte…';
+    }
+  }
+  const container = document.getElementById('gwait-players');
+  if(!container) return;
+  container.innerHTML = '';
+  players.forEach((p, i) => {
+    const isMe = p.name === myName;
+    const div = document.createElement('div');
+    div.className = 'player-item';
+    div.innerHTML = `<div class="avatar" style="background:${avatarBg(i)};color:${avatarTxt(i)};">${avatarLetter(p.name)}</div>
+      <span style="font-size:15px;${isMe?'font-weight:500;color:var(--accent)':''}">${p.name}${isMe?' (toi)':''}</span>
+      ${i===0?'<span class="tag" style="margin-left:auto;">Hôte</span>':''}`;
+    container.appendChild(div);
+  });
+}
+
 // ── Char counter ──
 document.getElementById('my-description').addEventListener('input', function() {
   document.getElementById('char-count').textContent = this.value.length + '/120';
@@ -560,12 +603,37 @@ window.deleteGame = async () => {
 // ══════════════════════════════════════
 // JOIN
 // ══════════════════════════════════════
+// ── Banned name detection ──
+function isBannedName(name) {
+  const n = name.toLowerCase().replace(/[^a-z0-9]/g,'');
+  // Patterns: speedy, speedlover, speedita, 67, and phonetic variants of "speed" / "spid"
+  const banned = [
+    /sp[ei][ei]?d/,   // speed, spied, spied, spiid, speeed…
+    /sp[iy]d/,        // spyd, spid
+    /speedlov/,
+    /speedit/,
+    /speedi/,
+    /speedy/,
+    /67(?:speed|spid|spyd)?/,
+    /(?:speed|spid|spyd).*67/,
+    /^67$/,
+  ];
+  return banned.some(r => r.test(n));
+}
+
 window.joinGame = async () => {
   const code=document.getElementById('join-code').value.trim().toUpperCase();
   const name=document.getElementById('join-name').value.trim();
   const errEl=document.getElementById('join-err');
   if(!code){errEl.style.display='block';errEl.textContent='Entre le code.';return;}
   if(!name){errEl.style.display='block';errEl.textContent='Entre ton prénom.';return;}
+
+  // Banned name check — before anything else
+  if(isBannedName(name)){
+    show('s-banned');
+    return;
+  }
+
   errEl.style.display='none';
   show('s-joining');
 
@@ -597,7 +665,9 @@ window.joinGame = async () => {
   myRole=game.roles[newIndex];
   myWord=myRole==='civil'?game.civilWord:myRole==='undercover'?game.undercoverWord:null;
   startGameListener(code);
+  // Show waiting lobby (player sees who else is in)
   show('s-game-wait');
+  document.getElementById('game-wait-msg').textContent='Tu as rejoint la partie !';
 };
 
 // ══════════════════════════════════════
@@ -617,10 +687,12 @@ function handlePhase(game) {
 
   // Lobby updates
   if(phase==='lobby'){
-    renderLobby(game);
-    if(document.getElementById('s-lobby').classList.contains('active')||
-       document.getElementById('s-game-wait').classList.contains('active')){
-      if(isHost) show('s-lobby');
+    if(isHost){
+      renderLobby(game);
+      if(!document.getElementById('s-lobby').classList.contains('active')) show('s-lobby');
+    } else {
+      renderWaitingLobby(game);
+      if(!document.getElementById('s-game-wait').classList.contains('active')) show('s-game-wait');
     }
     return;
   }
