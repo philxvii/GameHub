@@ -456,7 +456,7 @@ function renderWaitingLobby(game) {
       const missing = game.playerCount - players.length;
       sub.textContent = `En attente de ${missing} joueur${missing>1?'s':''} supplémentaire${missing>1?'s':''}…`;
     } else {
-      sub.textContent = 'Tous les joueurs sont là ! En attente de l'hôte…';
+      sub.textContent = "Tous les joueurs sont là ! En attente de l'hôte…";
     }
   }
   const container = document.getElementById('gwait-players');
