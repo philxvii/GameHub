@@ -461,7 +461,7 @@ function renderGame(game) {
   // Board cells
   const boardEl = document.getElementById('board');
   boardEl.innerHTML = '';
-  const board = game.board || emptyBoard();
+  const board = normalizeBoard(game.board);
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const cell = document.createElement('div');
@@ -493,6 +493,16 @@ function renderGame(game) {
   show('s-game');
 }
 
+function normalizeBoard(board) {
+  // Firebase converts arrays to objects — convert back
+  if (!board) return emptyBoard();
+  if (Array.isArray(board)) {
+    return board.map(row => Array.isArray(row) ? [...row] : Object.values(row).map(Number));
+  }
+  const rows = Object.values(board);
+  return rows.map(row => Array.isArray(row) ? [...row] : Object.values(row).map(Number));
+}
+
 function getLowestEmpty(board, col) {
   for (let r = ROWS - 1; r >= 0; r--) {
     if (board[r][col] === 0) return r;
@@ -505,7 +515,7 @@ async function dropPiece(col, game) {
   if (game.turn !== myPnum) return;
   if (game.phase !== 'playing') return;
 
-  const board = game.board.map(r => [...r]);
+  const board = normalizeBoard(game.board);
   const row = getLowestEmpty(board, col);
   if (row === -1) { showToast('Colonne pleine !'); return; }
 
