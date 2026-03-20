@@ -10,49 +10,47 @@
     --bg:#07090f; --surface:#0e1118; --surface2:#161b27;
     --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.14);
     --text:#eef0f6; --muted:#6b7280;
-    --p1:#f97316; --p1bg:rgba(249,115,22,0.15); --p1border:rgba(249,115,22,0.3);
-    --p2:#3b82f6; --p2bg:rgba(59,130,246,0.15); --p2border:rgba(59,130,246,0.3);
-    --empty:#1a2035;
-    --win:#fbbf24;
-    --r:12px;
+    --p1:#f97316; --p1bg:rgba(249,115,22,0.15); --p1bd:rgba(249,115,22,0.3);
+    --p2:#3b82f6; --p2bg:rgba(59,130,246,0.15); --p2bd:rgba(59,130,246,0.3);
+    --empty:#1a2035; --win:#fbbf24; --r:12px;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;}
   .app{width:100%;max-width:480px;min-height:100vh;padding:2rem 1.25rem 3rem;}
-  .screen{display:none;animation:fadeIn 0.22s ease;}
+  .screen{display:none;animation:fadeIn 0.2s ease;}
   .screen.active{display:block;}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
 
   .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:40px;line-height:1;letter-spacing:-1px;margin-bottom:0.5rem;}
-  .logo span.p1c{color:var(--p1);}
-  .logo span.p2c{color:var(--p2);}
   .logo small{font-size:14px;font-weight:400;color:var(--muted);font-family:'DM Sans',sans-serif;letter-spacing:0;display:block;margin-top:6px;}
-
   h2{font-family:'Syne',sans-serif;font-weight:700;font-size:22px;color:var(--text);margin-bottom:0.75rem;}
   p{font-size:14px;color:var(--muted);line-height:1.65;}
   label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px;margin-top:1rem;}
 
-  input{width:100%;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;}
-  input:focus{border-color:var(--border2);}
+  input,select{width:100%;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;appearance:none;}
+  input:focus,select:focus{border-color:var(--border2);}
   input::placeholder{color:var(--muted);}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;}
+  select option{background:#0e1118;}
 
   .btn{width:100%;padding:13px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all 0.15s;margin-top:10px;}
   .btn:hover{background:var(--surface2);border-color:var(--border2);}
   .btn:active{transform:scale(0.98);}
   .btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
-  .btn-primary{background:var(--p1);color:#fff;border-color:var(--p1);font-weight:700;}
-  .btn-primary:hover{filter:brightness(1.1);}
+  .btn-p1{background:var(--p1);color:#fff;border-color:var(--p1);font-weight:700;}
+  .btn-p1:hover{filter:brightness(1.1);}
   .btn-p2{background:var(--p2);color:#fff;border-color:var(--p2);font-weight:700;}
+  .btn-p2:hover{filter:brightness(1.1);}
   .btn-danger{border-color:rgba(239,68,68,0.3);color:#ef4444;}
   .btn-danger:hover{background:rgba(239,68,68,0.08);}
   .btn-sm{width:auto;padding:7px 14px;font-size:13px;margin-top:0;}
   .btn-row{display:flex;gap:8px;margin-top:10px;}
   .btn-row .btn{margin-top:0;}
 
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-top:1rem;}
   .info-card{background:transparent;border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem;margin-top:1rem;font-size:13px;color:var(--muted);line-height:1.7;}
+  .info-card strong{color:var(--text);}
 
-  .code-box{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;letter-spacing:6px;text-align:center;color:var(--p1);padding:1.5rem;background:var(--surface);border:1px solid var(--p1border);border-radius:var(--r);margin:1rem 0;cursor:pointer;transition:border-color 0.2s;}
+  .code-box{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;letter-spacing:6px;text-align:center;color:var(--p1);padding:1.5rem;background:var(--surface);border:1px solid var(--p1bd);border-radius:var(--r);margin:1rem 0;cursor:pointer;transition:border-color 0.2s;}
   .code-box:hover{border-color:var(--p1);}
   .copy-hint{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted);letter-spacing:0;font-weight:400;display:block;margin-top:6px;}
 
@@ -61,57 +59,50 @@
   @keyframes spin{to{transform:rotate(360deg);}}
   .error-msg{font-size:13px;color:#ef4444;margin-top:8px;display:none;}
   .sep{border:none;border-top:1px solid var(--border);margin:1.25rem 0;}
-  .waiting-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--p1);animation:pulse 1.4s ease-in-out infinite;}
+  .wdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--p1);animation:pulse 1.4s ease-in-out infinite;}
   @keyframes pulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}
 
   .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:13px;font-weight:500;opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap;z-index:999;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-  /* Players */
-  .player-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
-  .player-row:last-child{border-bottom:none;}
+  .prow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .prow:last-child{border-bottom:none;}
   .dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
 
-  /* Turn bar */
-  .turn-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding:10px 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);}
-  .turn-player{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;}
-  .score-pills{display:flex;gap:8px;}
-  .score-pill{font-size:13px;font-weight:700;font-family:'Syne',sans-serif;padding:3px 12px;border-radius:999px;}
-  .sp1{background:var(--p1bg);color:var(--p1);border:1px solid var(--p1border);}
-  .sp2{background:var(--p2bg);color:var(--p2);border:1px solid var(--p2border);}
+  /* Game UI */
+  .turn-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;padding:10px 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);}
+  .turn-info{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;}
+  .score-area{display:flex;align-items:center;gap:8px;}
+  .sc{font-size:13px;font-weight:700;font-family:'Syne',sans-serif;padding:3px 10px;border-radius:999px;}
+  .sc1{background:var(--p1bg);color:var(--p1);border:1px solid var(--p1bd);}
+  .sc2{background:var(--p2bg);color:var(--p2);border:1px solid var(--p2bd);}
 
   /* Board */
-  .board-wrap{position:relative;margin:0 auto;}
-  .board{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:10px;}
-  .col-hover-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:4px;}
-  .col-btn{height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;font-size:16px;}
-  .col-btn:hover{background:var(--surface2);}
-  .col-btn:disabled{cursor:not-allowed;opacity:0;}
-  .cell{aspect-ratio:1;border-radius:50%;transition:background 0.18s, transform 0.18s, box-shadow 0.18s;background:var(--empty);}
-  .cell.p1{background:var(--p1);box-shadow:0 0 10px rgba(249,115,22,0.4);}
-  .cell.p2{background:var(--p2);box-shadow:0 0 10px rgba(59,130,246,0.4);}
-  .cell.win{animation:winPulse 0.6s ease infinite alternate;}
-  @keyframes winPulse{from{box-shadow:0 0 8px var(--win);}to{box-shadow:0 0 22px var(--win),0 0 6px #fff;transform:scale(1.07);}}
-  .cell.drop{animation:dropIn 0.22s cubic-bezier(0.33,1,0.68,1);}
-  @keyframes dropIn{from{transform:scale(0.6);opacity:0.5;}to{transform:scale(1);opacity:1;}}
+  .board-outer{user-select:none;}
+  .arrow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:4px;}
+  .arrow-btn{height:30px;background:transparent;border:none;cursor:pointer;border-radius:8px;transition:background 0.12s;display:flex;align-items:center;justify-content:center;font-size:15px;}
+  .arrow-btn:hover{background:var(--surface2);}
+  .arrow-btn.active-col{background:var(--surface2);}
+  .board-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:8px;}
+  .cell{aspect-ratio:1;border-radius:50%;background:var(--empty);transition:background 0.15s;}
+  .cell.p1{background:var(--p1);box-shadow:0 0 8px rgba(249,115,22,0.5);}
+  .cell.p2{background:var(--p2);box-shadow:0 0 8px rgba(59,130,246,0.5);}
+  .cell.preview-p1{background:rgba(249,115,22,0.25);border:2px dashed rgba(249,115,22,0.5);}
+  .cell.preview-p2{background:rgba(59,130,246,0.25);border:2px dashed rgba(59,130,246,0.5);}
+  .cell.win-cell{animation:winPulse 0.55s ease infinite alternate;}
+  @keyframes winPulse{from{box-shadow:0 0 6px var(--win);}to{box-shadow:0 0 20px var(--win),0 0 5px #fff;transform:scale(1.08);}}
 
-  /* Preview dot */
-  .preview{background:var(--surface2);border:2px dashed;opacity:0.5;}
-  .preview.p1{border-color:var(--p1);}
-  .preview.p2{border-color:var(--p2);}
+  .status{text-align:center;font-size:13px;color:var(--muted);margin-top:8px;min-height:18px;}
 
-  /* Status */
-  .status-msg{text-align:center;font-size:14px;color:var(--muted);margin-top:0.75rem;min-height:20px;}
-
-  /* Win overlay */
-  .win-screen{text-align:center;padding:2.5rem 0;}
+  /* Win */
+  .win-wrap{text-align:center;padding:2.5rem 0;}
   .win-emoji{font-size:56px;margin-bottom:1rem;}
   .win-title{font-family:'Syne',sans-serif;font-weight:800;font-size:36px;line-height:1;letter-spacing:-1px;margin-bottom:0.5rem;}
   .win-sub{font-size:14px;color:var(--muted);margin-bottom:1.5rem;}
-  .win-scores{display:flex;gap:10px;margin-top:1rem;}
-  .win-score-card{flex:1;padding:1rem;border-radius:var(--r);text-align:center;}
-  .wsc-name{font-size:13px;color:var(--muted);margin-bottom:4px;}
-  .wsc-score{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;}
+  .score-cards{display:flex;gap:10px;margin-top:1rem;}
+  .scard{flex:1;padding:1rem;border-radius:var(--r);text-align:center;}
+  .scard-name{font-size:13px;color:var(--muted);margin-bottom:4px;}
+  .scard-score{font-family:'Syne',sans-serif;font-weight:800;font-size:30px;}
 </style>
 </head>
 <body>
@@ -120,19 +111,16 @@
   <!-- HOME -->
   <div class="screen active" id="s-home">
     <div style="padding-top:1rem;margin-bottom:2rem;">
-      <div class="logo">
-        <span class="p1c">PUIS</span><span class="p2c">SANCE</span> 4
-        <small>Multijoueur en ligne</small>
-      </div>
+      <div class="logo"><span style="color:var(--p1)">PUIS</span><span style="color:var(--p2)">SANCE</span> 4<small>Multijoueur en ligne</small></div>
     </div>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="show('s-create')">Créer une partie</button>
+      <button class="btn btn-p1" onclick="show('s-create')">Créer une partie</button>
       <button class="btn" onclick="show('s-join')">Rejoindre</button>
     </div>
     <div class="info-card" style="margin-top:1.5rem;">
-      <strong style="color:var(--text);">Règles</strong><br>
-      Aligne <strong style="color:var(--text)">4 jetons</strong> de ta couleur en ligne, colonne ou diagonale avant ton adversaire.<br><br>
-      <span style="color:var(--p1);">●</span> Joueur 1 (hôte) &nbsp;·&nbsp; <span style="color:var(--p2);">●</span> Joueur 2
+      <strong>Règles</strong><br>
+      Aligne <strong>4 jetons</strong> de ta couleur en ligne, colonne ou diagonale avant ton adversaire.<br><br>
+      <span style="color:var(--p1);">●</span> Joueur 1 (orange) &nbsp;·&nbsp; <span style="color:var(--p2);">●</span> Joueur 2 (bleu)
     </div>
   </div>
 
@@ -142,13 +130,13 @@
     <label>Ton prénom</label>
     <input type="text" id="create-name" placeholder="Ton prénom" maxlength="20"/>
     <label>Parties à gagner</label>
-    <select id="create-bo" style="width:100%;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%278%27 viewBox=%270 0 12 8%27%3E%3Cpath d=%27M1 1l5 5 5-5%27 stroke=%27%236b7280%27 stroke-width=%271.5%27 fill=%27none%27 stroke-linecap=%27round%27/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;">
-      <option value="1" selected>1 partie (match simple)</option>
+    <select id="create-bo">
+      <option value="1" selected>1 (match simple)</option>
       <option value="2">Best of 3 (2 victoires)</option>
       <option value="3">Best of 5 (3 victoires)</option>
     </select>
     <div class="error-msg" id="create-err"></div>
-    <button class="btn btn-primary" onclick="createGame()" style="margin-top:1.25rem;">Créer</button>
+    <button class="btn btn-p1" onclick="createGame()" style="margin-top:1.25rem;">Créer</button>
     <button class="btn" onclick="show('s-home')">Retour</button>
   </div>
 
@@ -159,7 +147,7 @@
     <div class="code-box" id="lobby-code" onclick="copyCode()">—<span class="copy-hint">Appuie pour copier</span></div>
     <div id="lobby-players"></div>
     <div id="lobby-start-wrap" style="margin-top:1.5rem;display:none;">
-      <button class="btn btn-primary" onclick="startGame()">Lancer !</button>
+      <button class="btn btn-p1" onclick="startGame()">Lancer !</button>
     </div>
     <button class="btn btn-danger" style="margin-top:0.5rem;" onclick="deleteGame()">Annuler</button>
   </div>
@@ -168,7 +156,7 @@
   <div class="screen" id="s-join">
     <h2>Rejoindre</h2>
     <label>Code de la partie</label>
-    <input type="text" id="join-code" placeholder="ex: LOUP-42" maxlength="10" oninput="this.value=this.value.toUpperCase()" style="letter-spacing:3px;font-family:'Syne',sans-serif;font-weight:700;"/>
+    <input type="text" id="join-code" placeholder="ex: DISC-42" maxlength="10" oninput="this.value=this.value.toUpperCase()" style="letter-spacing:3px;font-family:'Syne',sans-serif;font-weight:700;"/>
     <label>Ton prénom</label>
     <input type="text" id="join-name" placeholder="Ton prénom" maxlength="20"/>
     <div class="error-msg" id="join-err"></div>
@@ -193,42 +181,38 @@
   <!-- GAME -->
   <div class="screen" id="s-game">
     <div class="turn-bar">
-      <div class="turn-player" id="turn-display">
-        <div class="dot" id="turn-dot"></div>
-        <span id="turn-name"></span>
+      <div class="turn-info">
+        <div class="dot" id="turn-dot" style="background:var(--p1);"></div>
+        <span id="turn-name" style="font-size:15px;"></span>
       </div>
-      <div class="score-pills">
-        <span class="score-pill sp1" id="score-p1">0</span>
-        <span style="font-size:13px;color:var(--muted);align-self:center;">—</span>
-        <span class="score-pill sp2" id="score-p2">0</span>
+      <div class="score-area">
+        <span class="sc sc1" id="sc1">0</span>
+        <span style="font-size:12px;color:var(--muted);">vs</span>
+        <span class="sc sc2" id="sc2">0</span>
       </div>
     </div>
-
-    <!-- Column arrows -->
-    <div class="col-hover-row" id="col-btns"></div>
-
-    <!-- Board -->
-    <div class="board" id="board"></div>
-
-    <div class="status-msg" id="status-msg"></div>
-    <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:1.5rem;">Quitter la partie</button>
+    <div class="board-outer">
+      <div class="arrow-row" id="arrow-row"></div>
+      <div class="board-grid" id="board-grid"></div>
+    </div>
+    <div class="status" id="status"></div>
+    <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:1.5rem;">Quitter</button>
   </div>
 
   <!-- WIN -->
   <div class="screen" id="s-win">
-    <div class="win-screen">
+    <div class="win-wrap">
       <div class="win-emoji" id="win-emoji"></div>
       <div class="win-title" id="win-title"></div>
       <div class="win-sub" id="win-sub"></div>
-      <div class="win-scores" id="win-scores"></div>
-      <button class="btn btn-primary" id="win-rematch-btn" onclick="rematch()" style="margin-top:1.5rem;display:none;">Revanche !</button>
+      <div class="score-cards" id="score-cards"></div>
+      <button class="btn btn-p1" id="rematch-btn" onclick="rematch()" style="margin-top:1.5rem;display:none;">Revanche !</button>
       <button class="btn" onclick="show('s-home')" style="margin-top:0.5rem;">Accueil</button>
       <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.5rem;">Supprimer</button>
     </div>
   </div>
 
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -248,14 +232,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const ROWS = 6;
-const COLS = 7;
+const ROWS = 6, COLS = 7;
 
+// ── Global state (no stale closures) ──
 let myCode = null;
 let myName = null;
-let myPnum = null; // 0 or 1 (player index)
+let myPnum = null;
 let isHost = false;
 let gameListener = null;
+let currentGame = null; // always the latest game state
 let hoverCol = -1;
 
 // ── Utils ──
@@ -263,39 +248,81 @@ window.show = (id) => {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 };
-function showToast(msg) {
+function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 window.copyCode = () => {
   if (!myCode) return;
-  navigator.clipboard.writeText(myCode).then(() => showToast('Code copié !'));
+  navigator.clipboard.writeText(myCode).then(() => toast('Code copié !'));
 };
 function genCode() {
-  const w = ['FOUR','BLEU','GAME','DISC','WINS','COLS','ROWS','GRID'];
-  return w[Math.floor(Math.random()*w.length)]+'-'+Math.floor(10+Math.random()*90);
+  const w = ['DISC','COLS','ROWS','GRID','BLEU','ORNG','GAME','WINS'];
+  return w[Math.floor(Math.random()*w.length)] + '-' + Math.floor(10 + Math.random()*90);
 }
 function emptyBoard() {
-  // board[row][col], row 0 = top
-  return Array.from({length:ROWS}, () => Array(COLS).fill(0));
+  return Array.from({length: ROWS}, () => Array(COLS).fill(0));
 }
 
-// ── Create ──
+// Convert Firebase object/array board to proper 2D array of numbers
+function toBoard(raw) {
+  if (!raw) return emptyBoard();
+  const arr = Array.isArray(raw) ? raw : Object.values(raw);
+  return arr.map(row => {
+    const r = Array.isArray(row) ? row : Object.values(row);
+    return r.map(Number);
+  });
+}
+
+// Convert board to Firebase-safe format (array of arrays)
+function boardToFirebase(board) {
+  return board.map(row => row.map(Number));
+}
+
+function getLowestEmpty(board, col) {
+  for (let r = ROWS - 1; r >= 0; r--) {
+    if (board[r][col] === 0) return r;
+  }
+  return -1;
+}
+
+function checkWin(board, row, col, player) {
+  const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+  for (const [dr, dc] of dirs) {
+    const cells = [[row, col]];
+    for (let i = 1; i < 4; i++) {
+      const r = row + dr*i, c = col + dc*i;
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS || board[r][c] !== player) break;
+      cells.push([r, c]);
+    }
+    for (let i = 1; i < 4; i++) {
+      const r = row - dr*i, c = col - dc*i;
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS || board[r][c] !== player) break;
+      cells.push([r, c]);
+    }
+    if (cells.length >= 4) return cells.slice(0, 4);
+  }
+  return null;
+}
+
+// ══════════════════
+// CREATE
+// ══════════════════
 window.createGame = async () => {
   const name = document.getElementById('create-name').value.trim();
   const bo = parseInt(document.getElementById('create-bo').value);
   const errEl = document.getElementById('create-err');
-  if (!name) { errEl.style.display='block'; errEl.textContent='Entre ton prénom.'; return; }
-  errEl.style.display='none';
+  if (!name) { errEl.style.display = 'block'; errEl.textContent = 'Entre ton prénom.'; return; }
+  errEl.style.display = 'none';
 
   const code = genCode();
   const game = {
     code, bo,
     players: [{ name, score: 0 }, null],
     phase: 'lobby',
-    board: emptyBoard(),
-    turn: 0, // 0 = player1, 1 = player2
+    board: boardToFirebase(emptyBoard()),
+    turn: 0,
     winner: null,
     winCells: null,
     gameNum: 1,
@@ -309,7 +336,9 @@ window.createGame = async () => {
   show('s-lobby');
 };
 
-// ── Lobby ──
+// ══════════════════
+// LOBBY
+// ══════════════════
 function renderLobby(game) {
   const el = document.getElementById('lobby-code');
   el.childNodes[0].textContent = game.code;
@@ -319,16 +348,16 @@ function renderLobby(game) {
   container.innerHTML = '';
   players.forEach((p, i) => {
     if (!p) return;
-    const div = document.createElement('div'); div.className = 'player-row';
+    const div = document.createElement('div'); div.className = 'prow';
     div.innerHTML = `<div class="dot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div>
       <span style="font-size:15px;">${p.name}</span>
-      ${i===0?'<span style="font-size:11px;color:var(--muted);margin-left:auto;padding:2px 8px;border:1px solid var(--border);border-radius:999px;">Hôte</span>':''}`;
+      ${i===0 ? '<span style="font-size:11px;color:var(--muted);margin-left:auto;padding:2px 8px;border:1px solid var(--border);border-radius:999px;">Hôte</span>' : ''}`;
     container.appendChild(div);
   });
   if (!players[1]) {
     const div = document.createElement('div');
     div.style.cssText = 'font-size:13px;color:var(--muted);padding:10px 0;display:flex;align-items:center;gap:8px;';
-    div.innerHTML = '<span class="waiting-dot"></span> En attente du joueur 2…';
+    div.innerHTML = '<span class="wdot"></span> En attente du joueur 2…';
     container.appendChild(div);
   }
   const wrap = document.getElementById('lobby-start-wrap');
@@ -341,17 +370,19 @@ window.startGame = async () => {
 
 window.deleteGame = async () => {
   if (myCode) await remove(ref(db, `p4/${myCode}`));
-  myCode = null; show('s-home');
+  myCode = null; currentGame = null; show('s-home');
 };
 
-// ── Join ──
+// ══════════════════
+// JOIN
+// ══════════════════
 window.joinGame = async () => {
   const code = document.getElementById('join-code').value.trim().toUpperCase();
   const name = document.getElementById('join-name').value.trim();
   const errEl = document.getElementById('join-err');
   if (!code) { errEl.style.display='block'; errEl.textContent='Entre le code.'; return; }
   if (!name) { errEl.style.display='block'; errEl.textContent='Entre ton prénom.'; return; }
-  errEl.style.display='none';
+  errEl.style.display = 'none';
   show('s-joining');
 
   const snap = await get(ref(db, `p4/${code}`));
@@ -359,271 +390,250 @@ window.joinGame = async () => {
 
   const game = snap.val();
   const players = game.players || [];
-
-  // Reconnect?
   const existing = players.findIndex(p => p && p.name.toLowerCase() === name.toLowerCase());
   if (existing !== -1) {
     myCode = code; myName = name; myPnum = existing; isHost = existing === 0;
-    startListener(code); handlePhase(game); return;
+    startListener(code); return;
   }
-
   if (players[1]) { show('s-join'); errEl.style.display='block'; errEl.textContent='La partie est complète.'; return; }
-  if (game.phase !== 'lobby') { show('s-join'); errEl.style.display='block'; errEl.textContent='La partie est lancée.'; return; }
+  if (game.phase !== 'lobby') { show('s-join'); errEl.style.display='block'; errEl.textContent='La partie est déjà lancée.'; return; }
 
-  const newPlayers = [...players];
-  newPlayers[1] = { name, score: 0 };
+  const newPlayers = [players[0], { name, score: 0 }];
   await update(ref(db, `p4/${code}`), { players: newPlayers });
   myCode = code; myName = name; myPnum = 1; isHost = false;
   startListener(code);
-  renderWait(game, name);
-  show('s-wait');
 };
 
-function renderWait(game, name) {
-  document.getElementById('wait-msg').textContent = `Bienvenue ${name} ! En attente du lancement…`;
+// ══════════════════
+// LISTENER
+// ══════════════════
+function startListener(code) {
+  if (gameListener) gameListener();
+  gameListener = onValue(ref(db, `p4/${code}`), snap => {
+    if (!snap.exists()) { show('s-home'); return; }
+    const game = snap.val();
+    currentGame = game; // always update global state
+    handlePhase(game);
+  });
+}
+
+function handlePhase(game) {
+  if (game.phase === 'lobby') {
+    if (isHost) { renderLobby(game); if (!document.getElementById('s-lobby').classList.contains('active')) show('s-lobby'); }
+    else {
+      renderWait(game);
+      if (!document.getElementById('s-wait').classList.contains('active')) show('s-wait');
+    }
+    return;
+  }
+  if (game.phase === 'playing' || game.phase === 'win' || game.phase === 'draw') {
+    renderBoard(game);
+    if (game.phase === 'win' || game.phase === 'draw') {
+      setTimeout(() => renderWinScreen(game), 800);
+    }
+    return;
+  }
+}
+
+function renderWait(game) {
+  const players = game.players || [];
+  document.getElementById('wait-msg').textContent = `Bienvenue ${myName} ! En attente du lancement…`;
   const container = document.getElementById('wait-players');
   if (!container) return;
   container.innerHTML = '';
-  (game.players || []).forEach((p, i) => {
+  players.forEach((p, i) => {
     if (!p) return;
-    const div = document.createElement('div'); div.className = 'player-row';
+    const div = document.createElement('div'); div.className = 'prow';
     div.innerHTML = `<div class="dot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div>
       <span style="font-size:15px;">${p.name}</span>`;
     container.appendChild(div);
   });
 }
 
-// ── Listener ──
-function startListener(code) {
-  if (gameListener) gameListener();
-  gameListener = onValue(ref(db, `p4/${code}`), snap => {
-    if (!snap.exists()) return;
-    handlePhase(snap.val());
-  });
-}
-
-// ── Phase router ──
-function handlePhase(game) {
-  if (game.phase === 'lobby') {
-    if (isHost) { renderLobby(game); if (!document.getElementById('s-lobby').classList.contains('active')) show('s-lobby'); }
-    else { renderWait(game, myName); if (!document.getElementById('s-wait').classList.contains('active')) show('s-wait'); }
-    return;
-  }
-  if (game.phase === 'playing') {
-    renderGame(game);
-    return;
-  }
-  if (game.phase === 'win' || game.phase === 'draw') {
-    renderGame(game); // show final board state
-    renderWin(game);
-    return;
-  }
-}
-
-// ── Render game board ──
-function renderGame(game) {
+// ══════════════════
+// RENDER BOARD
+// ══════════════════
+function renderBoard(game) {
+  show('s-game');
   const players = game.players || [];
-  const p1 = players[0] || { name:'J1', score:0 };
-  const p2 = players[1] || { name:'J2', score:0 };
-  const isMyTurn = game.turn === myPnum && game.phase === 'playing';
+  const p1 = players[0] || { name: 'J1', score: 0 };
+  const p2 = players[1] || { name: 'J2', score: 0 };
+  const board = toBoard(game.board);
+  const isMyTurn = game.phase === 'playing' && game.turn === myPnum;
+  const winSet = new Set((game.winCells || []).map(([r, c]) => `${r},${c}`));
 
   // Turn bar
-  const currentPlayer = players[game.turn];
-  const turnDot = document.getElementById('turn-dot');
-  const turnName = document.getElementById('turn-name');
-  if (currentPlayer) {
-    turnDot.style.background = game.turn === 0 ? 'var(--p1)' : 'var(--p2)';
-    turnName.textContent = isMyTurn ? 'Ton tour !' : `Tour de ${currentPlayer.name}…`;
-    turnName.style.color = isMyTurn ? (myPnum === 0 ? 'var(--p1)' : 'var(--p2)') : 'var(--muted)';
+  const tdot = document.getElementById('turn-dot');
+  const tname = document.getElementById('turn-name');
+  tdot.style.background = game.turn === 0 ? 'var(--p1)' : 'var(--p2)';
+  if (game.phase === 'playing') {
+    if (isMyTurn) {
+      tname.textContent = 'Ton tour !';
+      tname.style.color = myPnum === 0 ? 'var(--p1)' : 'var(--p2)';
+    } else {
+      const other = players[game.turn];
+      tname.textContent = other ? `Tour de ${other.name}…` : '…';
+      tname.style.color = 'var(--muted)';
+    }
+  } else {
+    tname.textContent = game.phase === 'draw' ? 'Match nul !' : '';
+    tname.style.color = 'var(--muted)';
   }
 
   // Scores
-  document.getElementById('score-p1').textContent = `${p1.name} ${p1.score}`;
-  document.getElementById('score-p2').textContent = `${p2.score} ${p2.name}`;
+  document.getElementById('sc1').textContent = `${p1.name.split(' ')[0]} ${p1.score}`;
+  document.getElementById('sc2').textContent = `${p2.score} ${p2.name.split(' ')[0]}`;
 
-  // Win cells set
-  const winSet = new Set((game.winCells || []).map(([r,c]) => `${r},${c}`));
-
-  // Column buttons
-  const colBtnsEl = document.getElementById('col-btns');
-  colBtnsEl.innerHTML = '';
+  // Arrow row
+  const arrowRow = document.getElementById('arrow-row');
+  arrowRow.innerHTML = '';
   for (let c = 0; c < COLS; c++) {
     const btn = document.createElement('button');
-    btn.className = 'col-btn';
-    btn.disabled = !isMyTurn || game.phase !== 'playing';
-    btn.innerHTML = isMyTurn && hoverCol === c ? (myPnum === 0 ? '<span style="color:var(--p1);font-size:18px;">▼</span>' : '<span style="color:var(--p2);font-size:18px;">▼</span>') : '<span style="opacity:0.25;font-size:14px;">▼</span>';
-    btn.onmouseenter = () => { hoverCol = c; renderGame(game); };
-    btn.onmouseleave = () => { hoverCol = -1; renderGame(game); };
-    btn.onclick = () => dropPiece(c, game);
-    colBtnsEl.appendChild(btn);
+    btn.className = 'arrow-btn' + (hoverCol === c ? ' active-col' : '');
+    if (!isMyTurn) {
+      btn.style.opacity = '0.15';
+      btn.style.cursor = 'default';
+      btn.textContent = '▼';
+    } else {
+      btn.textContent = '▼';
+      btn.style.color = hoverCol === c ? (myPnum === 0 ? 'var(--p1)' : 'var(--p2)') : 'rgba(255,255,255,0.2)';
+      const col = c;
+      btn.onmouseenter = () => { hoverCol = col; renderBoard(currentGame); };
+      btn.onmouseleave = () => { hoverCol = -1; renderBoard(currentGame); };
+      btn.onclick = () => { dropPiece(col); };
+    }
+    arrowRow.appendChild(btn);
   }
 
-  // Board cells
-  const boardEl = document.getElementById('board');
-  boardEl.innerHTML = '';
-  const board = normalizeBoard(game.board);
+  // Board grid
+  const grid = document.getElementById('board-grid');
+  grid.innerHTML = '';
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const cell = document.createElement('div');
       const val = board[r][c];
-      const isWinCell = winSet.has(`${r},${c}`);
-      cell.className = 'cell' + (val === 1 ? ' p1' : val === 2 ? ' p2' : '') + (isWinCell ? ' win' : '');
-      // Preview hover
-      if (isMyTurn && val === 0 && hoverCol === c) {
-        const lowestEmpty = getLowestEmpty(board, c);
-        if (lowestEmpty === r) {
-          cell.classList.add('preview');
-          cell.classList.add(myPnum === 0 ? 'p1' : 'p2');
-        }
+      const isWin = winSet.has(`${r},${c}`);
+      let cls = 'cell';
+      if (val === 1) cls += ' p1';
+      else if (val === 2) cls += ' p2';
+      else if (isMyTurn && hoverCol === c) {
+        const lowest = getLowestEmpty(board, c);
+        if (lowest === r) cls += myPnum === 0 ? ' preview-p1' : ' preview-p2';
       }
-      boardEl.appendChild(cell);
+      if (isWin) cls += ' win-cell';
+      cell.className = cls;
+      // Click directly on cell also works
+      if (isMyTurn && val === 0) {
+        const col = c;
+        cell.style.cursor = 'pointer';
+        cell.onclick = () => dropPiece(col);
+      }
+      grid.appendChild(cell);
     }
   }
 
   // Status
-  const statusEl = document.getElementById('status-msg');
-  if (game.phase === 'playing') {
-    statusEl.textContent = isMyTurn ? 'Clique sur une colonne pour jouer.' : '';
-  } else if (game.phase === 'draw') {
-    statusEl.textContent = 'Match nul !';
-  } else {
-    statusEl.textContent = '';
-  }
-
-  show('s-game');
+  const statusEl = document.getElementById('status');
+  statusEl.textContent = isMyTurn ? 'Clique sur une colonne ou un jeton pour jouer.' : (game.phase === 'playing' ? '' : '');
 }
 
-function normalizeBoard(board) {
-  // Firebase converts arrays to objects — convert back
-  if (!board) return emptyBoard();
-  if (Array.isArray(board)) {
-    return board.map(row => Array.isArray(row) ? [...row] : Object.values(row).map(Number));
-  }
-  const rows = Object.values(board);
-  return rows.map(row => Array.isArray(row) ? [...row] : Object.values(row).map(Number));
-}
-
-function getLowestEmpty(board, col) {
-  for (let r = ROWS - 1; r >= 0; r--) {
-    if (board[r][col] === 0) return r;
-  }
-  return -1;
-}
-
-// ── Drop piece ──
-async function dropPiece(col, game) {
-  if (game.turn !== myPnum) return;
+// ══════════════════
+// DROP PIECE — uses currentGame (global, always fresh)
+// ══════════════════
+async function dropPiece(col) {
+  const game = currentGame;
+  if (!game) return;
   if (game.phase !== 'playing') return;
+  if (game.turn !== myPnum) { toast("Ce n'est pas ton tour !"); return; }
 
-  const board = normalizeBoard(game.board);
+  const board = toBoard(game.board);
   const row = getLowestEmpty(board, col);
-  if (row === -1) { showToast('Colonne pleine !'); return; }
+  if (row === -1) { toast('Colonne pleine !'); return; }
 
-  board[row][col] = myPnum + 1; // 1 or 2
+  board[row][col] = myPnum + 1;
+
   const winCells = checkWin(board, row, col, myPnum + 1);
   const isDraw = !winCells && board[0].every(v => v !== 0);
+  const fbBoard = boardToFirebase(board);
 
   if (winCells) {
-    // Win
-    const players = game.players.map((p, i) => ({
-      ...p,
-      score: i === myPnum ? (p.score || 0) + 1 : (p.score || 0)
-    }));
-    const totalWins = players[myPnum].score;
-    const gameOver = totalWins >= game.bo;
+    const players = (game.players || []).map((p, i) => p ? {
+      ...p, score: i === myPnum ? (p.score || 0) + 1 : (p.score || 0)
+    } : null);
     await update(ref(db, `p4/${myCode}`), {
-      board, players,
-      phase: gameOver ? 'win' : 'win',
-      winner: myPnum,
-      winCells,
+      board: fbBoard, players,
+      phase: 'win', winner: myPnum,
+      winCells: winCells.map(([r, c]) => [r, c]),
       gameNum: game.gameNum || 1
     });
   } else if (isDraw) {
-    await update(ref(db, `p4/${myCode}`), { board, phase: 'draw', winner: null, winCells: null });
+    await update(ref(db, `p4/${myCode}`), {
+      board: fbBoard, phase: 'draw',
+      winner: null, winCells: null
+    });
   } else {
-    await update(ref(db, `p4/${myCode}`), { board, turn: 1 - myPnum, winner: null, winCells: null });
+    await update(ref(db, `p4/${myCode}`), {
+      board: fbBoard, turn: 1 - myPnum,
+      winner: null, winCells: null
+    });
   }
 }
 
-// ── Win detection ──
-function checkWin(board, row, col, player) {
-  const directions = [[0,1],[1,0],[1,1],[1,-1]];
-  for (const [dr, dc] of directions) {
-    const cells = [[row, col]];
-    for (let i = 1; i < 4; i++) {
-      const r = row + dr*i, c = col + dc*i;
-      if (r<0||r>=ROWS||c<0||c>=COLS||board[r][c]!==player) break;
-      cells.push([r,c]);
-    }
-    for (let i = 1; i < 4; i++) {
-      const r = row - dr*i, c = col - dc*i;
-      if (r<0||r>=ROWS||c<0||c>=COLS||board[r][c]!==player) break;
-      cells.push([r,c]);
-    }
-    if (cells.length >= 4) return cells.slice(0,4);
-  }
-  return null;
-}
-
-// ── Render win screen ──
-function renderWin(game) {
+// ══════════════════
+// WIN SCREEN
+// ══════════════════
+function renderWinScreen(game) {
   const players = game.players || [];
-  const p1 = players[0] || { name:'J1', score:0 };
-  const p2 = players[1] || { name:'J2', score:0 };
+  const p1 = players[0] || { name: 'J1', score: 0 };
+  const p2 = players[1] || { name: 'J2', score: 0 };
 
   if (game.phase === 'draw') {
     document.getElementById('win-emoji').textContent = '🤝';
     document.getElementById('win-title').textContent = 'Match nul !';
     document.getElementById('win-title').style.color = 'var(--muted)';
-    document.getElementById('win-sub').textContent = 'Aucun gagnant cette fois.';
+    document.getElementById('win-sub').textContent = 'Personne ne gagne cette manche.';
   } else {
     const winner = players[game.winner];
     const isMe = game.winner === myPnum;
     document.getElementById('win-emoji').textContent = isMe ? '🎉' : '😤';
-    document.getElementById('win-title').textContent = isMe ? 'Tu gagnes !' : `${winner.name} gagne !`;
+    document.getElementById('win-title').textContent = isMe ? 'Tu gagnes !' : `${winner ? winner.name : '?'} gagne !`;
     document.getElementById('win-title').style.color = game.winner === 0 ? 'var(--p1)' : 'var(--p2)';
-
-    const totalWins = players[game.winner].score;
+    const totalWins = winner ? winner.score : 0;
     const matchOver = totalWins >= game.bo;
     document.getElementById('win-sub').textContent = matchOver
-      ? `Victoire finale avec ${totalWins} victoire${totalWins>1?'s':''}  !`
-      : `Manche ${game.gameNum} — ${totalWins}/${game.bo} victoires nécessaires`;
-
-    const rematchBtn = document.getElementById('win-rematch-btn');
+      ? `Victoire finale — ${totalWins} victoire${totalWins > 1 ? 's' : ''} !`
+      : `Manche ${game.gameNum} — ${totalWins}/${game.bo} victoires`;
+    const rematchBtn = document.getElementById('rematch-btn');
     rematchBtn.style.display = isHost && !matchOver ? 'block' : 'none';
-    if (matchOver) rematchBtn.style.display = 'none';
   }
 
-  // Scores
-  const scoresEl = document.getElementById('win-scores');
-  scoresEl.innerHTML = `
-    <div class="win-score-card" style="background:var(--p1bg);border:1px solid var(--p1border);">
-      <div class="wsc-name">${p1.name}</div>
-      <div class="wsc-score" style="color:var(--p1);">${p1.score}</div>
+  document.getElementById('score-cards').innerHTML = `
+    <div class="scard" style="background:var(--p1bg);border:1px solid var(--p1bd);">
+      <div class="scard-name">${p1.name}</div>
+      <div class="scard-score" style="color:var(--p1);">${p1.score}</div>
     </div>
-    <div class="win-score-card" style="background:var(--p2bg);border:1px solid var(--p2border);">
-      <div class="wsc-name">${p2.name}</div>
-      <div class="wsc-score" style="color:var(--p2);">${p2.score}</div>
+    <div class="scard" style="background:var(--p2bg);border:1px solid var(--p2bd);">
+      <div class="scard-name">${p2.name}</div>
+      <div class="scard-score" style="color:var(--p2);">${p2.score}</div>
     </div>
   `;
 
   show('s-win');
 }
 
-// ── Rematch ──
+// ══════════════════
+// REMATCH
+// ══════════════════
 window.rematch = async () => {
-  const snap = await get(ref(db, `p4/${myCode}`));
-  if (!snap.exists()) return;
-  const game = snap.val();
-  // Swap who starts
-  const nextStarter = 1 - (game.gameNum % 2 === 0 ? 0 : 1);
+  if (!currentGame) return;
+  const nextStarter = currentGame.gameNum % 2;
   await update(ref(db, `p4/${myCode}`), {
-    board: emptyBoard(),
+    board: boardToFirebase(emptyBoard()),
     phase: 'playing',
     turn: nextStarter,
     winner: null,
     winCells: null,
-    gameNum: (game.gameNum || 1) + 1
+    gameNum: (currentGame.gameNum || 1) + 1
   });
 };
 </script>
