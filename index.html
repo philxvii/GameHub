@@ -3,27 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Undercover</title>
+<title>Qui est-ce ?</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg:#0a0a0a; --surface:#141414; --surface2:#1e1e1e;
-    --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.15);
+    --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.18);
     --text:#f0ece4; --muted:#888; --accent:#e8d5a3; --accent2:#c4a96b;
-    --civil:#4ade80; --undercover:#f87171; --mrwhite:#94a3b8;
-    --danger:#ef4444; --r:12px;
+    --yes:#4ade80; --no:#f87171; --maybe:#94a3b8; --danger:#ef4444;
+    --r:12px;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;}
   .app{width:100%;max-width:480px;min-height:100vh;padding:2rem 1.25rem 3rem;}
-  .screen{display:none;animation:fadeIn 0.25s ease;}
+  .screen{display:none;animation:fadeIn 0.22s ease;}
   .screen.active{display:block;}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
-  .display{font-family:'Syne',sans-serif;font-weight:800;font-size:42px;line-height:1;letter-spacing:-1px;color:var(--accent);}
-  .display small{font-size:14px;font-weight:400;color:var(--muted);font-family:'DM Sans',sans-serif;letter-spacing:0;display:block;margin-top:6px;}
+  .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:40px;line-height:1;letter-spacing:-1px;color:var(--accent);margin-bottom:0.5rem;}
+  .logo small{font-size:14px;font-weight:400;color:var(--muted);font-family:'DM Sans',sans-serif;letter-spacing:0;display:block;margin-top:6px;}
   h2{font-family:'Syne',sans-serif;font-weight:700;font-size:22px;color:var(--text);margin-bottom:0.75rem;}
-  h3{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;color:var(--text);margin-bottom:0.5rem;}
+  h3{font-family:'Syne',sans-serif;font-weight:600;font-size:16px;color:var(--text);margin-bottom:0.5rem;}
   p{font-size:14px;color:var(--muted);line-height:1.65;}
   label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px;margin-top:1rem;}
 
@@ -37,7 +37,7 @@
   .btn{width:100%;padding:13px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all 0.15s;margin-top:10px;}
   .btn:hover{background:var(--surface2);border-color:var(--border2);}
   .btn:active{transform:scale(0.98);}
-  .btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+  .btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
   .btn-primary{background:var(--accent);color:#0a0a0a;border-color:var(--accent);font-weight:700;}
   .btn-primary:hover{background:var(--accent2);border-color:var(--accent2);}
   .btn-danger{border-color:rgba(239,68,68,0.3);color:var(--danger);}
@@ -50,19 +50,9 @@
   .info-card{background:transparent;border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem;margin-top:1rem;font-size:13px;color:var(--muted);line-height:1.7;}
   .info-card strong{color:var(--text);}
 
-  .code-display{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;letter-spacing:6px;text-align:center;color:var(--accent);padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin:1rem 0;cursor:pointer;transition:border-color 0.2s;}
-  .code-display:hover{border-color:var(--border2);}
+  .code-box{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;letter-spacing:6px;text-align:center;color:var(--accent);padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin:1rem 0;cursor:pointer;transition:border-color 0.2s;}
+  .code-box:hover{border-color:var(--border2);}
   .copy-hint{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted);letter-spacing:0;font-weight:400;display:block;margin-top:6px;}
-
-  .player-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
-  .player-item:last-child{border-bottom:none;}
-  .avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;font-family:'Syne',sans-serif;flex-shrink:0;}
-  .tag{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--muted);}
-
-  .role-screen{text-align:center;padding:2rem 0;}
-  .role-type{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1.5rem;padding:5px 14px;border-radius:999px;display:inline-block;}
-  .role-word-big{font-family:'Syne',sans-serif;font-weight:800;font-size:52px;line-height:1;letter-spacing:-1px;margin:0.5rem 0;}
-  .role-sub{font-size:13px;color:var(--muted);margin-bottom:1.5rem;}
 
   .loading{text-align:center;padding:3rem 0;color:var(--muted);font-size:15px;}
   .spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem;}
@@ -73,56 +63,59 @@
   .waiting-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.4s ease-in-out infinite;}
   @keyframes pulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}
 
-  /* Game screens */
-  .turn-indicator{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:12px;}
-  .turn-name{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--accent);}
-  .turn-sub{font-size:12px;color:var(--muted);}
-
-  .description-item{padding:12px 0;border-bottom:1px solid var(--border);}
-  .description-item:last-child{border-bottom:none;}
-  .desc-author{font-size:12px;color:var(--muted);margin-bottom:4px;}
-  .desc-text{font-size:15px;color:var(--text);line-height:1.5;}
-
-  .vote-option{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;cursor:pointer;transition:all 0.15s;background:var(--surface);}
-  .vote-option:hover{border-color:var(--border2);background:var(--surface2);}
-  .vote-option.selected{border-color:var(--accent);background:rgba(232,213,163,0.06);}
-  .vote-option.eliminated{opacity:0.35;cursor:not-allowed;pointer-events:none;}
-  .vote-option.blanc{border-style:dashed;}
-
-  .vote-bar-wrap{margin-top:6px;}
-  .vote-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:4px;}
-  .vote-bar-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.4s;}
-
-  .elim-banner{text-align:center;padding:2rem 0;}
-  .elim-name{font-family:'Syne',sans-serif;font-weight:800;font-size:36px;color:var(--danger);margin:0.5rem 0;}
-
-  .win-screen{text-align:center;padding:2rem 0;}
-  .win-title{font-family:'Syne',sans-serif;font-weight:800;font-size:40px;line-height:1;letter-spacing:-1px;margin:1rem 0;}
-
-  .round-badge{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem;}
-
-  .alive-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--border);margin:3px;}
-  .alive-pill.dead{opacity:0.3;text-decoration:line-through;}
-
-  /* Admin */
-  .admin-label{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.15em;color:var(--accent);text-transform:uppercase;margin-bottom:4px;}
-  .role-pill{display:inline-flex;align-items:center;font-size:12px;padding:4px 10px;border-radius:999px;font-weight:500;}
-  .role-pill.civil{background:rgba(74,222,128,0.12);color:var(--civil);border:1px solid rgba(74,222,128,0.25);}
-  .role-pill.undercover{background:rgba(248,113,113,0.12);color:var(--undercover);border:1px solid rgba(248,113,113,0.25);}
-  .role-pill.mrwhite{background:rgba(148,163,184,0.12);color:var(--mrwhite);border:1px solid rgba(148,163,184,0.25);}
-  .word-pill{font-size:13px;padding:6px 14px;border-radius:999px;font-weight:500;font-family:'Syne',sans-serif;}
-  .word-civil{background:rgba(74,222,128,0.12);color:var(--civil);border:1px solid rgba(74,222,128,0.2);}
-  .word-uc{background:rgba(248,113,113,0.12);color:var(--undercover);border:1px solid rgba(248,113,113,0.2);}
-  .admin-player-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
-  .admin-player-row:last-child{border-bottom:none;}
-  .admin-game-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
-  .admin-link{position:fixed;bottom:1rem;right:1rem;font-size:18px;color:var(--border2);cursor:pointer;padding:6px;user-select:none;transition:color 0.2s;z-index:10;}
-  .admin-link:hover{color:var(--muted);}
-
   .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:13px;font-weight:500;opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap;z-index:999;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-  .home-logo{margin-bottom:2.5rem;padding-top:1rem;}
+  /* Lobby players */
+  .player-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .player-row:last-child{border-bottom:none;}
+  .avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-family:'Syne',sans-serif;flex-shrink:0;}
+
+  /* Role card */
+  .role-card{text-align:center;padding:2rem 1rem;}
+  .role-badge{display:inline-block;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;padding:5px 14px;border-radius:999px;margin-bottom:1rem;}
+  .role-penseur{background:rgba(232,213,163,0.12);color:var(--accent);border:1px solid rgba(232,213,163,0.3);}
+  .role-devineur{background:rgba(148,163,184,0.12);color:var(--maybe);border:1px solid rgba(148,163,184,0.3);}
+
+  /* Question thread */
+  .q-item{padding:12px 0;border-bottom:1px solid var(--border);}
+  .q-item:last-child{border-bottom:none;}
+  .q-author{font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em;}
+  .q-text{font-size:15px;color:var(--text);margin-bottom:6px;}
+  .q-answer{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px;}
+  .q-answer.oui{background:rgba(74,222,128,0.12);color:var(--yes);border:1px solid rgba(74,222,128,0.25);}
+  .q-answer.non{background:rgba(248,113,113,0.12);color:var(--no);border:1px solid rgba(248,113,113,0.25);}
+  .q-answer.maybe{background:rgba(148,163,184,0.12);color:var(--maybe);border:1px solid rgba(148,163,184,0.25);}
+  .q-answer.pending{background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid var(--border);}
+
+  /* Answer buttons */
+  .answer-btn{flex:1;padding:14px;border-radius:var(--r);font-size:16px;font-weight:700;cursor:pointer;border:1px solid;transition:all 0.15s;font-family:'Syne',sans-serif;}
+  .answer-btn:active{transform:scale(0.97);}
+  .answer-oui{background:rgba(74,222,128,0.1);color:var(--yes);border-color:rgba(74,222,128,0.3);}
+  .answer-oui:hover{background:rgba(74,222,128,0.2);}
+  .answer-non{background:rgba(248,113,113,0.1);color:var(--no);border-color:rgba(248,113,113,0.3);}
+  .answer-non:hover{background:rgba(248,113,113,0.2);}
+  .answer-maybe{background:rgba(148,163,184,0.1);color:var(--maybe);border-color:rgba(148,163,184,0.3);}
+  .answer-maybe:hover{background:rgba(148,163,184,0.2);}
+
+  /* Turn indicator */
+  .turn-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:1rem;}
+  .turn-name{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--accent);}
+  .turn-sub{font-size:12px;color:var(--muted);}
+  .q-counter{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1rem;}
+
+  /* Win screen */
+  .win-screen{text-align:center;padding:2.5rem 0;}
+  .win-emoji{font-size:56px;margin-bottom:1rem;}
+  .win-title{font-family:'Syne',sans-serif;font-weight:800;font-size:36px;line-height:1;letter-spacing:-1px;color:var(--accent);margin-bottom:0.5rem;}
+  .revealed-name{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--text);margin:1rem 0;}
+
+  /* Secret input styling */
+  .secret-wrap{position:relative;}
+  .secret-wrap input{padding-right:44px;}
+  .toggle-vis{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px;width:auto;margin-top:0;}
+
+  .hint-bar{font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;margin-top:8px;}
 </style>
 </head>
 <body>
@@ -130,17 +123,18 @@
 
   <!-- HOME -->
   <div class="screen active" id="s-home">
-    <div class="home-logo">
-      <div class="display">UNDER<br>COVER<small>Le jeu du mot secret</small></div>
+    <div style="padding-top:1rem;margin-bottom:2rem;">
+      <div class="logo">QUI EST-CE ?<small>Le jeu des questions oui/non</small></div>
     </div>
     <div class="btn-row">
       <button class="btn btn-primary" onclick="show('s-create')">Créer une partie</button>
       <button class="btn" onclick="show('s-join')">Rejoindre</button>
     </div>
-    <div class="info-card">
+    <div class="info-card" style="margin-top:1.5rem;">
       <strong>Comment jouer</strong><br>
-      L'hôte crée une partie, partage le code. Chaque joueur rejoint sur son téléphone et voit son mot secret. Puis chacun décrit son mot à tour de rôle — un mot, une phrase. Ensuite tout le monde vote pour éliminer un suspect.<br><br>
-      <strong style="color:var(--civil)">Civils</strong> — même mot · <strong style="color:var(--undercover)">Undercover</strong> — mot proche · <strong style="color:var(--mrwhite)">Mr. White</strong> — aucun mot
+      Le <strong>Penseur</strong> choisit une célébrité ou un personnage en secret.<br>
+      Le <strong>Devineur</strong> pose des questions auxquelles on répond par Oui, Non ou Peut-être.<br><br>
+      Après chaque question, le devineur peut tenter de deviner. Le rôle s'inverse à chaque manche !
     </div>
   </div>
 
@@ -148,55 +142,35 @@
   <div class="screen" id="s-create">
     <h2>Nouvelle partie</h2>
     <label>Ton prénom</label>
-    <input type="text" id="host-name" placeholder="Ton prénom" maxlength="20"/>
-    <label>Nombre de joueurs</label>
-    <select id="player-count">
-      <option value="3">3 joueurs</option>
-      <option value="4">4 joueurs</option>
-      <option value="5" selected>5 joueurs</option>
-      <option value="6">6 joueurs</option>
-      <option value="7">7 joueurs</option>
-      <option value="8">8 joueurs</option>
-      <option value="9">9 joueurs</option>
+    <input type="text" id="create-name" placeholder="Ton prénom" maxlength="20"/>
+    <label>Questions max par manche</label>
+    <select id="create-maxq">
+      <option value="10" selected>10 questions</option>
+      <option value="15">15 questions</option>
+      <option value="20">20 questions</option>
+      <option value="999">Illimité</option>
     </select>
-    <label>Undercoverts</label>
-    <select id="uc-count">
-      <option value="1" selected>1 undercover</option>
-      <option value="2">2 undercoverts</option>
-      <option value="3">3 undercoverts</option>
-    </select>
-    <label>Mr. White</label>
-    <select id="mw-count">
-      <option value="0" selected>Non</option>
-      <option value="1">Oui (1 Mr. White)</option>
+    <label>Nombre de manches</label>
+    <select id="create-rounds">
+      <option value="2" selected>2 manches (1 chacun)</option>
+      <option value="4">4 manches (2 chacun)</option>
+      <option value="6">6 manches (3 chacun)</option>
     </select>
     <div class="error-msg" id="create-err"></div>
-    <button class="btn btn-primary" onclick="startCreation()" style="margin-top:1.25rem;">Créer la partie</button>
+    <button class="btn btn-primary" onclick="createGame()" style="margin-top:1.25rem;">Créer la partie</button>
     <button class="btn" onclick="show('s-home')">Retour</button>
   </div>
 
-  <!-- CREATING -->
-  <div class="screen" id="s-creating">
-    <div class="loading">
-      <div class="spinner"></div>
-      <div>Génération des mots…</div>
-      <p style="margin-top:6px;font-size:13px;">Claude choisit une paire de mots</p>
-    </div>
-  </div>
-
-  <!-- LOBBY (host waits for players) -->
+  <!-- LOBBY HOST -->
   <div class="screen" id="s-lobby">
-    <h2>En attente des joueurs</h2>
-    <p>Partage ce code. Tous les joueurs doivent rejoindre avant de lancer.</p>
-    <div class="code-display" id="lobby-code" onclick="copyCode()">—<span class="copy-hint">Appuie pour copier</span></div>
-    <div id="lobby-meta" style="font-size:13px;color:var(--muted);margin-bottom:0.5rem;"></div>
-    <hr class="sep">
-    <h2>Joueurs <span id="lobby-count" style="color:var(--muted);font-weight:400;font-size:16px;"></span></h2>
+    <h2>En attente d'un joueur</h2>
+    <p>Partage ce code à ton adversaire.</p>
+    <div class="code-box" id="lobby-code" onclick="copyCode()">—<span class="copy-hint">Appuie pour copier</span></div>
     <div id="lobby-players"></div>
-    <div style="margin-top:1.5rem;">
-      <button class="btn btn-primary" id="start-btn" onclick="startGame()" disabled>Lancer la partie</button>
-      <button class="btn btn-danger" onclick="deleteGame()">Supprimer la partie</button>
+    <div id="lobby-start-wrap" style="margin-top:1.5rem;display:none;">
+      <button class="btn btn-primary" onclick="startGame()">Lancer la partie</button>
     </div>
+    <button class="btn btn-danger" style="margin-top:0.5rem;" onclick="deleteGame()">Annuler</button>
   </div>
 
   <!-- JOIN -->
@@ -216,182 +190,164 @@
     <div class="loading"><div class="spinner"></div><div>Connexion…</div></div>
   </div>
 
-  <!-- BANNED NAME -->
-  <div class="screen" id="s-banned">
-    <div style="padding-top:2rem;">
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px;color:var(--danger);margin-bottom:1.5rem;line-height:1.1;">🚫 ACCÈS<br>REFUSÉ</div>
-      <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:1.25rem;font-size:13px;color:#f0ece4;line-height:1.8;font-style:italic;">
-        En vertu des très éclairées dispositions de l'article 16 de la loi SREN, il est solennellement institué un dispositif de bannissement numérique destiné à frapper d'indignité digitale les personnes soupçonnées d'avoir commis, ou reconnues coupables d'avoir commis, certaines infractions en ligne ; étant en outre précisé, avec toute la rigueur que commande l'ordre public numérique, que toute référence, explicite ou implicite, à « speedy » sera tenue pour prohibée et pourra, le cas échéant, justifier l'édiction d'une mesure de bannissement à caractère permanent.
-      </div>
-      <div style="margin-top:1.5rem;font-size:14px;color:var(--muted);">Choisis un autre prénom et réessaie.</div>
-      <button class="btn" onclick="show('s-join')" style="margin-top:1rem;">Changer de prénom</button>
-    </div>
-  </div>
-
-  <!-- ROLE REVEAL -->
-  <div class="screen" id="s-role">
-    <div class="role-screen">
-      <div id="role-badge"></div>
-      <div class="role-word-big" id="role-word"></div>
-      <div class="role-sub" id="role-sub"></div>
-      <div class="info-card" id="role-info" style="text-align:left;"></div>
-      <button class="btn btn-primary" onclick="goToGameWait()" style="margin-top:1.5rem;">J'ai mémorisé, continuer</button>
-    </div>
-  </div>
-
-  <!-- GAME WAIT (waiting for game to start / other players to see role) -->
-  <div class="screen" id="s-game-wait">
-    <div id="game-wait-msg" style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--text);margin-bottom:0.5rem;">Tu as rejoint la partie !</div>
-    <p style="margin-bottom:1.5rem;" id="game-wait-sub">En attente que tous les joueurs rejoignent…</p>
-    <h3>Joueurs connectés <span id="gwait-count" style="color:var(--muted);font-weight:400;font-size:14px;"></span></h3>
-    <div id="gwait-players" style="margin-top:0.75rem;"></div>
-    <div class="info-card" style="margin-top:1.5rem;">
-      <span class="waiting-dot"></span> <strong style="margin-left:6px;">Ne révèle pas ton mot !</strong><br>
-      La partie démarre automatiquement quand l'hôte lance.
-    </div>
-  </div>
-
-  <!-- TURN: my turn to describe -->
-  <div class="screen" id="s-my-turn">
-    <div class="round-badge" id="my-turn-round"></div>
-    <h2>C'est ton tour !</h2>
-    <p style="margin-bottom:1rem;">Décris ton mot en <strong style="color:var(--text)">une phrase ou un mot</strong>. Sois assez vague pour ne pas te trahir.</p>
-    <div class="info-card" style="margin-top:0;margin-bottom:1rem;">Ton mot : <strong id="my-turn-word" style="color:var(--accent);font-family:'Syne',sans-serif;font-size:16px;"></strong></div>
-    <textarea id="my-description" placeholder="Écris ta description ici…" rows="3" maxlength="120"></textarea>
-    <div style="font-size:12px;color:var(--muted);text-align:right;margin-top:4px;" id="char-count">0/120</div>
-    <div class="error-msg" id="desc-err"></div>
-    <button class="btn btn-primary" onclick="submitDescription()" style="margin-top:1rem;">Envoyer</button>
-  </div>
-
-  <!-- TURN: watching others describe -->
-  <div class="screen" id="s-watch-turn">
-    <div class="round-badge" id="watch-round"></div>
-    <div class="turn-indicator">
-      <div class="avatar" id="watch-avatar" style="width:40px;height:40px;font-size:15px;"></div>
-      <div>
-        <div class="turn-name" id="watch-name"></div>
-        <div class="turn-sub">est en train de décrire…</div>
-      </div>
-      <div class="waiting-dot" style="margin-left:auto;"></div>
-    </div>
-    <h3>Descriptions du tour</h3>
-    <div id="watch-descriptions"></div>
-  </div>
-
-  <!-- VOTE -->
-  <div class="screen" id="s-vote">
-    <div class="round-badge" id="vote-round"></div>
-    <h2>Vote !</h2>
-    <p style="margin-bottom:1rem;">Qui penses-tu être l'undercover ? Tu peux aussi voter blanc.</p>
-    <div id="vote-options"></div>
-    <div class="error-msg" id="vote-err"></div>
-    <button class="btn btn-primary" id="vote-submit-btn" onclick="submitVote()" style="margin-top:1rem;" disabled>Confirmer le vote</button>
-  </div>
-
-  <!-- VOTE WAIT -->
-  <div class="screen" id="s-vote-wait">
+  <!-- WAIT (joined, waiting for host to start) -->
+  <div class="screen" id="s-wait">
     <div class="loading">
       <div class="spinner"></div>
-      <div>En attente des votes…</div>
-      <p style="margin-top:8px;font-size:13px;" id="vote-wait-count"></p>
+      <div id="wait-msg">En attente du lancement…</div>
+      <p style="margin-top:8px;font-size:13px;">La partie commence dès que l'hôte lance.</p>
+    </div>
+    <div id="wait-players" style="margin-top:2rem;"></div>
+  </div>
+
+  <!-- PENSEUR: choose secret -->
+  <div class="screen" id="s-choose">
+    <div class="role-card" style="text-align:left;padding:0;">
+      <div style="margin-bottom:1.5rem;">
+        <span class="role-badge role-penseur">Penseur</span>
+        <h2 style="margin-top:0.75rem;">Choisis ton personnage</h2>
+        <p>Célébrité, personnage fictif, figure historique… Ton adversaire ne verra pas ce que tu écris.</p>
+      </div>
+      <label style="margin-top:0;">Personnage secret</label>
+      <div class="secret-wrap">
+        <input type="password" id="secret-input" placeholder="Ex: Napoléon Bonaparte" maxlength="50" autocomplete="off"/>
+        <button class="toggle-vis btn" onclick="toggleSecretVis()" id="vis-btn">👁</button>
+      </div>
+      <div class="hint-bar" style="margin-top:8px;">
+        <strong style="color:var(--text);">Conseil :</strong> choisis quelqu'un de connu — célébrité, personnage de film, politicien, sportif…
+      </div>
+      <div class="error-msg" id="choose-err"></div>
+      <button class="btn btn-primary" onclick="submitSecret()" style="margin-top:1.25rem;">Valider mon personnage</button>
     </div>
   </div>
 
-  <!-- ELIMINATION -->
-  <div class="screen" id="s-elim">
-    <div class="elim-banner">
-      <p style="margin-bottom:0.5rem;">Éliminé !</p>
-      <div class="elim-name" id="elim-name"></div>
-      <div id="elim-role-reveal" style="margin-top:1rem;"></div>
-      <div id="elim-mrwhite-guess" style="display:none;margin-top:1.5rem;">
-        <p style="margin-bottom:0.75rem;">C'est Mr. White ! Il peut tenter de deviner le mot des civils pour gagner.</p>
-        <input type="text" id="mrwhite-guess-input" placeholder="Deviner le mot des civils…" maxlength="30"/>
-        <button class="btn btn-primary" id="mrwhite-guess-btn" onclick="mrWhiteGuess()" style="margin-top:0.75rem;">Deviner</button>
-        <button class="btn" id="mrwhite-skip-btn" onclick="mrWhiteSkip()" style="margin-top:0.5rem;">Passer (les civils gagnent)</button>
+  <!-- DEVINEUR: waiting for penseur to choose -->
+  <div class="screen" id="s-wait-secret">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div id="wait-secret-msg">En attente du personnage…</div>
+      <p style="margin-top:8px;font-size:13px;">Le penseur choisit son personnage en secret.</p>
+    </div>
+  </div>
+
+  <!-- DEVINEUR: ask question -->
+  <div class="screen" id="s-ask">
+    <div class="turn-bar">
+      <div style="width:36px;height:36px;border-radius:50%;background:rgba(148,163,184,0.15);color:var(--maybe);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;" id="ask-avatar"></div>
+      <div>
+        <div class="turn-name" id="ask-name"></div>
+        <div class="turn-sub">Devineur</div>
       </div>
-      <div id="elim-continue" style="display:none;margin-top:1.5rem;">
-        <button class="btn btn-primary" onclick="continueAfterElim()">Continuer</button>
+    </div>
+    <div class="q-counter" id="ask-counter"></div>
+    <h3>Pose une question</h3>
+    <p style="margin-bottom:1rem;">Questions oui/non uniquement. Ex: "Est-ce un homme ?", "Est-il vivant ?"</p>
+    <textarea id="question-input" placeholder="Ta question…" rows="2" maxlength="120"></textarea>
+    <div class="error-msg" id="ask-err"></div>
+    <div class="btn-row" style="margin-top:1rem;">
+      <button class="btn btn-primary" onclick="submitQuestion()">Envoyer la question</button>
+    </div>
+    <hr class="sep">
+    <h3>Tenter de deviner</h3>
+    <input type="text" id="guess-input" placeholder="Qui est-ce ?" maxlength="50"/>
+    <button class="btn" onclick="submitGuess()" style="margin-top:0.5rem;">Deviner !</button>
+    <hr class="sep">
+    <h3>Questions posées</h3>
+    <div id="ask-thread"></div>
+  </div>
+
+  <!-- PENSEUR: answer question -->
+  <div class="screen" id="s-answer">
+    <div class="turn-bar">
+      <div style="width:36px;height:36px;border-radius:50%;background:rgba(232,213,163,0.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;" id="ans-avatar"></div>
+      <div>
+        <div class="turn-name" id="ans-name"></div>
+        <div class="turn-sub">Penseur</div>
       </div>
+    </div>
+    <div class="q-counter" id="ans-counter"></div>
+    <div class="card" style="margin-top:0;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Ton personnage secret</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--accent);" id="ans-secret"></div>
+    </div>
+    <div style="margin-top:1.25rem;">
+      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Question en attente</div>
+      <div class="card" style="margin-top:0;font-size:16px;line-height:1.5;" id="pending-question"></div>
+      <div style="display:flex;gap:8px;margin-top:1rem;">
+        <button class="answer-btn answer-oui" onclick="answerQuestion('oui')">✓ OUI</button>
+        <button class="answer-btn answer-non" onclick="answerQuestion('non')">✗ NON</button>
+        <button class="answer-btn answer-maybe" onclick="answerQuestion('maybe')">~ P-Ê</button>
+      </div>
+    </div>
+    <hr class="sep">
+    <h3>Questions répondues</h3>
+    <div id="ans-thread"></div>
+  </div>
+
+  <!-- PENSEUR: waiting for question -->
+  <div class="screen" id="s-wait-question">
+    <div class="card" style="margin-top:0;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Ton personnage secret</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--accent);" id="wq-secret"></div>
+    </div>
+    <div style="margin-top:1.5rem;display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;">
+      <span class="waiting-dot"></span>
+      <span id="wq-msg">En attente d'une question…</span>
+    </div>
+    <hr class="sep">
+    <h3>Questions répondues</h3>
+    <div id="wq-thread"></div>
+  </div>
+
+  <!-- GUESS RESULT: penseur sees guess attempt -->
+  <div class="screen" id="s-guess-result">
+    <div style="text-align:center;padding:2rem 0;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:0.5rem;" id="gr-guesser"></div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--text);margin-bottom:0.25rem;">a deviné :</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px;color:var(--accent);margin:1rem 0;" id="gr-guess"></div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:1.5rem;">Est-ce correct ?</div>
+      <div style="display:flex;gap:10px;">
+        <button class="answer-btn answer-oui" style="flex:1;" onclick="judgeGuess(true)">✓ OUI</button>
+        <button class="answer-btn answer-non" style="flex:1;" onclick="judgeGuess(false)">✗ NON</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEVINEUR: waiting for guess judgment -->
+  <div class="screen" id="s-guess-wait">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>Le penseur vérifie ta réponse…</div>
+    </div>
+  </div>
+
+  <!-- MANCHE OVER -->
+  <div class="screen" id="s-manche-over">
+    <div class="win-screen">
+      <div class="win-emoji" id="mo-emoji"></div>
+      <div class="win-title" id="mo-title"></div>
+      <div style="font-size:14px;color:var(--muted);margin:0.5rem 0;">Le personnage était</div>
+      <div class="revealed-name" id="mo-secret"></div>
+      <div style="font-size:13px;color:var(--muted);margin-top:1rem;" id="mo-score"></div>
+      <div style="font-size:13px;color:var(--muted);margin-top:0.5rem;" id="mo-next"></div>
+      <button class="btn btn-primary" id="mo-btn" onclick="nextManche()" style="margin-top:1.5rem;display:none;">Manche suivante</button>
     </div>
   </div>
 
   <!-- GAME OVER -->
   <div class="screen" id="s-gameover">
     <div class="win-screen">
-      <p id="go-subtitle" style="margin-bottom:0.25rem;"></p>
-      <div class="win-title" id="go-title"></div>
-      <div id="go-words" style="margin:1.5rem 0;"></div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:1rem;">Rôles révélés</div>
-      <div id="go-roles"></div>
-      <button class="btn btn-primary" onclick="show('s-home')" style="margin-top:2rem;">Retour à l'accueil</button>
+      <div class="win-emoji">🏆</div>
+      <div class="win-title" id="go-title" style="color:var(--accent);"></div>
+      <div style="font-size:14px;color:var(--muted);margin-top:0.5rem;">gagne la partie !</div>
+      <div id="go-scores" class="card" style="margin-top:1.5rem;text-align:left;"></div>
+      <button class="btn btn-primary" onclick="show('s-home')" style="margin-top:1.5rem;">Retour à l'accueil</button>
+      <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.5rem;">Supprimer la partie</button>
     </div>
-  </div>
-
-  <!-- ADMIN LOGIN -->
-  <div class="screen" id="s-admin-login">
-    <div style="margin-bottom:1.5rem;">
-      <div class="admin-label">Accès restreint</div>
-      <h2>Panel Admin</h2>
-    </div>
-    <label>Mot de passe</label>
-    <input type="password" id="admin-pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()"/>
-    <div class="error-msg" id="admin-err"></div>
-    <button class="btn btn-primary" onclick="adminLogin()" style="margin-top:1.25rem;">Entrer</button>
-    <button class="btn" onclick="show('s-home')">Retour</button>
-  </div>
-
-  <!-- ADMIN PANEL -->
-  <div class="screen" id="s-admin">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
-      <div><div class="admin-label">Admin</div><h2 style="margin-bottom:0;">Panel de test</h2></div>
-      <button class="btn btn-sm" onclick="show('s-home')">Quitter</button>
-    </div>
-    <div class="card" style="margin-top:0;">
-      <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:0.75rem;">Simuler une partie</div>
-      <label style="margin-top:0;">Robots</label>
-      <select id="admin-bots">
-        <option value="2">2 robots</option>
-        <option value="3" selected>3 robots</option>
-        <option value="4">4 robots</option>
-        <option value="5">5 robots</option>
-        <option value="6">6 robots</option>
-        <option value="7">7 robots</option>
-        <option value="8">8 robots</option>
-      </select>
-      <label>Undercoverts</label>
-      <select id="admin-uc">
-        <option value="1" selected>1 undercover</option>
-        <option value="2">2 undercoverts</option>
-      </select>
-      <label>Mr. White</label>
-      <select id="admin-mw">
-        <option value="0" selected>Non</option>
-        <option value="1">Oui</option>
-      </select>
-      <div class="error-msg" id="admin-create-err"></div>
-      <button class="btn btn-primary" id="admin-create-btn" onclick="adminCreateGame()" style="margin-top:1rem;">Créer partie test</button>
-    </div>
-    <div id="admin-result" style="display:none;">
-      <hr class="sep">
-      <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:0.75rem;">Résultat</div>
-      <div id="admin-code-display" style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:5px;color:var(--accent);text-align:center;padding:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:1rem;"></div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">Mots secrets</div>
-      <div id="admin-words" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;"></div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">Rôles</div>
-      <div id="admin-roles-list" class="card" style="margin-top:0;padding:0 1.25rem;"></div>
-      <button class="btn btn-danger" onclick="adminDeleteGame()" style="margin-top:1rem;">Supprimer</button>
-    </div>
-    <hr class="sep">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
-      <div style="font-size:14px;font-weight:500;color:var(--text);">Parties actives</div>
-      <button class="btn btn-sm" onclick="adminLoadGames()">Rafraîchir</button>
-    </div>
-    <div id="admin-games-list"></div>
   </div>
 
 </div>
 
-<div class="admin-link" onclick="show('s-admin-login')" title="Admin">⚙</div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -411,20 +367,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const ADMIN_PASSWORD = "XVIADMIN";
-const BOT_NAMES = ["Alpha","Beta","Gamma","Delta","Epsilon","Zeta","Eta","Theta"];
-const AVCOLORS = ['#4ade8022','#f8717122','#94a3b822','#e8d5a322','#a78bfa22','#38bdf822','#fb923c22','#a3e63522'];
-const AVTEXTS  = ['#4ade80','#f87171','#94a3b8','#e8d5a3','#a78bfa','#38bdf8','#fb923c','#a3e635'];
+const AVBG = ['rgba(232,213,163,0.15)','rgba(148,163,184,0.15)'];
+const AVTXT = ['#e8d5a3','#94a3b8'];
 
-// ── State ──
 let myCode = null;
 let myName = null;
-let myIndex = null;
-let myRole = null;
-let myWord = null;
 let isHost = false;
 let gameListener = null;
-let selectedVote = null;
 let lastPhase = null;
 
 // ── Utils ──
@@ -441,790 +390,419 @@ window.copyCode = () => {
   if (!myCode) return;
   navigator.clipboard.writeText(myCode).then(() => showToast('Code copié !'));
 };
-function avatarBg(i) { return AVCOLORS[i % AVCOLORS.length]; }
-function avatarTxt(i) { return AVTEXTS[i % AVTEXTS.length]; }
-function avatarLetter(name) { return name[0].toUpperCase(); }
-
-// ── Render waiting lobby for non-host players ──
-function renderWaitingLobby(game) {
-  const players = game.players || [];
-  const el = document.getElementById('gwait-count');
-  if(el) el.textContent = `${players.length}/${game.playerCount}`;
-  const sub = document.getElementById('game-wait-sub');
-  if(sub){
-    if(players.length < game.playerCount){
-      const missing = game.playerCount - players.length;
-      sub.textContent = `En attente de ${missing} joueur${missing>1?'s':''} supplémentaire${missing>1?'s':''}…`;
-    } else {
-      sub.textContent = "Tous les joueurs sont là ! En attente de l'hôte…";
-    }
-  }
-  const container = document.getElementById('gwait-players');
-  if(!container) return;
-  container.innerHTML = '';
-  players.forEach((p, i) => {
-    const isMe = p.name === myName;
-    const div = document.createElement('div');
-    div.className = 'player-item';
-    div.innerHTML = `<div class="avatar" style="background:${avatarBg(i)};color:${avatarTxt(i)};">${avatarLetter(p.name)}</div>
-      <span style="font-size:15px;${isMe?'font-weight:500;color:var(--accent)':''}">${p.name}${isMe?' (toi)':''}</span>
-      ${i===0?'<span class="tag" style="margin-left:auto;">Hôte</span>':''}`;
-    container.appendChild(div);
-  });
-}
-
-// ── Char counter ──
-document.getElementById('my-description').addEventListener('input', function() {
-  document.getElementById('char-count').textContent = this.value.length + '/120';
-});
-
-// ── Word generation ──
-async function generateWords() {
-  const fallback = [
-    {civil:'Coca-Cola',undercover:'Pepsi'},{civil:'Pizza',undercover:'Calzone'},
-    {civil:'Requin',undercover:'Dauphin'},{civil:'Château',undercover:'Manoir'},
-    {civil:'Guitare',undercover:'Basse'},{civil:'Café',undercover:'Thé'},
-    {civil:'Ski',undercover:'Snowboard'},{civil:'Lion',undercover:'Tigre'},
-    {civil:'Cinéma',undercover:'Théâtre'},{civil:'Sushi',undercover:'Sashimi'},
-    {civil:'Vélo',undercover:'Trottinette'},{civil:'Baguette',undercover:'Pain de mie'},
-    {civil:'Pompier',undercover:'Policier'},{civil:'Lune',undercover:'Soleil'},
-    {civil:'Voiture',undercover:'Moto'},{civil:'Plage',undercover:'Piscine'},
-  ];
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:150,
-        system:'Tu génères des paires de mots pour le jeu Undercover. Réponds UNIQUEMENT en JSON valide sans markdown: {"civil":"MOT1","undercover":"MOT2"}. Les deux mots doivent être proches mais clairement différents. Varie les catégories. Mots simples en français.',
-        messages:[{role:'user',content:'Génère une paire de mots pour Undercover.'}]
-      })
-    });
-    const data = await res.json();
-    const text = data.content.map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
-    return JSON.parse(text);
-  } catch(e) { return fallback[Math.floor(Math.random()*fallback.length)]; }
-}
-
-function assignRoles(total, ucCount, mwCount) {
-  const roles=[];
-  for(let i=0;i<total-ucCount-mwCount;i++) roles.push('civil');
-  for(let i=0;i<ucCount;i++) roles.push('undercover');
-  for(let i=0;i<mwCount;i++) roles.push('mrwhite');
-  for(let i=roles.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[roles[i],roles[j]]=[roles[j],roles[i]];}
-  return roles;
-}
 function genCode() {
-  const w=['LOUP','CHAT','ROSE','BLEU','NUIT','JAZZ','VENT','CIEL','FEUX','PARC'];
+  const w=['LION','OURS','LUNE','JAZZ','ROSE','VENT','CIEL','PARC','NUIT','BLEU'];
   return w[Math.floor(Math.random()*w.length)]+'-'+Math.floor(10+Math.random()*90);
 }
+window.toggleSecretVis = () => {
+  const inp = document.getElementById('secret-input');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+};
 
-// ══════════════════════════════════════
-// CREATE GAME
-// ══════════════════════════════════════
-window.startCreation = async () => {
-  const hostName = document.getElementById('host-name').value.trim();
-  const playerCount = parseInt(document.getElementById('player-count').value);
-  const ucCount = parseInt(document.getElementById('uc-count').value);
-  const mwCount = parseInt(document.getElementById('mw-count').value);
+// ── Create ──
+window.createGame = async () => {
+  const name = document.getElementById('create-name').value.trim();
+  const maxQ = parseInt(document.getElementById('create-maxq').value);
+  const totalRounds = parseInt(document.getElementById('create-rounds').value);
   const errEl = document.getElementById('create-err');
-  if (!hostName){errEl.style.display='block';errEl.textContent='Entre ton prénom.';return;}
-  if (ucCount+mwCount>=playerCount){errEl.style.display='block';errEl.textContent='Trop d\'imposteurs.';return;}
+  if (!name) { errEl.style.display='block'; errEl.textContent='Entre ton prénom.'; return; }
   errEl.style.display='none';
-  show('s-creating');
 
-  const words = await generateWords();
   const code = genCode();
-  const roles = assignRoles(playerCount, ucCount, mwCount);
-
   const game = {
-    code, hostName, playerCount, ucCount, mwCount,
-    civilWord:words.civil, undercoverWord:words.undercover,
-    roles, players:[{name:hostName,ready:false}],
-    phase:'lobby', // lobby | playing | voting | elimination | gameover
-    round:1, turnIndex:0,
-    descriptions:{}, // round_N: [{author,text}]
-    votes:{}, // playerName: votedFor
-    eliminated:[], // [{name,role}]
-    alive:null, // computed
-    createdAt:Date.now()
+    code, maxQ, totalRounds,
+    players: [{ name, score: 0 }],
+    phase: 'lobby',
+    manche: 1,
+    // In manche N: penseur = players[(N-1) % 2], devineur = the other
+    questions: [], // [{author, text, answer}]
+    secret: null,
+    pendingQuestion: null,
+    pendingGuess: null,
+    mancheResult: null,
+    createdAt: Date.now()
   };
 
-  await set(ref(db,`games/${code}`), game);
-  myCode=code; myName=hostName; myIndex=0; isHost=true;
-  myRole=roles[0];
-  myWord=myRole==='civil'?words.civil:myRole==='undercover'?words.undercover:null;
-
-  startGameListener(code);
+  await set(ref(db, `qec/${code}`), game);
+  myCode = code; myName = name; isHost = true;
+  startListener(code);
   renderLobby(game);
   show('s-lobby');
 };
 
-// ══════════════════════════════════════
-// LOBBY
-// ══════════════════════════════════════
+// ── Lobby ──
 function renderLobby(game) {
   const el = document.getElementById('lobby-code');
   el.childNodes[0].textContent = game.code;
-  document.getElementById('lobby-meta').textContent =
-    `${game.playerCount} joueurs · ${game.ucCount} undercover${game.ucCount>1?'s':''} · ${game.mwCount>0?'1 Mr. White':'sans Mr. White'}`;
-  const players=game.players||[];
-  document.getElementById('lobby-count').textContent=`${players.length}/${game.playerCount}`;
-  const container=document.getElementById('lobby-players');
-  container.innerHTML='';
-  players.forEach((p,i)=>{
-    const div=document.createElement('div'); div.className='player-item';
-    div.innerHTML=`<div class="avatar" style="background:${avatarBg(i)};color:${avatarTxt(i)};">${avatarLetter(p.name)}</div>
+  const players = game.players || [];
+  const container = document.getElementById('lobby-players');
+  if (!container) return;
+  container.innerHTML = '';
+  players.forEach((p, i) => {
+    const div = document.createElement('div'); div.className = 'player-row';
+    div.innerHTML = `<div class="avatar" style="background:${AVBG[i%2]};color:${AVTXT[i%2]};">${p.name[0].toUpperCase()}</div>
       <span style="font-size:15px;">${p.name}</span>
-      ${i===0?'<span class="tag" style="margin-left:auto;">Hôte</span>':''}`;
+      ${i===0?'<span style="font-size:11px;color:var(--muted);margin-left:auto;padding:2px 8px;border:1px solid var(--border);border-radius:999px;">Hôte</span>':''}`;
     container.appendChild(div);
   });
-  if(players.length<game.playerCount){
-    const missing=game.playerCount-players.length;
-    const div=document.createElement('div'); div.style.cssText='font-size:13px;color:var(--muted);padding:10px 0;';
-    div.innerHTML=`<span class="waiting-dot"></span> En attente de ${missing} joueur${missing>1?'s':''}…`;
+  if (players.length < 2) {
+    const div = document.createElement('div');
+    div.style.cssText = 'font-size:13px;color:var(--muted);padding:10px 0;display:flex;align-items:center;gap:8px;';
+    div.innerHTML = `<span class="waiting-dot"></span> En attente d'un 2e joueur…`;
     container.appendChild(div);
   }
-  // Enable start only when full and host
-  const startBtn=document.getElementById('start-btn');
-  if(startBtn) startBtn.disabled=(players.length<game.playerCount)||!isHost;
+  const wrap = document.getElementById('lobby-start-wrap');
+  if (wrap) wrap.style.display = players.length >= 2 ? 'block' : 'none';
 }
 
 window.startGame = async () => {
-  if (!myCode) return;
-  await update(ref(db,`games/${myCode}`),{phase:'role-reveal',turnIndex:0,round:1,descriptions:{},votes:{},eliminated:[]});
+  await update(ref(db, `qec/${myCode}`), { phase: 'choose' });
 };
 
 window.deleteGame = async () => {
   if (!confirm('Supprimer la partie ?')) return;
-  if (myCode) await remove(ref(db,`games/${myCode}`));
-  myCode=null; show('s-home');
+  if (myCode) await remove(ref(db, `qec/${myCode}`));
+  myCode = null; show('s-home');
 };
 
-// ══════════════════════════════════════
-// JOIN
-// ══════════════════════════════════════
-// ── Banned name detection ──
-function isBannedName(name) {
-  const n = name.toLowerCase().replace(/[^a-z0-9]/g,'');
-  // Patterns: speedy, speedlover, speedita, 67, and phonetic variants of "speed" / "spid"
-  const banned = [
-    /sp[ei][ei]?d/,   // speed, spied, spied, spiid, speeed…
-    /sp[iy]d/,        // spyd, spid
-    /speedlov/,
-    /speedit/,
-    /speedi/,
-    /speedy/,
-    /67(?:speed|spid|spyd)?/,
-    /(?:speed|spid|spyd).*67/,
-    /^67$/,
-  ];
-  return banned.some(r => r.test(n));
-}
-
+// ── Join ──
 window.joinGame = async () => {
-  const code=document.getElementById('join-code').value.trim().toUpperCase();
-  const name=document.getElementById('join-name').value.trim();
-  const errEl=document.getElementById('join-err');
-  if(!code){errEl.style.display='block';errEl.textContent='Entre le code.';return;}
-  if(!name){errEl.style.display='block';errEl.textContent='Entre ton prénom.';return;}
-
-  // Banned name check — before anything else
-  if(isBannedName(name)){
-    show('s-banned');
-    return;
-  }
-
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  const name = document.getElementById('join-name').value.trim();
+  const errEl = document.getElementById('join-err');
+  if (!code) { errEl.style.display='block'; errEl.textContent='Entre le code.'; return; }
+  if (!name) { errEl.style.display='block'; errEl.textContent='Entre ton prénom.'; return; }
   errEl.style.display='none';
   show('s-joining');
 
-  const snap=await get(ref(db,`games/${code}`));
-  if(!snap.exists()){show('s-join');errEl.style.display='block';errEl.textContent='Code introuvable.';return;}
+  const snap = await get(ref(db, `qec/${code}`));
+  if (!snap.exists()) { show('s-join'); errEl.style.display='block'; errEl.textContent='Code introuvable.'; return; }
 
-  const game=snap.val();
-  const players=game.players||[];
+  const game = snap.val();
+  const players = game.players || [];
 
-  // Already joined?
-  const existing=players.findIndex(p=>p.name.toLowerCase()===name.toLowerCase());
-  if(existing!==-1){
-    myCode=code; myName=name; myIndex=existing; isHost=existing===0;
-    myRole=game.roles[existing];
-    myWord=myRole==='civil'?game.civilWord:myRole==='undercover'?game.undercoverWord:null;
-    startGameListener(code);
-    handlePhase(game);
-    return;
+  // Already in?
+  const existing = players.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
+  if (existing !== -1) {
+    myCode = code; myName = name; isHost = existing === 0;
+    startListener(code); handlePhase(game); return;
   }
 
-  if(game.phase!=='lobby'){show('s-join');errEl.style.display='block';errEl.textContent='La partie est déjà en cours.';return;}
-  if(players.length>=game.playerCount){show('s-join');errEl.style.display='block';errEl.textContent='La partie est complète.';return;}
+  if (players.length >= 2) { show('s-join'); errEl.style.display='block'; errEl.textContent='La partie est complète.'; return; }
+  if (game.phase !== 'lobby') { show('s-join'); errEl.style.display='block'; errEl.textContent='La partie est déjà lancée.'; return; }
 
-  const newIndex=players.length;
-  const updatedPlayers=[...players,{name,ready:false}];
-  await update(ref(db,`games/${code}`),{players:updatedPlayers});
-
-  myCode=code; myName=name; myIndex=newIndex; isHost=false;
-  myRole=game.roles[newIndex];
-  myWord=myRole==='civil'?game.civilWord:myRole==='undercover'?game.undercoverWord:null;
-  startGameListener(code);
-  // Show waiting lobby (player sees who else is in)
-  show('s-game-wait');
-  document.getElementById('game-wait-msg').textContent='Tu as rejoint la partie !';
+  await update(ref(db, `qec/${code}`), { players: [...players, { name, score: 0 }] });
+  myCode = code; myName = name; isHost = false;
+  startListener(code);
+  show('s-wait');
+  document.getElementById('wait-msg').textContent = `Bienvenue ${name} ! En attente du lancement…`;
 };
 
-// ══════════════════════════════════════
-// GAME LISTENER — central brain
-// ══════════════════════════════════════
-function startGameListener(code) {
-  if(gameListener) gameListener();
-  gameListener=onValue(ref(db,`games/${code}`),snap=>{
-    if(!snap.exists()) return;
-    const game=snap.val();
-    handlePhase(game);
+// ── Listener ──
+function startListener(code) {
+  if (gameListener) gameListener();
+  gameListener = onValue(ref(db, `qec/${code}`), snap => {
+    if (!snap.exists()) return;
+    handlePhase(snap.val());
   });
 }
 
+function getPenseur(game) {
+  return game.players[(game.manche - 1) % 2];
+}
+function getDevineur(game) {
+  return game.players[game.manche % 2];
+}
+function amIPenseur(game) {
+  return getPenseur(game).name === myName;
+}
+
+// ── Phase routing ──
 function handlePhase(game) {
-  const phase=game.phase;
+  const phase = game.phase;
 
-  // Lobby updates
-  if(phase==='lobby'){
-    if(isHost){
-      renderLobby(game);
-      if(!document.getElementById('s-lobby').classList.contains('active')) show('s-lobby');
+  if (phase === 'lobby') {
+    if (isHost) { renderLobby(game); if (!document.getElementById('s-lobby').classList.contains('active')) show('s-lobby'); }
+    else { renderWaitLobby(game); }
+    return;
+  }
+
+  if (phase === 'choose') {
+    if (amIPenseur(game)) {
+      document.getElementById('secret-input').value = '';
+      document.getElementById('choose-err').style.display = 'none';
+      show('s-choose');
     } else {
-      renderWaitingLobby(game);
-      if(!document.getElementById('s-game-wait').classList.contains('active')) show('s-game-wait');
+      const penseur = getPenseur(game);
+      document.getElementById('wait-secret-msg').textContent = `${penseur.name} choisit son personnage…`;
+      show('s-wait-secret');
     }
     return;
   }
 
-  // Role reveal phase
-  if(phase==='role-reveal'){
-    if(lastPhase!=='role-reveal'){
-      lastPhase='role-reveal';
-      showMyRole();
+  if (phase === 'asking') {
+    if (amIPenseur(game)) {
+      renderPenseurWait(game);
+    } else {
+      renderDevineurAsk(game);
     }
     return;
   }
 
-  lastPhase=phase;
-
-  // Playing phase
-  if(phase==='playing'){
-    handlePlayingPhase(game);
-    return;
-  }
-
-  // Voting
-  if(phase==='voting'){
-    handleVotingPhase(game);
-    return;
-  }
-
-  // Vote counting (host computes, then sets elimination)
-  if(phase==='vote-counting'){
-    if(isHost) computeVotes(game);
-    else show('s-vote-wait');
-    return;
-  }
-
-  // Elimination
-  if(phase==='elimination'){
-    handleEliminationPhase(game);
-    return;
-  }
-
-  // Game over
-  if(phase==='gameover'){
-    handleGameOver(game);
-    return;
-  }
-}
-
-// ══════════════════════════════════════
-// ROLE REVEAL
-// ══════════════════════════════════════
-function showMyRole() {
-  let word,sub,badgeHtml,info;
-  if(myRole==='civil'){
-    word=myWord; sub='Ton mot secret';
-    badgeHtml=`<span class="role-type" style="background:rgba(74,222,128,0.12);color:var(--civil);border:1px solid rgba(74,222,128,0.25);">Civil</span>`;
-    info='Tu connais le vrai mot. Décris-le sans le dire. Repère l\'undercover !';
-  } else if(myRole==='undercover'){
-    word=myWord; sub='Ton mot (différent des civils !)';
-    badgeHtml=`<span class="role-type" style="background:rgba(248,113,113,0.12);color:var(--undercover);border:1px solid rgba(248,113,113,0.25);">Undercover</span>`;
-    info='Ton mot est proche mais différent. Écoute les civils pour deviner leur mot et blende-toi !';
-  } else {
-    word='???'; sub='Tu n\'as aucun mot';
-    badgeHtml=`<span class="role-type" style="background:rgba(148,163,184,0.12);color:var(--mrwhite);border:1px solid rgba(148,163,184,0.25);">Mr. White</span>`;
-    info='Tu n\'as aucun mot. Écoute bien les descriptions pour deviner le mot des civils. Si éliminé, tu peux tenter de le deviner !';
-  }
-  document.getElementById('role-badge').innerHTML=badgeHtml;
-  document.getElementById('role-word').textContent=word;
-  document.getElementById('role-word').style.color=myRole==='civil'?'var(--civil)':myRole==='undercover'?'var(--undercover)':'var(--mrwhite)';
-  document.getElementById('role-sub').textContent=sub;
-  document.getElementById('role-info').textContent=info;
-  show('s-role');
-}
-
-window.goToGameWait = async () => {
-  // Mark player as ready
-  const snap=await get(ref(db,`games/${myCode}`));
-  if(!snap.exists()) return;
-  const game=snap.val();
-  const players=[...game.players];
-  players[myIndex]={...players[myIndex],ready:true};
-  const allReady=players.every(p=>p.ready);
-  const update_data={players};
-  if(allReady) update_data.phase='playing';
-  await update(ref(db,`games/${myCode}`),update_data);
-  show('s-game-wait');
-  document.getElementById('game-wait-msg').textContent='En attente que tous les joueurs voient leur rôle…';
-};
-
-// ══════════════════════════════════════
-// PLAYING PHASE
-// ══════════════════════════════════════
-function getAlive(game) {
-  const eliminated=(game.eliminated||[]).map(e=>e.name);
-  return (game.players||[]).filter(p=>!eliminated.includes(p.name));
-}
-
-function handlePlayingPhase(game) {
-  const alive=getAlive(game);
-  const turnIndex=game.turnIndex||0;
-
-  // Build descriptions for this round
-  const roundKey=`round_${game.round}`;
-  const descs=game.descriptions?.[roundKey]||[];
-
-  // If all alive players have described this round → go to vote
-  if(descs.length>=alive.length && isHost){
-    update(ref(db,`games/${myCode}`),{phase:'voting',votes:{}});
-    return;
-  }
-
-  const currentPlayer=alive[turnIndex%alive.length];
-  const roundLabel=`Tour ${game.round} · ${descs.length+1}/${alive.length}`;
-
-  if(currentPlayer.name===myName){
-    // My turn
-    document.getElementById('my-turn-round').textContent=roundLabel;
-    document.getElementById('my-turn-word').textContent=myWord||'???';
-    document.getElementById('my-description').value='';
-    document.getElementById('char-count').textContent='0/120';
-    document.getElementById('desc-err').style.display='none';
-    show('s-my-turn');
-  } else {
-    // Watch
-    document.getElementById('watch-round').textContent=roundLabel;
-    document.getElementById('watch-name').textContent=currentPlayer.name;
-    const ci=game.players.findIndex(p=>p.name===currentPlayer.name);
-    document.getElementById('watch-avatar').style.background=avatarBg(ci);
-    document.getElementById('watch-avatar').style.color=avatarTxt(ci);
-    document.getElementById('watch-avatar').textContent=avatarLetter(currentPlayer.name);
-    // Show all descriptions so far
-    const container=document.getElementById('watch-descriptions');
-    container.innerHTML='';
-    descs.forEach(d=>{
-      const div=document.createElement('div'); div.className='description-item';
-      div.innerHTML=`<div class="desc-author">${d.author}</div><div class="desc-text">${d.text}</div>`;
-      container.appendChild(div);
-    });
-    show('s-watch-turn');
-  }
-}
-
-window.submitDescription = async () => {
-  const text=document.getElementById('my-description').value.trim();
-  const errEl=document.getElementById('desc-err');
-  if(!text){errEl.style.display='block';errEl.textContent='Écris quelque chose !';return;}
-  errEl.style.display='none';
-
-  const snap=await get(ref(db,`games/${myCode}`));
-  if(!snap.exists()) return;
-  const game=snap.val();
-  const alive=getAlive(game);
-  const roundKey=`round_${game.round}`;
-  const descs=game.descriptions?.[roundKey]||[];
-  const newDescs=[...descs,{author:myName,text}];
-  const nextTurnIndex=(game.turnIndex||0)+1;
-
-  const updates={[`descriptions/${roundKey}`]:newDescs, turnIndex:nextTurnIndex};
-  // If last player described → host will detect and move to voting
-  await update(ref(db,`games/${myCode}`),updates);
-  show('s-game-wait');
-  document.getElementById('game-wait-msg').textContent='Description envoyée ! En attente des autres…';
-};
-
-// ══════════════════════════════════════
-// VOTING PHASE
-// ══════════════════════════════════════
-function handleVotingPhase(game) {
-  const alive=getAlive(game);
-  const myVote=game.votes?.[myName];
-
-  // If I already voted
-  if(myVote){
-    // Count how many voted
-    const voteCount=Object.keys(game.votes||{}).length;
-    document.getElementById('vote-wait-count').textContent=`${voteCount}/${alive.length} votes reçus`;
-    show('s-vote-wait');
-    // Host moves phase when all voted
-    if(isHost && voteCount>=alive.length){
-      update(ref(db,`games/${myCode}`),{phase:'vote-counting'});
+  if (phase === 'answering') {
+    if (amIPenseur(game)) {
+      renderPenseurAnswer(game);
+    } else {
+      renderDevineurWait(game);
     }
     return;
   }
 
-  // Build vote UI
-  const roundKey=`round_${game.round}`;
-  const descs=game.descriptions?.[roundKey]||[];
-  const container=document.getElementById('vote-options');
-  container.innerHTML='';
-  selectedVote=null;
-  document.getElementById('vote-submit-btn').disabled=true;
-  document.getElementById('vote-round').textContent=`Tour ${game.round} — Vote`;
-
-  // Show descriptions recap
-  if(descs.length>0){
-    const recap=document.createElement('div');
-    recap.style.cssText='margin-bottom:1rem;';
-    recap.innerHTML='<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Récap des descriptions</div>';
-    descs.forEach(d=>{
-      const d2=document.createElement('div'); d2.className='description-item';
-      d2.innerHTML=`<div class="desc-author">${d.author}</div><div class="desc-text">${d.text}</div>`;
-      recap.appendChild(d2);
-    });
-    container.appendChild(recap);
+  if (phase === 'guessing') {
+    if (amIPenseur(game)) {
+      // Show guess to penseur
+      document.getElementById('gr-guesser').textContent = getDevineur(game).name;
+      document.getElementById('gr-guess').textContent = game.pendingGuess;
+      show('s-guess-result');
+    } else {
+      show('s-guess-wait');
+    }
+    return;
   }
 
-  const voteLabel=document.createElement('div');
-  voteLabel.style.cssText='font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;margin-top:1rem;';
-  voteLabel.textContent='Voter contre';
-  container.appendChild(voteLabel);
+  if (phase === 'manche-over') {
+    renderMancheOver(game);
+    return;
+  }
 
-  // Player options (excluding self, excluding eliminated)
-  alive.forEach((p,i)=>{
-    if(p.name===myName) return; // Can't vote self
-    const ci=game.players.findIndex(pl=>pl.name===p.name);
-    const div=document.createElement('div');
-    div.className='vote-option';
-    div.dataset.vote=p.name;
-    div.innerHTML=`<div class="avatar" style="background:${avatarBg(ci)};color:${avatarTxt(ci)};width:32px;height:32px;font-size:12px;">${avatarLetter(p.name)}</div>
+  if (phase === 'gameover') {
+    renderGameOver(game);
+    return;
+  }
+}
+
+function renderWaitLobby(game) {
+  const players = game.players || [];
+  const container = document.getElementById('wait-players');
+  if (!container) return;
+  container.innerHTML = '';
+  players.forEach((p, i) => {
+    const div = document.createElement('div'); div.className = 'player-row';
+    div.innerHTML = `<div class="avatar" style="background:${AVBG[i%2]};color:${AVTXT[i%2]};">${p.name[0].toUpperCase()}</div>
       <span style="font-size:15px;">${p.name}</span>`;
-    div.onclick=()=>selectVote(p.name);
     container.appendChild(div);
   });
-
-  // Blank vote
-  const blankDiv=document.createElement('div');
-  blankDiv.className='vote-option blanc';
-  blankDiv.dataset.vote='__blanc__';
-  blankDiv.innerHTML=`<div style="width:32px;height:32px;border:1px dashed var(--border2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;">○</div>
-    <span style="font-size:15px;color:var(--muted);">Vote blanc</span>`;
-  blankDiv.onclick=()=>selectVote('__blanc__');
-  container.appendChild(blankDiv);
-
-  show('s-vote');
 }
 
-function selectVote(name){
-  selectedVote=name;
-  document.querySelectorAll('.vote-option').forEach(el=>el.classList.remove('selected'));
-  const target=document.querySelector(`.vote-option[data-vote="${name}"]`);
-  if(target) target.classList.add('selected');
-  document.getElementById('vote-submit-btn').disabled=false;
-}
-
-window.submitVote = async () => {
-  if(!selectedVote) return;
-  const snap=await get(ref(db,`games/${myCode}`));
-  if(!snap.exists()) return;
-  const game=snap.val();
-  const votes=game.votes||{};
-  votes[myName]=selectedVote;
-  await update(ref(db,`games/${myCode}`),{votes});
-  show('s-vote-wait');
-  // Check if all voted
-  const alive=getAlive(game);
-  if(isHost && Object.keys(votes).length>=alive.length){
-    await update(ref(db,`games/${myCode}`),{phase:'vote-counting'});
-  }
+// ── Choose secret ──
+window.submitSecret = async () => {
+  const secret = document.getElementById('secret-input').value.trim();
+  const errEl = document.getElementById('choose-err');
+  if (!secret) { errEl.style.display='block'; errEl.textContent='Entre un personnage.'; return; }
+  errEl.style.display='none';
+  await update(ref(db, `qec/${myCode}`), { secret, questions: [], pendingQuestion: null, pendingGuess: null, phase: 'asking' });
 };
 
-// ══════════════════════════════════════
-// VOTE COUNTING (host only)
-// ══════════════════════════════════════
-function computeVotes(game) {
-  const votes=game.votes||{};
-  const tally={};
-  Object.values(votes).forEach(v=>{
-    if(v==='__blanc__') return;
-    tally[v]=(tally[v]||0)+1;
-  });
+// ── Render asking screen (devineur) ──
+function renderDevineurAsk(game) {
+  const qs = game.questions || [];
+  const maxQ = game.maxQ || 10;
+  document.getElementById('ask-counter').textContent = `Question ${qs.length + 1} / ${maxQ === 999 ? '∞' : maxQ}`;
+  document.getElementById('ask-name').textContent = myName;
+  document.getElementById('ask-avatar').textContent = myName[0].toUpperCase();
+  document.getElementById('question-input').value = '';
+  document.getElementById('guess-input').value = '';
+  document.getElementById('ask-err').style.display = 'none';
+  renderThread('ask-thread', qs);
+  show('s-ask');
+}
 
-  let maxVotes=0;
-  let eliminated=null;
-  let tie=false;
-  Object.entries(tally).forEach(([name,count])=>{
-    if(count>maxVotes){maxVotes=count;eliminated=name;tie=false;}
-    else if(count===maxVotes){tie=true;}
-  });
+// ── Render penseur waiting for question ──
+function renderPenseurWait(game) {
+  const qs = game.questions || [];
+  document.getElementById('wq-secret').textContent = game.secret || '';
+  document.getElementById('wq-msg').textContent = `${getDevineur(game).name} réfléchit…`;
+  renderThread('wq-thread', qs);
+  show('s-wait-question');
+}
 
-  if(tie||!eliminated){
-    // No elimination this round
-    nextRound(game, null);
+// ── Render penseur answering ──
+function renderPenseurAnswer(game) {
+  const qs = game.questions || [];
+  const maxQ = game.maxQ || 10;
+  document.getElementById('ans-counter').textContent = `Question ${qs.length + 1} / ${maxQ === 999 ? '∞' : maxQ}`;
+  document.getElementById('ans-name').textContent = myName;
+  document.getElementById('ans-avatar').textContent = myName[0].toUpperCase();
+  document.getElementById('ans-secret').textContent = game.secret || '';
+  document.getElementById('pending-question').textContent = game.pendingQuestion || '';
+  renderThread('ans-thread', qs);
+  show('s-answer');
+}
+
+// ── Render devineur waiting for answer ──
+function renderDevineurWait(game) {
+  show('s-guess-wait');
+  document.querySelector('#s-guess-wait .loading div:not(.spinner)').textContent = 'En attente de la réponse…';
+}
+
+// ── Thread renderer ──
+function renderThread(containerId, qs) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  if (!qs || qs.length === 0) {
+    container.innerHTML = '<p style="font-size:13px;color:var(--muted);padding:10px 0;">Aucune question pour l\'instant.</p>';
     return;
   }
-
-  const elimPlayer=game.players.find(p=>p.name===eliminated);
-  if(!elimPlayer) return;
-  const elimIndex=game.players.indexOf(elimPlayer);
-  const elimRole=game.roles[elimIndex];
-
-  const eliminatedList=[...(game.eliminated||[]),{name:eliminated,role:elimRole}];
-
-  update(ref(db,`games/${myCode}`),{
-    phase:'elimination',
-    lastEliminated:{name:eliminated,role:elimRole},
-    eliminated:eliminatedList
+  [...qs].reverse().forEach(q => {
+    const div = document.createElement('div'); div.className = 'q-item';
+    const ansClass = q.answer === 'oui' ? 'oui' : q.answer === 'non' ? 'non' : q.answer === 'maybe' ? 'maybe' : 'pending';
+    const ansLabel = q.answer === 'oui' ? '✓ OUI' : q.answer === 'non' ? '✗ NON' : q.answer === 'maybe' ? '~ PEUT-ÊTRE' : '⏳ En attente…';
+    div.innerHTML = `<div class="q-author">${q.author}</div>
+      <div class="q-text">${q.text}</div>
+      <span class="q-answer ${ansClass}">${ansLabel}</span>`;
+    container.appendChild(div);
   });
 }
 
-// ══════════════════════════════════════
-// ELIMINATION PHASE
-// ══════════════════════════════════════
-function handleEliminationPhase(game) {
-  const elim=game.lastEliminated;
-  if(!elim) return;
+// ── Submit question ──
+window.submitQuestion = async () => {
+  const text = document.getElementById('question-input').value.trim();
+  const errEl = document.getElementById('ask-err');
+  if (!text) { errEl.style.display='block'; errEl.textContent='Écris une question.'; return; }
+  if (!text.includes('?') && text.length < 5) { errEl.style.display='block'; errEl.textContent='Formule une vraie question.'; return; }
+  errEl.style.display='none';
+  await update(ref(db, `qec/${myCode}`), { pendingQuestion: text, phase: 'answering' });
+};
 
-  document.getElementById('elim-name').textContent=elim.name;
-  const roleLabel=elim.role==='civil'?'Civil':elim.role==='undercover'?'Undercover':'Mr. White';
-  const roleColor=elim.role==='civil'?'var(--civil)':elim.role==='undercover'?'var(--undercover)':'var(--mrwhite)';
-  document.getElementById('elim-role-reveal').innerHTML=
-    `<span style="font-size:15px;color:${roleColor};">${roleLabel}</span>`;
+// ── Answer question ──
+window.answerQuestion = async (answer) => {
+  const snap = await get(ref(db, `qec/${myCode}`));
+  if (!snap.exists()) return;
+  const game = snap.val();
+  const qs = game.questions || [];
+  const maxQ = game.maxQ || 10;
+  const newQ = { author: getDevineur(game).name, text: game.pendingQuestion, answer };
+  const updatedQs = [...qs, newQ];
 
-  // Mr. White guess opportunity — only for the eliminated player if they are Mr. White
-  const mrwhiteGuessEl=document.getElementById('elim-mrwhite-guess');
-  const continueEl=document.getElementById('elim-continue');
-  mrwhiteGuessEl.style.display='none';
-  continueEl.style.display='none';
-
-  if(elim.role==='mrwhite' && elim.name===myName){
-    mrwhiteGuessEl.style.display='block';
-  } else if(elim.role==='mrwhite' && elim.name!==myName){
-    // Others wait
-    continueEl.style.display='none';
+  // Check if max questions reached
+  if (maxQ !== 999 && updatedQs.length >= maxQ) {
+    await update(ref(db, `qec/${myCode}`), {
+      questions: updatedQs, pendingQuestion: null,
+      phase: 'manche-over',
+      mancheResult: { winner: 'penseur', reason: 'max-questions' }
+    });
   } else {
-    // Host shows continue
-    if(isHost) continueEl.style.display='block';
-    else continueEl.style.display='block'; // All can see it, host triggers
+    await update(ref(db, `qec/${myCode}`), { questions: updatedQs, pendingQuestion: null, phase: 'asking' });
+  }
+};
+
+// ── Submit guess ──
+window.submitGuess = async () => {
+  const guess = document.getElementById('guess-input').value.trim();
+  if (!guess) return;
+  await update(ref(db, `qec/${myCode}`), { pendingGuess: guess, phase: 'guessing' });
+};
+
+// ── Judge guess (penseur) ──
+window.judgeGuess = async (correct) => {
+  const snap = await get(ref(db, `qec/${myCode}`));
+  if (!snap.exists()) return;
+  const game = snap.val();
+
+  if (correct) {
+    // Devineur wins this manche — update score
+    const players = [...game.players];
+    const devineurIdx = game.manche % 2;
+    players[devineurIdx] = { ...players[devineurIdx], score: (players[devineurIdx].score || 0) + 1 };
+    await update(ref(db, `qec/${myCode}`), {
+      players,
+      phase: 'manche-over',
+      mancheResult: { winner: 'devineur', guesser: getDevineur(game).name, guess: game.pendingGuess, secret: game.secret }
+    });
+  } else {
+    // Wrong — continue asking
+    await update(ref(db, `qec/${myCode}`), { pendingGuess: null, phase: 'asking' });
+  }
+};
+
+// ── Manche over ──
+function renderMancheOver(game) {
+  const result = game.mancheResult || {};
+  const players = game.players || [];
+
+  if (result.winner === 'devineur') {
+    document.getElementById('mo-emoji').textContent = '🎉';
+    document.getElementById('mo-title').textContent = `${result.guesser} a deviné !`;
+    document.getElementById('mo-title').style.color = 'var(--yes)';
+  } else {
+    document.getElementById('mo-emoji').textContent = '🤫';
+    document.getElementById('mo-title').textContent = `${getPenseur(game).name} a résisté !`;
+    document.getElementById('mo-title').style.color = 'var(--accent)';
   }
 
-  // If Mr. White already guessed (mrwhiteResult set)
-  if(game.mrwhiteResult!==undefined){
-    mrwhiteGuessEl.style.display='none';
-    continueEl.style.display='none';
-    if(isHost) nextRound(game, elim);
-    return;
+  document.getElementById('mo-secret').textContent = game.secret || '';
+  document.getElementById('mo-score').textContent = `Score : ${players[0].name} ${players[0].score} — ${players[1]?.score || 0} ${players[1]?.name || ''}`;
+
+  // Check if game over
+  const nextManche = game.manche + 1;
+  const btn = document.getElementById('mo-btn');
+  if (nextManche > game.totalRounds) {
+    document.getElementById('mo-next').textContent = "C'est la fin de la partie !";
+    btn.textContent = 'Voir les résultats';
+    btn.style.display = 'block';
+  } else {
+    document.getElementById('mo-next').textContent = `Manche ${nextManche}/${game.totalRounds} — Les rôles s'inversent !`;
+    btn.style.display = isHost ? 'block' : 'none';
+    btn.textContent = 'Manche suivante';
   }
 
-  show('s-elim');
+  show('s-manche-over');
 }
 
-window.mrWhiteGuess = async () => {
-  const guess=document.getElementById('mrwhite-guess-input').value.trim().toLowerCase();
-  if(!guess) return;
-  const snap=await get(ref(db,`games/${myCode}`));
-  if(!snap.exists()) return;
-  const game=snap.val();
-  const correct=game.civilWord.toLowerCase()===guess;
-  await update(ref(db,`games/${myCode}`),{
-    mrwhiteResult:correct?'win':'lose',
-    phase:'gameover',
-    winner:correct?'mrwhite':'civils'
-  });
-};
-
-window.mrWhiteSkip = async () => {
-  await update(ref(db,`games/${myCode}`),{mrwhiteResult:'skip',phase:'gameover',winner:'civils'});
-};
-
-window.continueAfterElim = async () => {
-  const snap=await get(ref(db,`games/${myCode}`));
-  if(!snap.exists()) return;
-  const game=snap.val();
-  nextRound(game, game.lastEliminated);
-};
-
-function nextRound(game, elimInfo) {
-  // Check win conditions
-  const eliminated=(game.eliminated||[]);
-  const alive=getAlive(game);
-  const aliveRoles=alive.map(p=>{
-    const i=game.players.findIndex(pl=>pl.name===p.name);
-    return game.roles[i];
-  });
-
-  const undercoverAlive=aliveRoles.filter(r=>r==='undercover').length;
-  const civilsAlive=aliveRoles.filter(r=>r==='civil').length;
-  const mrwhiteAlive=aliveRoles.filter(r=>r==='mrwhite').length;
-
-  // Undercover wins if only 2 players remain (1 civ + 1 uc OR 1 uc + 1 mr white)
-  if(undercoverAlive>0 && alive.length<=2){
-    update(ref(db,`games/${myCode}`),{phase:'gameover',winner:'undercover'});
-    return;
+window.nextManche = async () => {
+  const snap = await get(ref(db, `qec/${myCode}`));
+  if (!snap.exists()) return;
+  const game = snap.val();
+  const nextManche = game.manche + 1;
+  if (nextManche > game.totalRounds) {
+    await update(ref(db, `qec/${myCode}`), { phase: 'gameover' });
+  } else {
+    await update(ref(db, `qec/${myCode}`), {
+      manche: nextManche, phase: 'choose',
+      questions: [], secret: null, pendingQuestion: null, pendingGuess: null, mancheResult: null
+    });
   }
-  // All undercoverts eliminated → civils win
-  if(undercoverAlive===0 && mrwhiteAlive===0){
-    update(ref(db,`games/${myCode}`),{phase:'gameover',winner:'civils'});
-    return;
-  }
+};
 
-  // Continue to next round
-  const nextRound=((game.round)||1)+1;
-  update(ref(db,`games/${myCode}`),{
-    phase:'playing', round:nextRound, turnIndex:0,
-    votes:{}, mrwhiteResult:null, lastEliminated:null
-  });
-}
+// ── Game over ──
+function renderGameOver(game) {
+  const players = game.players || [];
+  const p0 = players[0] || { name: '?', score: 0 };
+  const p1 = players[1] || { name: '?', score: 0 };
+  const winner = p0.score > p1.score ? p0 : p1.score > p0.score ? p1 : null;
 
-// ══════════════════════════════════════
-// GAME OVER
-// ══════════════════════════════════════
-function handleGameOver(game) {
-  const winner=game.winner;
-  let title,subtitle;
-  if(winner==='civils'){title='Les Civils gagnent !';subtitle='L\'undercover a été démasqué';}
-  else if(winner==='undercover'){title='L\'Undercover gagne !';subtitle='Il a survécu jusqu\'au bout';}
-  else if(winner==='mrwhite'){title='Mr. White gagne !';subtitle='Il a deviné le mot secret !';}
-  else{title='Partie terminée';subtitle='';}
+  document.getElementById('go-title').textContent = winner ? winner.name : 'Égalité !';
 
-  document.getElementById('go-title').textContent=title;
-  document.getElementById('go-subtitle').textContent=subtitle;
-  document.getElementById('go-title').style.color=winner==='civils'?'var(--civil)':winner==='undercover'?'var(--undercover)':'var(--mrwhite)';
-
-  document.getElementById('go-words').innerHTML=
-    `<span style="font-size:13px;color:var(--muted);">Mot civil : </span><strong style="color:var(--civil);font-family:'Syne',sans-serif;">${game.civilWord}</strong>
-     &nbsp;&nbsp;
-     <span style="font-size:13px;color:var(--muted);">Mot undercover : </span><strong style="color:var(--undercover);font-family:'Syne',sans-serif;">${game.undercoverWord}</strong>`;
-
-  const rolesEl=document.getElementById('go-roles');
-  rolesEl.innerHTML='';
-  (game.players||[]).forEach((p,i)=>{
-    const role=game.roles[i];
-    const roleLabel=role==='civil'?'Civil':role==='undercover'?'Undercover':'Mr. White';
-    const isElim=(game.eliminated||[]).some(e=>e.name===p.name);
-    const div=document.createElement('div');
-    div.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);';
-    div.innerHTML=`
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div class="avatar" style="background:${avatarBg(i)};color:${avatarTxt(i)};${isElim?'opacity:0.4':''}">${avatarLetter(p.name)}</div>
-        <span style="font-size:15px;${isElim?'opacity:0.4;text-decoration:line-through':''}">${p.name}</span>
-      </div>
-      <span class="role-pill ${role}">${roleLabel}</span>
-    `;
-    rolesEl.appendChild(div);
+  const scoresEl = document.getElementById('go-scores');
+  scoresEl.innerHTML = '';
+  [p0, p1].forEach((p, i) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);';
+    div.innerHTML = `<div style="display:flex;align-items:center;gap:10px;">
+      <div class="avatar" style="background:${AVBG[i]};color:${AVTXT[i]};">${p.name[0].toUpperCase()}</div>
+      <span style="font-size:15px;">${p.name}</span>
+    </div>
+    <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:${p===winner?'var(--accent)':'var(--muted)'};">${p.score} pt${p.score>1?'s':''}</span>`;
+    scoresEl.appendChild(div);
+    if (i === 0) {
+      const sep = document.createElement('div'); sep.className='sep'; sep.style.margin='0';
+      scoresEl.appendChild(sep);
+    }
   });
 
   show('s-gameover');
 }
-
-// ══════════════════════════════════════
-// ADMIN
-// ══════════════════════════════════════
-window.adminLogin = () => {
-  const pwd=document.getElementById('admin-pwd').value;
-  const errEl=document.getElementById('admin-err');
-  if(pwd!==ADMIN_PASSWORD){errEl.style.display='block';errEl.textContent='Mot de passe incorrect.';document.getElementById('admin-pwd').value='';return;}
-  errEl.style.display='none'; document.getElementById('admin-pwd').value='';
-  document.getElementById('admin-result').style.display='none';
-  adminLoadGames(); show('s-admin');
-};
-
-window.adminCreateGame = async () => {
-  const botCount=parseInt(document.getElementById('admin-bots').value);
-  const ucCount=parseInt(document.getElementById('admin-uc').value);
-  const mwCount=parseInt(document.getElementById('admin-mw').value);
-  const errEl=document.getElementById('admin-create-err');
-  const totalPlayers=botCount+1;
-  if(ucCount+mwCount>=totalPlayers){errEl.style.display='block';errEl.textContent='Trop d\'imposteurs.';return;}
-  errEl.style.display='none';
-  const btn=document.getElementById('admin-create-btn');
-  btn.textContent='Génération…'; btn.disabled=true;
-
-  const words=await generateWords();
-  const code='TEST-'+Math.floor(10+Math.random()*90);
-  const roles=assignRoles(totalPlayers,ucCount,mwCount);
-  const players=[{name:'Admin (toi)',ready:true}];
-  for(let i=0;i<botCount;i++) players.push({name:`Bot-${BOT_NAMES[i]}`,ready:true});
-
-  const game={
-    code, hostName:'Admin', playerCount:totalPlayers, ucCount, mwCount,
-    civilWord:words.civil, undercoverWord:words.undercover,
-    roles, players, phase:'playing', round:1, turnIndex:0,
-    descriptions:{}, votes:{}, eliminated:[], createdAt:Date.now(), isTest:true
-  };
-  await set(ref(db,`games/${code}`),game);
-
-  btn.textContent='Créer partie test'; btn.disabled=false;
-  document.getElementById('admin-code-display').textContent=code;
-  document.getElementById('admin-words').innerHTML=
-    `<span class="word-pill word-civil">Civil : ${words.civil}</span>
-     <span class="word-pill word-uc">Undercover : ${words.undercover}</span>`;
-
-  const rolesEl=document.getElementById('admin-roles-list');
-  rolesEl.innerHTML='';
-  players.forEach((p,i)=>{
-    const role=roles[i];
-    const word=role==='civil'?words.civil:role==='undercover'?words.undercover:'???';
-    const rl=role==='civil'?'Civil':role==='undercover'?'Undercover':'Mr. White';
-    const div=document.createElement('div'); div.className='admin-player-row';
-    div.innerHTML=`<div style="display:flex;align-items:center;gap:10px;">
-      <div class="avatar" style="background:${avatarBg(i)};color:${avatarTxt(i)};width:30px;height:30px;font-size:12px;">${avatarLetter(p.name)}</div>
-      <div><div style="font-size:14px;color:var(--text);">${p.name}</div>
-      <div style="font-size:12px;color:var(--muted);">Mot : <strong style="color:var(--text);">${word}</strong></div></div></div>
-      <span class="role-pill ${role}">${rl}</span>`;
-    rolesEl.appendChild(div);
-  });
-
-  document.getElementById('admin-result').style.display='block';
-  adminLoadGames(); showToast('Partie test créée !');
-  window._adminTestCode=code;
-};
-
-window.adminDeleteGame = async () => {
-  if(!window._adminTestCode) return;
-  if(!confirm(`Supprimer ${window._adminTestCode} ?`)) return;
-  await remove(ref(db,`games/${window._adminTestCode}`));
-  window._adminTestCode=null;
-  document.getElementById('admin-result').style.display='none';
-  adminLoadGames(); showToast('Supprimé.');
-};
-
-window.adminLoadGames = async () => {
-  const container=document.getElementById('admin-games-list');
-  container.innerHTML='<p style="font-size:13px;color:var(--muted);">Chargement…</p>';
-  const snap=await get(ref(db,'games'));
-  if(!snap.exists()){container.innerHTML='<p style="font-size:13px;color:var(--muted);">Aucune partie active.</p>';return;}
-  const games=snap.val(); container.innerHTML='';
-  Object.values(games).forEach(g=>{
-    const players=g.players||[];
-    const div=document.createElement('div'); div.className='admin-game-item';
-    div.innerHTML=`<div>
-      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--accent);letter-spacing:3px;">${g.code}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:3px;">${players.length}/${g.playerCount} joueurs · phase: ${g.phase} · ${g.isTest?'<span style="color:var(--undercover);">Test</span>':'Normal'}</div>
-    </div>
-    <button class="btn btn-sm btn-danger" onclick="adminForceDelete('${g.code}')">Suppr.</button>`;
-    container.appendChild(div);
-  });
-};
-
-window.adminForceDelete = async (code) => {
-  if(!confirm(`Supprimer ${code} ?`)) return;
-  await remove(ref(db,`games/${code}`));
-  adminLoadGames(); showToast(`${code} supprimé.`);
-};
 </script>
 </body>
 </html>
