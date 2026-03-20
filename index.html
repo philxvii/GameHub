@@ -3,14 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Qui est-ce ?</title>
+<title>Puissance 4</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:#0a0a0a; --surface:#141414; --surface2:#1e1e1e;
-    --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.18);
-    --text:#f0ece4; --muted:#888; --accent:#e8d5a3; --accent2:#c4a96b;
-    --yes:#4ade80; --no:#f87171; --maybe:#94a3b8; --danger:#ef4444;
+    --bg:#07090f; --surface:#0e1118; --surface2:#161b27;
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.14);
+    --text:#eef0f6; --muted:#6b7280;
+    --p1:#f97316; --p1bg:rgba(249,115,22,0.15); --p1border:rgba(249,115,22,0.3);
+    --p2:#3b82f6; --p2bg:rgba(59,130,246,0.15); --p2border:rgba(59,130,246,0.3);
+    --empty:#1a2035;
+    --win:#fbbf24;
     --r:12px;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -20,27 +23,27 @@
   .screen.active{display:block;}
   @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
-  .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:40px;line-height:1;letter-spacing:-1px;color:var(--accent);margin-bottom:0.5rem;}
+  .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:40px;line-height:1;letter-spacing:-1px;margin-bottom:0.5rem;}
+  .logo span.p1c{color:var(--p1);}
+  .logo span.p2c{color:var(--p2);}
   .logo small{font-size:14px;font-weight:400;color:var(--muted);font-family:'DM Sans',sans-serif;letter-spacing:0;display:block;margin-top:6px;}
+
   h2{font-family:'Syne',sans-serif;font-weight:700;font-size:22px;color:var(--text);margin-bottom:0.75rem;}
-  h3{font-family:'Syne',sans-serif;font-weight:600;font-size:16px;color:var(--text);margin-bottom:0.5rem;}
   p{font-size:14px;color:var(--muted);line-height:1.65;}
   label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px;margin-top:1rem;}
 
-  input,select,textarea{width:100%;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;appearance:none;}
-  input:focus,select:focus,textarea:focus{border-color:var(--border2);}
-  input::placeholder,textarea::placeholder{color:var(--muted);}
-  textarea{resize:none;line-height:1.5;}
-  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;}
-  select option{background:#1e1e1e;}
+  input{width:100%;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;}
+  input:focus{border-color:var(--border2);}
+  input::placeholder{color:var(--muted);}
 
   .btn{width:100%;padding:13px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all 0.15s;margin-top:10px;}
   .btn:hover{background:var(--surface2);border-color:var(--border2);}
   .btn:active{transform:scale(0.98);}
   .btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
-  .btn-primary{background:var(--accent);color:#0a0a0a;border-color:var(--accent);font-weight:700;}
-  .btn-primary:hover{background:var(--accent2);border-color:var(--accent2);}
-  .btn-danger{border-color:rgba(239,68,68,0.3);color:var(--danger);}
+  .btn-primary{background:var(--p1);color:#fff;border-color:var(--p1);font-weight:700;}
+  .btn-primary:hover{filter:brightness(1.1);}
+  .btn-p2{background:var(--p2);color:#fff;border-color:var(--p2);font-weight:700;}
+  .btn-danger{border-color:rgba(239,68,68,0.3);color:#ef4444;}
   .btn-danger:hover{background:rgba(239,68,68,0.08);}
   .btn-sm{width:auto;padding:7px 14px;font-size:13px;margin-top:0;}
   .btn-row{display:flex;gap:8px;margin-top:10px;}
@@ -48,74 +51,67 @@
 
   .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-top:1rem;}
   .info-card{background:transparent;border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem;margin-top:1rem;font-size:13px;color:var(--muted);line-height:1.7;}
-  .info-card strong{color:var(--text);}
 
-  .code-box{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;letter-spacing:6px;text-align:center;color:var(--accent);padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin:1rem 0;cursor:pointer;transition:border-color 0.2s;}
-  .code-box:hover{border-color:var(--border2);}
+  .code-box{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;letter-spacing:6px;text-align:center;color:var(--p1);padding:1.5rem;background:var(--surface);border:1px solid var(--p1border);border-radius:var(--r);margin:1rem 0;cursor:pointer;transition:border-color 0.2s;}
+  .code-box:hover{border-color:var(--p1);}
   .copy-hint{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted);letter-spacing:0;font-weight:400;display:block;margin-top:6px;}
 
   .loading{text-align:center;padding:3rem 0;color:var(--muted);font-size:15px;}
-  .spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem;}
+  .spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--p1);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem;}
   @keyframes spin{to{transform:rotate(360deg);}}
-
-  .error-msg{font-size:13px;color:var(--danger);margin-top:8px;display:none;}
+  .error-msg{font-size:13px;color:#ef4444;margin-top:8px;display:none;}
   .sep{border:none;border-top:1px solid var(--border);margin:1.25rem 0;}
-  .waiting-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.4s ease-in-out infinite;}
+  .waiting-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--p1);animation:pulse 1.4s ease-in-out infinite;}
   @keyframes pulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}
 
   .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:13px;font-weight:500;opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap;z-index:999;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-  /* Lobby players */
+  /* Players */
   .player-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
   .player-row:last-child{border-bottom:none;}
-  .avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-family:'Syne',sans-serif;flex-shrink:0;}
+  .dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
 
-  /* Role card */
-  .role-card{text-align:center;padding:2rem 1rem;}
-  .role-badge{display:inline-block;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;padding:5px 14px;border-radius:999px;margin-bottom:1rem;}
-  .role-penseur{background:rgba(232,213,163,0.12);color:var(--accent);border:1px solid rgba(232,213,163,0.3);}
-  .role-devineur{background:rgba(148,163,184,0.12);color:var(--maybe);border:1px solid rgba(148,163,184,0.3);}
+  /* Turn bar */
+  .turn-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding:10px 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);}
+  .turn-player{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;}
+  .score-pills{display:flex;gap:8px;}
+  .score-pill{font-size:13px;font-weight:700;font-family:'Syne',sans-serif;padding:3px 12px;border-radius:999px;}
+  .sp1{background:var(--p1bg);color:var(--p1);border:1px solid var(--p1border);}
+  .sp2{background:var(--p2bg);color:var(--p2);border:1px solid var(--p2border);}
 
-  /* Question thread */
-  .q-item{padding:12px 0;border-bottom:1px solid var(--border);}
-  .q-item:last-child{border-bottom:none;}
-  .q-author{font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em;}
-  .q-text{font-size:15px;color:var(--text);margin-bottom:6px;}
-  .q-answer{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px;}
-  .q-answer.oui{background:rgba(74,222,128,0.12);color:var(--yes);border:1px solid rgba(74,222,128,0.25);}
-  .q-answer.non{background:rgba(248,113,113,0.12);color:var(--no);border:1px solid rgba(248,113,113,0.25);}
-  .q-answer.maybe{background:rgba(148,163,184,0.12);color:var(--maybe);border:1px solid rgba(148,163,184,0.25);}
-  .q-answer.pending{background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid var(--border);}
+  /* Board */
+  .board-wrap{position:relative;margin:0 auto;}
+  .board{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:10px;}
+  .col-hover-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:4px;}
+  .col-btn{height:28px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;font-size:16px;}
+  .col-btn:hover{background:var(--surface2);}
+  .col-btn:disabled{cursor:not-allowed;opacity:0;}
+  .cell{aspect-ratio:1;border-radius:50%;transition:background 0.18s, transform 0.18s, box-shadow 0.18s;background:var(--empty);}
+  .cell.p1{background:var(--p1);box-shadow:0 0 10px rgba(249,115,22,0.4);}
+  .cell.p2{background:var(--p2);box-shadow:0 0 10px rgba(59,130,246,0.4);}
+  .cell.win{animation:winPulse 0.6s ease infinite alternate;}
+  @keyframes winPulse{from{box-shadow:0 0 8px var(--win);}to{box-shadow:0 0 22px var(--win),0 0 6px #fff;transform:scale(1.07);}}
+  .cell.drop{animation:dropIn 0.22s cubic-bezier(0.33,1,0.68,1);}
+  @keyframes dropIn{from{transform:scale(0.6);opacity:0.5;}to{transform:scale(1);opacity:1;}}
 
-  /* Answer buttons */
-  .answer-btn{flex:1;padding:14px;border-radius:var(--r);font-size:16px;font-weight:700;cursor:pointer;border:1px solid;transition:all 0.15s;font-family:'Syne',sans-serif;}
-  .answer-btn:active{transform:scale(0.97);}
-  .answer-oui{background:rgba(74,222,128,0.1);color:var(--yes);border-color:rgba(74,222,128,0.3);}
-  .answer-oui:hover{background:rgba(74,222,128,0.2);}
-  .answer-non{background:rgba(248,113,113,0.1);color:var(--no);border-color:rgba(248,113,113,0.3);}
-  .answer-non:hover{background:rgba(248,113,113,0.2);}
-  .answer-maybe{background:rgba(148,163,184,0.1);color:var(--maybe);border-color:rgba(148,163,184,0.3);}
-  .answer-maybe:hover{background:rgba(148,163,184,0.2);}
+  /* Preview dot */
+  .preview{background:var(--surface2);border:2px dashed;opacity:0.5;}
+  .preview.p1{border-color:var(--p1);}
+  .preview.p2{border-color:var(--p2);}
 
-  /* Turn indicator */
-  .turn-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:1rem;}
-  .turn-name{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--accent);}
-  .turn-sub{font-size:12px;color:var(--muted);}
-  .q-counter{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1rem;}
+  /* Status */
+  .status-msg{text-align:center;font-size:14px;color:var(--muted);margin-top:0.75rem;min-height:20px;}
 
-  /* Win screen */
+  /* Win overlay */
   .win-screen{text-align:center;padding:2.5rem 0;}
   .win-emoji{font-size:56px;margin-bottom:1rem;}
-  .win-title{font-family:'Syne',sans-serif;font-weight:800;font-size:36px;line-height:1;letter-spacing:-1px;color:var(--accent);margin-bottom:0.5rem;}
-  .revealed-name{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--text);margin:1rem 0;}
-
-  /* Secret input styling */
-  .secret-wrap{position:relative;}
-  .secret-wrap input{padding-right:44px;}
-  .toggle-vis{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px;width:auto;margin-top:0;}
-
-  .hint-bar{font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;margin-top:8px;}
+  .win-title{font-family:'Syne',sans-serif;font-weight:800;font-size:36px;line-height:1;letter-spacing:-1px;margin-bottom:0.5rem;}
+  .win-sub{font-size:14px;color:var(--muted);margin-bottom:1.5rem;}
+  .win-scores{display:flex;gap:10px;margin-top:1rem;}
+  .win-score-card{flex:1;padding:1rem;border-radius:var(--r);text-align:center;}
+  .wsc-name{font-size:13px;color:var(--muted);margin-bottom:4px;}
+  .wsc-score{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;}
 </style>
 </head>
 <body>
@@ -124,17 +120,19 @@
   <!-- HOME -->
   <div class="screen active" id="s-home">
     <div style="padding-top:1rem;margin-bottom:2rem;">
-      <div class="logo">QUI EST-CE ?<small>Le jeu des questions oui/non</small></div>
+      <div class="logo">
+        <span class="p1c">PUIS</span><span class="p2c">SANCE</span> 4
+        <small>Multijoueur en ligne</small>
+      </div>
     </div>
     <div class="btn-row">
       <button class="btn btn-primary" onclick="show('s-create')">Créer une partie</button>
       <button class="btn" onclick="show('s-join')">Rejoindre</button>
     </div>
     <div class="info-card" style="margin-top:1.5rem;">
-      <strong>Comment jouer</strong><br>
-      Le <strong>Penseur</strong> choisit une célébrité ou un personnage en secret.<br>
-      Le <strong>Devineur</strong> pose des questions auxquelles on répond par Oui, Non ou Peut-être.<br><br>
-      Après chaque question, le devineur peut tenter de deviner. Le rôle s'inverse à chaque manche !
+      <strong style="color:var(--text);">Règles</strong><br>
+      Aligne <strong style="color:var(--text)">4 jetons</strong> de ta couleur en ligne, colonne ou diagonale avant ton adversaire.<br><br>
+      <span style="color:var(--p1);">●</span> Joueur 1 (hôte) &nbsp;·&nbsp; <span style="color:var(--p2);">●</span> Joueur 2
     </div>
   </div>
 
@@ -143,32 +141,25 @@
     <h2>Nouvelle partie</h2>
     <label>Ton prénom</label>
     <input type="text" id="create-name" placeholder="Ton prénom" maxlength="20"/>
-    <label>Questions max par manche</label>
-    <select id="create-maxq">
-      <option value="10" selected>10 questions</option>
-      <option value="15">15 questions</option>
-      <option value="20">20 questions</option>
-      <option value="999">Illimité</option>
-    </select>
-    <label>Nombre de manches</label>
-    <select id="create-rounds">
-      <option value="2" selected>2 manches (1 chacun)</option>
-      <option value="4">4 manches (2 chacun)</option>
-      <option value="6">6 manches (3 chacun)</option>
+    <label>Parties à gagner</label>
+    <select id="create-bo" style="width:100%;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%278%27 viewBox=%270 0 12 8%27%3E%3Cpath d=%27M1 1l5 5 5-5%27 stroke=%27%236b7280%27 stroke-width=%271.5%27 fill=%27none%27 stroke-linecap=%27round%27/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;">
+      <option value="1" selected>1 partie (match simple)</option>
+      <option value="2">Best of 3 (2 victoires)</option>
+      <option value="3">Best of 5 (3 victoires)</option>
     </select>
     <div class="error-msg" id="create-err"></div>
-    <button class="btn btn-primary" onclick="createGame()" style="margin-top:1.25rem;">Créer la partie</button>
+    <button class="btn btn-primary" onclick="createGame()" style="margin-top:1.25rem;">Créer</button>
     <button class="btn" onclick="show('s-home')">Retour</button>
   </div>
 
-  <!-- LOBBY HOST -->
+  <!-- LOBBY -->
   <div class="screen" id="s-lobby">
     <h2>En attente d'un joueur</h2>
     <p>Partage ce code à ton adversaire.</p>
     <div class="code-box" id="lobby-code" onclick="copyCode()">—<span class="copy-hint">Appuie pour copier</span></div>
     <div id="lobby-players"></div>
     <div id="lobby-start-wrap" style="margin-top:1.5rem;display:none;">
-      <button class="btn btn-primary" onclick="startGame()">Lancer la partie</button>
+      <button class="btn btn-primary" onclick="startGame()">Lancer !</button>
     </div>
     <button class="btn btn-danger" style="margin-top:0.5rem;" onclick="deleteGame()">Annuler</button>
   </div>
@@ -181,7 +172,7 @@
     <label>Ton prénom</label>
     <input type="text" id="join-name" placeholder="Ton prénom" maxlength="20"/>
     <div class="error-msg" id="join-err"></div>
-    <button class="btn btn-primary" onclick="joinGame()" style="margin-top:1.25rem;">Rejoindre</button>
+    <button class="btn btn-p2" onclick="joinGame()" style="margin-top:1.25rem;">Rejoindre</button>
     <button class="btn" onclick="show('s-home')">Retour</button>
   </div>
 
@@ -190,159 +181,49 @@
     <div class="loading"><div class="spinner"></div><div>Connexion…</div></div>
   </div>
 
-  <!-- WAIT (joined, waiting for host to start) -->
+  <!-- WAIT -->
   <div class="screen" id="s-wait">
     <div class="loading">
       <div class="spinner"></div>
       <div id="wait-msg">En attente du lancement…</div>
-      <p style="margin-top:8px;font-size:13px;">La partie commence dès que l'hôte lance.</p>
     </div>
     <div id="wait-players" style="margin-top:2rem;"></div>
   </div>
 
-  <!-- PENSEUR: choose secret -->
-  <div class="screen" id="s-choose">
-    <div class="role-card" style="text-align:left;padding:0;">
-      <div style="margin-bottom:1.5rem;">
-        <span class="role-badge role-penseur">Penseur</span>
-        <h2 style="margin-top:0.75rem;">Choisis ton personnage</h2>
-        <p>Célébrité, personnage fictif, figure historique… Ton adversaire ne verra pas ce que tu écris.</p>
-      </div>
-      <label style="margin-top:0;">Personnage secret</label>
-      <div class="secret-wrap">
-        <input type="password" id="secret-input" placeholder="Ex: Napoléon Bonaparte" maxlength="50" autocomplete="off"/>
-        <button class="toggle-vis btn" onclick="toggleSecretVis()" id="vis-btn">👁</button>
-      </div>
-      <div class="hint-bar" style="margin-top:8px;">
-        <strong style="color:var(--text);">Conseil :</strong> choisis quelqu'un de connu — célébrité, personnage de film, politicien, sportif…
-      </div>
-      <div class="error-msg" id="choose-err"></div>
-      <button class="btn btn-primary" onclick="submitSecret()" style="margin-top:1.25rem;">Valider mon personnage</button>
-    </div>
-  </div>
-
-  <!-- DEVINEUR: waiting for penseur to choose -->
-  <div class="screen" id="s-wait-secret">
-    <div class="loading">
-      <div class="spinner"></div>
-      <div id="wait-secret-msg">En attente du personnage…</div>
-      <p style="margin-top:8px;font-size:13px;">Le penseur choisit son personnage en secret.</p>
-    </div>
-  </div>
-
-  <!-- DEVINEUR: ask question -->
-  <div class="screen" id="s-ask">
+  <!-- GAME -->
+  <div class="screen" id="s-game">
     <div class="turn-bar">
-      <div style="width:36px;height:36px;border-radius:50%;background:rgba(148,163,184,0.15);color:var(--maybe);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;" id="ask-avatar"></div>
-      <div>
-        <div class="turn-name" id="ask-name"></div>
-        <div class="turn-sub">Devineur</div>
+      <div class="turn-player" id="turn-display">
+        <div class="dot" id="turn-dot"></div>
+        <span id="turn-name"></span>
+      </div>
+      <div class="score-pills">
+        <span class="score-pill sp1" id="score-p1">0</span>
+        <span style="font-size:13px;color:var(--muted);align-self:center;">—</span>
+        <span class="score-pill sp2" id="score-p2">0</span>
       </div>
     </div>
-    <div class="q-counter" id="ask-counter"></div>
-    <h3>Pose une question</h3>
-    <p style="margin-bottom:1rem;">Questions oui/non uniquement. Ex: "Est-ce un homme ?", "Est-il vivant ?"</p>
-    <textarea id="question-input" placeholder="Ta question…" rows="2" maxlength="120"></textarea>
-    <div class="error-msg" id="ask-err"></div>
-    <div class="btn-row" style="margin-top:1rem;">
-      <button class="btn btn-primary" onclick="submitQuestion()">Envoyer la question</button>
-    </div>
-    <hr class="sep">
-    <h3>Tenter de deviner</h3>
-    <input type="text" id="guess-input" placeholder="Qui est-ce ?" maxlength="50"/>
-    <button class="btn" onclick="submitGuess()" style="margin-top:0.5rem;">Deviner !</button>
-    <hr class="sep">
-    <h3>Questions posées</h3>
-    <div id="ask-thread"></div>
+
+    <!-- Column arrows -->
+    <div class="col-hover-row" id="col-btns"></div>
+
+    <!-- Board -->
+    <div class="board" id="board"></div>
+
+    <div class="status-msg" id="status-msg"></div>
+    <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:1.5rem;">Quitter la partie</button>
   </div>
 
-  <!-- PENSEUR: answer question -->
-  <div class="screen" id="s-answer">
-    <div class="turn-bar">
-      <div style="width:36px;height:36px;border-radius:50%;background:rgba(232,213,163,0.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;" id="ans-avatar"></div>
-      <div>
-        <div class="turn-name" id="ans-name"></div>
-        <div class="turn-sub">Penseur</div>
-      </div>
-    </div>
-    <div class="q-counter" id="ans-counter"></div>
-    <div class="card" style="margin-top:0;">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Ton personnage secret</div>
-      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--accent);" id="ans-secret"></div>
-    </div>
-    <div style="margin-top:1.25rem;">
-      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Question en attente</div>
-      <div class="card" style="margin-top:0;font-size:16px;line-height:1.5;" id="pending-question"></div>
-      <div style="display:flex;gap:8px;margin-top:1rem;">
-        <button class="answer-btn answer-oui" onclick="answerQuestion('oui')">✓ OUI</button>
-        <button class="answer-btn answer-non" onclick="answerQuestion('non')">✗ NON</button>
-        <button class="answer-btn answer-maybe" onclick="answerQuestion('maybe')">~ P-Ê</button>
-      </div>
-    </div>
-    <hr class="sep">
-    <h3>Questions répondues</h3>
-    <div id="ans-thread"></div>
-  </div>
-
-  <!-- PENSEUR: waiting for question -->
-  <div class="screen" id="s-wait-question">
-    <div class="card" style="margin-top:0;">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Ton personnage secret</div>
-      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--accent);" id="wq-secret"></div>
-    </div>
-    <div style="margin-top:1.5rem;display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;">
-      <span class="waiting-dot"></span>
-      <span id="wq-msg">En attente d'une question…</span>
-    </div>
-    <hr class="sep">
-    <h3>Questions répondues</h3>
-    <div id="wq-thread"></div>
-  </div>
-
-  <!-- GUESS RESULT: penseur sees guess attempt -->
-  <div class="screen" id="s-guess-result">
-    <div style="text-align:center;padding:2rem 0;">
-      <div style="font-size:13px;color:var(--muted);margin-bottom:0.5rem;" id="gr-guesser"></div>
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--text);margin-bottom:0.25rem;">a deviné :</div>
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px;color:var(--accent);margin:1rem 0;" id="gr-guess"></div>
-      <div style="font-size:14px;color:var(--muted);margin-bottom:1.5rem;">Est-ce correct ?</div>
-      <div style="display:flex;gap:10px;">
-        <button class="answer-btn answer-oui" style="flex:1;" onclick="judgeGuess(true)">✓ OUI</button>
-        <button class="answer-btn answer-non" style="flex:1;" onclick="judgeGuess(false)">✗ NON</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- DEVINEUR: waiting for guess judgment -->
-  <div class="screen" id="s-guess-wait">
-    <div class="loading">
-      <div class="spinner"></div>
-      <div>Le penseur vérifie ta réponse…</div>
-    </div>
-  </div>
-
-  <!-- MANCHE OVER -->
-  <div class="screen" id="s-manche-over">
+  <!-- WIN -->
+  <div class="screen" id="s-win">
     <div class="win-screen">
-      <div class="win-emoji" id="mo-emoji"></div>
-      <div class="win-title" id="mo-title"></div>
-      <div style="font-size:14px;color:var(--muted);margin:0.5rem 0;">Le personnage était</div>
-      <div class="revealed-name" id="mo-secret"></div>
-      <div style="font-size:13px;color:var(--muted);margin-top:1rem;" id="mo-score"></div>
-      <div style="font-size:13px;color:var(--muted);margin-top:0.5rem;" id="mo-next"></div>
-      <button class="btn btn-primary" id="mo-btn" onclick="nextManche()" style="margin-top:1.5rem;display:none;">Manche suivante</button>
-    </div>
-  </div>
-
-  <!-- GAME OVER -->
-  <div class="screen" id="s-gameover">
-    <div class="win-screen">
-      <div class="win-emoji">🏆</div>
-      <div class="win-title" id="go-title" style="color:var(--accent);"></div>
-      <div style="font-size:14px;color:var(--muted);margin-top:0.5rem;">gagne la partie !</div>
-      <div id="go-scores" class="card" style="margin-top:1.5rem;text-align:left;"></div>
-      <button class="btn btn-primary" onclick="show('s-home')" style="margin-top:1.5rem;">Retour à l'accueil</button>
-      <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.5rem;">Supprimer la partie</button>
+      <div class="win-emoji" id="win-emoji"></div>
+      <div class="win-title" id="win-title"></div>
+      <div class="win-sub" id="win-sub"></div>
+      <div class="win-scores" id="win-scores"></div>
+      <button class="btn btn-primary" id="win-rematch-btn" onclick="rematch()" style="margin-top:1.5rem;display:none;">Revanche !</button>
+      <button class="btn" onclick="show('s-home')" style="margin-top:0.5rem;">Accueil</button>
+      <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.5rem;">Supprimer</button>
     </div>
   </div>
 
@@ -352,7 +233,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
@@ -367,14 +248,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const AVBG = ['rgba(232,213,163,0.15)','rgba(148,163,184,0.15)'];
-const AVTXT = ['#e8d5a3','#94a3b8'];
+const ROWS = 6;
+const COLS = 7;
 
 let myCode = null;
 let myName = null;
+let myPnum = null; // 0 or 1 (player index)
 let isHost = false;
 let gameListener = null;
-let lastPhase = null;
+let hoverCol = -1;
 
 // ── Utils ──
 window.show = (id) => {
@@ -391,40 +273,37 @@ window.copyCode = () => {
   navigator.clipboard.writeText(myCode).then(() => showToast('Code copié !'));
 };
 function genCode() {
-  const w=['LION','OURS','LUNE','JAZZ','ROSE','VENT','CIEL','PARC','NUIT','BLEU'];
+  const w = ['FOUR','BLEU','GAME','DISC','WINS','COLS','ROWS','GRID'];
   return w[Math.floor(Math.random()*w.length)]+'-'+Math.floor(10+Math.random()*90);
 }
-window.toggleSecretVis = () => {
-  const inp = document.getElementById('secret-input');
-  inp.type = inp.type === 'password' ? 'text' : 'password';
-};
+function emptyBoard() {
+  // board[row][col], row 0 = top
+  return Array.from({length:ROWS}, () => Array(COLS).fill(0));
+}
 
 // ── Create ──
 window.createGame = async () => {
   const name = document.getElementById('create-name').value.trim();
-  const maxQ = parseInt(document.getElementById('create-maxq').value);
-  const totalRounds = parseInt(document.getElementById('create-rounds').value);
+  const bo = parseInt(document.getElementById('create-bo').value);
   const errEl = document.getElementById('create-err');
   if (!name) { errEl.style.display='block'; errEl.textContent='Entre ton prénom.'; return; }
   errEl.style.display='none';
 
   const code = genCode();
   const game = {
-    code, maxQ, totalRounds,
-    players: [{ name, score: 0 }],
+    code, bo,
+    players: [{ name, score: 0 }, null],
     phase: 'lobby',
-    manche: 1,
-    // In manche N: penseur = players[(N-1) % 2], devineur = the other
-    questions: [], // [{author, text, answer}]
-    secret: null,
-    pendingQuestion: null,
-    pendingGuess: null,
-    mancheResult: null,
+    board: emptyBoard(),
+    turn: 0, // 0 = player1, 1 = player2
+    winner: null,
+    winCells: null,
+    gameNum: 1,
     createdAt: Date.now()
   };
 
-  await set(ref(db, `qec/${code}`), game);
-  myCode = code; myName = name; isHost = true;
+  await set(ref(db, `p4/${code}`), game);
+  myCode = code; myName = name; myPnum = 0; isHost = true;
   startListener(code);
   renderLobby(game);
   show('s-lobby');
@@ -439,29 +318,29 @@ function renderLobby(game) {
   if (!container) return;
   container.innerHTML = '';
   players.forEach((p, i) => {
+    if (!p) return;
     const div = document.createElement('div'); div.className = 'player-row';
-    div.innerHTML = `<div class="avatar" style="background:${AVBG[i%2]};color:${AVTXT[i%2]};">${p.name[0].toUpperCase()}</div>
+    div.innerHTML = `<div class="dot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div>
       <span style="font-size:15px;">${p.name}</span>
       ${i===0?'<span style="font-size:11px;color:var(--muted);margin-left:auto;padding:2px 8px;border:1px solid var(--border);border-radius:999px;">Hôte</span>':''}`;
     container.appendChild(div);
   });
-  if (players.length < 2) {
+  if (!players[1]) {
     const div = document.createElement('div');
     div.style.cssText = 'font-size:13px;color:var(--muted);padding:10px 0;display:flex;align-items:center;gap:8px;';
-    div.innerHTML = `<span class="waiting-dot"></span> En attente d'un 2e joueur…`;
+    div.innerHTML = '<span class="waiting-dot"></span> En attente du joueur 2…';
     container.appendChild(div);
   }
   const wrap = document.getElementById('lobby-start-wrap');
-  if (wrap) wrap.style.display = players.length >= 2 ? 'block' : 'none';
+  if (wrap) wrap.style.display = players[1] ? 'block' : 'none';
 }
 
 window.startGame = async () => {
-  await update(ref(db, `qec/${myCode}`), { phase: 'choose' });
+  await update(ref(db, `p4/${myCode}`), { phase: 'playing' });
 };
 
 window.deleteGame = async () => {
-  if (!confirm('Supprimer la partie ?')) return;
-  if (myCode) await remove(ref(db, `qec/${myCode}`));
+  if (myCode) await remove(ref(db, `p4/${myCode}`));
   myCode = null; show('s-home');
 };
 
@@ -475,334 +354,268 @@ window.joinGame = async () => {
   errEl.style.display='none';
   show('s-joining');
 
-  const snap = await get(ref(db, `qec/${code}`));
+  const snap = await get(ref(db, `p4/${code}`));
   if (!snap.exists()) { show('s-join'); errEl.style.display='block'; errEl.textContent='Code introuvable.'; return; }
 
   const game = snap.val();
   const players = game.players || [];
 
-  // Already in?
-  const existing = players.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
+  // Reconnect?
+  const existing = players.findIndex(p => p && p.name.toLowerCase() === name.toLowerCase());
   if (existing !== -1) {
-    myCode = code; myName = name; isHost = existing === 0;
+    myCode = code; myName = name; myPnum = existing; isHost = existing === 0;
     startListener(code); handlePhase(game); return;
   }
 
-  if (players.length >= 2) { show('s-join'); errEl.style.display='block'; errEl.textContent='La partie est complète.'; return; }
-  if (game.phase !== 'lobby') { show('s-join'); errEl.style.display='block'; errEl.textContent='La partie est déjà lancée.'; return; }
+  if (players[1]) { show('s-join'); errEl.style.display='block'; errEl.textContent='La partie est complète.'; return; }
+  if (game.phase !== 'lobby') { show('s-join'); errEl.style.display='block'; errEl.textContent='La partie est lancée.'; return; }
 
-  await update(ref(db, `qec/${code}`), { players: [...players, { name, score: 0 }] });
-  myCode = code; myName = name; isHost = false;
+  const newPlayers = [...players];
+  newPlayers[1] = { name, score: 0 };
+  await update(ref(db, `p4/${code}`), { players: newPlayers });
+  myCode = code; myName = name; myPnum = 1; isHost = false;
   startListener(code);
+  renderWait(game, name);
   show('s-wait');
-  document.getElementById('wait-msg').textContent = `Bienvenue ${name} ! En attente du lancement…`;
 };
 
-// ── Listener ──
-function startListener(code) {
-  if (gameListener) gameListener();
-  gameListener = onValue(ref(db, `qec/${code}`), snap => {
-    if (!snap.exists()) return;
-    handlePhase(snap.val());
-  });
-}
-
-function getPenseur(game) {
-  return game.players[(game.manche - 1) % 2];
-}
-function getDevineur(game) {
-  return game.players[game.manche % 2];
-}
-function amIPenseur(game) {
-  return getPenseur(game).name === myName;
-}
-
-// ── Phase routing ──
-function handlePhase(game) {
-  const phase = game.phase;
-
-  if (phase === 'lobby') {
-    if (isHost) { renderLobby(game); if (!document.getElementById('s-lobby').classList.contains('active')) show('s-lobby'); }
-    else { renderWaitLobby(game); }
-    return;
-  }
-
-  if (phase === 'choose') {
-    if (amIPenseur(game)) {
-      document.getElementById('secret-input').value = '';
-      document.getElementById('choose-err').style.display = 'none';
-      show('s-choose');
-    } else {
-      const penseur = getPenseur(game);
-      document.getElementById('wait-secret-msg').textContent = `${penseur.name} choisit son personnage…`;
-      show('s-wait-secret');
-    }
-    return;
-  }
-
-  if (phase === 'asking') {
-    if (amIPenseur(game)) {
-      renderPenseurWait(game);
-    } else {
-      renderDevineurAsk(game);
-    }
-    return;
-  }
-
-  if (phase === 'answering') {
-    if (amIPenseur(game)) {
-      renderPenseurAnswer(game);
-    } else {
-      renderDevineurWait(game);
-    }
-    return;
-  }
-
-  if (phase === 'guessing') {
-    if (amIPenseur(game)) {
-      // Show guess to penseur
-      document.getElementById('gr-guesser').textContent = getDevineur(game).name;
-      document.getElementById('gr-guess').textContent = game.pendingGuess;
-      show('s-guess-result');
-    } else {
-      show('s-guess-wait');
-    }
-    return;
-  }
-
-  if (phase === 'manche-over') {
-    renderMancheOver(game);
-    return;
-  }
-
-  if (phase === 'gameover') {
-    renderGameOver(game);
-    return;
-  }
-}
-
-function renderWaitLobby(game) {
-  const players = game.players || [];
+function renderWait(game, name) {
+  document.getElementById('wait-msg').textContent = `Bienvenue ${name} ! En attente du lancement…`;
   const container = document.getElementById('wait-players');
   if (!container) return;
   container.innerHTML = '';
-  players.forEach((p, i) => {
+  (game.players || []).forEach((p, i) => {
+    if (!p) return;
     const div = document.createElement('div'); div.className = 'player-row';
-    div.innerHTML = `<div class="avatar" style="background:${AVBG[i%2]};color:${AVTXT[i%2]};">${p.name[0].toUpperCase()}</div>
+    div.innerHTML = `<div class="dot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div>
       <span style="font-size:15px;">${p.name}</span>`;
     container.appendChild(div);
   });
 }
 
-// ── Choose secret ──
-window.submitSecret = async () => {
-  const secret = document.getElementById('secret-input').value.trim();
-  const errEl = document.getElementById('choose-err');
-  if (!secret) { errEl.style.display='block'; errEl.textContent='Entre un personnage.'; return; }
-  errEl.style.display='none';
-  await update(ref(db, `qec/${myCode}`), { secret, questions: [], pendingQuestion: null, pendingGuess: null, phase: 'asking' });
-};
-
-// ── Render asking screen (devineur) ──
-function renderDevineurAsk(game) {
-  const qs = game.questions || [];
-  const maxQ = game.maxQ || 10;
-  document.getElementById('ask-counter').textContent = `Question ${qs.length + 1} / ${maxQ === 999 ? '∞' : maxQ}`;
-  document.getElementById('ask-name').textContent = myName;
-  document.getElementById('ask-avatar').textContent = myName[0].toUpperCase();
-  document.getElementById('question-input').value = '';
-  document.getElementById('guess-input').value = '';
-  document.getElementById('ask-err').style.display = 'none';
-  renderThread('ask-thread', qs);
-  show('s-ask');
+// ── Listener ──
+function startListener(code) {
+  if (gameListener) gameListener();
+  gameListener = onValue(ref(db, `p4/${code}`), snap => {
+    if (!snap.exists()) return;
+    handlePhase(snap.val());
+  });
 }
 
-// ── Render penseur waiting for question ──
-function renderPenseurWait(game) {
-  const qs = game.questions || [];
-  document.getElementById('wq-secret').textContent = game.secret || '';
-  document.getElementById('wq-msg').textContent = `${getDevineur(game).name} réfléchit…`;
-  renderThread('wq-thread', qs);
-  show('s-wait-question');
-}
-
-// ── Render penseur answering ──
-function renderPenseurAnswer(game) {
-  const qs = game.questions || [];
-  const maxQ = game.maxQ || 10;
-  document.getElementById('ans-counter').textContent = `Question ${qs.length + 1} / ${maxQ === 999 ? '∞' : maxQ}`;
-  document.getElementById('ans-name').textContent = myName;
-  document.getElementById('ans-avatar').textContent = myName[0].toUpperCase();
-  document.getElementById('ans-secret').textContent = game.secret || '';
-  document.getElementById('pending-question').textContent = game.pendingQuestion || '';
-  renderThread('ans-thread', qs);
-  show('s-answer');
-}
-
-// ── Render devineur waiting for answer ──
-function renderDevineurWait(game) {
-  show('s-guess-wait');
-  document.querySelector('#s-guess-wait .loading div:not(.spinner)').textContent = 'En attente de la réponse…';
-}
-
-// ── Thread renderer ──
-function renderThread(containerId, qs) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  container.innerHTML = '';
-  if (!qs || qs.length === 0) {
-    container.innerHTML = '<p style="font-size:13px;color:var(--muted);padding:10px 0;">Aucune question pour l\'instant.</p>';
+// ── Phase router ──
+function handlePhase(game) {
+  if (game.phase === 'lobby') {
+    if (isHost) { renderLobby(game); if (!document.getElementById('s-lobby').classList.contains('active')) show('s-lobby'); }
+    else { renderWait(game, myName); if (!document.getElementById('s-wait').classList.contains('active')) show('s-wait'); }
     return;
   }
-  [...qs].reverse().forEach(q => {
-    const div = document.createElement('div'); div.className = 'q-item';
-    const ansClass = q.answer === 'oui' ? 'oui' : q.answer === 'non' ? 'non' : q.answer === 'maybe' ? 'maybe' : 'pending';
-    const ansLabel = q.answer === 'oui' ? '✓ OUI' : q.answer === 'non' ? '✗ NON' : q.answer === 'maybe' ? '~ PEUT-ÊTRE' : '⏳ En attente…';
-    div.innerHTML = `<div class="q-author">${q.author}</div>
-      <div class="q-text">${q.text}</div>
-      <span class="q-answer ${ansClass}">${ansLabel}</span>`;
-    container.appendChild(div);
-  });
+  if (game.phase === 'playing') {
+    renderGame(game);
+    return;
+  }
+  if (game.phase === 'win' || game.phase === 'draw') {
+    renderGame(game); // show final board state
+    renderWin(game);
+    return;
+  }
 }
 
-// ── Submit question ──
-window.submitQuestion = async () => {
-  const text = document.getElementById('question-input').value.trim();
-  const errEl = document.getElementById('ask-err');
-  if (!text) { errEl.style.display='block'; errEl.textContent='Écris une question.'; return; }
-  if (!text.includes('?') && text.length < 5) { errEl.style.display='block'; errEl.textContent='Formule une vraie question.'; return; }
-  errEl.style.display='none';
-  await update(ref(db, `qec/${myCode}`), { pendingQuestion: text, phase: 'answering' });
-};
-
-// ── Answer question ──
-window.answerQuestion = async (answer) => {
-  const snap = await get(ref(db, `qec/${myCode}`));
-  if (!snap.exists()) return;
-  const game = snap.val();
-  const qs = game.questions || [];
-  const maxQ = game.maxQ || 10;
-  const newQ = { author: getDevineur(game).name, text: game.pendingQuestion, answer };
-  const updatedQs = [...qs, newQ];
-
-  // Check if max questions reached
-  if (maxQ !== 999 && updatedQs.length >= maxQ) {
-    await update(ref(db, `qec/${myCode}`), {
-      questions: updatedQs, pendingQuestion: null,
-      phase: 'manche-over',
-      mancheResult: { winner: 'penseur', reason: 'max-questions' }
-    });
-  } else {
-    await update(ref(db, `qec/${myCode}`), { questions: updatedQs, pendingQuestion: null, phase: 'asking' });
-  }
-};
-
-// ── Submit guess ──
-window.submitGuess = async () => {
-  const guess = document.getElementById('guess-input').value.trim();
-  if (!guess) return;
-  await update(ref(db, `qec/${myCode}`), { pendingGuess: guess, phase: 'guessing' });
-};
-
-// ── Judge guess (penseur) ──
-window.judgeGuess = async (correct) => {
-  const snap = await get(ref(db, `qec/${myCode}`));
-  if (!snap.exists()) return;
-  const game = snap.val();
-
-  if (correct) {
-    // Devineur wins this manche — update score
-    const players = [...game.players];
-    const devineurIdx = game.manche % 2;
-    players[devineurIdx] = { ...players[devineurIdx], score: (players[devineurIdx].score || 0) + 1 };
-    await update(ref(db, `qec/${myCode}`), {
-      players,
-      phase: 'manche-over',
-      mancheResult: { winner: 'devineur', guesser: getDevineur(game).name, guess: game.pendingGuess, secret: game.secret }
-    });
-  } else {
-    // Wrong — continue asking
-    await update(ref(db, `qec/${myCode}`), { pendingGuess: null, phase: 'asking' });
-  }
-};
-
-// ── Manche over ──
-function renderMancheOver(game) {
-  const result = game.mancheResult || {};
+// ── Render game board ──
+function renderGame(game) {
   const players = game.players || [];
+  const p1 = players[0] || { name:'J1', score:0 };
+  const p2 = players[1] || { name:'J2', score:0 };
+  const isMyTurn = game.turn === myPnum && game.phase === 'playing';
 
-  if (result.winner === 'devineur') {
-    document.getElementById('mo-emoji').textContent = '🎉';
-    document.getElementById('mo-title').textContent = `${result.guesser} a deviné !`;
-    document.getElementById('mo-title').style.color = 'var(--yes)';
-  } else {
-    document.getElementById('mo-emoji').textContent = '🤫';
-    document.getElementById('mo-title').textContent = `${getPenseur(game).name} a résisté !`;
-    document.getElementById('mo-title').style.color = 'var(--accent)';
+  // Turn bar
+  const currentPlayer = players[game.turn];
+  const turnDot = document.getElementById('turn-dot');
+  const turnName = document.getElementById('turn-name');
+  if (currentPlayer) {
+    turnDot.style.background = game.turn === 0 ? 'var(--p1)' : 'var(--p2)';
+    turnName.textContent = isMyTurn ? 'Ton tour !' : `Tour de ${currentPlayer.name}…`;
+    turnName.style.color = isMyTurn ? (myPnum === 0 ? 'var(--p1)' : 'var(--p2)') : 'var(--muted)';
   }
 
-  document.getElementById('mo-secret').textContent = game.secret || '';
-  document.getElementById('mo-score').textContent = `Score : ${players[0].name} ${players[0].score} — ${players[1]?.score || 0} ${players[1]?.name || ''}`;
+  // Scores
+  document.getElementById('score-p1').textContent = `${p1.name} ${p1.score}`;
+  document.getElementById('score-p2').textContent = `${p2.score} ${p2.name}`;
 
-  // Check if game over
-  const nextManche = game.manche + 1;
-  const btn = document.getElementById('mo-btn');
-  if (nextManche > game.totalRounds) {
-    document.getElementById('mo-next').textContent = "C'est la fin de la partie !";
-    btn.textContent = 'Voir les résultats';
-    btn.style.display = 'block';
-  } else {
-    document.getElementById('mo-next').textContent = `Manche ${nextManche}/${game.totalRounds} — Les rôles s'inversent !`;
-    btn.style.display = isHost ? 'block' : 'none';
-    btn.textContent = 'Manche suivante';
+  // Win cells set
+  const winSet = new Set((game.winCells || []).map(([r,c]) => `${r},${c}`));
+
+  // Column buttons
+  const colBtnsEl = document.getElementById('col-btns');
+  colBtnsEl.innerHTML = '';
+  for (let c = 0; c < COLS; c++) {
+    const btn = document.createElement('button');
+    btn.className = 'col-btn';
+    btn.disabled = !isMyTurn || game.phase !== 'playing';
+    btn.innerHTML = isMyTurn && hoverCol === c ? (myPnum === 0 ? '<span style="color:var(--p1);font-size:18px;">▼</span>' : '<span style="color:var(--p2);font-size:18px;">▼</span>') : '<span style="opacity:0.25;font-size:14px;">▼</span>';
+    btn.onmouseenter = () => { hoverCol = c; renderGame(game); };
+    btn.onmouseleave = () => { hoverCol = -1; renderGame(game); };
+    btn.onclick = () => dropPiece(c, game);
+    colBtnsEl.appendChild(btn);
   }
 
-  show('s-manche-over');
-}
-
-window.nextManche = async () => {
-  const snap = await get(ref(db, `qec/${myCode}`));
-  if (!snap.exists()) return;
-  const game = snap.val();
-  const nextManche = game.manche + 1;
-  if (nextManche > game.totalRounds) {
-    await update(ref(db, `qec/${myCode}`), { phase: 'gameover' });
-  } else {
-    await update(ref(db, `qec/${myCode}`), {
-      manche: nextManche, phase: 'choose',
-      questions: [], secret: null, pendingQuestion: null, pendingGuess: null, mancheResult: null
-    });
-  }
-};
-
-// ── Game over ──
-function renderGameOver(game) {
-  const players = game.players || [];
-  const p0 = players[0] || { name: '?', score: 0 };
-  const p1 = players[1] || { name: '?', score: 0 };
-  const winner = p0.score > p1.score ? p0 : p1.score > p0.score ? p1 : null;
-
-  document.getElementById('go-title').textContent = winner ? winner.name : 'Égalité !';
-
-  const scoresEl = document.getElementById('go-scores');
-  scoresEl.innerHTML = '';
-  [p0, p1].forEach((p, i) => {
-    const div = document.createElement('div');
-    div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);';
-    div.innerHTML = `<div style="display:flex;align-items:center;gap:10px;">
-      <div class="avatar" style="background:${AVBG[i]};color:${AVTXT[i]};">${p.name[0].toUpperCase()}</div>
-      <span style="font-size:15px;">${p.name}</span>
-    </div>
-    <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:${p===winner?'var(--accent)':'var(--muted)'};">${p.score} pt${p.score>1?'s':''}</span>`;
-    scoresEl.appendChild(div);
-    if (i === 0) {
-      const sep = document.createElement('div'); sep.className='sep'; sep.style.margin='0';
-      scoresEl.appendChild(sep);
+  // Board cells
+  const boardEl = document.getElementById('board');
+  boardEl.innerHTML = '';
+  const board = game.board || emptyBoard();
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cell = document.createElement('div');
+      const val = board[r][c];
+      const isWinCell = winSet.has(`${r},${c}`);
+      cell.className = 'cell' + (val === 1 ? ' p1' : val === 2 ? ' p2' : '') + (isWinCell ? ' win' : '');
+      // Preview hover
+      if (isMyTurn && val === 0 && hoverCol === c) {
+        const lowestEmpty = getLowestEmpty(board, c);
+        if (lowestEmpty === r) {
+          cell.classList.add('preview');
+          cell.classList.add(myPnum === 0 ? 'p1' : 'p2');
+        }
+      }
+      boardEl.appendChild(cell);
     }
-  });
+  }
 
-  show('s-gameover');
+  // Status
+  const statusEl = document.getElementById('status-msg');
+  if (game.phase === 'playing') {
+    statusEl.textContent = isMyTurn ? 'Clique sur une colonne pour jouer.' : '';
+  } else if (game.phase === 'draw') {
+    statusEl.textContent = 'Match nul !';
+  } else {
+    statusEl.textContent = '';
+  }
+
+  show('s-game');
 }
+
+function getLowestEmpty(board, col) {
+  for (let r = ROWS - 1; r >= 0; r--) {
+    if (board[r][col] === 0) return r;
+  }
+  return -1;
+}
+
+// ── Drop piece ──
+async function dropPiece(col, game) {
+  if (game.turn !== myPnum) return;
+  if (game.phase !== 'playing') return;
+
+  const board = game.board.map(r => [...r]);
+  const row = getLowestEmpty(board, col);
+  if (row === -1) { showToast('Colonne pleine !'); return; }
+
+  board[row][col] = myPnum + 1; // 1 or 2
+  const winCells = checkWin(board, row, col, myPnum + 1);
+  const isDraw = !winCells && board[0].every(v => v !== 0);
+
+  if (winCells) {
+    // Win
+    const players = game.players.map((p, i) => ({
+      ...p,
+      score: i === myPnum ? (p.score || 0) + 1 : (p.score || 0)
+    }));
+    const totalWins = players[myPnum].score;
+    const gameOver = totalWins >= game.bo;
+    await update(ref(db, `p4/${myCode}`), {
+      board, players,
+      phase: gameOver ? 'win' : 'win',
+      winner: myPnum,
+      winCells,
+      gameNum: game.gameNum || 1
+    });
+  } else if (isDraw) {
+    await update(ref(db, `p4/${myCode}`), { board, phase: 'draw', winner: null, winCells: null });
+  } else {
+    await update(ref(db, `p4/${myCode}`), { board, turn: 1 - myPnum, winner: null, winCells: null });
+  }
+}
+
+// ── Win detection ──
+function checkWin(board, row, col, player) {
+  const directions = [[0,1],[1,0],[1,1],[1,-1]];
+  for (const [dr, dc] of directions) {
+    const cells = [[row, col]];
+    for (let i = 1; i < 4; i++) {
+      const r = row + dr*i, c = col + dc*i;
+      if (r<0||r>=ROWS||c<0||c>=COLS||board[r][c]!==player) break;
+      cells.push([r,c]);
+    }
+    for (let i = 1; i < 4; i++) {
+      const r = row - dr*i, c = col - dc*i;
+      if (r<0||r>=ROWS||c<0||c>=COLS||board[r][c]!==player) break;
+      cells.push([r,c]);
+    }
+    if (cells.length >= 4) return cells.slice(0,4);
+  }
+  return null;
+}
+
+// ── Render win screen ──
+function renderWin(game) {
+  const players = game.players || [];
+  const p1 = players[0] || { name:'J1', score:0 };
+  const p2 = players[1] || { name:'J2', score:0 };
+
+  if (game.phase === 'draw') {
+    document.getElementById('win-emoji').textContent = '🤝';
+    document.getElementById('win-title').textContent = 'Match nul !';
+    document.getElementById('win-title').style.color = 'var(--muted)';
+    document.getElementById('win-sub').textContent = 'Aucun gagnant cette fois.';
+  } else {
+    const winner = players[game.winner];
+    const isMe = game.winner === myPnum;
+    document.getElementById('win-emoji').textContent = isMe ? '🎉' : '😤';
+    document.getElementById('win-title').textContent = isMe ? 'Tu gagnes !' : `${winner.name} gagne !`;
+    document.getElementById('win-title').style.color = game.winner === 0 ? 'var(--p1)' : 'var(--p2)';
+
+    const totalWins = players[game.winner].score;
+    const matchOver = totalWins >= game.bo;
+    document.getElementById('win-sub').textContent = matchOver
+      ? `Victoire finale avec ${totalWins} victoire${totalWins>1?'s':''}  !`
+      : `Manche ${game.gameNum} — ${totalWins}/${game.bo} victoires nécessaires`;
+
+    const rematchBtn = document.getElementById('win-rematch-btn');
+    rematchBtn.style.display = isHost && !matchOver ? 'block' : 'none';
+    if (matchOver) rematchBtn.style.display = 'none';
+  }
+
+  // Scores
+  const scoresEl = document.getElementById('win-scores');
+  scoresEl.innerHTML = `
+    <div class="win-score-card" style="background:var(--p1bg);border:1px solid var(--p1border);">
+      <div class="wsc-name">${p1.name}</div>
+      <div class="wsc-score" style="color:var(--p1);">${p1.score}</div>
+    </div>
+    <div class="win-score-card" style="background:var(--p2bg);border:1px solid var(--p2border);">
+      <div class="wsc-name">${p2.name}</div>
+      <div class="wsc-score" style="color:var(--p2);">${p2.score}</div>
+    </div>
+  `;
+
+  show('s-win');
+}
+
+// ── Rematch ──
+window.rematch = async () => {
+  const snap = await get(ref(db, `p4/${myCode}`));
+  if (!snap.exists()) return;
+  const game = snap.val();
+  // Swap who starts
+  const nextStarter = 1 - (game.gameNum % 2 === 0 ? 0 : 1);
+  await update(ref(db, `p4/${myCode}`), {
+    board: emptyBoard(),
+    phase: 'playing',
+    turn: nextStarter,
+    winner: null,
+    winCells: null,
+    gameNum: (game.gameNum || 1) + 1
+  });
+};
 </script>
 </body>
 </html>
