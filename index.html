@@ -25,74 +25,121 @@
   #age-gate{
     position:fixed;inset:0;z-index:100;
     background:var(--bg);
-    display:flex;align-items:center;justify-content:center;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     padding:1.5rem;
-    animation:fadeIn 0.3s ease;
   }
   #age-gate.hidden{display:none;}
+
   .gate-box{
-    width:100%;max-width:400px;
+    width:100%;
+    max-width:380px;
+    background:var(--surface);
+    border:1px solid var(--border2);
+    border-radius:20px;
+    padding:2.5rem 2rem;
     text-align:center;
+    box-shadow:0 24px 80px rgba(0,0,0,0.6);
   }
-  .gate-logo{
-    font-family:'Syne',sans-serif;font-weight:800;
-    font-size:52px;line-height:1;letter-spacing:-2px;
-    color:var(--accent);margin-bottom:2rem;
+  .gate-icon{
+    font-size:48px;
+    margin-bottom:1.25rem;
+    display:block;
   }
   .gate-title{
-    font-family:'Syne',sans-serif;font-weight:700;
-    font-size:22px;color:var(--text);margin-bottom:0.5rem;
-  }
-  .gate-sub{font-size:14px;color:var(--muted);margin-bottom:2rem;line-height:1.6;}
-  .gate-input-row{display:flex;gap:8px;margin-bottom:1rem;}
-  .gate-input-row input{
-    flex:1;padding:14px;background:var(--surface);
-    border:1px solid var(--border);border-radius:var(--r);
-    color:var(--text);font-family:'DM Sans',sans-serif;
-    font-size:22px;font-weight:700;text-align:center;
-    outline:none;letter-spacing:2px;
     font-family:'Syne',sans-serif;
+    font-weight:800;
+    font-size:24px;
+    color:var(--text);
+    margin-bottom:0.5rem;
+    letter-spacing:-0.5px;
   }
-  .gate-input-row input:focus{border-color:var(--border2);}
+  .gate-sub{
+    font-size:14px;
+    color:var(--muted);
+    margin-bottom:2rem;
+    line-height:1.6;
+  }
+  .gate-input-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:1rem;
+  }
+  .gate-input-row input{
+    flex:1;
+    padding:13px 6px;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:var(--r);
+    color:var(--text);
+    font-family:'Syne',sans-serif;
+    font-size:20px;
+    font-weight:700;
+    text-align:center;
+    outline:none;
+    letter-spacing:1px;
+    transition:border-color 0.2s;
+  }
+  .gate-input-row input:focus{border-color:var(--accent);}
+  .gate-input-row input::placeholder{color:rgba(107,114,128,0.5);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:400;letter-spacing:0;}
   .gate-btn{
-    width:100%;padding:14px;border-radius:var(--r);
-    font-family:'Syne',sans-serif;font-size:16px;font-weight:700;
-    cursor:pointer;border:none;
-    background:var(--accent);color:#07090f;
+    width:100%;
+    padding:14px;
+    border-radius:var(--r);
+    font-family:'Syne',sans-serif;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    border:none;
+    background:var(--accent);
+    color:#07090f;
     transition:all 0.15s;
+    margin-top:0;
   }
   .gate-btn:hover{filter:brightness(1.08);}
   .gate-btn:active{transform:scale(0.98);}
   .gate-error{
-    font-size:13px;color:#f87171;margin-top:10px;
+    font-size:13px;
+    color:#f87171;
+    margin-top:10px;
     min-height:18px;
+    line-height:1.4;
   }
   .gate-legal{
-    font-size:11px;color:var(--muted);margin-top:1.5rem;
-    line-height:1.6;opacity:0.7;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:1.5rem;
+    line-height:1.6;
+    opacity:0.6;
   }
 
   /* ── Hub ── */
   #hub{
-    max-width:1000px;margin:0 auto;
+    max-width:1000px;
+    margin:0 auto;
     padding:2.5rem 1.5rem 4rem;
-    opacity:0;transition:opacity 0.4s ease;
+    opacity:0;
+    transition:opacity 0.4s ease;
   }
   #hub.visible{opacity:1;}
 
   .hub-header{margin-bottom:2.5rem;}
   .hub-title{
-    font-family:'Syne',sans-serif;font-weight:800;
-    font-size:48px;line-height:1;letter-spacing:-2px;
+    font-family:'Syne',sans-serif;
+    font-weight:800;
+    font-size:48px;
+    line-height:1;
+    letter-spacing:-2px;
     color:var(--accent);
   }
-  .hub-title span{color:rgba(232,213,163,0.4);}
+  .hub-title span{color:rgba(232,213,163,0.35);}
   .hub-sub{font-size:15px;color:var(--muted);margin-top:8px;}
 
   /* ── Game grid ── */
   .game-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
     gap:16px;
   }
 
@@ -115,127 +162,88 @@
   .game-card:active{transform:translateY(-2px);}
 
   .card-banner{
-    height:140px;display:flex;align-items:center;justify-content:center;
-    position:relative;overflow:hidden;
-    font-size:64px;
-    letter-spacing:-2px;
+    height:130px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    overflow:hidden;
+    font-size:56px;
   }
+  .banner-bg{position:absolute;inset:0;}
 
-  /* Undercover banner */
-  .banner-undercover{background:linear-gradient(135deg,#0f0f1a 0%,#1a1040 100%);}
-  .banner-undercover .banner-bg{
-    position:absolute;inset:0;
-    background:radial-gradient(circle at 30% 60%, rgba(139,92,246,0.3) 0%, transparent 60%),
-               radial-gradient(circle at 70% 30%, rgba(236,72,153,0.2) 0%, transparent 50%);
-  }
+  /* Undercover */
+  .banner-undercover{background:linear-gradient(135deg,#0f0f1a,#1a1040);}
+  .banner-undercover .banner-bg{background:radial-gradient(circle at 30% 60%,rgba(139,92,246,0.3) 0%,transparent 60%),radial-gradient(circle at 70% 30%,rgba(236,72,153,0.2) 0%,transparent 50%);}
 
-  /* Puissance 4 banner */
-  .banner-p4{background:linear-gradient(135deg,#0f1a0f 0%,#101830 100%);}
-  .banner-p4 .banner-bg{
-    position:absolute;inset:0;
-    background:radial-gradient(circle at 25% 50%, rgba(249,115,22,0.3) 0%, transparent 55%),
-               radial-gradient(circle at 75% 50%, rgba(59,130,246,0.3) 0%, transparent 55%);
-  }
-  .p4-grid{
-    position:absolute;inset:0;display:grid;
-    grid-template-columns:repeat(7,1fr);
-    grid-template-rows:repeat(4,1fr);
-    gap:4px;padding:12px;opacity:0.18;
-  }
+  /* Puissance 4 */
+  .banner-p4{background:linear-gradient(135deg,#0f1a0f,#101830);}
+  .banner-p4 .banner-bg{background:radial-gradient(circle at 25% 50%,rgba(249,115,22,0.3) 0%,transparent 55%),radial-gradient(circle at 75% 50%,rgba(59,130,246,0.3) 0%,transparent 55%);}
+  .p4-grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(4,1fr);gap:4px;padding:12px;opacity:0.18;}
   .p4-dot{border-radius:50%;background:white;}
   .p4-dot.o{background:#f97316;}
   .p4-dot.b{background:#3b82f6;}
 
-  /* Qui est-ce banner */
-  .banner-qec{background:linear-gradient(135deg,#0f1a18 0%,#0f1820 100%);}
-  .banner-qec .banner-bg{
-    position:absolute;inset:0;
-    background:radial-gradient(circle at 50% 50%, rgba(20,184,166,0.25) 0%, transparent 60%);
-  }
+  /* Qui est-ce */
+  .banner-qec{background:linear-gradient(135deg,#0f1a18,#0f1820);}
+  .banner-qec .banner-bg{background:radial-gradient(circle at 50% 50%,rgba(20,184,166,0.25) 0%,transparent 60%);}
+
+  /* Bataille navale */
+  .banner-bn{background:linear-gradient(135deg,#060d1a,#0a1a2e);}
+  .banner-bn .banner-bg{background:radial-gradient(circle at 30% 70%,rgba(34,211,238,0.2) 0%,transparent 55%),radial-gradient(circle at 70% 30%,rgba(14,165,233,0.15) 0%,transparent 50%);}
+  .bn-grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(5,1fr);gap:3px;padding:14px;opacity:0.15;}
+  .bn-cell{border-radius:2px;background:#1e3a5f;}
+  .bn-cell.hit{background:#ef4444;}
+  .bn-cell.ship{background:#2a4a6b;}
 
   .banner-emoji{position:relative;z-index:1;}
 
-  .card-body{padding:1.25rem;}
-  .card-name{
-    font-family:'Syne',sans-serif;font-weight:700;
-    font-size:20px;color:var(--text);margin-bottom:6px;
-  }
+  .card-body{padding:1.1rem 1.25rem 1.25rem;}
+  .card-name{font-family:'Syne',sans-serif;font-weight:700;font-size:19px;color:var(--text);margin-bottom:5px;}
   .card-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:1rem;}
   .card-tags{display:flex;gap:6px;flex-wrap:wrap;}
-  .tag{
-    font-size:11px;padding:3px 9px;border-radius:999px;
-    border:1px solid var(--border);color:var(--muted);
-    font-family:'Syne',sans-serif;font-weight:500;
-  }
-  .card-arrow{
-    position:absolute;top:1rem;right:1rem;
-    width:28px;height:28px;border-radius:50%;
-    background:var(--surface2);border:1px solid var(--border);
-    display:flex;align-items:center;justify-content:center;
-    font-size:13px;color:var(--muted);
-    transition:all 0.15s;
-  }
-  .game-card:hover .card-arrow{
-    background:var(--accent);color:#07090f;border-color:var(--accent);
-  }
+  .tag{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--border);color:var(--muted);font-family:'Syne',sans-serif;font-weight:500;}
+  .card-arrow{position:absolute;top:1rem;right:1rem;width:28px;height:28px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);transition:all 0.15s;}
+  .game-card:hover .card-arrow{background:var(--accent);color:#07090f;border-color:var(--accent);}
 
-  /* Coming soon card */
-  .card-soon{opacity:0.45;cursor:default;pointer-events:none;}
-  .soon-badge{
-    position:absolute;top:12px;left:12px;
-    font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
-    background:rgba(255,255,255,0.06);color:var(--muted);
-    padding:3px 8px;border-radius:999px;border:1px solid var(--border);
-    font-family:'Syne',sans-serif;
-  }
+  /* Coming soon */
+  .card-soon{opacity:0.4;cursor:default;pointer-events:none;}
+  .soon-badge{position:absolute;top:12px;left:12px;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:rgba(255,255,255,0.06);color:var(--muted);padding:3px 8px;border-radius:999px;border:1px solid var(--border);font-family:'Syne',sans-serif;}
 
   /* Footer */
-  .hub-footer{
-    margin-top:3rem;padding-top:1.5rem;
-    border-top:1px solid var(--border);
-    display:flex;align-items:center;justify-content:space-between;
-    flex-wrap:wrap;gap:1rem;
-  }
+  .hub-footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
   .footer-text{font-size:12px;color:var(--muted);}
-  .footer-dot{
-    width:8px;height:8px;border-radius:50%;background:#4ade80;
-    display:inline-block;margin-right:6px;
-    box-shadow:0 0 6px #4ade80;
-  }
+  .footer-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block;margin-right:6px;box-shadow:0 0 6px #4ade80;}
 
-  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
+
   @media(max-width:600px){
     .hub-title{font-size:36px;}
     .game-grid{grid-template-columns:1fr;}
+    .gate-box{padding:2rem 1.25rem;}
   }
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════ AGE GATE ══════════════════════════════ -->
+<!-- ── AGE GATE ── -->
 <div id="age-gate">
   <div class="gate-box">
-    <div class="gate-logo">🎮</div>
+    <span class="gate-icon">🔞</span>
     <div class="gate-title">Vérification d'âge</div>
-    <div class="gate-sub">Ce site est réservé aux personnes majeures.<br>Entre ta date de naissance pour continuer.</div>
-
+    <div class="gate-sub">Ce site est réservé aux personnes majeures.<br>Entre ta date de naissance.</div>
     <div class="gate-input-row">
       <input type="text" id="gate-dd" placeholder="JJ" maxlength="2" inputmode="numeric" oninput="gateInput(this,'gate-mm',2)"/>
       <input type="text" id="gate-mm" placeholder="MM" maxlength="2" inputmode="numeric" oninput="gateInput(this,'gate-yyyy',2)"/>
       <input type="text" id="gate-yyyy" placeholder="AAAA" maxlength="4" inputmode="numeric" oninput="gateInput(this,null,4)"/>
     </div>
-
     <button class="gate-btn" onclick="checkAge()">Entrer</button>
     <div class="gate-error" id="gate-error"></div>
-
-    <div class="gate-legal">
-      En entrant sur ce site, tu confirmes avoir l'âge légal requis.<br>
-      Cette vérification est purement indicative et non contractuelle.
-    </div>
+    <div class="gate-legal">En entrant sur ce site, tu confirmes avoir l'âge légal requis.<br>Cette vérification est purement indicative.</div>
   </div>
 </div>
 
-<!-- ══════════════════════════════ HUB ══════════════════════════════ -->
+<!-- ── HUB ── -->
 <div id="hub">
   <div class="hub-header">
     <div class="hub-title">GAME<span>.</span>HUB</div>
@@ -252,7 +260,7 @@
       </div>
       <div class="card-body">
         <div class="card-name">Undercover</div>
-        <div class="card-desc">Chaque joueur reçoit un mot secret. Les civils ont le même mot, l'undercover en a un proche mais différent. Décris ton mot sans te trahir, vote pour éliminer l'imposteur.</div>
+        <div class="card-desc">Chaque joueur reçoit un mot secret. Décris-le sans te trahir, vote pour éliminer l'imposteur.</div>
         <div class="card-tags">
           <span class="tag">3–9 joueurs</span>
           <span class="tag">Déduction</span>
@@ -276,7 +284,7 @@
       </div>
       <div class="card-body">
         <div class="card-name">Puissance 4</div>
-        <div class="card-desc">Aligne 4 jetons de ta couleur en ligne, colonne ou diagonale avant ton adversaire. Classique et redoutable.</div>
+        <div class="card-desc">Aligne 4 jetons de ta couleur en ligne, colonne ou diagonale avant ton adversaire.</div>
         <div class="card-tags">
           <span class="tag">2 joueurs</span>
           <span class="tag">Stratégie</span>
@@ -294,7 +302,7 @@
       </div>
       <div class="card-body">
         <div class="card-name">Qui est-ce ?</div>
-        <div class="card-desc">Un joueur pense à une célébrité ou un personnage. L'autre pose des questions auxquelles on répond uniquement par Oui, Non ou Peut-être. Sauras-tu deviner ?</div>
+        <div class="card-desc">Un joueur pense à une célébrité. L'autre pose des questions oui/non pour deviner.</div>
         <div class="card-tags">
           <span class="tag">2 joueurs</span>
           <span class="tag">Devinette</span>
@@ -304,31 +312,40 @@
       <div class="card-arrow">→</div>
     </a>
 
-    <!-- Coming soon -->
-    <div class="game-card card-soon">
-      <div class="soon-badge">Bientôt</div>
-      <div class="card-banner" style="background:linear-gradient(135deg,#0f0f0f,#1a1a1a);">
-        <span style="font-size:48px;opacity:0.3;">🎲</span>
+    <!-- Bataille navale -->
+    <a class="game-card" href="bataille-navale.html">
+      <div class="card-banner banner-bn">
+        <div class="banner-bg"></div>
+        <div class="bn-grid">
+          <div class="bn-cell"></div><div class="bn-cell ship"></div><div class="bn-cell ship"></div><div class="bn-cell ship"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell hit"></div><div class="bn-cell"></div>
+          <div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell ship"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell"></div>
+          <div class="bn-cell hit"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell ship"></div><div class="bn-cell"></div><div class="bn-cell ship"></div><div class="bn-cell ship"></div>
+          <div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell hit"></div><div class="bn-cell"></div><div class="bn-cell ship"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell"></div>
+          <div class="bn-cell"></div><div class="bn-cell ship"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell hit"></div><div class="bn-cell"></div>
+        </div>
+        <span class="banner-emoji" style="position:relative;z-index:1;">⚓</span>
       </div>
       <div class="card-body">
-        <div class="card-name" style="color:var(--muted);">Prochain jeu</div>
-        <div class="card-desc">Un nouveau jeu arrive bientôt…</div>
-        <div class="card-tags"><span class="tag">À venir</span></div>
+        <div class="card-name">Bataille Navale</div>
+        <div class="card-desc">Place ta flotte en secret et coule les bateaux adverses avant qu'il ne coule les tiens.</div>
+        <div class="card-tags">
+          <span class="tag">2 joueurs</span>
+          <span class="tag">Tactique</span>
+          <span class="tag">En ligne</span>
+        </div>
       </div>
-    </div>
+      <div class="card-arrow">→</div>
+    </a>
 
   </div>
 
   <div class="hub-footer">
-    <div class="footer-text">
-      <span class="footer-dot"></span>Tous les jeux sont en ligne et gratuits
-    </div>
+    <div class="footer-text"><span class="footer-dot"></span>Tous les jeux sont en ligne et gratuits</div>
     <div class="footer-text">Fait avec ❤️ &amp; Claude</div>
   </div>
 </div>
 
 <script>
-// ── Age gate ──
 function gateInput(el, nextId, maxLen) {
   el.value = el.value.replace(/\D/g, '');
   if (el.value.length >= maxLen && nextId) {
@@ -350,13 +367,11 @@ function checkAge() {
 
   if (!dd || !mm || !yyyy || yyyy < 1900 || yyyy > 2025) {
     errEl.textContent = 'Entre une date de naissance valide.';
-    shake();
-    return;
+    shake(); return;
   }
   if (mm < 1 || mm > 12 || dd < 1 || dd > 31) {
     errEl.textContent = 'Date invalide.';
-    shake();
-    return;
+    shake(); return;
   }
 
   const birth = new Date(yyyy, mm - 1, dd);
@@ -366,17 +381,14 @@ function checkAge() {
   if (mDiff < 0 || (mDiff === 0 && today.getDate() < birth.getDate())) age--;
 
   if (age < 18) {
-    errEl.textContent = `Tu as ${age} ans. Ce site est réservé aux +18 ans. 👮`;
-    shake();
-    return;
+    errEl.textContent = `Tu as ${age} ans. Accès réservé aux +18 ans. 👮`;
+    shake(); return;
   }
 
-  // Age ok — welcome
   errEl.textContent = '';
   sessionStorage.setItem('age_ok', '1');
   document.getElementById('age-gate').classList.add('hidden');
-  const hub = document.getElementById('hub');
-  hub.classList.add('visible');
+  document.getElementById('hub').classList.add('visible');
 }
 
 function shake() {
@@ -386,21 +398,10 @@ function shake() {
   box.style.animation = 'shake 0.4s ease';
 }
 
-// Check if already verified this session
 if (sessionStorage.getItem('age_ok') === '1') {
   document.getElementById('age-gate').classList.add('hidden');
   document.getElementById('hub').classList.add('visible');
 }
 </script>
-
-<style>
-@keyframes shake {
-  0%,100%{transform:translateX(0);}
-  20%{transform:translateX(-8px);}
-  40%{transform:translateX(8px);}
-  60%{transform:translateX(-5px);}
-  80%{transform:translateX(5px);}
-}
-</style>
 </body>
 </html>
