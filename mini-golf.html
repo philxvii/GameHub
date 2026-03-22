@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Mini Golf</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a1a0a;--surface:#0f2010;--surface2:#162a16;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.16);
+  --text:#e8f4e8;--muted:#6a8a6a;
+  --green:#22c55e;--green2:#16a34a;--green-glow:rgba(34,197,94,0.3);
+  --gold:#fbbf24;--sand:#d97706;
+  --p1:#f97316;--p2:#38bdf8;--p3:#a78bfa;--p4:#f472b6;
+  --hole:#111;--wall:#374151;--water:#1d4ed8;--bunker:#d97706;
+  --danger:#ef4444;--r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{min-height:100%;background:var(--bg);}
+body{color:var(--text);font-family:'DM Sans',sans-serif;display:flex;align-items:flex-start;justify-content:center;}
+.app{width:100%;max-width:520px;min-height:100vh;padding:1rem 0.75rem 3rem;}
+.screen{display:none;animation:fadeIn 0.2s ease;}
+.screen.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:34px;line-height:1;letter-spacing:-1px;color:var(--green);}
+.logo small{font-size:13px;font-weight:400;color:var(--muted);font-family:'DM Sans',sans-serif;letter-spacing:0;display:block;margin-top:5px;}
+h2{font-family:'Syne',sans-serif;font-weight:700;font-size:20px;color:var(--text);margin-bottom:0.6rem;}
+p{font-size:14px;color:var(--muted);line-height:1.6;}
+label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;margin-top:0.9rem;}
+input,select{width:100%;padding:11px 13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;appearance:none;}
+input:focus,select:focus{border-color:var(--green);}
+input::placeholder{color:var(--muted);}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236a8a6a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;cursor:pointer;}
+select option{background:#0f2010;}
+.btn{width:100%;padding:12px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all 0.15s;margin-top:9px;}
+.btn:hover{background:var(--surface2);border-color:var(--border2);}
+.btn:active{transform:scale(0.98);}
+.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
+.btn-primary{background:var(--green);color:#0a1a0a;border-color:var(--green);font-weight:700;font-family:'Syne',sans-serif;}
+.btn-primary:hover{background:var(--green2);}
+.btn-danger{border-color:rgba(239,68,68,0.3);color:var(--danger);}
+.btn-danger:hover{background:rgba(239,68,68,0.08);}
+.btn-sm{width:auto;padding:6px 13px;font-size:13px;margin-top:0;}
+.btn-row{display:flex;gap:8px;margin-top:9px;}
+.btn-row .btn{margin-top:0;}
+.info-card{background:transparent;border:1px solid var(--border);border-radius:var(--r);padding:0.9rem 1.1rem;margin-top:0.9rem;font-size:13px;color:var(--muted);line-height:1.7;}
+.info-card strong{color:var(--text);}
+.code-box{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:6px;text-align:center;color:var(--green);padding:1.2rem;background:var(--surface);border:1px solid rgba(34,197,94,0.3);border-radius:var(--r);margin:0.9rem 0;cursor:pointer;}
+.copy-hint{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted);letter-spacing:0;font-weight:400;display:block;margin-top:5px;}
+.loading{text-align:center;padding:2.5rem 0;color:var(--muted);font-size:15px;}
+.spinner{width:26px;height:26px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 0.9rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.error-msg{font-size:12px;color:var(--danger);margin-top:7px;display:none;line-height:1.5;}
+.sep{border:none;border-top:1px solid var(--border);margin:1rem 0;}
+.wdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.4s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}
+.toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:13px;font-weight:500;opacity:0;transition:all 0.22s;pointer-events:none;white-space:nowrap;z-index:999;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.prow{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);}
+.prow:last-child{border-bottom:none;}
+.pdot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+.back-home{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:1.1rem;}
+.back-home:hover{color:var(--text);}
+
+/* GAME UI */
+.game-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.hole-info{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--green);}
+.hole-par{font-size:12px;color:var(--muted);}
+.turn-bar{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;margin-bottom:8px;}
+.turn-dot-big{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.turn-name{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;}
+.shots-badge{font-size:12px;color:var(--muted);margin-left:auto;}
+
+/* CANVAS */
+.canvas-wrap{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;touch-action:none;}
+canvas#golf{display:block;width:100%;cursor:crosshair;}
+
+/* POWER BAR */
+.power-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-top:8px;}
+.power-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;font-family:'Syne',sans-serif;}
+.power-bar-bg{height:12px;background:var(--surface2);border-radius:6px;overflow:hidden;}
+.power-bar-fill{height:100%;border-radius:6px;transition:width 0.05s,background 0.1s;}
+.power-hint{font-size:11px;color:var(--muted);margin-top:5px;}
+
+/* SCOREBOARD */
+.scoreboard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-top:8px;}
+.sb-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;font-family:'Syne',sans-serif;}
+.sb-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.sb-row:last-child{border-bottom:none;}
+.sb-name{flex:1;}
+.sb-score{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;}
+.sb-holes{display:flex;gap:4px;flex-wrap:wrap;}
+.sb-hole{width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Syne',sans-serif;}
+.sb-hole.eagle{background:rgba(34,197,94,0.3);color:#4ade80;}
+.sb-hole.birdie{background:rgba(34,197,94,0.15);color:#86efac;}
+.sb-hole.par{background:rgba(255,255,255,0.06);color:var(--muted);}
+.sb-hole.bogey{background:rgba(249,115,22,0.2);color:#fb923c;}
+.sb-hole.double{background:rgba(239,68,68,0.2);color:#f87171;}
+.sb-hole.pending{background:var(--surface2);color:var(--muted);}
+
+/* WIN */
+.win-wrap{text-align:center;padding:2rem 0;}
+.win-emoji{font-size:52px;margin-bottom:0.8rem;}
+.win-title{font-family:'Syne',sans-serif;font-weight:800;font-size:34px;line-height:1;letter-spacing:-1px;color:var(--green);margin-bottom:0.4rem;}
+.win-sub{font-size:14px;color:var(--muted);margin-bottom:1.5rem;}
+.final-scores{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin:1rem 0;}
+.fs-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.fs-row:last-child{border-bottom:none;}
+.fs-rank{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--muted);width:28px;}
+.fs-name{font-size:15px;flex:1;}
+.fs-score{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;}
+.version-tag{text-align:center;font-size:11px;color:rgba(106,138,106,0.3);padding:1rem 0 0.5rem;font-family:'Syne',sans-serif;letter-spacing:0.1em;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HOME -->
+<div class="screen active" id="s-home">
+  <div style="padding-top:0.5rem;margin-bottom:1.4rem;">
+    <a href="index.html" class="back-home">← Accueil</a>
+    <div class="logo">⛳ MINI GOLF<small>Multijoueur en ligne · 9 trous</small></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="show('s-create')">Créer une partie</button>
+    <button class="btn" onclick="show('s-join')">Rejoindre</button>
+  </div>
+  <div class="info-card">
+    <strong>Comment jouer</strong><br>
+    Vise et ajuste la puissance en maintenant ton doigt ou la souris appuyée. Relâche pour frapper ! Chaque joueur joue à son tour. Le moins de coups sur 9 trous gagne.<br><br>
+    🟢 Eagle (−2) · 🟡 Birdie (−1) · ⬜ Par · 🟠 Bogey (+1) · 🔴 Double (+2)
+  </div>
+</div>
+
+<!-- CREATE -->
+<div class="screen" id="s-create">
+  <h2>Nouvelle partie</h2>
+  <label>Ton prénom</label>
+  <input type="text" id="create-name" placeholder="Ton prénom" maxlength="20"/>
+  <label>Nombre de joueurs</label>
+  <select id="create-players">
+    <option value="2" selected>2 joueurs</option>
+    <option value="3">3 joueurs</option>
+    <option value="4">4 joueurs</option>
+  </select>
+  <div class="error-msg" id="create-err"></div>
+  <button class="btn btn-primary" onclick="createGame()" style="margin-top:1.1rem;">Créer</button>
+  <button class="btn" onclick="show('s-home')">Retour</button>
+</div>
+
+<!-- LOBBY -->
+<div class="screen" id="s-lobby">
+  <h2>En attente des joueurs</h2>
+  <p>Partage ce code à tes amis.</p>
+  <div class="code-box" id="lobby-code" onclick="copyCode()">—<span class="copy-hint">Appuie pour copier</span></div>
+  <div id="lobby-players"></div>
+  <div id="lobby-start-wrap" style="margin-top:1.25rem;display:none;">
+    <button class="btn btn-primary" onclick="startGame()">Lancer !</button>
+  </div>
+  <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.5rem;">Annuler</button>
+</div>
+
+<!-- JOIN -->
+<div class="screen" id="s-join">
+  <h2>Rejoindre</h2>
+  <label>Code</label>
+  <input type="text" id="join-code" placeholder="ex: GOLF-42" maxlength="10" oninput="this.value=this.value.toUpperCase()" style="letter-spacing:3px;font-family:'Syne',sans-serif;font-weight:700;"/>
+  <label>Ton prénom</label>
+  <input type="text" id="join-name" placeholder="Ton prénom" maxlength="20"/>
+  <div class="error-msg" id="join-err"></div>
+  <button class="btn btn-primary" onclick="joinGame()" style="margin-top:1.1rem;">Rejoindre</button>
+  <button class="btn" onclick="show('s-home')">Retour</button>
+</div>
+
+<!-- JOINING -->
+<div class="screen" id="s-joining">
+  <div class="loading"><div class="spinner"></div><div>Connexion…</div></div>
+</div>
+
+<!-- WAIT -->
+<div class="screen" id="s-wait">
+  <div class="loading"><div class="spinner"></div><div id="wait-msg">En attente…</div></div>
+  <div id="wait-players" style="margin-top:1.5rem;"></div>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="s-game">
+  <div class="game-header">
+    <div>
+      <div class="hole-info" id="hole-info">Trou 1</div>
+      <div class="hole-par" id="hole-par">Par 3</div>
+    </div>
+    <button class="btn btn-danger btn-sm" onclick="deleteGame()">Quitter</button>
+  </div>
+
+  <div class="turn-bar">
+    <div class="turn-dot-big" id="turn-dot"></div>
+    <div class="turn-name" id="turn-name"></div>
+    <div class="shots-badge" id="shots-badge"></div>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="golf"></canvas>
+  </div>
+
+  <div class="power-wrap" id="power-wrap" style="display:none;">
+    <div class="power-label">Puissance du tir</div>
+    <div class="power-bar-bg"><div class="power-bar-fill" id="power-fill" style="width:0%"></div></div>
+    <div class="power-hint">Maintiens pour charger · Relâche pour frapper</div>
+  </div>
+
+  <div class="scoreboard">
+    <div class="sb-title">Scores</div>
+    <div id="sb-rows"></div>
+  </div>
+  <div class="version-tag">version1</div>
+</div>
+
+<!-- WIN -->
+<div class="screen" id="s-win">
+  <div class="win-wrap">
+    <div class="win-emoji">🏆</div>
+    <div class="win-title" id="win-title"></div>
+    <div class="win-sub" id="win-sub"></div>
+    <div class="final-scores" id="final-scores"></div>
+    <button class="btn btn-primary" onclick="rematch()" id="rematch-btn" style="display:none;">Rejouer !</button>
+    <button class="btn" onclick="show('s-home')" style="margin-top:0.5rem;">Accueil</button>
+    <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.5rem;">Supprimer</button>
+  </div>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
+  authDomain:"undercover-game-b0d2a.firebaseapp.com",
+  databaseURL:"https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"undercover-game-b0d2a",
+  storageBucket:"undercover-game-b0d2a.firebasestorage.app",
+  messagingSenderId:"195280531653",
+  appId:"1:195280531653:web:94d72b25760b05af6bc0ac"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ═══════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════
+const PLAYER_COLORS = ['#f97316','#38bdf8','#a78bfa','#f472b6'];
+const MAX_SHOTS = 10;
+const TOTAL_HOLES = 9;
+const FRICTION = 0.985;
+const WALL_BOUNCE = 0.55;
+const MIN_SPEED = 0.15;
+const CANVAS_W = 360;
+const CANVAS_H = 480;
+
+// ═══════════════════════════════════════
+// HOLE DEFINITIONS (9 holes)
+// Each hole: ball start, hole pos, par, obstacles
+// Obstacles: {type:'rect'|'circle'|'water'|'bunker', x,y,w,h,r}
+// ═══════════════════════════════════════
+const HOLES = [
+  // Hole 1 — straight shot, par 2
+  { par:2, ball:{x:180,y:420}, hole:{x:180,y:60}, walls:[
+    {type:'rect',x:60,y:40,w:240,h:400,fill:false} // course boundary
+  ], obs:[] },
+
+  // Hole 2 — left turn, par 3
+  { par:3, ball:{x:60,y:420}, hole:{x:300,y:80}, walls:[], obs:[
+    {type:'rect',x:160,y:150,w:20,h:180,fill:true,color:'#374151'},
+  ]},
+
+  // Hole 3 — zigzag, par 3
+  { par:3, ball:{x:180,y:440}, hole:{x:180,y:60}, walls:[], obs:[
+    {type:'rect',x:80,y:340,w:160,h:16,fill:true,color:'#374151'},
+    {type:'rect',x:120,y:240,w:160,h:16,fill:true,color:'#374151'},
+    {type:'rect',x:80,y:140,w:160,h:16,fill:true,color:'#374151'},
+  ]},
+
+  // Hole 4 — water hazard, par 3
+  { par:3, ball:{x:180,y:430}, hole:{x:180,y:60}, walls:[], obs:[
+    {type:'rect',x:80,y:220,w:200,h:60,fill:true,color:'#1d4ed8',type2:'water'},
+  ]},
+
+  // Hole 5 — diagonal wall, par 3
+  { par:3, ball:{x:80,y:420}, hole:{x:280,y:80}, walls:[], obs:[
+    {type:'rect',x:100,y:180,w:180,h:16,fill:true,color:'#374151',angle:30},
+  ]},
+
+  // Hole 6 — island green, par 4
+  { par:4, ball:{x:180,y:440}, hole:{x:180,y:80}, walls:[], obs:[
+    {type:'circle',x:180,y:260,r:60,fill:true,color:'#1d4ed8',type2:'water'},
+  ]},
+
+  // Hole 7 — bunkers, par 3
+  { par:3, ball:{x:60,y:420}, hole:{x:300,y:60}, walls:[], obs:[
+    {type:'circle',x:180,y:300,r:35,fill:true,color:'#d97706',type2:'bunker'},
+    {type:'circle',x:260,y:180,r:30,fill:true,color:'#d97706',type2:'bunker'},
+  ]},
+
+  // Hole 8 — corridor, par 2
+  { par:2, ball:{x:180,y:440}, hole:{x:180,y:60}, walls:[], obs:[
+    {type:'rect',x:60,y:40,w:80,h:400,fill:true,color:'#374151'},
+    {type:'rect',x:220,y:40,w:80,h:400,fill:true,color:'#374151'},
+  ]},
+
+  // Hole 9 — final challenge, par 4
+  { par:4, ball:{x:60,y:440}, hole:{x:300,y:60}, walls:[], obs:[
+    {type:'rect',x:100,y:340,w:16,h:120,fill:true,color:'#374151'},
+    {type:'rect',x:160,y:200,w:16,h:140,fill:true,color:'#374151'},
+    {type:'rect',x:240,y:280,w:16,h:120,fill:true,color:'#374151'},
+    {type:'circle',x:200,y:150,r:25,fill:true,color:'#1d4ed8',type2:'water'},
+  ]},
+];
+
+// Course boundary (green area)
+const COURSE = {x:30,y:30,w:300,h:420};
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let myCode=null,myName=null,myPnum=null,isHost=false;
+let gameListener=null,currentGame=null;
+
+// Local physics state
+let ball={x:180,y:420,vx:0,vy:0,moving:false};
+let aimAngle=0,power=0,charging=false,chargingStart=0;
+let animRAF=null;
+let canvasW=360,canvasH=480;
+let inputDown=false,inputStart=null;
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+window.show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');};
+function toast(msg,dur=2200){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+window.copyCode=()=>{if(!myCode)return;navigator.clipboard.writeText(myCode).then(()=>toast('Code copié !'));};
+function genCode(){const w=['GOLF','PUTT','HOLE','FLAG','PAR'];return w[Math.floor(Math.random()*w.length)]+'-'+Math.floor(10+Math.random()*90);}
+function isBannedName(n){const s=n.toLowerCase().replace(/[^a-z0-9]/g,'');return [/sp[ei][ei]?d/,/sp[iy]d/,/speedlov/,/speedit/,/speedi/,/speedy/,/67(?:speed|spid|spyd)?/,/(?:speed|spid|spyd).*67/,/^67$/].some(r=>r.test(s));}
+const BANNED_MSG="En vertu des très éclairées dispositions de l'article 16 de la loi SREN, il est solennellement institué un dispositif de bannissement numérique destiné à frapper d'indignité digitale les personnes soupçonnées d'avoir commis, ou reconnues coupables d'avoir commis, certaines infractions en ligne ; étant en outre précisé, avec toute la rigueur que commande l'ordre public numérique, que toute référence, explicite ou implicite, à « speedy » sera tenue pour prohibée et pourra, le cas échéant, justifier l'édiction d'une mesure de bannissement à caractère permanent.";
+
+// ═══════════════════════════════════════
+// CANVAS SETUP
+// ═══════════════════════════════════════
+function setupCanvas(){
+  const canvas=document.getElementById('golf'); if(!canvas)return;
+  const wrap=canvas.parentElement;
+  const displayW=wrap.clientWidth||360;
+  const scale=displayW/CANVAS_W;
+  canvas.width=CANVAS_W; canvas.height=CANVAS_H;
+  canvas.style.width=displayW+'px';
+  canvas.style.height=(CANVAS_H*scale)+'px';
+  canvasW=CANVAS_W; canvasH=CANVAS_H;
+}
+
+// ═══════════════════════════════════════
+// DRAWING
+// ═══════════════════════════════════════
+function drawGame(game){
+  const canvas=document.getElementById('golf'); if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const holeIdx=(game.currentHole||1)-1;
+  const hole=HOLES[holeIdx]||HOLES[0];
+  ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
+
+  // Background
+  ctx.fillStyle='#0a1a0a'; ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
+
+  // Green (course)
+  ctx.fillStyle='#166534'; ctx.beginPath();
+  ctx.roundRect(COURSE.x,COURSE.y,COURSE.w,COURSE.h,8); ctx.fill();
+
+  // Grass texture lines
+  ctx.strokeStyle='rgba(255,255,255,0.03)'; ctx.lineWidth=1;
+  for(let i=0;i<20;i++){
+    ctx.beginPath(); ctx.moveTo(COURSE.x,COURSE.y+i*22); ctx.lineTo(COURSE.x+COURSE.w,COURSE.y+i*22); ctx.stroke();
+  }
+
+  // Obstacles
+  hole.obs.forEach(obs=>{
+    if(obs.type==='rect'){
+      ctx.fillStyle=obs.color||'#374151';
+      if(obs.angle){
+        ctx.save();
+        ctx.translate(obs.x+obs.w/2,obs.y+obs.h/2);
+        ctx.rotate(obs.angle*Math.PI/180);
+        ctx.fillRect(-obs.w/2,-obs.h/2,obs.w,obs.h);
+        ctx.restore();
+      } else {
+        ctx.fillRect(obs.x,obs.y,obs.w,obs.h);
+      }
+      // Water ripple
+      if(obs.type2==='water'){
+        ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=1;
+        for(let i=1;i<3;i++){
+          ctx.beginPath(); ctx.rect(obs.x+obs.w*0.2*i/3,obs.y+obs.h*0.3,obs.w*0.3,2); ctx.stroke();
+        }
+      }
+    } else if(obs.type==='circle'){
+      ctx.fillStyle=obs.color||'#374151';
+      ctx.beginPath(); ctx.arc(obs.x,obs.y,obs.r,0,2*Math.PI); ctx.fill();
+      if(obs.type2==='water'){
+        ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.arc(obs.x,obs.y,obs.r*0.5,0,2*Math.PI); ctx.stroke();
+      }
+      if(obs.type2==='bunker'){
+        ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=1;
+        for(let i=0;i<3;i++){
+          ctx.beginPath(); ctx.arc(obs.x+i*6-6,obs.y+i*4-4,4,0,2*Math.PI); ctx.stroke();
+        }
+      }
+    }
+  });
+
+  // Course border
+  ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.roundRect(COURSE.x,COURSE.y,COURSE.w,COURSE.h,8); ctx.stroke();
+
+  // Hole (cup)
+  const hp=hole.hole;
+  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(hp.x,hp.y,10,0,2*Math.PI); ctx.fill();
+  ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(hp.x,hp.y,9,0,2*Math.PI); ctx.fill();
+  // Flag
+  ctx.strokeStyle='#888'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(hp.x,hp.y); ctx.lineTo(hp.x,hp.y-28); ctx.stroke();
+  ctx.fillStyle='#ef4444';
+  ctx.beginPath(); ctx.moveTo(hp.x,hp.y-28); ctx.lineTo(hp.x+14,hp.y-22); ctx.lineTo(hp.x,hp.y-16); ctx.fill();
+
+  // Aim line (only for current player on their turn)
+  const players=game.players||[];
+  const isMyTurn=players[game.currentPlayerTurn]?.name===myName && !ball.moving && game.phase==='playing';
+  if(isMyTurn && !ball.moving){
+    const len=60+power*1.2;
+    ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=1.5;
+    ctx.setLineDash([5,4]);
+    ctx.beginPath();
+    ctx.moveTo(ball.x,ball.y);
+    ctx.lineTo(ball.x+Math.cos(aimAngle)*len, ball.y+Math.sin(aimAngle)*len);
+    ctx.stroke(); ctx.setLineDash([]);
+    // Arrow head
+    const ax=ball.x+Math.cos(aimAngle)*len;
+    const ay=ball.y+Math.sin(aimAngle)*len;
+    ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.save(); ctx.translate(ax,ay); ctx.rotate(aimAngle);
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-8,-4); ctx.lineTo(-8,4); ctx.fill();
+    ctx.restore();
+  }
+
+  // All players' balls (show others too)
+  players.forEach((p,i)=>{
+    if(!p||p.finishedHole) return;
+    const bx=i===myPnum?ball.x:(p.ballX||hole.ball.x);
+    const by=i===myPnum?ball.y:(p.ballY||hole.ball.y);
+    const col=PLAYER_COLORS[i%PLAYER_COLORS.length];
+    // Shadow
+    ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(bx+2,by+3,7,4,0,0,2*Math.PI); ctx.fill();
+    // Ball
+    const grad=ctx.createRadialGradient(bx-3,by-3,1,bx,by,8);
+    grad.addColorStop(0,'#ffffff');
+    grad.addColorStop(0.4,col);
+    grad.addColorStop(1,col.replace(')',',0.7)').replace('rgb','rgba'));
+    ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(bx,by,8,0,2*Math.PI); ctx.fill();
+    // Player indicator
+    ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.beginPath(); ctx.arc(bx,by-14,7,0,2*Math.PI); ctx.fill();
+    ctx.fillStyle=col; ctx.font='bold 8px Syne,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(p.name[0].toUpperCase(),bx,by-14);
+  });
+}
+
+// ═══════════════════════════════════════
+// PHYSICS
+// ═══════════════════════════════════════
+function updatePhysics(game){
+  if(!ball.moving)return;
+  const holeIdx=(game.currentHole||1)-1;
+  const holeDef=HOLES[holeIdx]||HOLES[0];
+  const hp=holeDef.hole;
+
+  ball.x+=ball.vx; ball.y+=ball.vy;
+  ball.vx*=FRICTION; ball.vy*=FRICTION;
+
+  // Course boundary bounce
+  if(ball.x<COURSE.x+8){ball.x=COURSE.x+8;ball.vx=Math.abs(ball.vx)*WALL_BOUNCE;}
+  if(ball.x>COURSE.x+COURSE.w-8){ball.x=COURSE.x+COURSE.w-8;ball.vx=-Math.abs(ball.vx)*WALL_BOUNCE;}
+  if(ball.y<COURSE.y+8){ball.y=COURSE.y+8;ball.vy=Math.abs(ball.vy)*WALL_BOUNCE;}
+  if(ball.y>COURSE.y+COURSE.h-8){ball.y=COURSE.y+COURSE.h-8;ball.vy=-Math.abs(ball.vy)*WALL_BOUNCE;}
+
+  // Obstacle collisions
+  holeDef.obs.forEach(obs=>{
+    if(obs.type==='rect'&&!obs.angle){
+      const bx=ball.x,by=ball.y,r=8;
+      const left=obs.x,right=obs.x+obs.w,top=obs.y,bot=obs.y+obs.h;
+      if(bx+r>left&&bx-r<right&&by+r>top&&by-r<bot){
+        if(obs.type2==='water'){
+          // Reset to start of hole
+          ball.x=holeDef.ball.x; ball.y=holeDef.ball.y;
+          ball.vx=0; ball.vy=0; ball.moving=false;
+          toast('💦 Dans l\'eau ! +1 coup',1500);
+          // Add penalty shot
+          incrementShot(game);
+          return;
+        }
+        if(obs.type2==='bunker'){
+          ball.vx*=0.4; ball.vy*=0.4;
+        } else {
+          // Wall bounce — find closest edge
+          const overlapL=bx+r-left, overlapR=right-(bx-r);
+          const overlapT=by+r-top, overlapB=bot-(by-r);
+          const minH=Math.min(overlapL,overlapR), minV=Math.min(overlapT,overlapB);
+          if(minH<minV){
+            if(overlapL<overlapR){ball.x=left-r;ball.vx=-Math.abs(ball.vx)*WALL_BOUNCE;}
+            else{ball.x=right+r;ball.vx=Math.abs(ball.vx)*WALL_BOUNCE;}
+          } else {
+            if(overlapT<overlapB){ball.y=top-r;ball.vy=-Math.abs(ball.vy)*WALL_BOUNCE;}
+            else{ball.y=bot+r;ball.vy=Math.abs(ball.vy)*WALL_BOUNCE;}
+          }
+        }
+      }
+    } else if(obs.type==='circle'){
+      const dx=ball.x-obs.x, dy=ball.y-obs.y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<obs.r+8){
+        if(obs.type2==='water'){
+          ball.x=holeDef.ball.x; ball.y=holeDef.ball.y;
+          ball.vx=0; ball.vy=0; ball.moving=false;
+          toast('💦 Dans l\'eau ! +1 coup',1500);
+          incrementShot(game);
+          return;
+        }
+        if(obs.type2==='bunker'){ball.vx*=0.5;ball.vy*=0.5;}
+        else {
+          const nx=dx/dist, ny=dy/dist;
+          const overlap=obs.r+8-dist;
+          ball.x+=nx*overlap; ball.y+=ny*overlap;
+          const dot=ball.vx*nx+ball.vy*ny;
+          ball.vx=(ball.vx-2*dot*nx)*WALL_BOUNCE;
+          ball.vy=(ball.vy-2*dot*ny)*WALL_BOUNCE;
+        }
+      }
+    }
+  });
+
+  // Check hole-in
+  const dx=ball.x-hp.x, dy=ball.y-hp.y;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  if(dist<12){
+    ball.x=hp.x; ball.y=hp.y;
+    ball.vx=0; ball.vy=0; ball.moving=false;
+    holeSunk(game);
+    return;
+  }
+
+  // Stop if slow enough
+  const speed=Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy);
+  if(speed<MIN_SPEED){
+    ball.vx=0; ball.vy=0; ball.moving=false;
+    // Sync ball position and pass turn
+    syncBallAndPassTurn(game);
+  }
+}
+
+async function incrementShot(game){
+  const players=JSON.parse(JSON.stringify(game.players||[]));
+  const turn=game.currentPlayerTurn||0;
+  players[turn].shots=(players[turn].shots||0)+1;
+  await update(ref(db,`mg/${myCode}`),{players});
+}
+
+async function syncBallAndPassTurn(game){
+  if(!myCode) return;
+  const players=JSON.parse(JSON.stringify(game.players||[]));
+  const turn=game.currentPlayerTurn||0;
+  players[turn].ballX=ball.x; players[turn].ballY=ball.y;
+  // Pass turn to next active player
+  const n=players.length;
+  let next=(turn+1)%n;
+  let tries=0;
+  while(players[next]?.finishedHole && tries<n){next=(next+1)%n;tries++;}
+  await update(ref(db,`mg/${myCode}`),{players, currentPlayerTurn:next});
+}
+
+async function holeSunk(game){
+  if(!myCode) return;
+  const holeIdx=(game.currentHole||1)-1;
+  const holeDef=HOLES[holeIdx];
+  const players=JSON.parse(JSON.stringify(game.players||[]));
+  const turn=game.currentPlayerTurn||0;
+  const shots=players[turn].shots||0;
+  // Record score for this hole
+  if(!players[turn].scores) players[turn].scores=[];
+  players[turn].scores[holeIdx]=shots;
+  players[turn].finishedHole=true;
+  players[turn].ballX=holeDef.hole.x; players[turn].ballY=holeDef.hole.y;
+
+  toast(`⛳ Dans le trou en ${shots} coup${shots>1?'s':''}!`,2000);
+
+  // Check if all players finished this hole
+  const allDone=players.every(p=>p&&p.finishedHole);
+  if(allDone){
+    // Move to next hole or end game
+    const nextHole=(game.currentHole||1)+1;
+    if(nextHole>TOTAL_HOLES){
+      // Game over
+      await update(ref(db,`mg/${myCode}`),{players,phase:'gameover'});
+    } else {
+      // Reset for next hole
+      players.forEach((p,i)=>{
+        p.finishedHole=false;
+        p.shots=0;
+        p.ballX=HOLES[nextHole-1].ball.x;
+        p.ballY=HOLES[nextHole-1].ball.y;
+      });
+      await update(ref(db,`mg/${myCode}`),{players,currentHole:nextHole,currentPlayerTurn:0,phase:'playing'});
+    }
+  } else {
+    // Pass to next unfinished player
+    const n=players.length;
+    let next=(turn+1)%n;
+    let tries=0;
+    while(players[next]?.finishedHole && tries<n){next=(next+1)%n;tries++;}
+    await update(ref(db,`mg/${myCode}`),{players,currentPlayerTurn:next});
+  }
+}
+
+// ═══════════════════════════════════════
+// SHOT INPUT
+// ═══════════════════════════════════════
+function getCanvasPos(e,canvas){
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=CANVAS_W/rect.width;
+  const scaleY=CANVAS_H/rect.height;
+  const clientX=e.touches?e.touches[0].clientX:e.clientX;
+  const clientY=e.touches?e.touches[0].clientY:e.clientY;
+  return{x:(clientX-rect.left)*scaleX, y:(clientY-rect.top)*scaleY};
+}
+
+function setupInput(){
+  const canvas=document.getElementById('golf'); if(!canvas)return;
+
+  function onDown(e){
+    e.preventDefault();
+    if(!currentGame||ball.moving)return;
+    const game=currentGame;
+    const players=game.players||[];
+    if(players[game.currentPlayerTurn]?.name!==myName)return;
+    const pos=getCanvasPos(e,canvas);
+    inputDown=true; inputStart=pos; charging=true; chargingStart=Date.now(); power=0;
+    document.getElementById('power-wrap').style.display='block';
+    updateAim(pos);
+  }
+  function onMove(e){
+    e.preventDefault();
+    if(!inputDown||ball.moving)return;
+    const pos=getCanvasPos(e,canvas);
+    updateAim(pos);
+    const elapsed=Date.now()-chargingStart;
+    power=Math.min(100,elapsed/30);
+    updatePowerBar();
+  }
+  function onUp(e){
+    e.preventDefault();
+    if(!inputDown||ball.moving)return;
+    inputDown=false;
+    if(!currentGame)return;
+    const game=currentGame;
+    const players=game.players||[];
+    if(players[game.currentPlayerTurn]?.name!==myName)return;
+    fireShot(game);
+    document.getElementById('power-wrap').style.display='none';
+    power=0;
+  }
+
+  canvas.addEventListener('mousedown',onDown,{passive:false});
+  canvas.addEventListener('mousemove',onMove,{passive:false});
+  canvas.addEventListener('mouseup',onUp,{passive:false});
+  canvas.addEventListener('touchstart',onDown,{passive:false});
+  canvas.addEventListener('touchmove',onMove,{passive:false});
+  canvas.addEventListener('touchend',onUp,{passive:false});
+}
+
+function updateAim(pos){
+  aimAngle=Math.atan2(pos.y-ball.y, pos.x-ball.x);
+}
+
+function updatePowerBar(){
+  const fill=document.getElementById('power-fill'); if(!fill)return;
+  fill.style.width=power+'%';
+  const h=power<40?'#4ade80':power<70?'#fbbf24':'#ef4444';
+  fill.style.background=h;
+}
+
+async function fireShot(game){
+  const minPow=5, maxPow=18;
+  const shotPower=minPow+(power/100)*(maxPow-minPow);
+  ball.vx=Math.cos(aimAngle)*shotPower;
+  ball.vy=Math.sin(aimAngle)*shotPower;
+  ball.moving=true;
+  charging=false; power=0;
+
+  // Increment shot count
+  const players=JSON.parse(JSON.stringify(game.players||[]));
+  const turn=game.currentPlayerTurn||0;
+  players[turn].shots=(players[turn].shots||0)+1;
+  await update(ref(db,`mg/${myCode}`),{players});
+}
+
+// ═══════════════════════════════════════
+// ANIMATION LOOP
+// ═══════════════════════════════════════
+function startAnimLoop(){
+  if(animRAF) cancelAnimationFrame(animRAF);
+  function loop(){
+    if(!currentGame) return;
+    if(ball.moving) updatePhysics(currentGame);
+    drawGame(currentGame);
+    animRAF=requestAnimationFrame(loop);
+  }
+  animRAF=requestAnimationFrame(loop);
+}
+
+// ═══════════════════════════════════════
+// UI UPDATES
+// ═══════════════════════════════════════
+function updateGameUI(game){
+  const players=game.players||[];
+  const holeIdx=(game.currentHole||1)-1;
+  const holeDef=HOLES[holeIdx]||HOLES[0];
+  const turnIdx=game.currentPlayerTurn||0;
+  const currentPlayer=players[turnIdx];
+  const isMyTurn=currentPlayer?.name===myName;
+
+  document.getElementById('hole-info').textContent=`Trou ${game.currentHole||1} / ${TOTAL_HOLES}`;
+  document.getElementById('hole-par').textContent=`Par ${holeDef.par}`;
+
+  const dot=document.getElementById('turn-dot');
+  const nameEl=document.getElementById('turn-name');
+  const shotsEl=document.getElementById('shots-badge');
+  if(currentPlayer){
+    dot.style.background=PLAYER_COLORS[turnIdx%PLAYER_COLORS.length];
+    nameEl.textContent=isMyTurn?'Ton tour !':currentPlayer.name+' joue…';
+    nameEl.style.color=isMyTurn?(PLAYER_COLORS[myPnum%PLAYER_COLORS.length]):'var(--muted)';
+    shotsEl.textContent=`${currentPlayer.shots||0} coup${(currentPlayer.shots||0)>1?'s':''}`;
+  }
+
+  // Sync ball position for my player from game state (when I'm not the one moving)
+  if(!ball.moving){
+    const myP=players[myPnum];
+    if(myP&&myP.ballX!==undefined){
+      ball.x=myP.ballX; ball.y=myP.ballY;
+    }
+  }
+
+  updateScoreboard(game);
+}
+
+function updateScoreboard(game){
+  const container=document.getElementById('sb-rows'); if(!container)return;
+  container.innerHTML='';
+  const players=game.players||[];
+  const currentHole=(game.currentHole||1)-1;
+
+  players.forEach((p,i)=>{
+    if(!p)return;
+    const col=PLAYER_COLORS[i%PLAYER_COLORS.length];
+    const total=(p.scores||[]).reduce((s,v)=>s+(v||0),0);
+    const div=document.createElement('div'); div.className='sb-row';
+
+    let holesHtml='<div class="sb-holes">';
+    for(let h=0;h<TOTAL_HOLES;h++){
+      const score=p.scores&&p.scores[h]!==undefined?p.scores[h]:null;
+      const par=HOLES[h].par;
+      let cls='pending', txt=h+1;
+      if(score!==null){
+        const diff=score-par;
+        txt=score;
+        if(diff<=-2)cls='eagle';
+        else if(diff===-1)cls='birdie';
+        else if(diff===0)cls='par';
+        else if(diff===1)cls='bogey';
+        else cls='double';
+      }
+      holesHtml+=`<div class="sb-hole ${cls}">${txt}</div>`;
+    }
+    holesHtml+='</div>';
+
+    div.innerHTML=`<div class="pdot" style="background:${col};"></div>
+      <div class="sb-name" style="${p.name===myName?'color:var(--text);font-weight:500':'color:var(--muted)'}">${p.name}</div>
+      ${holesHtml}
+      <div class="sb-score" style="color:${col};">${total||0}</div>`;
+    container.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════
+// CREATE / JOIN
+// ═══════════════════════════════════════
+window.createGame=async()=>{
+  const name=document.getElementById('create-name').value.trim();
+  const maxPlayers=parseInt(document.getElementById('create-players').value);
+  const errEl=document.getElementById('create-err');
+  if(!name){errEl.style.display='block';errEl.textContent='Entre ton prénom.';return;}
+  if(isBannedName(name)){errEl.style.display='block';errEl.textContent=BANNED_MSG;return;}
+  errEl.style.display='none';
+  const code=genCode();
+  const player={name,scores:[],shots:0,ballX:HOLES[0].ball.x,ballY:HOLES[0].ball.y,finishedHole:false};
+  const game={code,maxPlayers,players:[player],phase:'lobby',currentHole:1,currentPlayerTurn:0,createdAt:Date.now()};
+  await set(ref(db,`mg/${code}`),game);
+  myCode=code;myName=name;myPnum=0;isHost=true;
+  startListener(code);renderLobby(game);show('s-lobby');
+};
+
+function renderLobby(game){
+  const el=document.getElementById('lobby-code'); el.childNodes[0].textContent=game.code;
+  const c=document.getElementById('lobby-players'); if(!c)return; c.innerHTML='';
+  (game.players||[]).forEach((p,i)=>{
+    const d=document.createElement('div');d.className='prow';
+    d.innerHTML=`<div class="pdot" style="background:${PLAYER_COLORS[i]};"></div><span style="font-size:15px;">${p.name}</span>`;
+    c.appendChild(d);
+  });
+  if(game.players.length<(game.maxPlayers||2)){
+    const d=document.createElement('div');d.style.cssText='font-size:13px;color:var(--muted);padding:9px 0;display:flex;align-items:center;gap:8px;';
+    d.innerHTML=`<span class="wdot"></span> En attente (${game.players.length}/${game.maxPlayers})`;
+    c.appendChild(d);
+  }
+  const w=document.getElementById('lobby-start-wrap');
+  if(w) w.style.display=(isHost&&game.players.length>=2)?'block':'none';
+}
+
+window.startGame=async()=>{
+  const snap=await get(ref(db,`mg/${myCode}`));if(!snap.exists())return;
+  const game=snap.val();
+  const players=game.players.map((p,i)=>({...p,ballX:HOLES[0].ball.x,ballY:HOLES[0].ball.y,shots:0,scores:[],finishedHole:false}));
+  await update(ref(db,`mg/${myCode}`),{phase:'playing',players,currentHole:1,currentPlayerTurn:0});
+};
+
+window.deleteGame=async()=>{
+  if(animRAF)cancelAnimationFrame(animRAF);
+  if(myCode)await remove(ref(db,`mg/${myCode}`));
+  myCode=null;currentGame=null;show('s-home');
+};
+
+window.joinGame=async()=>{
+  const code=document.getElementById('join-code').value.trim().toUpperCase();
+  const name=document.getElementById('join-name').value.trim();
+  const errEl=document.getElementById('join-err');
+  if(!code){errEl.style.display='block';errEl.textContent='Entre le code.';return;}
+  if(!name){errEl.style.display='block';errEl.textContent='Entre ton prénom.';return;}
+  if(isBannedName(name)){errEl.style.display='block';errEl.textContent=BANNED_MSG;return;}
+  errEl.style.display='none';show('s-joining');
+  const snap=await get(ref(db,`mg/${code}`));
+  if(!snap.exists()){show('s-join');errEl.style.display='block';errEl.textContent='Code introuvable.';return;}
+  const game=snap.val();const players=game.players||[];
+  const ex=players.findIndex(p=>p&&p.name.toLowerCase()===name.toLowerCase());
+  if(ex!==-1){myCode=code;myName=name;myPnum=ex;isHost=ex===0;startListener(code);return;}
+  if(players.length>=(game.maxPlayers||2)){show('s-join');errEl.style.display='block';errEl.textContent='Partie complète.';return;}
+  if(game.phase!=='lobby'){show('s-join');errEl.style.display='block';errEl.textContent='Partie déjà lancée.';return;}
+  const np=[...players,{name,scores:[],shots:0,ballX:HOLES[0].ball.x,ballY:HOLES[0].ball.y,finishedHole:false}];
+  await update(ref(db,`mg/${code}`),{players:np});
+  myCode=code;myName=name;myPnum=np.length-1;isHost=false;
+  startListener(code);
+  document.getElementById('wait-msg').textContent=`Bienvenue ${name} !`;show('s-wait');
+};
+
+// ═══════════════════════════════════════
+// LISTENER
+// ═══════════════════════════════════════
+function startListener(code){
+  if(gameListener)gameListener();
+  gameListener=onValue(ref(db,`mg/${code}`),snap=>{
+    if(!snap.exists()){show('s-home');return;}
+    const prev=currentGame;
+    currentGame=snap.val();
+    handlePhase(currentGame,prev);
+  });
+}
+
+function handlePhase(game,prev){
+  if(game.phase==='lobby'){
+    if(isHost){renderLobby(game);if(!document.getElementById('s-lobby').classList.contains('active'))show('s-lobby');}
+    else{renderWaitLobby(game);if(!document.getElementById('s-wait').classList.contains('active'))show('s-wait');}
+    return;
+  }
+  if(game.phase==='playing'){
+    if(!document.getElementById('s-game').classList.contains('active')){
+      show('s-game');
+      requestAnimationFrame(()=>{setupCanvas();setupInput();startAnimLoop();});
+    }
+    // On hole change, reset local ball
+    if(!prev||prev.currentHole!==game.currentHole){
+      const holeIdx=(game.currentHole||1)-1;
+      const holeDef=HOLES[holeIdx]||HOLES[0];
+      ball.x=holeDef.ball.x; ball.y=holeDef.ball.y;
+      ball.vx=0;ball.vy=0;ball.moving=false;
+      if(game.currentHole>1) toast(`⛳ Trou ${game.currentHole} !`,1500);
+    }
+    updateGameUI(game);
+    return;
+  }
+  if(game.phase==='gameover'){
+    if(animRAF)cancelAnimationFrame(animRAF);
+    renderGameOver(game);
+    return;
+  }
+}
+
+function renderWaitLobby(game){
+  const c=document.getElementById('wait-players');if(!c)return;c.innerHTML='';
+  (game.players||[]).forEach((p,i)=>{
+    const d=document.createElement('div');d.className='prow';
+    d.innerHTML=`<div class="pdot" style="background:${PLAYER_COLORS[i]};"></div><span style="font-size:15px;">${p.name}</span>`;
+    c.appendChild(d);
+  });
+}
+
+// ═══════════════════════════════════════
+// GAME OVER
+// ═══════════════════════════════════════
+function renderGameOver(game){
+  const players=[...(game.players||[])];
+  // Sort by total score (ascending = fewer shots = better)
+  const ranked=players.map((p,i)=>({...p,i,total:(p.scores||[]).reduce((s,v)=>s+(v||0),0)})).sort((a,b)=>a.total-b.total);
+  const winner=ranked[0];
+  const isWinner=winner.name===myName;
+
+  document.getElementById('win-title').textContent=isWinner?'Tu gagnes !':`${winner.name} gagne !`;
+  document.getElementById('win-title').style.color=PLAYER_COLORS[winner.i%PLAYER_COLORS.length];
+  document.getElementById('win-sub').textContent=`${winner.total} coups au total sur ${TOTAL_HOLES} trous`;
+
+  const fs=document.getElementById('final-scores'); fs.innerHTML='';
+  const medals=['🥇','🥈','🥉','4️⃣'];
+  ranked.forEach((p,rank)=>{
+    const d=document.createElement('div');d.className='fs-row';
+    d.innerHTML=`<div class="fs-rank">${medals[rank]||''}</div>
+      <div class="fs-name" style="${p.name===myName?'color:var(--text);font-weight:500':'color:var(--muted)'}">${p.name}</div>
+      <div class="fs-score" style="color:${PLAYER_COLORS[p.i%PLAYER_COLORS.length]};">${p.total} coups</div>`;
+    fs.appendChild(d);
+  });
+
+  const rb=document.getElementById('rematch-btn');
+  if(rb) rb.style.display=isHost?'block':'none';
+  show('s-win');
+}
+
+window.rematch=async()=>{
+  const players=(currentGame?.players||[]).map((p,i)=>({name:p.name,scores:[],shots:0,ballX:HOLES[0].ball.x,ballY:HOLES[0].ball.y,finishedHole:false}));
+  await update(ref(db,`mg/${myCode}`),{phase:'playing',players,currentHole:1,currentPlayerTurn:0});
+  const hd=HOLES[0];ball.x=hd.ball.x;ball.y=hd.ball.y;ball.vx=0;ball.vy=0;ball.moving=false;
+  show('s-game');requestAnimationFrame(()=>{setupCanvas();startAnimLoop();});
+};
+</script>
+</body>
+</html>
