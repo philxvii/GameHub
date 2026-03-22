@@ -310,7 +310,7 @@ canvas#rwheel{display:block;border-radius:50%;}
   </div>
 
 </div>
-<div class="version-tag">version2</div>
+<div class="version-tag">version3</div>
 </div>
 
 <!-- RESULT OVERLAY -->
@@ -501,9 +501,11 @@ function animLoop(){
   const ease = easeOutCubic(t);
   const easeStrong = easeOutQuint(t);
 
-  // Wheel rotates forward
+  // Wheel rotates forward — at t=1 snap to exact finalWheelAngle
   const totalWheelRot = spinData.totalWheelRot;
-  wheelAngle = spinData.startWheelAngle + totalWheelRot * ease;
+  wheelAngle = t < 1
+    ? spinData.startWheelAngle + totalWheelRot * ease
+    : spinData.finalWheelAngle;
 
   // Ball orbit: starts large, spirals inward as it slows
   const outerR = wheelSize/2 - 2;
@@ -520,14 +522,12 @@ function animLoop(){
   if(t < 1){
     animRAF = requestAnimationFrame(animLoop);
   } else {
-    // Animation done — snap to final position
-    wheelAngle = spinData.startWheelAngle + totalWheelRot;
-    // Ball lands at the pointer (top of wheel = -π/2)
+    // Animation done — snap EXACTLY to finalWheelAngle stored in spinData
+    // This guarantees the correct pocket is under the pointer regardless of float drift
+    wheelAngle = spinData.finalWheelAngle;
     ballAngle = -Math.PI/2;
-    // Ball stays at inner orbit
     ballR = ballEndR;
     drawWheel();
-    // Show result number
     showResultOnWheel(spinData.targetResult);
   }
 }
@@ -589,6 +589,7 @@ async function hostTriggerSpin(){
     targetResult,
     startWheelAngle: currentW,
     totalWheelRot,
+    finalWheelAngle,  // stored so all clients snap to exact same angle
     startBallAngle,
     ballTotalRot: ballSpins * 2 * Math.PI,
   };
