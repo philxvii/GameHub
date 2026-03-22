@@ -72,18 +72,23 @@ select option{background:#0e1209;}
 /* ── GAME LAYOUT (desktop: side by side) ── */
 #s-game{width:100%;padding:0;}
 .game-layout{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  grid-template-rows:auto;
-  gap:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
   padding:12px;
-  max-width:1100px;
+  max-width:900px;
   margin:0 auto;
   min-height:100vh;
+  align-items:stretch;
+}
+.game-top-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
   align-items:start;
 }
-@media(max-width:760px){
-  .game-layout{grid-template-columns:1fr;padding:8px;}
+@media(max-width:700px){
+  .game-top-row{grid-template-columns:1fr;}
 }
 .col-left{display:flex;flex-direction:column;gap:10px;}
 .col-right{display:flex;flex-direction:column;gap:10px;}
@@ -132,9 +137,9 @@ canvas#rwheel{display:block;border-radius:50%;}
 
 /* Number grid: 3 rows × 12 cols + zero column */
 .num-grid{display:grid;grid-template-columns:26px repeat(12,1fr);gap:2px;margin-bottom:2px;}
-.ng-zero{background:var(--zero-color);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:12px;color:white;cursor:pointer;transition:filter 0.1s;grid-row:span 3;writing-mode:vertical-rl;padding:3px 0;}
+.ng-zero{background:var(--zero-color);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:white;cursor:pointer;transition:filter 0.1s;grid-row:span 3;writing-mode:vertical-rl;padding:3px 0;}
 .ng-zero:hover{filter:brightness(1.35);}
-.ng-cell{height:30px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;cursor:pointer;transition:filter 0.1s;position:relative;user-select:none;}
+.ng-cell{height:40px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:filter 0.1s;position:relative;user-select:none;}
 .ng-cell.red{background:var(--red);}
 .ng-cell.blk{background:#111;border:1px solid rgba(255,255,255,0.08);}
 .ng-cell:hover{filter:brightness(1.45);transform:scale(1.06);}
@@ -142,7 +147,7 @@ canvas#rwheel{display:block;border-radius:50%;}
 
 /* Column 2:1 row */
 .col-bets-row{display:grid;grid-template-columns:26px repeat(12,1fr);gap:2px;margin-top:2px;}
-.col-bet-cell{height:20px;border-radius:2px;background:var(--felt2);border:1px solid rgba(212,175,55,0.12);display:flex;align-items:center;justify-content:center;font-size:9px;cursor:pointer;transition:all 0.1s;position:relative;color:var(--muted);user-select:none;}
+.col-bet-cell{height:28px;border-radius:3px;background:var(--felt2);border:1px solid rgba(212,175,55,0.12);display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;transition:all 0.1s;position:relative;color:var(--muted);user-select:none;}
 .col-bet-cell:hover{background:rgba(212,175,55,0.18);color:var(--text);}
 .col-bet-cell.has-bet{border-color:var(--gold);color:var(--gold);}
 
@@ -150,7 +155,7 @@ canvas#rwheel{display:block;border-radius:50%;}
 .doz-row{display:grid;grid-template-columns:26px repeat(3,1fr);gap:2px;margin-top:2px;}
 /* Outside bets */
 .out-row{display:grid;grid-template-columns:26px repeat(6,1fr);gap:2px;margin-top:2px;}
-.ob-cell{height:26px;border-radius:2px;background:var(--felt2);border:1px solid rgba(212,175,55,0.12);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.1s;position:relative;color:var(--text);user-select:none;}
+.ob-cell{height:36px;border-radius:3px;background:var(--felt2);border:1px solid rgba(212,175,55,0.12);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.1s;position:relative;color:var(--text);user-select:none;}
 .ob-cell:hover{background:rgba(212,175,55,0.15);border-color:rgba(212,175,55,0.35);}
 .ob-cell.has-bet{border-color:var(--gold);}
 .ob-red{color:var(--red)!important;font-weight:700;}
@@ -265,6 +270,7 @@ canvas#rwheel{display:block;border-radius:50%;}
 <!-- ── GAME ── -->
 <div class="screen" id="s-game">
 <div class="game-layout">
+<div class="game-top-row">
 
   <!-- LEFT COL: wheel + spin -->
   <div class="col-left">
@@ -316,6 +322,7 @@ canvas#rwheel{display:block;border-radius:50%;}
     </div>
   </div>
 
+</div><!-- end game-top-row -->
 </div>
 </div>
 
