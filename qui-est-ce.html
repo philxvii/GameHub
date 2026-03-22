@@ -464,15 +464,17 @@ async function handlePhase(game) {
     const players=game.players||[];
     const myP=players[myPnum];
     const otherP=players[1-myPnum];
-    // Both picked but phase not updated yet (race condition) — host triggers transition
+    // Both picked but phase not updated yet — host triggers transition
     if(myP?.secretId && otherP?.secretId && isHost){
       await update(ref(db,`qec2/${myCode}`),{phase:'playing',turn:0,questions:[],pendingQuestion:null,pendingGuess:null});
       return;
     }
-    if(myP&&myP.secretId){
+    // I already picked — wait
+    if(myP?.secretId){
       if(!document.getElementById('s-wait-pick').classList.contains('active')) show('s-wait-pick');
       return;
     }
+    // I haven't picked yet
     if(!document.getElementById('s-pick').classList.contains('active')){buildPickGrid();show('s-pick');}
     return;
   }
@@ -520,12 +522,13 @@ window.confirmPick=async()=>{
     updates.pendingGuess=null;
   }
   await update(ref(db,`qec2/${myCode}`),updates);
-  show('s-wait-pick');
+  // Don't navigate here — let the Firebase listener handle all navigation
 };
 
 // ── Game screen ──
 function renderGameScreen(game){
-  if(!document.getElementById('s-game').classList.contains('active')||!panelBuilt){
+  // Build grids only once
+  if(!panelBuilt){
     panelBuilt=true;
     buildGrid('my-panel',char=>{
       myEliminated[char.id]=!myEliminated[char.id];
@@ -533,8 +536,9 @@ function renderGameScreen(game){
       toast(myEliminated[char.id]?`${char.name} abattu !`:`${char.name} relevé !`,1000);
     });
     buildGrid('guess-grid',char=>submitGuess(char));
-    show('s-game');
   }
+  // Always show game screen
+  if(!document.getElementById('s-game').classList.contains('active')) show('s-game');
 
   // Secret
   const secret=charById(mySecretId||game.players[myPnum]?.secretId);
