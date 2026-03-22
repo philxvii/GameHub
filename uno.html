@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>UNO</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0608;--surface:#130d10;--surface2:#1c1218;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.16);
+  --text:#f5eef0;--muted:#7a606a;
+  --red:#ef4444;--blue:#3b82f6;--green:#22c55e;--yellow:#fbbf24;
+  --wild:#1a1a2e;--wild-border:#6366f1;
+  --danger:#ef4444;--r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{min-height:100%;background:var(--bg);}
+body{color:var(--text);font-family:'DM Sans',sans-serif;display:flex;align-items:flex-start;justify-content:center;}
+.app{width:100%;max-width:520px;min-height:100vh;padding:1rem 0.75rem 3rem;}
+.screen{display:none;animation:fadeIn 0.2s ease;}
+.screen.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:40px;line-height:1;letter-spacing:-2px;}
+.logo .u{color:var(--red);}.logo .n{color:var(--blue);}.logo .o{color:var(--green);}
+.logo small{font-size:13px;font-weight:400;color:var(--muted);font-family:'DM Sans',sans-serif;letter-spacing:0;display:block;margin-top:5px;}
+h2{font-family:'Syne',sans-serif;font-weight:700;font-size:20px;color:var(--text);margin-bottom:0.6rem;}
+p{font-size:14px;color:var(--muted);line-height:1.6;}
+label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;margin-top:0.9rem;}
+input,select{width:100%;padding:11px 13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;appearance:none;}
+input:focus,select:focus{border-color:var(--border2);}
+input::placeholder{color:var(--muted);}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a606a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;cursor:pointer;}
+select option{background:#130d10;}
+.btn{width:100%;padding:12px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all 0.15s;margin-top:9px;}
+.btn:hover{background:var(--surface2);border-color:var(--border2);}
+.btn:active{transform:scale(0.98);}
+.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
+.btn-primary{background:var(--red);color:#fff;border-color:var(--red);font-weight:700;font-family:'Syne',sans-serif;}
+.btn-primary:hover{filter:brightness(1.1);}
+.btn-danger{border-color:rgba(239,68,68,0.3);color:var(--danger);}
+.btn-danger:hover{background:rgba(239,68,68,0.08);}
+.btn-sm{width:auto;padding:6px 13px;font-size:13px;margin-top:0;}
+.btn-row{display:flex;gap:8px;margin-top:9px;}
+.btn-row .btn{margin-top:0;}
+.info-card{background:transparent;border:1px solid var(--border);border-radius:var(--r);padding:0.9rem 1.1rem;margin-top:0.9rem;font-size:13px;color:var(--muted);line-height:1.7;}
+.info-card strong{color:var(--text);}
+.code-box{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:6px;text-align:center;color:var(--red);padding:1.2rem;background:var(--surface);border:1px solid rgba(239,68,68,0.3);border-radius:var(--r);margin:0.9rem 0;cursor:pointer;}
+.copy-hint{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted);letter-spacing:0;font-weight:400;display:block;margin-top:5px;}
+.loading{text-align:center;padding:2.5rem 0;color:var(--muted);font-size:15px;}
+.spinner{width:26px;height:26px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 0.9rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.error-msg{font-size:12px;color:var(--danger);margin-top:7px;display:none;line-height:1.5;}
+.sep{border:none;border-top:1px solid var(--border);margin:1rem 0;}
+.wdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);animation:pulse 1.4s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}
+.toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:13px;font-weight:500;opacity:0;transition:all 0.22s;pointer-events:none;white-space:nowrap;z-index:999;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.prow{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);}
+.prow:last-child{border-bottom:none;}
+.back-home{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:1.1rem;}
+.back-home:hover{color:var(--text);}
+
+/* ── CARDS ── */
+.uno-card{
+  width:56px;height:84px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:16px;
+  cursor:pointer;user-select:none;position:relative;flex-shrink:0;
+  border:2px solid rgba(255,255,255,0.15);
+  transition:transform 0.15s,box-shadow 0.15s,filter 0.15s;
+  box-shadow:0 2px 8px rgba(0,0,0,0.5);
+}
+.uno-card:hover{transform:translateY(-8px);box-shadow:0 8px 20px rgba(0,0,0,0.5);}
+.uno-card.playable{border-color:rgba(255,255,255,0.7);box-shadow:0 0 12px rgba(255,255,255,0.3);}
+.uno-card.playable:hover{transform:translateY(-12px);box-shadow:0 12px 28px rgba(0,0,0,0.5),0 0 16px rgba(255,255,255,0.35);}
+.uno-card.not-playable{opacity:0.45;cursor:not-allowed;}
+.uno-card.not-playable:hover{transform:none;}
+.uno-card .corner{position:absolute;font-size:10px;font-weight:800;line-height:1;}
+.uno-card .corner.tl{top:4px;left:5px;}
+.uno-card .corner.br{bottom:4px;right:5px;transform:rotate(180deg);}
+.uno-card .center{font-size:22px;}
+
+.card-red{background:linear-gradient(135deg,#dc2626,#ef4444);}
+.card-blue{background:linear-gradient(135deg,#1d4ed8,#3b82f6);}
+.card-green{background:linear-gradient(135deg,#15803d,#22c55e);}
+.card-yellow{background:linear-gradient(135deg,#b45309,#fbbf24);color:#1a1a1a;}
+.card-wild{background:linear-gradient(135deg,#1a1a2e,#312e81);border-color:rgba(99,102,241,0.5);}
+.card-back{background:linear-gradient(135deg,#1a0a0a,#3d1515);border-color:rgba(239,68,68,0.3);}
+
+/* ── GAME LAYOUT ── */
+.game-wrap{display:flex;flex-direction:column;gap:8px;}
+
+.players-bar{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+.players-bar::-webkit-scrollbar{display:none;}
+.player-info-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:7px 10px;min-width:80px;flex-shrink:0;text-align:center;transition:border-color 0.2s;}
+.player-info-card.active{border-color:var(--red);background:rgba(239,68,68,0.08);}
+.pic-name{font-size:11px;color:var(--muted);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70px;}
+.pic-cards{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--text);}
+.pic-uno{font-size:10px;color:var(--red);font-weight:700;}
+
+.game-table{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:flex;align-items:center;justify-content:center;gap:20px;min-height:130px;}
+.discard-pile{position:relative;}
+.discard-pile .uno-card{cursor:default;}
+.discard-pile .uno-card:hover{transform:none;}
+.draw-pile{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.draw-pile-stack{position:relative;width:56px;height:84px;cursor:pointer;}
+.draw-pile-stack .uno-card{position:absolute;transition:transform 0.1s;}
+.draw-pile-stack:hover .uno-card{transform:translateY(-4px);}
+.draw-label{font-size:10px;color:var(--muted);text-align:center;}
+.current-color-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);}
+
+.turn-info{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;}
+.turn-name{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;}
+.direction-badge{font-size:12px;color:var(--muted);}
+
+.my-hand{display:flex;gap:6px;overflow-x:auto;padding:10px 0;scrollbar-width:thin;scrollbar-color:var(--border) transparent;-webkit-overflow-scrolling:touch;}
+.my-hand::-webkit-scrollbar{height:4px;}
+.my-hand::-webkit-scrollbar-track{background:transparent;}
+.my-hand::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+.uno-btn{background:var(--red);color:#fff;border:none;border-radius:var(--r);padding:10px 20px;font-family:'Syne',sans-serif;font-weight:800;font-size:20px;cursor:pointer;letter-spacing:1px;transition:all 0.15s;box-shadow:0 3px 12px rgba(239,68,68,0.4);}
+.uno-btn:hover{filter:brightness(1.15);transform:scale(1.05);}
+.uno-btn:active{transform:scale(0.95);}
+.uno-btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;box-shadow:none;}
+
+.action-bar{display:flex;align-items:center;gap:8px;}
+
+/* Color picker overlay */
+.color-picker{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:50;display:flex;align-items:center;justify-content:center;}
+.color-picker.hidden{display:none;}
+.cp-box{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:1.5rem;text-align:center;width:280px;}
+.cp-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:1rem;}
+.cp-colors{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.cp-btn{height:60px;border-radius:var(--r);border:none;font-family:'Syne',sans-serif;font-weight:800;font-size:18px;cursor:pointer;transition:all 0.15s;color:#fff;}
+.cp-btn:hover{transform:scale(1.05);}
+.cp-btn:active{transform:scale(0.97);}
+.cp-red{background:var(--red);}
+.cp-blue{background:var(--blue);}
+.cp-green{background:var(--green);}
+.cp-yellow{background:var(--yellow);color:#1a1a1a;}
+
+/* UNO alert */
+.uno-alert{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--red);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:48px;padding:20px 40px;border-radius:16px;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.15s;letter-spacing:2px;}
+.uno-alert.show{opacity:1;}
+
+/* Win */
+.win-wrap{text-align:center;padding:2rem 0;}
+.win-emoji{font-size:52px;margin-bottom:0.8rem;}
+.win-title{font-family:'Syne',sans-serif;font-weight:800;font-size:34px;line-height:1;letter-spacing:-1px;color:var(--red);margin-bottom:0.4rem;}
+.win-sub{font-size:14px;color:var(--muted);margin-bottom:1.5rem;}
+.version-tag{text-align:center;font-size:11px;color:rgba(122,96,106,0.3);padding:1rem 0 0.5rem;font-family:'Syne',sans-serif;letter-spacing:0.1em;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HOME -->
+<div class="screen active" id="s-home">
+  <div style="padding-top:0.5rem;margin-bottom:1.4rem;">
+    <a href="index.html" class="back-home">← Accueil</a>
+    <div class="logo"><span class="u">U</span><span class="n">N</span><span class="o">O</span><small>Multijoueur en ligne · 2–6 joueurs</small></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="show('s-create')">Créer une partie</button>
+    <button class="btn" onclick="show('s-join')">Rejoindre</button>
+  </div>
+  <div class="info-card">
+    <strong>Comment jouer</strong><br>
+    Pose une carte de même couleur ou même valeur que la carte du dessus. Utilise les cartes spéciales pour bloquer, inverser ou faire piocher tes adversaires. Le premier à poser toutes ses cartes gagne — mais n'oublie pas de crier <strong style="color:var(--red)">UNO</strong> quand il t'en reste une !<br><br>
+    <strong style="color:var(--text)">Cartes spéciales</strong> — +2 · Passe ton tour · Inverser · Joker · Joker +4
+  </div>
+</div>
+
+<!-- CREATE -->
+<div class="screen" id="s-create">
+  <h2>Nouvelle partie</h2>
+  <label>Ton prénom</label>
+  <input type="text" id="create-name" placeholder="Ton prénom" maxlength="20"/>
+  <label>Joueurs</label>
+  <select id="create-players">
+    <option value="2" selected>2 joueurs</option>
+    <option value="3">3 joueurs</option>
+    <option value="4">4 joueurs</option>
+    <option value="5">5 joueurs</option>
+    <option value="6">6 joueurs</option>
+  </select>
+  <div class="error-msg" id="create-err"></div>
+  <button class="btn btn-primary" onclick="createGame()" style="margin-top:1.1rem;">Créer</button>
+  <button class="btn" onclick="show('s-home')">Retour</button>
+</div>
+
+<!-- LOBBY -->
+<div class="screen" id="s-lobby">
+  <h2>En attente des joueurs</h2>
+  <p>Partage ce code à tes amis.</p>
+  <div class="code-box" id="lobby-code" onclick="copyCode()">—<span class="copy-hint">Appuie pour copier</span></div>
+  <div id="lobby-players"></div>
+  <div id="lobby-start-wrap" style="margin-top:1.25rem;display:none;">
+    <button class="btn btn-primary" onclick="startGame()">Lancer !</button>
+  </div>
+  <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.5rem;">Annuler</button>
+</div>
+
+<!-- JOIN -->
+<div class="screen" id="s-join">
+  <h2>Rejoindre</h2>
+  <label>Code</label>
+  <input type="text" id="join-code" placeholder="ex: UNO-42" maxlength="10" oninput="this.value=this.value.toUpperCase()" style="letter-spacing:3px;font-family:'Syne',sans-serif;font-weight:700;"/>
+  <label>Ton prénom</label>
+  <input type="text" id="join-name" placeholder="Ton prénom" maxlength="20"/>
+  <div class="error-msg" id="join-err"></div>
+  <button class="btn btn-primary" onclick="joinGame()" style="margin-top:1.1rem;">Rejoindre</button>
+  <button class="btn" onclick="show('s-home')">Retour</button>
+</div>
+
+<!-- JOINING -->
+<div class="screen" id="s-joining">
+  <div class="loading"><div class="spinner"></div><div>Connexion…</div></div>
+</div>
+
+<!-- WAIT -->
+<div class="screen" id="s-wait">
+  <div class="loading"><div class="spinner"></div><div id="wait-msg">En attente…</div></div>
+  <div id="wait-players" style="margin-top:1.5rem;"></div>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="s-game">
+  <div class="game-wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;"><span style="color:var(--red)">U</span><span style="color:var(--blue)">N</span><span style="color:var(--green)">O</span></div>
+      <button class="btn btn-danger btn-sm" onclick="deleteGame()">Quitter</button>
+    </div>
+
+    <div class="players-bar" id="players-bar"></div>
+
+    <div class="turn-info">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="current-color-dot" id="current-color-dot"></div>
+        <div class="turn-name" id="turn-name">—</div>
+      </div>
+      <div class="direction-badge" id="direction-badge">→</div>
+    </div>
+
+    <div class="game-table">
+      <div class="draw-pile">
+        <div class="draw-pile-stack" id="draw-pile" onclick="drawCard()">
+          <div class="uno-card card-back" style="top:4px;left:4px;"><div class="center">🃏</div></div>
+          <div class="uno-card card-back" style="top:2px;left:2px;"></div>
+          <div class="uno-card card-back" style="top:0;left:0;"></div>
+        </div>
+        <div class="draw-label">Piocher</div>
+      </div>
+      <div class="discard-pile" id="discard-pile"></div>
+    </div>
+
+    <div id="my-hand-wrap">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.08em;font-family:'Syne',sans-serif;">Ta main (<span id="my-card-count">0</span>)</div>
+      <div class="my-hand" id="my-hand"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="uno-btn" id="uno-btn" onclick="callUno()" disabled>UNO!</button>
+      <div style="flex:1;font-size:12px;color:var(--muted);padding-left:8px;" id="game-status"></div>
+    </div>
+  </div>
+  <div class="version-tag">version1</div>
+</div>
+
+<!-- WIN -->
+<div class="screen" id="s-win">
+  <div class="win-wrap">
+    <div class="win-emoji">🏆</div>
+    <div class="win-title" id="win-title"></div>
+    <div class="win-sub" id="win-sub"></div>
+    <button class="btn btn-primary" id="rematch-btn" onclick="rematch()" style="display:none;">Rejouer !</button>
+    <button class="btn" onclick="show('s-home')" style="margin-top:0.5rem;">Accueil</button>
+    <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.5rem;">Supprimer</button>
+  </div>
+</div>
+
+</div><!-- app -->
+
+<!-- Color picker -->
+<div class="color-picker hidden" id="color-picker">
+  <div class="cp-box">
+    <div class="cp-title">Choisis une couleur</div>
+    <div class="cp-colors">
+      <button class="cp-btn cp-red" onclick="pickColor('red')">🔴</button>
+      <button class="cp-btn cp-blue" onclick="pickColor('blue')">🔵</button>
+      <button class="cp-btn cp-green" onclick="pickColor('green')">🟢</button>
+      <button class="cp-btn cp-yellow" onclick="pickColor('yellow')">🟡</button>
+    </div>
+  </div>
+</div>
+
+<!-- UNO alert -->
+<div class="uno-alert" id="uno-alert">UNO!</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
+  authDomain:"undercover-game-b0d2a.firebaseapp.com",
+  databaseURL:"https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"undercover-game-b0d2a",
+  storageBucket:"undercover-game-b0d2a.firebasestorage.app",
+  messagingSenderId:"195280531653",
+  appId:"1:195280531653:web:94d72b25760b05af6bc0ac"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ═══════════════════════════════════
+// DECK
+// ═══════════════════════════════════
+const COLORS = ['red','blue','green','yellow'];
+const SPECIALS = ['skip','reverse','+2'];
+
+function buildDeck(){
+  const deck = [];
+  let id = 0;
+  COLORS.forEach(c=>{
+    // 0 × 1, 1-9 × 2, skip/reverse/+2 × 2
+    deck.push({id:id++,color:c,value:'0',type:'number'});
+    for(let v=1;v<=9;v++){
+      deck.push({id:id++,color:c,value:String(v),type:'number'});
+      deck.push({id:id++,color:c,value:String(v),type:'number'});
+    }
+    SPECIALS.forEach(s=>{
+      deck.push({id:id++,color:c,value:s,type:'special'});
+      deck.push({id:id++,color:c,value:s,type:'special'});
+    });
+  });
+  // Wild × 4, Wild+4 × 4
+  for(let i=0;i<4;i++){
+    deck.push({id:id++,color:'wild',value:'wild',type:'wild'});
+    deck.push({id:id++,color:'wild',value:'+4',type:'wild'});
+  }
+  return shuffle(deck);
+}
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+// ═══════════════════════════════════
+// STATE
+// ═══════════════════════════════════
+let myCode=null,myName=null,myPnum=null,isHost=false;
+let gameListener=null,currentGame=null;
+let pendingWildCard=null; // card waiting for color pick
+
+// ═══════════════════════════════════
+// UTILS
+// ═══════════════════════════════════
+window.show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');};
+function toast(msg,dur=2200){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+window.copyCode=()=>{if(!myCode)return;navigator.clipboard.writeText(myCode).then(()=>toast('Code copié !'));};
+function genCode(){const w=['UNO','CARD','WILD','SKIP','DRAW'];return w[Math.floor(Math.random()*w.length)]+'-'+Math.floor(10+Math.random()*90);}
+function isBannedName(n){const s=n.toLowerCase().replace(/[^a-z0-9]/g,'');return[/sp[ei][ei]?d/,/sp[iy]d/,/speedlov/,/speedit/,/speedi/,/speedy/,/67(?:speed|spid|spyd)?/,/(?:speed|spid|spyd).*67/,/^67$/].some(r=>r.test(s));}
+const BANNED_MSG="En vertu des très éclairées dispositions de l'article 16 de la loi SREN, il est solennellement institué un dispositif de bannissement numérique destiné à frapper d'indignité digitale les personnes soupçonnées d'avoir commis, ou reconnues coupables d'avoir commis, certaines infractions en ligne ; étant en outre précisé, avec toute la rigueur que commande l'ordre public numérique, que toute référence, explicite ou implicite, à « speedy » sera tenue pour prohibée et pourra, le cas échéant, justifier l'édiction d'une mesure de bannissement à caractère permanent.";
+
+function cardLabel(card){
+  if(card.value==='skip') return '⊘';
+  if(card.value==='reverse') return '⇄';
+  if(card.value==='+2') return '+2';
+  if(card.value==='wild') return '🌈';
+  if(card.value==='+4') return '+4';
+  return card.value;
+}
+
+function cardClass(card){
+  if(card.color==='wild'||card.type==='wild') return 'card-wild';
+  return 'card-'+card.color;
+}
+
+function makeCardEl(card, playable, onClick){
+  const el = document.createElement('div');
+  el.className = `uno-card ${cardClass(card)} ${playable?'playable':'not-playable'}`;
+  el.innerHTML = `<div class="corner tl">${cardLabel(card)}</div>
+    <div class="center">${cardLabel(card)}</div>
+    <div class="corner br">${cardLabel(card)}</div>`;
+  if(playable && onClick) el.onclick = onClick;
+  return el;
+}
+
+function showUnoAlert(name){
+  const el=document.getElementById('uno-alert');
+  el.textContent=name==='toi'?'UNO!':name+' dit UNO!';
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),1500);
+}
+
+// ═══════════════════════════════════
+// CARD PLAYABILITY
+// ═══════════════════════════════════
+function canPlay(card, topCard, currentColor){
+  if(card.type==='wild') return true;
+  if(card.color===currentColor) return true;
+  if(card.value===topCard.value) return true;
+  return false;
+}
+
+// ═══════════════════════════════════
+// CREATE / JOIN
+// ═══════════════════════════════════
+window.createGame=async()=>{
+  const name=document.getElementById('create-name').value.trim();
+  const maxP=parseInt(document.getElementById('create-players').value);
+  const errEl=document.getElementById('create-err');
+  if(!name){errEl.style.display='block';errEl.textContent='Entre ton prénom.';return;}
+  if(isBannedName(name)){errEl.style.display='block';errEl.textContent=BANNED_MSG;return;}
+  errEl.style.display='none';
+  const code=genCode();
+  const game={code,maxPlayers:maxP,players:[{name,hand:[],saidUno:false}],phase:'lobby',deck:[],discardPile:[],currentPlayerTurn:0,currentColor:null,direction:1,drawnThisTurn:false,createdAt:Date.now()};
+  await set(ref(db,`uno/${code}`),game);
+  myCode=code;myName=name;myPnum=0;isHost=true;
+  startListener(code);renderLobby(game);show('s-lobby');
+};
+
+function renderLobby(game){
+  const el=document.getElementById('lobby-code');el.childNodes[0].textContent=game.code;
+  const c=document.getElementById('lobby-players');if(!c)return;c.innerHTML='';
+  (game.players||[]).forEach((p,i)=>{
+    const d=document.createElement('div');d.className='prow';
+    d.innerHTML=`<div style="width:10px;height:10px;border-radius:50%;background:${['#ef4444','#3b82f6','#22c55e','#fbbf24','#a78bfa','#f472b6'][i]};"></div><span style="font-size:15px;">${p.name}</span>`;
+    c.appendChild(d);
+  });
+  if(game.players.length<(game.maxPlayers||2)){
+    const d=document.createElement('div');d.style.cssText='font-size:13px;color:var(--muted);padding:9px 0;display:flex;align-items:center;gap:8px;';
+    d.innerHTML=`<span class="wdot"></span> En attente (${game.players.length}/${game.maxPlayers})`;
+    c.appendChild(d);
+  }
+  const w=document.getElementById('lobby-start-wrap');
+  if(w) w.style.display=(isHost&&game.players.length>=2)?'block':'none';
+}
+
+window.startGame=async()=>{
+  const snap=await get(ref(db,`uno/${myCode}`));if(!snap.exists())return;
+  const g=snap.val();
+  const deck=buildDeck();
+  const players=g.players.map(p=>({...p,hand:[],saidUno:false}));
+  // Deal 7 cards each
+  players.forEach(p=>{
+    for(let i=0;i<7;i++) p.hand.push(deck.pop());
+  });
+  // First card (not wild)
+  let firstCard;
+  do{ firstCard=deck.pop(); }while(firstCard.type==='wild');
+  const discardPile=[firstCard];
+  await update(ref(db,`uno/${myCode}`),{
+    phase:'playing',deck,discardPile,players,
+    currentPlayerTurn:0,currentColor:firstCard.color,
+    direction:1,drawnThisTurn:false,lastAction:null
+  });
+};
+
+window.deleteGame=async()=>{
+  if(myCode)await remove(ref(db,`uno/${myCode}`));
+  myCode=null;currentGame=null;show('s-home');
+};
+
+window.joinGame=async()=>{
+  const code=document.getElementById('join-code').value.trim().toUpperCase();
+  const name=document.getElementById('join-name').value.trim();
+  const errEl=document.getElementById('join-err');
+  if(!code){errEl.style.display='block';errEl.textContent='Entre le code.';return;}
+  if(!name){errEl.style.display='block';errEl.textContent='Entre ton prénom.';return;}
+  if(isBannedName(name)){errEl.style.display='block';errEl.textContent=BANNED_MSG;return;}
+  errEl.style.display='none';show('s-joining');
+  const snap=await get(ref(db,`uno/${code}`));
+  if(!snap.exists()){show('s-join');errEl.style.display='block';errEl.textContent='Code introuvable.';return;}
+  const game=snap.val();const players=game.players||[];
+  const ex=players.findIndex(p=>p&&p.name.toLowerCase()===name.toLowerCase());
+  if(ex!==-1){myCode=code;myName=name;myPnum=ex;isHost=ex===0;startListener(code);return;}
+  if(players.length>=(game.maxPlayers||2)){show('s-join');errEl.style.display='block';errEl.textContent='Partie complète.';return;}
+  if(game.phase!=='lobby'){show('s-join');errEl.style.display='block';errEl.textContent='Partie lancée.';return;}
+  const np=[...players,{name,hand:[],saidUno:false}];
+  await update(ref(db,`uno/${code}`),{players:np});
+  myCode=code;myName=name;myPnum=np.length-1;isHost=false;
+  startListener(code);document.getElementById('wait-msg').textContent=`Bienvenue ${name} !`;show('s-wait');
+};
+
+// ═══════════════════════════════════
+// LISTENER
+// ═══════════════════════════════════
+function startListener(code){
+  if(gameListener)gameListener();
+  gameListener=onValue(ref(db,`uno/${code}`),snap=>{
+    if(!snap.exists()){show('s-home');return;}
+    currentGame=snap.val();handlePhase(currentGame);
+  });
+}
+
+function handlePhase(game){
+  if(game.phase==='lobby'){
+    if(isHost){renderLobby(game);if(!document.getElementById('s-lobby').classList.contains('active'))show('s-lobby');}
+    else{renderWait(game);if(!document.getElementById('s-wait').classList.contains('active'))show('s-wait');}
+    return;
+  }
+  if(game.phase==='playing'){
+    if(!document.getElementById('s-game').classList.contains('active')) show('s-game');
+    renderGame(game);
+    return;
+  }
+  if(game.phase==='gameover'){
+    renderWin(game);return;
+  }
+}
+
+function renderWait(game){
+  const c=document.getElementById('wait-players');if(!c)return;c.innerHTML='';
+  (game.players||[]).forEach((p,i)=>{
+    const d=document.createElement('div');d.className='prow';
+    d.innerHTML=`<div style="width:10px;height:10px;border-radius:50%;background:${['#ef4444','#3b82f6','#22c55e','#fbbf24','#a78bfa','#f472b6'][i]};"></div><span style="font-size:15px;">${p.name}</span>`;
+    c.appendChild(d);
+  });
+}
+
+// ═══════════════════════════════════
+// RENDER GAME
+// ═══════════════════════════════════
+function renderGame(game){
+  const players=game.players||[];
+  const turnIdx=game.currentPlayerTurn||0;
+  const isMyTurn=players[turnIdx]?.name===myName;
+  const topCard=(game.discardPile||[]).slice(-1)[0];
+  const currentColor=game.currentColor||topCard?.color||'red';
+  const myPlayer=players.find(p=>p.name===myName);
+  const myHand=myPlayer?.hand||[];
+
+  // Players bar
+  const bar=document.getElementById('players-bar');
+  if(bar){
+    bar.innerHTML='';
+    players.forEach((p,i)=>{
+      const isActive=i===turnIdx;
+      const d=document.createElement('div');
+      d.className=`player-info-card${isActive?' active':''}`;
+      d.innerHTML=`<div class="pic-name" style="${p.name===myName?'color:var(--text)':''}">${p.name===myName?'Toi':p.name}</div>
+        <div class="pic-cards">${(p.hand||[]).length}</div>
+        ${(p.hand||[]).length===1?'<div class="pic-uno">UNO!</div>':''}`;
+      bar.appendChild(d);
+    });
+  }
+
+  // Turn info
+  const turnName=document.getElementById('turn-name');
+  const colorDot=document.getElementById('current-color-dot');
+  const dirBadge=document.getElementById('direction-badge');
+  if(turnName){
+    turnName.textContent=isMyTurn?'Ton tour !':`Tour de ${players[turnIdx]?.name||'?'}…`;
+    turnName.style.color=isMyTurn?'var(--red)':'var(--muted)';
+  }
+  const colorMap={red:'#ef4444',blue:'#3b82f6',green:'#22c55e',yellow:'#fbbf24',wild:'#6366f1'};
+  if(colorDot) colorDot.style.background=colorMap[currentColor]||'#888';
+  if(dirBadge) dirBadge.textContent=(game.direction||1)===1?'→ Sens normal':'← Inversé';
+
+  // Discard pile (show top card)
+  const discardEl=document.getElementById('discard-pile');
+  if(discardEl&&topCard){
+    discardEl.innerHTML='';
+    const cardEl=makeCardEl(topCard,false,null);
+    cardEl.style.cursor='default';
+    discardEl.appendChild(cardEl);
+  }
+
+  // My hand
+  const handEl=document.getElementById('my-hand');
+  const countEl=document.getElementById('my-card-count');
+  if(handEl){
+    handEl.innerHTML='';
+    if(countEl) countEl.textContent=myHand.length;
+    myHand.forEach((card,idx)=>{
+      const playable=isMyTurn&&canPlay(card,topCard,currentColor)&&!game.drawnThisTurn;
+      const el=makeCardEl(card,playable,playable?()=>playCardAt(idx):null);
+      handEl.appendChild(el);
+    });
+  }
+
+  // UNO button — enabled when it's my turn AND I have 2 cards (about to have 1)
+  const unoBtn=document.getElementById('uno-btn');
+  if(unoBtn) unoBtn.disabled=!(isMyTurn&&myHand.length<=2&&myHand.length>0);
+
+  // Status
+  const statusEl=document.getElementById('game-status');
+  if(statusEl){
+    if(!isMyTurn) statusEl.textContent=`${players[turnIdx]?.name||'?'} joue…`;
+    else if(game.drawnThisTurn) statusEl.textContent='Carte piochée — passe ton tour ou joue-la.';
+    else statusEl.textContent='Pose une carte ou pioche.';
+  }
+
+  // Show last action toast (once)
+  if(game.lastAction&&game.lastAction!==window._lastAction){
+    window._lastAction=game.lastAction;
+    toast(game.lastAction,2000);
+  }
+
+  // UNO called by someone?
+  if(game.lastUnoCall&&game.lastUnoCall!==window._lastUnoCall){
+    window._lastUnoCall=game.lastUnoCall;
+    const caller=game.lastUnoCall;
+    showUnoAlert(caller===myName?'toi':caller);
+  }
+}
+
+// ═══════════════════════════════════
+// PLAY CARD
+// ═══════════════════════════════════
+async function playCardAt(idx){
+  const game=currentGame;if(!game)return;
+  const players=JSON.parse(JSON.stringify(game.players||[]));
+  const turnIdx=game.currentPlayerTurn||0;
+  if(players[turnIdx]?.name!==myName)return;
+
+  const myP=players[turnIdx];
+  const card=myP.hand[idx];
+  if(!card)return;
+
+  const topCard=(game.discardPile||[]).slice(-1)[0];
+  const currentColor=game.currentColor||topCard?.color;
+  if(!canPlay(card,topCard,currentColor)){toast('Carte non jouable !');return;}
+
+  // Wild card → pick color first
+  if(card.type==='wild'){
+    pendingWildCard={idx,card};
+    document.getElementById('color-picker').classList.remove('hidden');
+    return;
+  }
+
+  await doPlayCard(idx,card,card.color);
+}
+
+window.pickColor=async(color)=>{
+  document.getElementById('color-picker').classList.add('hidden');
+  if(!pendingWildCard)return;
+  await doPlayCard(pendingWildCard.idx,pendingWildCard.card,color);
+  pendingWildCard=null;
+};
+
+async function doPlayCard(idx,card,newColor){
+  const game=currentGame;if(!game)return;
+  const players=JSON.parse(JSON.stringify(game.players||[]));
+  const n=players.length;
+  const turnIdx=game.currentPlayerTurn||0;
+  const myP=players[turnIdx];
+  let direction=game.direction||1;
+  let deck=[...(game.deck||[])];
+  let discardPile=[...(game.discardPile||[])];
+
+  // Remove card from hand
+  myP.hand.splice(idx,1);
+  discardPile.push(card);
+  myP.saidUno=false;
+
+  // Check win
+  if(myP.hand.length===0){
+    await update(ref(db,`uno/${myCode}`),{
+      players,discardPile,deck,phase:'gameover',
+      winner:myName,lastAction:`🏆 ${myName} a gagné !`
+    });
+    return;
+  }
+
+  let nextTurn=turnIdx;
+  let skipped=false;
+  let actionMsg=`${myName} joue ${cardLabel(card)}`;
+  let drawnThisTurn=false;
+
+  // Apply special effects
+  if(card.value==='reverse'){
+    direction=-direction;
+    if(n===2){skipped=true;}// with 2 players, reverse = skip
+    actionMsg=`${myName} inverse le sens !`;
+  }
+  if(card.value==='skip'){
+    skipped=true;
+    actionMsg=`${myName} passe le tour suivant !`;
+  }
+  if(card.value==='+2'){
+    nextTurn=(turnIdx+direction+n)%n;
+    const victim=players[nextTurn];
+    for(let i=0;i<2;i++){
+      if(deck.length===0) deck=reshuffleDeck(discardPile);
+      victim.hand.push(deck.pop());
+    }
+    skipped=true;
+    actionMsg=`${myName} fait piocher +2 à ${victim.name} !`;
+  }
+  if(card.value==='+4'){
+    nextTurn=(turnIdx+direction+n)%n;
+    const victim=players[nextTurn];
+    for(let i=0;i<4;i++){
+      if(deck.length===0) deck=reshuffleDeck(discardPile);
+      victim.hand.push(deck.pop());
+    }
+    skipped=true;
+    actionMsg=`${myName} fait piocher +4 à ${victim.name} et choisit ${newColor} !`;
+  }
+  if(card.value==='wild'){
+    actionMsg=`${myName} joue un Joker et choisit ${newColor} !`;
+  }
+
+  // Advance turn
+  if(!skipped){
+    nextTurn=(turnIdx+direction+n)%n;
+  } else if(card.value!=='+2'&&card.value!=='+4'){
+    nextTurn=(turnIdx+direction*2+n*2)%n;
+  }
+
+  await update(ref(db,`uno/${myCode}`),{
+    players,deck,discardPile,
+    currentPlayerTurn:nextTurn,
+    currentColor:newColor,
+    direction,
+    drawnThisTurn:false,
+    lastAction:actionMsg,
+    lastUnoCall:game.lastUnoCall||null
+  });
+}
+
+function reshuffleDeck(discardPile){
+  if(discardPile.length<=1) return buildDeck();
+  const top=discardPile[discardPile.length-1];
+  const rest=shuffle(discardPile.slice(0,-1));
+  discardPile.length=0; discardPile.push(top);
+  return rest;
+}
+
+// ═══════════════════════════════════
+// DRAW CARD
+// ═══════════════════════════════════
+window.drawCard=async()=>{
+  const game=currentGame;if(!game)return;
+  const players=JSON.parse(JSON.stringify(game.players||[]));
+  const turnIdx=game.currentPlayerTurn||0;
+  if(players[turnIdx]?.name!==myName){toast("Ce n'est pas ton tour !");return;}
+  if(game.drawnThisTurn){
+    // Pass turn
+    const n=players.length;
+    const direction=game.direction||1;
+    const nextTurn=(turnIdx+direction+n)%n;
+    await update(ref(db,`uno/${myCode}`),{players,currentPlayerTurn:nextTurn,drawnThisTurn:false,lastAction:`${myName} passe son tour.`});
+    return;
+  }
+  let deck=[...(game.deck||[])];
+  let discardPile=[...(game.discardPile||[])];
+  if(deck.length===0) deck=reshuffleDeck(discardPile);
+  const drawn=deck.pop();
+  players[turnIdx].hand.push(drawn);
+  await update(ref(db,`uno/${myCode}`),{players,deck,discardPile,drawnThisTurn:true,lastAction:`${myName} pioche une carte.`});
+};
+
+// ═══════════════════════════════════
+// UNO BUTTON
+// ═══════════════════════════════════
+window.callUno=async()=>{
+  if(!currentGame)return;
+  const players=JSON.parse(JSON.stringify(currentGame.players||[]));
+  const myP=players.find(p=>p.name===myName);
+  if(!myP)return;
+  myP.saidUno=true;
+  showUnoAlert('toi');
+  await update(ref(db,`uno/${myCode}`),{players,lastUnoCall:myName});
+};
+
+// ═══════════════════════════════════
+// WIN
+// ═══════════════════════════════════
+function renderWin(game){
+  const isWinner=game.winner===myName;
+  document.getElementById('win-title').textContent=isWinner?'Tu gagnes !':game.winner+' gagne !';
+  document.getElementById('win-sub').textContent=isWinner?'Tu as posé toutes tes cartes !':'Meilleure chance la prochaine fois !';
+  const rb=document.getElementById('rematch-btn');
+  if(rb) rb.style.display=isHost?'block':'none';
+  show('s-win');
+}
+
+window.rematch=async()=>{
+  const snap=await get(ref(db,`uno/${myCode}`));if(!snap.exists())return;
+  const g=snap.val();
+  const deck=buildDeck();
+  const players=g.players.map(p=>({name:p.name,hand:[],saidUno:false}));
+  players.forEach(p=>{for(let i=0;i<7;i++) p.hand.push(deck.pop());});
+  let firstCard;
+  do{firstCard=deck.pop();}while(firstCard.type==='wild');
+  await update(ref(db,`uno/${myCode}`),{
+    phase:'playing',deck,discardPile:[firstCard],players,
+    currentPlayerTurn:0,currentColor:firstCard.color,direction:1,drawnThisTurn:false,
+    winner:null,lastAction:null,lastUnoCall:null
+  });
+};
+</script>
+</body>
+</html>
