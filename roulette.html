@@ -716,6 +716,18 @@ window.spinWheel=async()=>{
   animFrame=requestAnimationFrame(animate);
 };
 
+// Position ball on the winning number pocket for non-host players
+function positionBallOnNumber(n){
+  const pocketIdx=WHEEL_ORDER.indexOf(n);
+  const SLICE=2*Math.PI/NUM_SLOTS;
+  // Pocket center is at wheelAngle + pocketIdx*SLICE - PI/2 + SLICE/2
+  const pocketCenterAngle=wheelAngle+pocketIdx*SLICE-Math.PI/2+SLICE/2;
+  const outerR=wheelSize/2-2;
+  ballRadius=outerR*0.65;
+  ballAngle=pocketCenterAngle;
+  drawFrame();
+}
+
 function showWheelResult(n){
   const c=numColor(n);
   const numEl=document.getElementById('res-num');
@@ -727,8 +739,9 @@ function showWheelResult(n){
 
 async function finalizeSpin(result){
   spinning=false;
-  ballRadius=0; // hide ball
-  drawFrame();
+  // Keep ball visible — don't reset ballRadius here
+  // Ball stays in pocket until player closes result
+  showWheelResult(result); // ensure result is shown
   const game=currentGame;if(!game)return;
   const players=[...(game.players||[])].map(p=>{
     if(!p)return p;
@@ -872,7 +885,9 @@ function showResultOverlay(game){
   numEl.textContent=n;
   numEl.style.color=n===0?'#4ade80':res.color==='red'?'#ef4444':'#f0ede0';
   document.getElementById('overlay-col').textContent=n===0?'🟢 Zéro':res.color==='red'?'🔴 Rouge':'⚫ Noir';
-  showWheelResult(n);
+  showWheelResult(n); // update wheel result bar too
+  // For non-host: position ball visually on the winning pocket
+  if(!isHost){ positionBallOnNumber(n); }
 
   const pl=document.getElementById('overlay-players');
   pl.innerHTML='';
@@ -889,6 +904,12 @@ function showResultOverlay(game){
 window.closeResult=async()=>{
   document.getElementById('result-overlay').classList.add('hidden');
   resultShown=false;
+  // Hide ball and reset result display
+  ballRadius=0;
+  document.getElementById('res-num').textContent='—';
+  document.getElementById('res-num').style.color='var(--muted)';
+  document.getElementById('res-col').textContent='';
+  drawFrame();
   lastBets={...myBets};
   myBets={};updateBetUI();
   if(isHost){await update(ref(db,`rl/${myCode}`),{phase:'betting',lastResult:null});}
