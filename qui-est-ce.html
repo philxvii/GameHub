@@ -615,10 +615,9 @@ window.answerQuestion=async answer=>{
   if(!game.pendingQuestion)return;
   const qs=[...(game.questions||[])];
   qs.push({...game.pendingQuestion,answer});
-  // After answering, pass turn to the asker (they asked, now they play again OR we alternate)
-  // Standard rules: after answer, same player continues asking OR we keep same turn
-  // Keep same turn (asker keeps turn until they guess or we alternate each round)
-  await update(ref(db,`qec2/${myCode}`),{questions:qs,pendingQuestion:null,turn:game.pendingQuestion.asker});
+  // After answering, turn passes to the answerer (alternating turns like real game)
+  const nextTurn = 1 - game.pendingQuestion.asker;
+  await update(ref(db,`qec2/${myCode}`),{questions:qs,pendingQuestion:null,turn:nextTurn});
 };
 
 async function submitGuess(char){
