@@ -453,7 +453,7 @@ function startListener(code) {
   });
 }
 
-function handlePhase(game) {
+async function handlePhase(game) {
   const phase=game.phase;
   if(phase==='lobby'){
     if(isHost){renderLobby(game);if(!document.getElementById('s-lobby').classList.contains('active'))show('s-lobby');}
@@ -461,8 +461,18 @@ function handlePhase(game) {
     return;
   }
   if(phase==='pick'){
-    const myP=game.players[myPnum];
-    if(myP&&myP.secretId){show('s-wait-pick');return;}
+    const players=game.players||[];
+    const myP=players[myPnum];
+    const otherP=players[1-myPnum];
+    // Both picked but phase not updated yet (race condition) — host triggers transition
+    if(myP?.secretId && otherP?.secretId && isHost){
+      await update(ref(db,`qec2/${myCode}`),{phase:'playing',turn:0,questions:[],pendingQuestion:null,pendingGuess:null});
+      return;
+    }
+    if(myP&&myP.secretId){
+      if(!document.getElementById('s-wait-pick').classList.contains('active')) show('s-wait-pick');
+      return;
+    }
     if(!document.getElementById('s-pick').classList.contains('active')){buildPickGrid();show('s-pick');}
     return;
   }
@@ -495,11 +505,20 @@ window.confirmPick=async()=>{
   if(!pickedChar)return;
   mySecretId=pickedChar.id;
   const snap=await get(ref(db,`qec2/${myCode}`));if(!snap.exists())return;
-  const game=snap.val(); const players=[...game.players];
+  const game=snap.val();
+  const players=[...game.players];
   players[myPnum]={...players[myPnum],secretId:pickedChar.id,ready:true};
-  const bothReady=players.every(p=>p&&p.secretId);
+  // Check if other player already picked
+  const otherId=players[1-myPnum]?.secretId;
   const updates={players};
-  if(bothReady){updates.phase='playing';updates.turn=0;updates.questions=[];updates.pendingQuestion=null;updates.pendingGuess=null;}
+  if(otherId){
+    // Both picked — start game
+    updates.phase='playing';
+    updates.turn=0;
+    updates.questions=[];
+    updates.pendingQuestion=null;
+    updates.pendingGuess=null;
+  }
   await update(ref(db,`qec2/${myCode}`),updates);
   show('s-wait-pick');
 };
@@ -580,17 +599,22 @@ function renderThread(qs){
 window.submitQuestion=async()=>{
   const text=document.getElementById('question-input').value.trim();
   if(!text){toast('Écris une question !');return;}
-  const game=currentGame;if(!game||game.turn!==myPnum)return;
+  const game=currentGame;if(!game||game.turn!==myPnum){toast("Ce n'est pas ton tour !");return;}
+  if(game.pendingQuestion){toast('Une question est déjà en attente de réponse.');return;}
   const players=game.players||[];
+  document.getElementById('question-input').value='';
   await update(ref(db,`qec2/${myCode}`),{pendingQuestion:{text,asker:myPnum,authorName:players[myPnum]?.name||'?'}});
 };
 
 window.answerQuestion=async answer=>{
   const game=currentGame;if(!game)return;
-  const qs=[...(game.questions||[])];
   if(!game.pendingQuestion)return;
+  const qs=[...(game.questions||[])];
   qs.push({...game.pendingQuestion,answer});
-  await update(ref(db,`qec2/${myCode}`),{questions:qs,pendingQuestion:null});
+  // After answering, pass turn to the asker (they asked, now they play again OR we alternate)
+  // Standard rules: after answer, same player continues asking OR we keep same turn
+  // Keep same turn (asker keeps turn until they guess or we alternate each round)
+  await update(ref(db,`qec2/${myCode}`),{questions:qs,pendingQuestion:null,turn:game.pendingQuestion.asker});
 };
 
 async function submitGuess(char){
