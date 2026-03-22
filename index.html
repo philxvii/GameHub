@@ -16,33 +16,14 @@
   body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
 
   /* ── Age gate ── */
-  #age-gate{
-    position:fixed;inset:0;z-index:100;
-    background:rgba(7,9,15,0.97);
-    display:flex;align-items:center;justify-content:center;
-    padding:1rem;
-  }
+  #age-gate{position:fixed;inset:0;z-index:100;background:rgba(7,9,15,0.97);display:flex;align-items:center;justify-content:center;padding:1rem;}
   #age-gate.hidden{display:none;}
-  .gate-box{
-    width:100%;max-width:360px;
-    background:var(--surface);
-    border:1px solid var(--border2);
-    border-radius:20px;
-    padding:2rem 1.5rem;
-    text-align:center;
-    box-shadow:0 24px 80px rgba(0,0,0,0.7);
-  }
+  .gate-box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:2rem 1.5rem;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.7);}
   .gate-icon{font-size:44px;margin-bottom:1rem;display:block;}
   .gate-title{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);margin-bottom:0.5rem;}
   .gate-sub{font-size:13px;color:var(--muted);margin-bottom:1.5rem;line-height:1.6;}
   .gate-input-row{display:flex;gap:6px;margin-bottom:1rem;width:100%;}
-  .gate-input-row input{
-    flex:1;min-width:0;
-    padding:11px 4px;
-    background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);
-    color:var(--text);font-family:'Syne',sans-serif;font-size:18px;font-weight:700;
-    text-align:center;outline:none;letter-spacing:1px;transition:border-color 0.2s;
-  }
+  .gate-input-row input{flex:1;min-width:0;padding:11px 4px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'Syne',sans-serif;font-size:18px;font-weight:700;text-align:center;outline:none;letter-spacing:1px;transition:border-color 0.2s;}
   .gate-input-row input:focus{border-color:var(--accent);}
   .gate-input-row input::placeholder{color:rgba(107,114,128,0.5);font-size:12px;font-family:'DM Sans',sans-serif;font-weight:400;letter-spacing:0;}
   .gate-btn{width:100%;padding:13px;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:#07090f;transition:all 0.15s;}
@@ -65,6 +46,7 @@
   .game-card:hover{transform:translateY(-4px);border-color:var(--border2);box-shadow:0 12px 40px rgba(0,0,0,0.4);}
   .game-card:active{transform:translateY(-2px);}
   .game-card.hidden-game{display:none;}
+  .game-card.coming-soon{opacity:0.45;cursor:default;pointer-events:none;}
 
   .card-banner{height:130px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;font-size:54px;}
   .banner-bg{position:absolute;inset:0;}
@@ -80,21 +62,25 @@
   .banner-bn .banner-bg{background:radial-gradient(circle at 30% 70%,rgba(34,211,238,0.2) 0%,transparent 55%),radial-gradient(circle at 70% 30%,rgba(14,165,233,0.15) 0%,transparent 50%);}
   .banner-roulette{background:linear-gradient(135deg,#0d0a06,#1a1206);}
   .banner-roulette .banner-bg{background:radial-gradient(circle at 50% 50%,rgba(212,175,55,0.25) 0%,transparent 60%);position:absolute;inset:0;}
+  .banner-golf{background:linear-gradient(135deg,#061a06,#0a2010);}
+  .banner-golf .banner-bg{background:radial-gradient(circle at 40% 60%,rgba(34,197,94,0.3) 0%,transparent 55%),radial-gradient(circle at 70% 30%,rgba(16,185,129,0.2) 0%,transparent 50%);}
+  .banner-uno{background:linear-gradient(135deg,#1a0606,#200a0a);}
+  .banner-uno .banner-bg{background:radial-gradient(circle at 30% 50%,rgba(239,68,68,0.3) 0%,transparent 55%),radial-gradient(circle at 70% 60%,rgba(59,130,246,0.25) 0%,transparent 50%);}
 
   .p4-grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(4,1fr);gap:4px;padding:12px;opacity:0.18;}
-  .p4-dot{border-radius:50%;background:white;}
-  .p4-dot.o{background:#f97316;} .p4-dot.b{background:#3b82f6;}
+  .p4-dot{border-radius:50%;background:white;} .p4-dot.o{background:#f97316;} .p4-dot.b{background:#3b82f6;}
   .bn-grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(5,1fr);gap:3px;padding:14px;opacity:0.15;}
-  .bn-cell{border-radius:2px;background:#1e3a5f;}
-  .bn-cell.hit{background:#ef4444;} .bn-cell.ship{background:#2a4a6b;}
+  .bn-cell{border-radius:2px;background:#1e3a5f;} .bn-cell.hit{background:#ef4444;} .bn-cell.ship{background:#2a4a6b;}
 
   .card-body{padding:1.1rem 1.25rem 1.25rem;}
   .card-name{font-family:'Syne',sans-serif;font-weight:700;font-size:19px;color:var(--text);margin-bottom:5px;}
   .card-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:1rem;}
   .card-tags{display:flex;gap:6px;flex-wrap:wrap;}
   .tag{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--border);color:var(--muted);font-family:'Syne',sans-serif;font-weight:500;}
+  .tag-soon{background:rgba(107,114,128,0.1);border-color:rgba(107,114,128,0.2);}
   .card-arrow{position:absolute;top:1rem;right:1rem;width:28px;height:28px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);transition:all 0.15s;}
   .game-card:hover .card-arrow{background:var(--accent);color:#07090f;border-color:var(--accent);}
+  .soon-badge{position:absolute;top:10px;left:10px;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:rgba(255,255,255,0.06);color:var(--muted);padding:3px 8px;border-radius:999px;border:1px solid var(--border);font-family:'Syne',sans-serif;}
 
   /* ── Footer ── */
   .hub-footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
@@ -103,29 +89,29 @@
   .admin-trigger{font-size:11px;color:rgba(107,114,128,0.3);cursor:pointer;padding:4px;transition:color 0.2s;user-select:none;}
   .admin-trigger:hover{color:var(--muted);}
 
-  /* ── Admin panel ── */
+  /* ── Admin gate ── */
   #admin-gate{position:fixed;inset:0;z-index:200;background:rgba(7,9,15,0.97);display:flex;align-items:center;justify-content:center;padding:1rem;}
   #admin-gate.hidden{display:none;}
   .admin-gate-box{width:100%;max-width:340px;background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:2rem 1.5rem;text-align:center;}
   .admin-gate-box input{width:100%;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:15px;text-align:center;outline:none;letter-spacing:3px;margin-bottom:10px;font-family:'Syne',sans-serif;font-weight:700;}
   .admin-gate-box input:focus{border-color:var(--accent);}
 
+  /* ── Admin panel ── */
   #admin-panel{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;padding:1.5rem;}
   #admin-panel.hidden{display:none;}
   .admin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;padding-bottom:1rem;border-bottom:1px solid var(--border);}
   .admin-title{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:var(--accent);}
-
   .admin-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;}
-  .admin-section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.08em;}
-
+  .admin-section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--text);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.08em;}
   .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
   .stat-card{background:var(--surface2);border-radius:var(--r);padding:1rem;text-align:center;}
   .stat-val{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--accent);}
   .stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-top:3px;}
 
+  /* Toggle */
   .game-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
   .game-toggle-row:last-child{border-bottom:none;}
-  .toggle{position:relative;width:40px;height:22px;cursor:pointer;}
+  .toggle{position:relative;width:40px;height:22px;cursor:pointer;flex-shrink:0;}
   .toggle input{opacity:0;width:0;height:0;}
   .toggle-slider{position:absolute;inset:0;background:#333;border-radius:22px;transition:0.2s;}
   .toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:white;border-radius:50%;transition:0.2s;}
@@ -133,15 +119,12 @@
   .toggle input:checked+.toggle-slider::before{transform:translateX(18px);}
 
   .btn-admin{padding:8px 16px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text);transition:all 0.15s;width:auto;}
-  .btn-admin:hover{border-color:var(--border2);background:var(--surface);}
+  .btn-admin:hover{border-color:var(--border2);}
   .btn-admin-danger{border-color:rgba(239,68,68,0.3);color:#ef4444;}
   .btn-admin-danger:hover{background:rgba(239,68,68,0.08);}
   .btn-admin-primary{background:var(--accent);color:#07090f;border-color:var(--accent);font-weight:700;}
   .btn-admin-primary:hover{filter:brightness(1.08);}
-
   .game-row{display:flex;align-items:center;gap:10px;}
-  .game-emoji-sm{font-size:20px;}
-
   .party-item{padding:10px 0;border-bottom:1px solid var(--border);}
   .party-item:last-child{border-bottom:none;}
   .party-code{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--accent);}
@@ -150,13 +133,15 @@
   .player-badge{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:12px;}
   .player-kick{background:none;border:none;color:rgba(239,68,68,0.6);cursor:pointer;font-size:12px;padding:0 2px;transition:color 0.15s;}
   .player-kick:hover{color:#ef4444;}
-
-  .log-item{font-size:12px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+  .log-item{font-size:12px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:8px;}
   .log-item:last-child{border-bottom:none;}
-  .log-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+  .log-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:3px;}
+  .log-time{font-size:11px;color:rgba(107,114,128,0.6);white-space:nowrap;}
+  .log-msg{flex:1;}
 
   @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
-  @media(max-width:600px){.hub-title{font-size:36px;}.game-grid{grid-template-columns:1fr;}.stat-grid{grid-template-columns:1fr 1fr;}}
+  @media(max-width:600px){.hub-title{font-size:36px;}.game-grid{grid-template-columns:1fr 1fr;}.stat-grid{grid-template-columns:1fr 1fr;}}
+  @media(max-width:380px){.game-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -202,25 +187,32 @@
     <div class="admin-section">
       <div class="admin-section-title">📊 Statistiques</div>
       <div class="stat-grid">
-        <div class="stat-card">
-          <div class="stat-val" id="stat-online">—</div>
-          <div class="stat-lbl">En ligne</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-val" id="stat-visits">—</div>
-          <div class="stat-lbl">Visites totales</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-val" id="stat-parties">—</div>
-          <div class="stat-lbl">Parties actives</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-val" id="stat-players">—</div>
-          <div class="stat-lbl">Joueurs actifs</div>
-        </div>
+        <div class="stat-card"><div class="stat-val" id="stat-online">—</div><div class="stat-lbl">En ligne</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-visits">—</div><div class="stat-lbl">Visites totales</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-parties">—</div><div class="stat-lbl">Parties actives</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-players">—</div><div class="stat-lbl">Joueurs actifs</div></div>
       </div>
-      <div style="margin-top:1rem;font-size:12px;color:var(--muted);">
-        Dernière mise à jour du site : <strong style="color:var(--text);" id="stat-lastupdate">—</strong>
+      <div style="margin-top:1rem;font-size:12px;color:var(--muted);line-height:1.8;" id="stat-lastupdate-block">
+        <strong style="color:var(--text);">Dernières mises à jour :</strong><br>
+        <span id="stat-lastupdate">Chargement…</span>
+      </div>
+    </div>
+
+    <!-- Age gate toggle -->
+    <div class="admin-section">
+      <div class="admin-section-title">🔞 Vérification d'âge</div>
+      <div class="game-toggle-row">
+        <div class="game-row">
+          <span style="font-size:20px;">🔞</span>
+          <div>
+            <div style="font-size:14px;color:var(--text);">Activer la vérification d'âge</div>
+            <div style="font-size:11px;color:var(--muted);">Si désactivé, les visiteurs accèdent directement au site</div>
+          </div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="age-gate-toggle" checked onchange="toggleAgeGate(this.checked)"/>
+          <span class="toggle-slider"></span>
+        </label>
       </div>
     </div>
 
@@ -235,13 +227,13 @@
       <div class="admin-section-title">🎲 Parties actives
         <button class="btn-admin" onclick="loadParties()" style="margin-left:10px;padding:4px 10px;font-size:11px;">Rafraîchir</button>
       </div>
-      <div id="parties-list"><div style="font-size:13px;color:var(--muted);">Chargement…</div></div>
+      <div id="parties-list"><p style="font-size:13px;color:var(--muted);">Chargement…</p></div>
     </div>
 
     <!-- Activity log -->
     <div class="admin-section">
-      <div class="admin-section-title">📋 Journal d'activité</div>
-      <div id="activity-log"><div style="font-size:13px;color:var(--muted);">Aucune activité enregistrée.</div></div>
+      <div class="admin-section-title">📋 Journal d'activité admin</div>
+      <div id="activity-log"><div style="font-size:13px;color:var(--muted);">Aucune activité.</div></div>
     </div>
 
     <!-- Danger zone -->
@@ -259,21 +251,23 @@
 <div id="hub">
   <div class="hub-header">
     <div class="hub-title">GAME<span>.</span>HUB</div>
-    <div class="hub-sub">Choisis un jeu et joue en ligne</div>
+    <div class="hub-sub">Choisis un jeu et joue en ligne avec tes amis 🎮</div>
   </div>
 
   <div class="game-grid" id="game-grid">
 
+    <!-- Undercover -->
     <a class="game-card" href="undercover.html" id="card-undercover">
       <div class="card-banner banner-undercover"><div class="banner-bg"></div><span class="banner-emoji">🕵️</span></div>
       <div class="card-body">
         <div class="card-name">Undercover</div>
-        <div class="card-desc">Chaque joueur reçoit un mot secret. Décris-le sans te trahir, vote pour éliminer l'imposteur.</div>
-        <div class="card-tags"><span class="tag">3–9 joueurs</span><span class="tag">Déduction</span><span class="tag">En ligne</span></div>
+        <div class="card-desc">Trouve l'imposteur avant qu'il ne te démasque.</div>
+        <div class="card-tags"><span class="tag">3–9 joueurs</span><span class="tag">Déduction</span></div>
       </div>
       <div class="card-arrow">→</div>
     </a>
 
+    <!-- Puissance 4 -->
     <a class="game-card" href="puissance4.html" id="card-puissance4">
       <div class="card-banner banner-p4">
         <div class="banner-bg"></div>
@@ -287,22 +281,24 @@
       </div>
       <div class="card-body">
         <div class="card-name">Puissance 4</div>
-        <div class="card-desc">Aligne 4 jetons de ta couleur en ligne, colonne ou diagonale avant ton adversaire.</div>
-        <div class="card-tags"><span class="tag">2 joueurs</span><span class="tag">Stratégie</span><span class="tag">En ligne</span></div>
+        <div class="card-desc">Aligne 4 jetons avant ton adversaire.</div>
+        <div class="card-tags"><span class="tag">2 joueurs</span><span class="tag">Stratégie</span></div>
       </div>
       <div class="card-arrow">→</div>
     </a>
 
+    <!-- Qui est-ce -->
     <a class="game-card" href="qui-est-ce.html" id="card-quiestce">
       <div class="card-banner banner-qec"><div class="banner-bg"></div><span class="banner-emoji">🤔</span></div>
       <div class="card-body">
         <div class="card-name">Qui est-ce ?</div>
-        <div class="card-desc">Un joueur pense à une célébrité. L'autre pose des questions oui/non pour deviner.</div>
-        <div class="card-tags"><span class="tag">2 joueurs</span><span class="tag">Devinette</span><span class="tag">En ligne</span></div>
+        <div class="card-desc">Pose des questions pour deviner le personnage adverse.</div>
+        <div class="card-tags"><span class="tag">2 joueurs</span><span class="tag">Devinette</span></div>
       </div>
       <div class="card-arrow">→</div>
     </a>
 
+    <!-- Bataille navale -->
     <a class="game-card" href="bataille-navale.html" id="card-bataille">
       <div class="card-banner banner-bn">
         <div class="banner-bg"></div>
@@ -317,21 +313,44 @@
       </div>
       <div class="card-body">
         <div class="card-name">Bataille Navale</div>
-        <div class="card-desc">Place ta flotte en secret et coule les bateaux adverses avant qu'il ne coule les tiens.</div>
-        <div class="card-tags"><span class="tag">2 joueurs</span><span class="tag">Tactique</span><span class="tag">En ligne</span></div>
+        <div class="card-desc">Place ta flotte et coule celle de l'adversaire.</div>
+        <div class="card-tags"><span class="tag">2 joueurs</span><span class="tag">Tactique</span></div>
       </div>
       <div class="card-arrow">→</div>
     </a>
 
-    <a class="game-card" href="roulette.html" id="card-roulette" style="max-width:100%;">
-      <div class="card-banner banner-roulette" style="overflow:hidden;"><div class="banner-bg"></div><span class="banner-emoji" style="position:relative;z-index:1;">🎰</span></div>
+    <!-- Roulette -->
+    <a class="game-card" href="roulette.html" id="card-roulette">
+      <div class="card-banner banner-roulette"><div class="banner-bg"></div><span class="banner-emoji">🎰</span></div>
       <div class="card-body">
         <div class="card-name">Roulette</div>
-        <div class="card-desc">Placez vos mises sur la table, l'hôte lance la roue. Rouge, noir, plein, douzaine — à vous de jouer !</div>
-        <div class="card-tags"><span class="tag">2–8 joueurs</span><span class="tag">Casino</span><span class="tag">En ligne</span></div>
+        <div class="card-desc">Misez vos jetons, la roue tourne automatiquement.</div>
+        <div class="card-tags"><span class="tag">2–8 joueurs</span><span class="tag">Casino</span></div>
       </div>
       <div class="card-arrow">→</div>
     </a>
+
+    <!-- Mini Golf -->
+    <a class="game-card" href="mini-golf.html" id="card-minigolf">
+      <div class="card-banner banner-golf"><div class="banner-bg"></div><span class="banner-emoji">⛳</span></div>
+      <div class="card-body">
+        <div class="card-name">Mini Golf</div>
+        <div class="card-desc">9 trous, vise et ajuste la puissance. Le moins de coups gagne !</div>
+        <div class="card-tags"><span class="tag">2–4 joueurs</span><span class="tag">Sport</span></div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <!-- UNO (coming soon) -->
+    <div class="game-card coming-soon" id="card-uno">
+      <div class="soon-badge">Bientôt</div>
+      <div class="card-banner banner-uno"><div class="banner-bg"></div><span class="banner-emoji">🃏</span></div>
+      <div class="card-body">
+        <div class="card-name" style="color:var(--muted);">UNO</div>
+        <div class="card-desc">Le jeu de cartes classique en ligne. Criez UNO !</div>
+        <div class="card-tags"><span class="tag tag-soon">2–6 joueurs</span><span class="tag tag-soon">Cartes</span><span class="tag tag-soon">Bientôt</span></div>
+      </div>
+    </div>
 
   </div>
 
@@ -349,7 +368,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue, remove, serverTimestamp, increment, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, get, update, onValue, remove, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
@@ -360,63 +379,81 @@ const firebaseConfig = {
   messagingSenderId:"195280531653",
   appId:"1:195280531653:web:94d72b25760b05af6bc0ac"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 const ADMIN_PASSWORD = "ADMINNXVI";
+
+// All games with Firebase db paths
 const GAMES = [
-  {id:'undercover', name:'Undercover', emoji:'🕵️', db:null},
-  {id:'puissance4',  name:'Puissance 4', emoji:'🔴', db:'p4'},
-  {id:'quiestce',   name:'Qui est-ce ?', emoji:'🤔', db:'qec'},
+  {id:'undercover', name:'Undercover',      emoji:'🕵️', db:'games'},
+  {id:'puissance4', name:'Puissance 4',     emoji:'🔴', db:'p4'},
+  {id:'quiestce',   name:'Qui est-ce ?',    emoji:'🤔', db:'qec2'},
   {id:'bataille',   name:'Bataille Navale', emoji:'⚓', db:'bn'},
-  {id:'roulette',   name:'Roulette', emoji:'🎰', db:'rl'},
+  {id:'roulette',   name:'Roulette',        emoji:'🎰', db:'rl'},
+  {id:'minigolf',   name:'Mini Golf',       emoji:'⛳', db:'mg'},
+  {id:'uno',        name:'UNO',             emoji:'🃏', db:null},
 ];
-const LAST_UPDATE = "22 mars 2026";
 
-// ── Presence (online counter) ──
-const presenceRef = ref(db, '.info/connected');
-const myPresenceKey = Math.random().toString(36).slice(2);
-const onlineRef = ref(db, `hub/online/${myPresenceKey}`);
-
-onValue(presenceRef, snap => {
-  if (snap.val()) {
-    set(onlineRef, { t: Date.now() });
-    // Remove on disconnect
-    import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js").then(m => {
-      m.onDisconnect(onlineRef).remove();
-    });
+// ── Presence ──
+const presenceKey = Math.random().toString(36).slice(2);
+const onlineRef = ref(db, `hub/online/${presenceKey}`);
+onValue(ref(db, '.info/connected'), snap => {
+  if(snap.val()){
+    set(onlineRef, {t:Date.now()});
+    import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js")
+      .then(m => m.onDisconnect(onlineRef).remove());
   }
 });
-
-// Listen to online count
 onValue(ref(db, 'hub/online'), snap => {
   const count = snap.exists() ? Object.keys(snap.val()).length : 0;
   const el = document.getElementById('online-count');
-  if (el) el.textContent = `${count} personne${count > 1 ? 's' : ''} connectée${count > 1 ? 's' : ''} actuellement`;
+  if(el) el.textContent = `${count} personne${count>1?'s':''} connectée${count>1?'s':''} actuellement`;
   const statEl = document.getElementById('stat-online');
-  if (statEl) statEl.textContent = count;
+  if(statEl) statEl.textContent = count;
 });
 
 // ── Visit counter ──
-update(ref(db, 'hub/stats'), { visits: increment(1) });
+update(ref(db, 'hub/stats'), {visits: increment(1)});
 onValue(ref(db, 'hub/stats/visits'), snap => {
   const el = document.getElementById('stat-visits');
-  if (el && snap.exists()) el.textContent = snap.val();
+  if(el && snap.exists()) el.textContent = snap.val();
 });
 
 // ── Game visibility ──
-function applyVisibility(hidden) {
-  GAMES.forEach(g => {
-    const card = document.getElementById('card-' + g.id);
-    if (!card) return;
-    const isHidden = hidden && hidden[g.id];
-    card.classList.toggle('hidden-game', !!isHidden);
-  });
-}
-
 onValue(ref(db, 'hub/hidden'), snap => {
-  applyVisibility(snap.exists() ? snap.val() : {});
+  const hidden = snap.exists() ? snap.val() : {};
+  GAMES.forEach(g => {
+    const card = document.getElementById('card-'+g.id);
+    if(!card) return;
+    if(hidden[g.id]) card.classList.add('hidden-game');
+    else card.classList.remove('hidden-game');
+  });
+});
+
+// ── Age gate setting ──
+onValue(ref(db, 'hub/settings/ageGate'), snap => {
+  const enabled = snap.exists() ? snap.val() : true;
+  const toggle = document.getElementById('age-gate-toggle');
+  if(toggle) toggle.checked = enabled;
+  // If admin disabled age gate, auto-bypass for everyone
+  if(!enabled && !document.getElementById('hub').classList.contains('visible')){
+    document.getElementById('age-gate').classList.add('hidden');
+    document.getElementById('hub').classList.add('visible');
+  }
+});
+
+// ── Update log from Firebase ──
+onValue(ref(db, 'hub/updateLog'), snap => {
+  const el = document.getElementById('stat-lastupdate');
+  if(!el) return;
+  if(!snap.exists()){ el.textContent = 'Aucune mise à jour enregistrée.'; return; }
+  const logs = snap.val();
+  const items = Array.isArray(logs) ? logs : Object.values(logs);
+  const sorted = items.sort((a,b) => (b.ts||0)-(a.ts||0)).slice(0,5);
+  el.innerHTML = sorted.map(l =>
+    `<span style="color:var(--text);font-weight:500;">${l.datetime}</span> — <span style="color:var(--accent);">${l.game}</span> : ${l.change}`
+  ).join('<br>');
 });
 
 // ── Admin ──
@@ -432,11 +469,10 @@ window.closeAdminGate = () => {
 window.adminLogin = () => {
   const pwd = document.getElementById('admin-pwd').value;
   const errEl = document.getElementById('admin-pwd-err');
-  if (pwd !== ADMIN_PASSWORD) {
+  if(pwd !== ADMIN_PASSWORD){
     errEl.textContent = 'Mot de passe incorrect.';
     const box = document.querySelector('.admin-gate-box');
-    box.style.animation = 'none'; box.offsetHeight;
-    box.style.animation = 'shake 0.4s ease';
+    box.style.animation='none'; box.offsetHeight; box.style.animation='shake 0.4s ease';
     document.getElementById('admin-pwd').value = '';
     return;
   }
@@ -444,26 +480,22 @@ window.adminLogin = () => {
   document.getElementById('admin-pwd').value = '';
   openAdminPanel();
 };
-window.closeAdmin = () => {
-  document.getElementById('admin-panel').classList.add('hidden');
-};
+window.closeAdmin = () => { document.getElementById('admin-panel').classList.add('hidden'); };
 
-function openAdminPanel() {
+function openAdminPanel(){
   document.getElementById('admin-panel').classList.remove('hidden');
-  document.getElementById('stat-lastupdate').textContent = LAST_UPDATE;
   loadAdminStats();
   loadGameToggles();
   loadParties();
-  loadActivityLog();
+  renderLog();
 }
 
-async function loadAdminStats() {
-  // Parties actives
-  let totalParties = 0, totalPlayers = 0;
-  for (const g of GAMES) {
-    if (!g.db) continue;
+async function loadAdminStats(){
+  let totalParties=0, totalPlayers=0;
+  for(const g of GAMES){
+    if(!g.db) continue;
     const snap = await get(ref(db, g.db));
-    if (snap.exists()) {
+    if(snap.exists()){
       const parties = Object.values(snap.val());
       totalParties += parties.length;
       parties.forEach(p => {
@@ -476,23 +508,24 @@ async function loadAdminStats() {
   document.getElementById('stat-players').textContent = totalPlayers;
 }
 
-function loadGameToggles() {
-  const container = document.getElementById('game-toggles');
-  if (!container) return;
+function loadGameToggles(){
+  const container = document.getElementById('game-toggles'); if(!container) return;
   get(ref(db, 'hub/hidden')).then(snap => {
     const hidden = snap.exists() ? snap.val() : {};
     container.innerHTML = '';
     GAMES.forEach(g => {
-      const row = document.createElement('div');
-      row.className = 'game-toggle-row';
+      const row = document.createElement('div'); row.className = 'game-toggle-row';
       const isVisible = !hidden[g.id];
       row.innerHTML = `
         <div class="game-row">
-          <span class="game-emoji-sm">${g.emoji}</span>
-          <span style="font-size:14px;">${g.name}</span>
+          <span style="font-size:18px;">${g.emoji}</span>
+          <div>
+            <div style="font-size:14px;color:var(--text);">${g.name}</div>
+            ${g.db===null?'<div style="font-size:11px;color:var(--muted);">Bientôt disponible</div>':''}
+          </div>
         </div>
         <label class="toggle">
-          <input type="checkbox" ${isVisible ? 'checked' : ''} onchange="toggleGame('${g.id}', this.checked)"/>
+          <input type="checkbox" ${isVisible?'checked':''} onchange="toggleGame('${g.id}', this.checked)"/>
           <span class="toggle-slider"></span>
         </label>`;
       container.appendChild(row);
@@ -501,137 +534,159 @@ function loadGameToggles() {
 }
 
 window.toggleGame = async (gameId, visible) => {
-  await update(ref(db, 'hub/hidden'), { [gameId]: !visible });
-  logActivity(`Jeu "${gameId}" ${visible ? 'affiché' : 'masqué'}`);
+  await update(ref(db, 'hub/hidden'), {[gameId]: !visible});
+  logActivity('Jeu', `"${gameId}" ${visible?'affiché':'masqué'}`, gameId);
+};
+
+window.toggleAgeGate = async (enabled) => {
+  await update(ref(db, 'hub/settings'), {ageGate: enabled});
+  logActivity('Paramètre', `Vérification d'âge ${enabled?'activée':'désactivée'}`, 'index');
 };
 
 window.loadParties = async () => {
-  const container = document.getElementById('parties-list');
-  if (!container) return;
-  container.innerHTML = '<div style="font-size:13px;color:var(--muted);">Chargement…</div>';
-  let html = '';
-  let found = false;
-  for (const g of GAMES) {
-    if (!g.db) continue;
+  const container = document.getElementById('parties-list'); if(!container) return;
+  container.innerHTML = '<p style="font-size:13px;color:var(--muted);">Chargement…</p>';
+  let html = ''; let found = false;
+  for(const g of GAMES){
+    if(!g.db) continue;
     const snap = await get(ref(db, g.db));
-    if (!snap.exists()) continue;
+    if(!snap.exists()) continue;
     Object.entries(snap.val()).forEach(([code, party]) => {
       found = true;
-      const players = (party.players || []).filter(Boolean);
+      const players = (party.players||[]).filter(Boolean);
       html += `<div class="party-item">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div>
             <span class="party-code">${code}</span>
             <span style="font-size:11px;color:var(--muted);margin-left:8px;">${g.emoji} ${g.name}</span>
-            <div class="party-info">Phase : ${party.phase || '?'} · ${players.length} joueur${players.length > 1 ? 's' : ''}</div>
+            <div class="party-info">Phase : ${party.phase||'?'} · ${players.length} joueur${players.length>1?'s':''}</div>
           </div>
           <button class="btn-admin btn-admin-danger" onclick="adminDeleteParty('${g.db}','${code}')" style="font-size:11px;padding:4px 8px;">Suppr.</button>
         </div>
         <div class="party-players">
-          ${players.map((p, i) => `
-            <div class="player-badge">
-              ${p.name}
-              <button class="player-kick" onclick="adminKickPlayer('${g.db}','${code}',${i})" title="Exclure">✕</button>
-            </div>`).join('')}
+          ${players.map((p,i)=>`<div class="player-badge">${p.name}<button class="player-kick" onclick="adminKickPlayer('${g.db}','${code}',${i})" title="Exclure">✕</button></div>`).join('')}
         </div>
       </div>`;
     });
   }
-  container.innerHTML = found ? html : '<div style="font-size:13px;color:var(--muted);">Aucune partie active.</div>';
+  container.innerHTML = found ? html : '<p style="font-size:13px;color:var(--muted);">Aucune partie active.</p>';
 };
 
 window.adminDeleteParty = async (dbPath, code) => {
-  if (!confirm(`Supprimer la partie ${code} ?`)) return;
+  if(!confirm(`Supprimer la partie ${code} ?`)) return;
   await remove(ref(db, `${dbPath}/${code}`));
-  logActivity(`Partie ${code} supprimée`);
-  loadParties();
-  loadAdminStats();
+  logActivity('Partie', `${code} supprimée`, dbPath);
+  loadParties(); loadAdminStats();
 };
 
 window.adminKickPlayer = async (dbPath, code, playerIdx) => {
   const snap = await get(ref(db, `${dbPath}/${code}`));
-  if (!snap.exists()) return;
+  if(!snap.exists()) return;
   const party = snap.val();
-  const players = [...(party.players || [])];
-  const playerName = players[playerIdx] ? players[playerIdx].name : '?';
-  if (!confirm(`Exclure ${playerName} de la partie ${code} ?`)) return;
+  const players = [...(party.players||[])];
+  const playerName = players[playerIdx]?.name || '?';
+  if(!confirm(`Exclure ${playerName} de ${code} ?`)) return;
   players[playerIdx] = null;
-  await update(ref(db, `${dbPath}/${code}`), { players });
-  logActivity(`Joueur "${playerName}" exclu de ${code}`);
+  await update(ref(db, `${dbPath}/${code}`), {players});
+  logActivity('Joueur', `"${playerName}" exclu de ${code}`, dbPath);
   loadParties();
 };
 
 window.adminClearAllParties = async () => {
-  if (!confirm('Supprimer TOUTES les parties actives ? Cette action est irréversible.')) return;
-  for (const g of GAMES) {
-    if (!g.db) continue;
-    await remove(ref(db, g.db));
-  }
-  logActivity('Toutes les parties supprimées');
-  loadParties();
-  loadAdminStats();
+  if(!confirm('Supprimer TOUTES les parties ? Irréversible.')) return;
+  for(const g of GAMES){ if(!g.db) continue; await remove(ref(db, g.db)); }
+  logActivity('Global', 'Toutes les parties supprimées', 'toutes');
+  loadParties(); loadAdminStats();
 };
 
 window.adminResetStats = async () => {
-  if (!confirm('Remettre les stats à zéro ?')) return;
+  if(!confirm('Remettre les stats à zéro ?')) return;
   await set(ref(db, 'hub/stats/visits'), 0);
-  logActivity('Stats remises à zéro');
+  logActivity('Stats', 'Remises à zéro', 'index');
 };
 
-// ── Activity log ──
+// ── Activity log (local + Firebase update log) ──
 const activityLog = [];
-function logActivity(msg) {
-  const now = new Date().toLocaleTimeString('fr-FR');
-  activityLog.unshift({ msg, time: now });
-  if (activityLog.length > 20) activityLog.pop();
+function logActivity(category, msg, gameFile){
+  const now = new Date();
+  const datetime = now.toLocaleDateString('fr-FR') + ' ' +
+    now.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  activityLog.unshift({category, msg, datetime, gameFile});
+  if(activityLog.length > 30) activityLog.pop();
+  // Push to Firebase update log
+  const logEntry = {
+    datetime,
+    game: GAMES.find(g=>g.db===gameFile||g.id===gameFile)?.name || gameFile,
+    change: msg,
+    ts: Date.now()
+  };
+  const logsRef = ref(db, 'hub/updateLog');
+  get(logsRef).then(snap => {
+    const existing = snap.exists() ? Object.values(snap.val()) : [];
+    existing.unshift(logEntry);
+    const trimmed = existing.slice(0, 20);
+    set(logsRef, trimmed);
+  });
   renderLog();
 }
-function loadActivityLog() { renderLog(); }
-function renderLog() {
-  const container = document.getElementById('activity-log');
-  if (!container) return;
-  if (activityLog.length === 0) {
-    container.innerHTML = '<div style="font-size:13px;color:var(--muted);">Aucune activité enregistrée.</div>';
+
+function renderLog(){
+  const container = document.getElementById('activity-log'); if(!container) return;
+  if(activityLog.length === 0){
+    container.innerHTML = '<div style="font-size:13px;color:var(--muted);">Aucune activité.</div>';
     return;
   }
   container.innerHTML = activityLog.map(l =>
-    `<div class="log-item"><div class="log-dot"></div><span style="color:var(--muted);margin-right:6px;">${l.time}</span>${l.msg}</div>`
+    `<div class="log-item">
+      <div class="log-dot"></div>
+      <span class="log-time">${l.datetime}</span>
+      <span class="log-msg"><strong style="color:var(--text);">[${l.category}]</strong> ${l.msg}</span>
+    </div>`
   ).join('');
 }
 
 // ── Age gate ──
 window.gateInput = (el, nextId, maxLen) => {
   el.value = el.value.replace(/\D/g, '');
-  if (el.value.length >= maxLen && nextId) document.getElementById(nextId).focus();
+  if(el.value.length >= maxLen && nextId) document.getElementById(nextId).focus();
 };
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !document.getElementById('age-gate').classList.contains('hidden')) checkAge();
+  if(e.key==='Enter' && !document.getElementById('age-gate').classList.contains('hidden')) checkAge();
 });
 window.checkAge = () => {
-  const dd = parseInt(document.getElementById('gate-dd').value);
-  const mm = parseInt(document.getElementById('gate-mm').value);
-  const yyyy = parseInt(document.getElementById('gate-yyyy').value);
-  const errEl = document.getElementById('gate-error');
-  if (!dd || !mm || !yyyy || yyyy < 1900 || yyyy > 2025) { errEl.textContent = 'Entre une date valide.'; shake(); return; }
-  if (mm < 1 || mm > 12 || dd < 1 || dd > 31) { errEl.textContent = 'Date invalide.'; shake(); return; }
-  const birth = new Date(yyyy, mm - 1, dd);
-  let age = new Date().getFullYear() - birth.getFullYear();
-  const m = new Date().getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && new Date().getDate() < birth.getDate())) age--;
-  if (age < 18) { errEl.textContent = `Tu as ${age} ans. Accès réservé aux +18 ans. 👮`; shake(); return; }
-  errEl.textContent = '';
-  sessionStorage.setItem('age_ok', '1');
+  const dd=parseInt(document.getElementById('gate-dd').value);
+  const mm=parseInt(document.getElementById('gate-mm').value);
+  const yyyy=parseInt(document.getElementById('gate-yyyy').value);
+  const errEl=document.getElementById('gate-error');
+  if(!dd||!mm||!yyyy||yyyy<1900||yyyy>2025){errEl.textContent='Entre une date valide.';shake();return;}
+  if(mm<1||mm>12||dd<1||dd>31){errEl.textContent='Date invalide.';shake();return;}
+  const birth=new Date(yyyy,mm-1,dd);
+  let age=new Date().getFullYear()-birth.getFullYear();
+  const m=new Date().getMonth()-birth.getMonth();
+  if(m<0||(m===0&&new Date().getDate()<birth.getDate())) age--;
+  if(age<18){errEl.textContent=`Tu as ${age} ans. Accès réservé aux +18 ans. 👮`;shake();return;}
+  errEl.textContent='';
+  sessionStorage.setItem('age_ok','1');
   document.getElementById('age-gate').classList.add('hidden');
   document.getElementById('hub').classList.add('visible');
 };
-function shake() {
-  const box = document.querySelector('.gate-box');
-  box.style.animation = 'none'; box.offsetHeight; box.style.animation = 'shake 0.4s ease';
+function shake(){
+  const box=document.querySelector('.gate-box');
+  box.style.animation='none'; box.offsetHeight; box.style.animation='shake 0.4s ease';
 }
-if (sessionStorage.getItem('age_ok') === '1') {
-  document.getElementById('age-gate').classList.add('hidden');
-  document.getElementById('hub').classList.add('visible');
-}
+
+// Init — check age gate setting before showing anything
+get(ref(db, 'hub/settings/ageGate')).then(snap => {
+  const enabled = snap.exists() ? snap.val() : true;
+  if(!enabled){
+    // Age gate disabled by admin
+    document.getElementById('age-gate').classList.add('hidden');
+    document.getElementById('hub').classList.add('visible');
+  } else if(sessionStorage.getItem('age_ok')==='1'){
+    document.getElementById('age-gate').classList.add('hidden');
+    document.getElementById('hub').classList.add('visible');
+  }
+});
 </script>
 
 <style>
