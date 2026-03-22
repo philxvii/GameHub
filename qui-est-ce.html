@@ -272,18 +272,11 @@
       </div>
     </div>
 
-    <!-- Guess confirm -->
+    <!-- Guess resolves automatically — no confirmation needed -->
     <div id="guess-confirm-section" style="display:none;">
       <div class="q-section" style="border-color:rgba(240,192,64,0.3);">
-        <div class="q-section-title" style="color:var(--accent);">⚡ L'adversaire devine !</div>
-        <div style="font-size:14px;color:var(--text);margin-bottom:0.75rem;">
-          <strong id="guesser-name"></strong> pense que ton personnage est :
-          <div style="font-size:20px;margin-top:6px;" id="guess-display"></div>
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-yes" onclick="judgeGuess(true)">✓ Correct !</button>
-          <button class="btn btn-no" onclick="judgeGuess(false)">✗ Mauvaise réponse</button>
-        </div>
+        <div class="q-section-title" style="color:var(--accent);">⚡ Vérification en cours…</div>
+        <div style="font-size:13px;color:var(--muted);">La réponse est vérifiée automatiquement.</div>
       </div>
     </div>
 
@@ -393,11 +386,20 @@ function updatePanel() {
 }
 
 // ── Create ──
+function isBannedName(name){
+  const n=name.toLowerCase().replace(/[^a-z0-9]/g,'');
+  const banned=[/sp[ei][ei]?d/,/sp[iy]d/,/speedlov/,/speedit/,/speedi/,/speedy/,/67(?:speed|spid|spyd)?/,/(?:speed|spid|spyd).*67/,/^67$/];
+  return banned.some(r=>r.test(n));
+}
+
+const BANNED_MSG = "En vertu des très éclairées dispositions de l'article 16 de la loi SREN, il est solennellement institué un dispositif de bannissement numérique destiné à frapper d'indignité digitale les personnes soupçonnées d'avoir commis, ou reconnues coupables d'avoir commis, certaines infractions en ligne ; étant en outre précisé, avec toute la rigueur que commande l'ordre public numérique, que toute référence, explicite ou implicite, à « speedy » sera tenue pour prohibée et pourra, le cas échéant, justifier l'édiction d'une mesure de bannissement à caractère permanent.";
+
 window.createGame = async () => {
   const name = document.getElementById('create-name').value.trim();
   const rounds = parseInt(document.getElementById('create-rounds').value);
   const errEl = document.getElementById('create-err');
   if (!name) { errEl.style.display='block'; errEl.textContent='Entre ton prénom.'; return; }
+  if (isBannedName(name)) { errEl.style.display='block'; errEl.textContent=BANNED_MSG; return; }
   errEl.style.display = 'none';
   const code = genCode();
   const game = { code, rounds, players:[{name,score:0,secretId:null,ready:false},null], phase:'lobby', turn:0, round:1, questions:[], pendingQuestion:null, pendingGuess:null, roundResult:null, createdAt:Date.now() };
@@ -428,6 +430,7 @@ window.joinGame=async()=>{
   const errEl=document.getElementById('join-err');
   if(!code){errEl.style.display='block';errEl.textContent='Entre le code.';return;}
   if(!name){errEl.style.display='block';errEl.textContent='Entre ton prénom.';return;}
+  if(isBannedName(name)){errEl.style.display='block';errEl.textContent=BANNED_MSG;return;}
   errEl.style.display='none'; show('s-joining');
   const snap=await get(ref(db,`qec2/${code}`));
   if(!snap.exists()){show('s-join');errEl.style.display='block';errEl.textContent='Code introuvable.';return;}
@@ -535,15 +538,9 @@ function renderGameScreen(game){
   ['my-turn-section','answer-section','waiting-section','guess-confirm-section'].forEach(id=>{document.getElementById(id).style.display='none';});
 
   if(game.phase==='guessing'){
-    if(!isMyTurn){
-      const guess=charById(game.pendingGuess);
-      document.getElementById('guesser-name').textContent=players[game.turn]?.name||'?';
-      document.getElementById('guess-display').innerHTML=guess?`${guess.face} <strong>${guess.name}</strong>`:'?';
-      document.getElementById('guess-confirm-section').style.display='block';
-    } else {
-      document.getElementById('waiting-section').style.display='block';
-      document.getElementById('waiting-msg').textContent="L'adversaire vérifie ta réponse…";
-    }
+    // Both players wait — result is computed automatically
+    document.getElementById('waiting-section').style.display='block';
+    document.getElementById('waiting-msg').textContent='Vérification automatique en cours…';
     return;
   }
 
@@ -600,23 +597,32 @@ async function submitGuess(char){
   const game=currentGame;if(!game)return;
   if(game.turn!==myPnum){toast("Ce n'est pas ton tour !");return;}
   if(!confirm(`Deviner que l'adversaire est ${char.face} ${char.name} ?`))return;
-  await update(ref(db,`qec2/${myCode}`),{phase:'guessing',pendingGuess:char.id});
-}
-
-window.judgeGuess=async correct=>{
-  const game=currentGame;if(!game)return;
-  const players=JSON.parse(JSON.stringify(game.players||[]));
-  const guesser=game.turn;
+  // Auto-resolve: compare with opponent's secret stored in Firebase
+  const snap=await get(ref(db,`qec2/${myCode}`));
+  if(!snap.exists())return;
+  const freshGame=snap.val();
+  const opponent=1-myPnum;
+  const opponentSecretId=freshGame.players[opponent]?.secretId;
+  const correct=char.id===opponentSecretId;
+  const players=JSON.parse(JSON.stringify(freshGame.players||[]));
+  const guesser=myPnum;
   if(correct) players[guesser].score=(players[guesser].score||0)+1;
   const roundWinner=correct?guesser:1-guesser;
-  const totalWins=players[roundWinner].score;
-  const matchOver=totalWins>=(game.rounds||1);
+  const matchOver=players[roundWinner].score>=(freshGame.rounds||1);
   await update(ref(db,`qec2/${myCode}`),{
-    players, phase:'round-over',
-    roundResult:{winner:roundWinner,correct,guesserName:players[guesser]?.name||'?',guessedId:game.pendingGuess,p0secretId:players[0]?.secretId,p1secretId:players[1]?.secretId,matchOver},
-    pendingGuess:null
+    players, phase:'round-over', pendingGuess:null,
+    roundResult:{
+      winner:roundWinner,correct,
+      guesserName:players[guesser]?.name||'?',
+      guessedId:char.id,
+      p0secretId:players[0]?.secretId,
+      p1secretId:players[1]?.secretId,
+      matchOver
+    }
   });
-};
+}
+
+// judgeGuess removed — auto-resolved in submitGuess
 
 function renderRoundOver(game){
   const res=game.roundResult||{};
