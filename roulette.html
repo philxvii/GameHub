@@ -299,9 +299,6 @@ canvas#rwheel{display:block;border-radius:50%;}
       <div class="chip" data-v="100" onclick="selectChip(100)">100</div>
     </div>
 
-    <button class="spin-btn" id="spin-btn" onclick="spinWheel()" disabled>🎰 LANCER LA ROULETTE</button>
-    <div id="spin-status" style="text-align:center;font-size:12px;color:var(--muted);min-height:16px;"></div>
-    <button class="btn btn-danger btn-sm" onclick="deleteGame()" style="margin-top:4px;">Quitter</button>
   </div>
 
   <!-- RIGHT COL: betting table -->
@@ -320,6 +317,9 @@ canvas#rwheel{display:block;border-radius:50%;}
       <button class="btn btn-sm" onclick="replayBets()" id="replay-btn" style="margin-top:0;display:none;">↺ Rejouer</button>
       <span class="status-txt" id="bet-status"></span>
     </div>
+    <button class="spin-btn" id="spin-btn" onclick="spinWheel()" disabled>🎰 LANCER LA ROULETTE</button>
+    <div id="spin-status" style="text-align:center;font-size:12px;color:var(--muted);min-height:16px;"></div>
+    <button class="btn btn-danger btn-sm" onclick="deleteGame()" style="margin-top:4px;">Quitter</button>
   </div>
 
 </div><!-- end game-top-row -->
