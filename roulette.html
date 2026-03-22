@@ -310,7 +310,7 @@ canvas#rwheel{display:block;border-radius:50%;}
   </div>
 
 </div>
-<div class="version-tag">version1</div>
+<div class="version-tag">version2</div>
 </div>
 
 <!-- RESULT OVERLAY -->
@@ -568,10 +568,14 @@ async function hostTriggerSpin(){
   // Pocket center at angle: wheelAngle + pocketIdx*SLICE - π/2 + SLICE/2
   // We want this to equal 0 (pointer at top = angle 0 from center)
   // => finalWheelAngle = -pocketIdx*SLICE + π/2 - SLICE/2
-  const finalWheelAngle = -(pocketIdx * SLICE) + Math.PI/2 - SLICE/2;
+  // Correct formula: for pocket pocketIdx to be under the pointer (top = -PI/2),
+  // we need: wheelAngle + pocketIdx*SLICE - PI/2 + SLICE/2 = -PI/2
+  // => finalWheelAngle = -SLICE/2 - pocketIdx*SLICE
+  const finalWheelAngle = -SLICE/2 - pocketIdx * SLICE;
   const currentW = wheelAngle;
-  // How much we need to rotate (always forward, minimum 6 full turns)
+  // How much we need to rotate forward (always forward, minimum 6 full turns)
   let diff = ((finalWheelAngle - currentW) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+  if(diff < 0.001) diff = 2*Math.PI; // avoid zero rotation
   const minSpins = 6;
   const totalWheelRot = minSpins * 2 * Math.PI + diff;
 
