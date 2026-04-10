@@ -5,16 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WikiRace</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
 <style>
 :root{
   --bg:#07090f;
   --surface:#0e1118;
+  --surface2:#141820;
   --border:rgba(255,255,255,0.08);
   --text:#eef0f6;
   --muted:#6b7280;
   --accent:#e8d5a3;
+  --green:#4ade80;
 }
 
 body{
@@ -24,27 +26,39 @@ body{
   font-family:'DM Sans',sans-serif;
 }
 
-.app{
-  max-width:700px;
-  margin:auto;
-  padding:1rem;
-}
+.app{max-width:900px;margin:auto;padding:1rem;}
 
 .logo{
   font-family:'Syne';
-  font-size:32px;
+  font-size:40px;
   font-weight:800;
   color:var(--accent);
+}
+
+.card{
+  background:var(--surface);
+  border-radius:16px;
+  padding:1rem;
+  margin-top:1rem;
+  border:1px solid var(--border);
+}
+
+input{
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text);
+  margin-top:8px;
 }
 
 .btn{
   width:100%;
   padding:12px;
+  border:none;
+  border-radius:12px;
   margin-top:10px;
-  border-radius:10px;
-  border:1px solid var(--border);
-  background:var(--surface);
-  color:var(--text);
   cursor:pointer;
 }
 
@@ -54,80 +68,87 @@ body{
   font-weight:700;
 }
 
-input{
-  width:100%;
-  padding:10px;
-  margin-top:8px;
-  border-radius:10px;
-  border:1px solid var(--border);
-  background:var(--surface);
-  color:var(--text);
-}
-
 .screen{display:none;}
 .screen.active{display:block;}
 
+.top{
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+  margin-bottom:10px;
+}
+
+.target{color:var(--green);font-weight:700;}
+
 .article{
+  height:60vh;
+  overflow:auto;
   background:var(--surface);
   padding:1rem;
   border-radius:12px;
-  margin-top:1rem;
-  max-height:60vh;
-  overflow:auto;
+  border:1px solid var(--border);
 }
 
 a.wlink{
-  color:#4ade80;
+  color:var(--accent);
   cursor:pointer;
   text-decoration:none;
 }
-a.wlink:hover{text-decoration:underline;}
 
-.topbar{
-  margin-top:1rem;
-  display:flex;
-  justify-content:space-between;
-  font-size:14px;
-  color:var(--muted);
+.win{
+  text-align:center;
+  margin-top:2rem;
 }
 
-.target{
-  color:#4ade80;
-  font-weight:700;
+.win h1{
+  font-family:'Syne';
+  font-size:32px;
 }
 </style>
 </head>
 
 <body>
-
 <div class="app">
 
 <!-- HOME -->
 <div class="screen active" id="home">
   <div class="logo">WIKIRACE</div>
-
-  <input id="name" placeholder="Ton prénom">
-  <button class="btn btn-primary" onclick="createGame()">Créer une partie</button>
-
-  <input id="join-code" placeholder="Code">
-  <button class="btn" onclick="joinGame()">Rejoindre</button>
+  <div class="card">
+    <input id="name" placeholder="Ton prénom">
+    <button class="btn btn-primary" onclick="createGame()">Créer</button>
+    <input id="join" placeholder="Code">
+    <button class="btn" onclick="joinGame()">Rejoindre</button>
+  </div>
 </div>
 
 <!-- LOBBY -->
 <div class="screen" id="lobby">
-  <h2>Code : <span id="code"></span></h2>
-  <div id="players"></div>
-  <button class="btn btn-primary" onclick="startGame()">Lancer</button>
+  <div class="logo">Lobby</div>
+  <div class="card">
+    Code : <b id="code"></b>
+    <div id="players"></div>
+    <button class="btn btn-primary" onclick="startGame()">Lancer</button>
+  </div>
 </div>
 
 <!-- GAME -->
 <div class="screen" id="game">
-  <div class="topbar">
-    <div>Clics : <span id="clicks">0</span></div>
-    <div>Cible : <span id="target" class="target"></span></div>
+  <div class="top">
+    <div>🎯 <span id="target"></span></div>
+    <div>⏱ <span id="timer">0</span>s</div>
+    <div>🖱 <span id="clicks">0</span></div>
   </div>
 
   <div class="article" id="article"></div>
+</div>
+
+<!-- WIN -->
+<div class="screen" id="win">
+  <div class="win">
+    <h1 id="winner"></h1>
+    <p id="stats"></p>
+    <button class="btn btn-primary" onclick="location.reload()">Rejouer</button>
+  </div>
 </div>
 
 </div>
@@ -136,27 +157,33 @@ a.wlink:hover{text-decoration:underline;}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-const firebaseConfig = {
+const app = initializeApp({
   apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
   databaseURL:"https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app"
-};
-
-const app = initializeApp(firebaseConfig);
+});
 const db = getDatabase(app);
 
-let myCode=null, myName=null, myIndex=0;
-let clicks=0;
+let myCode, myName, clicks=0, startTime;
 
 function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-function genCode(){
-  return "WR-"+Math.floor(1000+Math.random()*9000);
+function genCode(){return "WR-"+Math.floor(Math.random()*9000+1000);}
+
+// ARTICLES RANDOM
+const ARTICLES = [
+"France","Chat","Napoléon","Football","Internet",
+"Musique","Lune","Soleil","Paris","Amazonie",
+"Einstein","Titanic","Google","YouTube","Pizza"
+];
+
+function randomArticle(){
+  return ARTICLES[Math.floor(Math.random()*ARTICLES.length)];
 }
 
-window.createGame = async () => {
+window.createGame = async ()=>{
   const name=document.getElementById('name').value.trim();
   if(!name) return;
 
@@ -167,87 +194,75 @@ window.createGame = async () => {
     phase:'lobby'
   });
 
-  myCode=code;
-  myName=name;
-
+  myCode=code; myName=name;
   listen();
 };
 
-window.joinGame = async () => {
-  const code=document.getElementById('join-code').value.trim().toUpperCase();
+window.joinGame = async ()=>{
+  const code=document.getElementById('join').value.trim().toUpperCase();
   const name=document.getElementById('name').value.trim();
-  if(!code||!name) return;
 
   const snap=await get(ref(db,'wr/'+code));
-  if(!snap.exists()) return alert("Introuvable");
+  if(!snap.exists()) return alert("introuvable");
 
-  const game=snap.val();
-  game.players.push({name});
+  const g=snap.val();
+  g.players.push({name});
 
-  await update(ref(db,'wr/'+code),{players:game.players});
+  await update(ref(db,'wr/'+code),{players:g.players});
 
-  myCode=code;
-  myName=name;
-  myIndex=game.players.length-1;
-
+  myCode=code; myName=name;
   listen();
 };
 
 function listen(){
   onValue(ref(db,'wr/'+myCode),snap=>{
-    const game=snap.val();
+    const g=snap.val();
 
-    if(game.phase==='lobby'){
+    if(g.phase==='lobby'){
       show('lobby');
       document.getElementById('code').textContent=myCode;
-      document.getElementById('players').innerHTML=
-        game.players.map(p=>p.name).join('<br>');
+      document.getElementById('players').innerHTML=g.players.map(p=>p.name).join('<br>');
     }
 
-    if(game.phase==='playing'){
+    if(g.phase==='playing'){
       show('game');
-      document.getElementById('target').textContent=game.target;
-      loadArticle(game.current);
+      document.getElementById('target').textContent=g.target;
+      loadArticle(g.current);
+      startTimer();
+    }
+
+    if(g.phase==='finished'){
+      show('win');
+      document.getElementById('winner').textContent="🏆 "+g.winner+" a gagné !";
+      document.getElementById('stats').textContent=g.clicks+" clics";
     }
   });
 }
 
-window.startGame = async () => {
-  const start="France";
-  const target="Tour Eiffel";
-
+window.startGame = async ()=>{
   await update(ref(db,'wr/'+myCode),{
     phase:'playing',
-    current:start,
-    target
+    current:randomArticle(),
+    target:randomArticle()
   });
 };
 
 async function loadArticle(title){
-  const url=`https://fr.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title)}`;
-
-  const res=await fetch(url);
+  const res=await fetch(`https://fr.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title)}`);
   const html=await res.text();
 
-  const container=document.getElementById('article');
-  container.innerHTML=html;
+  const el=document.getElementById('article');
+  el.innerHTML=html;
 
-  // nettoyer scripts
-  container.querySelectorAll('script').forEach(s=>s.remove());
+  el.querySelectorAll('script').forEach(s=>s.remove());
 
-  // transformer liens
-  container.querySelectorAll('a').forEach(a=>{
+  el.querySelectorAll('a').forEach(a=>{
     const href=a.getAttribute('href');
     if(href && href.startsWith('./')){
-      const title=decodeURIComponent(href.replace('./',''));
+      const t=decodeURIComponent(href.replace('./',''));
       a.classList.add('wlink');
-      a.onclick=(e)=>{
-        e.preventDefault();
-        click(title);
-      };
-    }else{
-      a.removeAttribute('href');
-    }
+      a.onclick=(e)=>{e.preventDefault();click(t);}
+    } else a.removeAttribute('href');
   });
 }
 
@@ -256,10 +271,14 @@ async function click(title){
   document.getElementById('clicks').textContent=clicks;
 
   const snap=await get(ref(db,'wr/'+myCode));
-  const game=snap.val();
+  const g=snap.val();
 
-  if(title.toLowerCase()===game.target.toLowerCase()){
-    alert("🎉 Gagné !");
+  if(title.toLowerCase()===g.target.toLowerCase()){
+    await update(ref(db,'wr/'+myCode),{
+      phase:'finished',
+      winner:myName,
+      clicks
+    });
     return;
   }
 
@@ -268,6 +287,13 @@ async function click(title){
   });
 }
 
+function startTimer(){
+  startTime=Date.now();
+  setInterval(()=>{
+    const s=Math.floor((Date.now()-startTime)/1000);
+    document.getElementById('timer').textContent=s;
+  },1000);
+}
 </script>
 </body>
 </html>
