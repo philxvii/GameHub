@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WikiRace</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#07090f; --surface:#0e1118; --surface2:#141820;
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.14);
+    --text:#eef0f6; --muted:#6b7280; --accent:#e8d5a3; --r:16px;
+    --wiki:#3366cc;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;}
+  .app{width:100%;max-width:560px;min-height:100vh;padding:1rem 0.75rem 3rem;}
+  .screen{display:none;animation:fadeIn 0.2s ease;}
+  .screen.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+
+  .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:34px;line-height:1;letter-spacing:-1px;color:var(--accent);}
+  .logo small{font-size:13px;font-weight:400;color:var(--muted);font-family:'DM Sans',sans-serif;letter-spacing:0;display:block;margin-top:5px;}
+  h2{font-family:'Syne',sans-serif;font-weight:700;font-size:20px;color:var(--text);margin-bottom:0.6rem;}
+  p{font-size:14px;color:var(--muted);line-height:1.6;}
+  label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;margin-top:0.9rem;}
+  input,select{width:100%;padding:11px 13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;appearance:none;}
+  input:focus,select:focus{border-color:var(--border2);}
+  input::placeholder{color:var(--muted);}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237d8590' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;cursor:pointer;}
+  select option{background:#0e1118;}
+  .btn{width:100%;padding:12px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all 0.15s;margin-top:9px;}
+  .btn:hover{background:var(--surface2);border-color:var(--border2);}
+  .btn:active{transform:scale(0.98);}
+  .btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
+  .btn-primary{background:var(--accent);color:#07090f;border-color:var(--accent);font-weight:700;font-family:'Syne',sans-serif;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-danger{border-color:rgba(248,113,113,0.3);color:#f87171;}
+  .btn-danger:hover{background:rgba(248,113,113,0.08);}
+  .btn-sm{width:auto;padding:6px 13px;font-size:13px;margin-top:0;}
+  .btn-row{display:flex;gap:8px;margin-top:9px;}
+  .btn-row .btn{margin-top:0;}
+  .info-card{background:transparent;border:1px solid var(--border);border-radius:var(--r);padding:0.9rem 1.1rem;margin-top:0.9rem;font-size:13px;color:var(--muted);line-height:1.7;}
+  .info-card strong{color:var(--text);}
+  .code-box{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:6px;text-align:center;color:var(--accent);padding:1.2rem;background:var(--surface);border:1px solid rgba(232,213,163,0.3);border-radius:var(--r);margin:0.9rem 0;cursor:pointer;}
+  .copy-hint{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted);letter-spacing:0;font-weight:400;display:block;margin-top:5px;}
+  .loading{text-align:center;padding:2.5rem 0;color:var(--muted);font-size:15px;}
+  .spinner{width:26px;height:26px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 0.9rem;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .error-msg{font-size:13px;color:#f87171;margin-top:7px;display:none;}
+  .wdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}
+  .toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:13px;font-weight:500;opacity:0;transition:all 0.22s;pointer-events:none;white-space:nowrap;z-index:999;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .prow{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);}
+  .prow:last-child{border-bottom:none;}
+  .pdot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+  .back-home{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:1.1rem;}
+  .back-home:hover{color:var(--text);}
+  .sep{border:none;border-top:1px solid var(--border);margin:1.1rem 0;}
+
+  /* GAME SCREEN */
+  .game-top{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:9px 12px;margin-bottom:0.6rem;}
+  .game-route{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap;}
+  .route-start{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--accent);}
+  .route-arrow{color:var(--muted);font-size:12px;}
+  .route-target{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:#4ade80;}
+  .game-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;}
+  .meta-info{font-size:12px;color:var(--muted);}
+  .meta-info span{color:var(--text);}
+
+  /* BREADCRUMB */
+  .breadcrumb-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;margin-bottom:0.6rem;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px;flex-wrap:wrap;overflow-x:auto;scrollbar-width:none;}
+  .breadcrumb-bar::-webkit-scrollbar{display:none;}
+  .bc-item{color:var(--text);font-family:'Syne',sans-serif;font-weight:600;font-size:12px;white-space:nowrap;}
+  .bc-sep{color:var(--muted);font-size:10px;}
+  .bc-current{color:var(--accent);}
+
+  /* ARTICLE */
+  .article-container{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:0.6rem;max-height:55vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
+  .article-container::-webkit-scrollbar{width:4px;}
+  .article-container::-webkit-scrollbar-track{background:transparent;}
+  .article-container::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+  .article-title{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);margin-bottom:0.5rem;line-height:1.2;}
+  .article-extract{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:1rem;}
+  .article-section{margin-bottom:1rem;}
+  .article-section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:0.4rem;border-bottom:1px solid var(--border);padding-bottom:4px;}
+  .links-label{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'Syne',sans-serif;margin-bottom:0.5rem;margin-top:0.75rem;}
+  .links-grid{display:flex;flex-wrap:wrap;gap:6px;}
+  .wiki-link{display:inline-block;padding:5px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:999px;font-size:13px;color:var(--accent);cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;text-decoration:none;}
+  .wiki-link:hover{background:rgba(232,213,163,0.1);border-color:rgba(232,213,163,0.3);}
+  .wiki-link:active{transform:scale(0.97);}
+  .wiki-link.target-link{background:rgba(74,222,128,0.08);border-color:rgba(74,222,128,0.3);color:#4ade80;font-weight:700;}
+  .no-links{font-size:13px;color:var(--muted);font-style:italic;}
+
+  /* LEADERBOARD */
+  .leaderboard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:0.75rem;margin-bottom:0.6rem;}
+  .lb-title{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'Syne',sans-serif;margin-bottom:0.5rem;}
+  .lb-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);}
+  .lb-row:last-child{border-bottom:none;}
+  .lb-rank{font-family:'Syne',sans-serif;font-weight:800;font-size:13px;width:18px;color:var(--muted);flex-shrink:0;}
+  .lb-name{font-size:14px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lb-name.me{color:var(--accent);}
+  .lb-status{font-size:12px;font-family:'Syne',sans-serif;font-weight:700;}
+  .lb-status.done{color:#4ade80;}
+  .lb-status.playing{color:var(--muted);display:flex;align-items:center;gap:5px;}
+  .lb-clicks{font-size:11px;color:var(--muted);}
+
+  /* WIN SCREEN */
+  .win-wrap{text-align:center;padding:2rem 0;}
+  .win-emoji{font-size:50px;margin-bottom:0.6rem;}
+  .win-title{font-family:'Syne',sans-serif;font-weight:800;font-size:32px;line-height:1;letter-spacing:-1px;margin-bottom:0.4rem;}
+  .win-sub{font-size:14px;color:var(--muted);margin-bottom:1.25rem;}
+  .podium{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:0.75rem;margin-bottom:1rem;}
+
+  /* WAITING STATUS */
+  .waiting-banner{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);padding:0.75rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:0.6rem;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HOME -->
+  <div class="screen active" id="s-home">
+    <div style="padding-top:0.5rem;margin-bottom:1.5rem;">
+      <a href="index.html" class="back-home">← Accueil</a>
+      <div class="logo">WIKIRACE<small>Navigue jusqu'à l'article cible</small></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="show('s-create')">Créer une partie</button>
+      <button class="btn" onclick="show('s-join')">Rejoindre</button>
+    </div>
+    <div class="info-card">
+      <strong>Comment jouer</strong><br>
+      Tout le monde part du même article Wikipedia. Le but : atteindre l'article cible en cliquant uniquement sur les liens de la page. Le premier arrivé gagne la manche !<br><br>
+      <strong>Règles :</strong> Liens bleus uniquement · Pas de retour arrière autorisé · Pas de recherche Wikipedia
+    </div>
+  </div>
+
+  <!-- CREATE -->
+  <div class="screen" id="s-create">
+    <h2>Nouvelle partie</h2>
+    <label>Ton prénom</label>
+    <input type="text" id="create-name" placeholder="Ton prénom" maxlength="20"/>
+    <label>Manches</label>
+    <select id="create-rounds">
+      <option value="1">1 manche</option>
+      <option value="3" selected>3 manches</option>
+      <option value="5">5 manches</option>
+    </select>
+    <label>Langue Wikipedia</label>
+    <select id="create-lang">
+      <option value="fr" selected>Français</option>
+      <option value="en">Anglais</option>
+    </select>
+    <div class="error-msg" id="create-err"></div>
+    <button class="btn btn-primary" onclick="createGame()" style="margin-top:1.1rem;">Créer</button>
+    <button class="btn" onclick="show('s-home')">Retour</button>
+  </div>
+
+  <!-- LOBBY HOST -->
+  <div class="screen" id="s-lobby">
+    <h2>Salle d'attente</h2>
+    <p>Partage ce code à tes amis.</p>
+    <div class="code-box" id="lobby-code" onclick="copyCode()">—<span class="copy-hint">Appuie pour copier</span></div>
+    <div id="lobby-players"></div>
+    <div id="lobby-start-wrap" style="margin-top:1.25rem;display:none;">
+      <button class="btn btn-primary" onclick="hostPickArticles()">Lancer la partie !</button>
+    </div>
+    <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.5rem;">Annuler</button>
+  </div>
+
+  <!-- JOIN -->
+  <div class="screen" id="s-join">
+    <h2>Rejoindre</h2>
+    <label>Code de la partie</label>
+    <input type="text" id="join-code" placeholder="ex: WIKI-42" maxlength="10" oninput="this.value=this.value.toUpperCase()" style="letter-spacing:3px;font-family:'Syne',sans-serif;font-weight:700;"/>
+    <label>Ton prénom</label>
+    <input type="text" id="join-name" placeholder="Ton prénom" maxlength="20"/>
+    <div class="error-msg" id="join-err"></div>
+    <button class="btn btn-primary" onclick="joinGame()" style="margin-top:1.1rem;">Rejoindre</button>
+    <button class="btn" onclick="show('s-home')">Retour</button>
+  </div>
+
+  <!-- JOINING SPINNER -->
+  <div class="screen" id="s-joining">
+    <div class="loading"><div class="spinner"></div><div>Connexion…</div></div>
+  </div>
+
+  <!-- WAIT (non-host) -->
+  <div class="screen" id="s-wait">
+    <div class="loading"><div class="spinner"></div><div id="wait-msg">En attente du lancement…</div></div>
+    <div id="wait-players" style="margin-top:1.5rem;"></div>
+    <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:1rem;">Quitter</button>
+  </div>
+
+  <!-- LOADING ARTICLE -->
+  <div class="screen" id="s-loading-article">
+    <div class="loading"><div class="spinner"></div><div>Chargement de l'article…</div></div>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="s-game">
+    <div class="game-top">
+      <div class="game-route">
+        <span class="route-start" id="g-start-title">—</span>
+        <span class="route-arrow">→</span>
+        <span class="route-target" id="g-target-title">—</span>
+      </div>
+      <div class="game-meta">
+        <span class="meta-info">Clics : <span id="g-clicks">0</span></span>
+        <span class="meta-info">Manche <span id="g-round">1</span>/<span id="g-rounds">3</span></span>
+        <span class="meta-info" id="g-timer">⏱ 0s</span>
+      </div>
+    </div>
+
+    <div class="breadcrumb-bar" id="g-breadcrumb"></div>
+
+    <div class="leaderboard" id="g-leaderboard">
+      <div class="lb-title">Joueurs</div>
+      <div id="lb-rows"></div>
+    </div>
+
+    <div class="article-container" id="article-view">
+      <div class="loading"><div class="spinner"></div></div>
+    </div>
+
+    <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.6rem;">Quitter</button>
+  </div>
+
+  <!-- ROUND OVER -->
+  <div class="screen" id="s-round-over">
+    <div class="win-wrap">
+      <div class="win-emoji" id="ro-emoji">🏆</div>
+      <div class="win-title" id="ro-title">Manche terminée</div>
+      <div class="win-sub" id="ro-sub"></div>
+      <div class="podium" id="ro-podium"></div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:1rem;" id="ro-score"></div>
+      <div id="ro-next-wrap" style="display:none;">
+        <button class="btn btn-primary" onclick="hostNextRound()">Manche suivante →</button>
+      </div>
+      <div id="ro-wait-wrap" style="display:none;">
+        <div class="waiting-banner"><span class="wdot"></span>En attente de l'hôte…</div>
+      </div>
+      <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.5rem;">Quitter</button>
+    </div>
+  </div>
+
+  <!-- GAME OVER -->
+  <div class="screen" id="s-game-over">
+    <div class="win-wrap">
+      <div class="win-emoji">🎉</div>
+      <div class="win-title" id="go-title">Partie terminée !</div>
+      <div class="win-sub" id="go-sub"></div>
+      <div class="podium" id="go-podium"></div>
+      <button class="btn btn-primary" onclick="show('s-home')" style="margin-top:1rem;">Retour à l'accueil</button>
+      <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.5rem;">Supprimer la partie</button>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, update, onValue, remove, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
+  authDomain:"undercover-game-b0d2a.firebaseapp.com",
+  databaseURL:"https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"undercover-game-b0d2a",
+  storageBucket:"undercover-game-b0d2a.firebasestorage.app",
+  messagingSenderId:"195280531653",
+  appId:"1:195280531653:web:94d72b25760b05af6bc0ac"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ── State ──
+let myCode=null, myName=null, myPnum=null, isHost=false;
+let gameListener=null, currentGame=null;
+let myClicks=0, myPath=[], myFinished=false;
+let timerInterval=null, startTime=null;
+let currentArticleTitle=null;
+
+// Articles de départ et cibles prédéfinis par langue
+const ARTICLE_PAIRS = {
+  fr: [
+    {start:'France',target:'Révolution française'},
+    {start:'Napoléon Ier',target:'Égypte'},
+    {start:'Football',target:'Brésil'},
+    {start:'Paris',target:'Tour Eiffel'},
+    {start:'Océan Atlantique',target:'Christophe Colomb'},
+    {start:'Musique',target:'Ludwig van Beethoven'},
+    {start:'Chat',target:'Égypte antique'},
+    {start:'Ordinateur',target:'Alan Turing'},
+    {start:'Soleil',target:'Albert Einstein'},
+    {start:'Guerre mondiale',target:'Adolf Hitler'},
+  ],
+  en: [
+    {start:'France',target:'Eiffel Tower'},
+    {start:'World War II',target:'Albert Einstein'},
+    {start:'Football',target:'Brazil'},
+    {start:'Computer',target:'Alan Turing'},
+    {start:'Sun',target:'Isaac Newton'},
+    {start:'Music',target:'Ludwig van Beethoven'},
+    {start:'Cat',target:'Ancient Egypt'},
+    {start:'Ocean',target:'Christopher Columbus'},
+  ]
+};
+
+window.show = id => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); };
+function toast(msg, dur=2200){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),dur); }
+window.copyCode = () => { if(!myCode)return; navigator.clipboard.writeText(myCode).then(()=>toast('Code copié !')); };
+function genCode(){ const w=['WIKI','LIEN','PAGE','SURF']; return w[Math.floor(Math.random()*w.length)]+'-'+Math.floor(10+Math.random()*90); }
+function playerColors(i){ const c=['#f97316','#38bdf8','#a78bfa','#4ade80','#fb7185','#facc15','#2dd4bf','#f472b6','#60a5fa','#34d399','#fbbf24']; return c[i%c.length]; }
+
+// ── Wikipedia API ──
+async function fetchWikiArticle(title, lang='fr') {
+  const url = `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+  try {
+    const r = await fetch(url);
+    if(!r.ok) return null;
+    return await r.json();
+  } catch(e){ return null; }
+}
+
+async function fetchWikiLinks(title, lang='fr') {
+  const url = `https://${lang}.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=links&pllimit=500&format=json&origin=*`;
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    const pages = data.query?.pages;
+    if(!pages) return [];
+    const page = Object.values(pages)[0];
+    return (page.links||[]).map(l=>l.title).filter(t=>!t.includes(':'));
+  } catch(e){ return []; }
+}
+
+async function loadAndRenderArticle(title) {
+  currentArticleTitle = title;
+  const lang = currentGame?.lang || 'fr';
+  const container = document.getElementById('article-view');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  
+  const [summary, links] = await Promise.all([
+    fetchWikiArticle(title, lang),
+    fetchWikiLinks(title, lang)
+  ]);
+
+  if(!summary){ container.innerHTML='<p style="color:var(--muted);font-size:14px;">Article introuvable.</p>'; return; }
+
+  const targetTitle = currentGame?.targetTitle || '';
+  const isTargetLink = t => t.toLowerCase() === targetTitle.toLowerCase();
+  // Sort: target first, then alphabetical
+  const sorted = [...links].sort((a,b)=>{
+    if(isTargetLink(a)) return -1;
+    if(isTargetLink(b)) return 1;
+    return a.localeCompare(b);
+  });
+
+  let html = `<div class="article-title">${summary.title}</div>`;
+  if(summary.extract) html += `<div class="article-extract">${summary.extract.slice(0,500)}${summary.extract.length>500?'…':''}</div>`;
+  
+  html += `<div class="links-label">Liens disponibles (${sorted.length})</div>`;
+  html += `<div class="links-grid">`;
+  if(sorted.length===0){ html += '<span class="no-links">Aucun lien disponible.</span>'; }
+  else {
+    sorted.forEach(t=>{
+      const cls = isTargetLink(t) ? 'wiki-link target-link' : 'wiki-link';
+      html += `<span class="${cls}" onclick="clickLink(${JSON.stringify(t)})">${t}</span>`;
+    });
+  }
+  html += `</div>`;
+  container.innerHTML = html;
+
+  // Update breadcrumb
+  renderBreadcrumb();
+}
+
+window.clickLink = async (title) => {
+  if(myFinished) return;
+  const game = currentGame;
+  if(!game || game.phase!=='playing') return;
+  
+  myClicks++;
+  myPath.push(title);
+  document.getElementById('g-clicks').textContent = myClicks;
+
+  // Save progress to Firebase
+  const players = JSON.parse(JSON.stringify(game.players||[]));
+  if(players[myPnum]){
+    players[myPnum].clicks = myClicks;
+    players[myPnum].currentTitle = title;
+  }
+  await update(ref(db,`wr/${myCode}`),{players});
+
+  // Check if target reached
+  const target = game.targetTitle;
+  if(title.toLowerCase() === target.toLowerCase()){
+    // Won this round!
+    myFinished = true;
+    clearInterval(timerInterval);
+    const elapsed = Math.floor((Date.now()-startTime)/1000);
+    const updatedPlayers = JSON.parse(JSON.stringify(game.players||[]));
+    if(updatedPlayers[myPnum]){
+      updatedPlayers[myPnum].clicks = myClicks;
+      updatedPlayers[myPnum].finishedAt = Date.now();
+      updatedPlayers[myPnum].time = elapsed;
+      updatedPlayers[myPnum].path = myPath;
+      updatedPlayers[myPnum].score = (updatedPlayers[myPnum].score||0)+1;
+    }
+    // Check if all finished or if we should trigger round-over
+    const allDone = updatedPlayers.every(p=>p&&p.finishedAt);
+    const updates = {players:updatedPlayers};
+    if(allDone || isHost){ updates.phase='round-over'; }
+    await update(ref(db,`wr/${myCode}`),updates);
+    toast(`🎉 Trouvé en ${myClicks} clic${myClicks>1?'s':''} !`);
+    return;
+  }
+
+  toast(`${title}`, 1200);
+  await loadAndRenderArticle(title);
+};
+
+function renderBreadcrumb(){
+  const bar = document.getElementById('g-breadcrumb');
+  if(!bar) return;
+  const game = currentGame;
+  const startTitle = game?.startTitle||'';
+  let html = `<span class="bc-item">${startTitle}</span>`;
+  myPath.forEach((t,i)=>{
+    html += `<span class="bc-sep">›</span>`;
+    html += `<span class="${i===myPath.length-1?'bc-item bc-current':'bc-item'}">${t}</span>`;
+  });
+  bar.innerHTML = html;
+  bar.scrollLeft = bar.scrollWidth;
+}
+
+function renderLeaderboard(game){
+  const el = document.getElementById('lb-rows'); if(!el) return;
+  const players = (game.players||[]).filter(Boolean);
+  const sorted = [...players].sort((a,b)=>{
+    if(a.finishedAt && b.finishedAt) return (a.clicks||999)-(b.clicks||999);
+    if(a.finishedAt) return -1;
+    if(b.finishedAt) return 1;
+    return 0;
+  });
+  el.innerHTML = sorted.map((p,i)=>{
+    const isMe = p.name === myName;
+    const statusHtml = p.finishedAt
+      ? `<span class="lb-status done">✓ ${p.clicks} clics</span>`
+      : `<span class="lb-status playing"><span class="wdot"></span>${p.currentTitle||'…'}</span>`;
+    return `<div class="lb-row">
+      <div class="lb-rank" style="color:${playerColors(players.indexOf(p))}">${i+1}</div>
+      <div class="lb-name${isMe?' me':''}">${p.name}${isMe?' (toi)':''}</div>
+      ${statusHtml}
+    </div>`;
+  }).join('');
+}
+
+function startTimer(){
+  startTime = Date.now();
+  clearInterval(timerInterval);
+  timerInterval = setInterval(()=>{
+    const s = Math.floor((Date.now()-startTime)/1000);
+    const el = document.getElementById('g-timer');
+    if(el) el.textContent = `⏱ ${s}s`;
+  }, 1000);
+}
+
+// ── Create ──
+window.createGame = async () => {
+  const name = document.getElementById('create-name').value.trim();
+  const rounds = parseInt(document.getElementById('create-rounds').value);
+  const lang = document.getElementById('create-lang').value;
+  const errEl = document.getElementById('create-err');
+  if(!name){ errEl.style.display='block'; errEl.textContent='Entre ton prénom.'; return; }
+  errEl.style.display='none';
+  const code = genCode();
+  const game = { code, rounds, lang, players:[{name,score:0,clicks:0,currentTitle:'',finishedAt:null,path:[]}], phase:'lobby', round:1, startTitle:null, targetTitle:null, createdAt:Date.now() };
+  await set(ref(db,`wr/${code}`), game);
+  myCode=code; myName=name; myPnum=0; isHost=true;
+  startListener(code);
+  renderLobby(game);
+  show('s-lobby');
+};
+
+function renderLobby(game){
+  const el = document.getElementById('lobby-code');
+  el.childNodes[0].textContent = game.code;
+  const c = document.getElementById('lobby-players'); if(!c) return;
+  c.innerHTML = '';
+  (game.players||[]).forEach((p,i)=>{
+    if(!p) return;
+    const div = document.createElement('div'); div.className='prow';
+    div.innerHTML=`<div class="pdot" style="background:${playerColors(i)};"></div><span style="font-size:15px;">${p.name}</span>${i===0?'<span style="font-size:11px;color:var(--muted);margin-left:auto;padding:2px 8px;border:1px solid var(--border);border-radius:999px;">Hôte</span>':''}`;
+    c.appendChild(div);
+  });
+  const w = document.getElementById('lobby-start-wrap');
+  if(w) w.style.display = (game.players||[]).filter(Boolean).length>=2 ? 'block':'none';
+}
+
+window.hostPickArticles = async () => {
+  const game = currentGame;
+  if(!game) return;
+  const pairs = ARTICLE_PAIRS[game.lang||'fr'];
+  const pair = pairs[Math.floor(Math.random()*pairs.length)];
+  const players = (game.players||[]).map(p=>p?{...p,clicks:0,currentTitle:pair.start,finishedAt:null,path:[]}:null);
+  await update(ref(db,`wr/${myCode}`),{
+    phase:'playing',
+    startTitle:pair.start,
+    targetTitle:pair.target,
+    players,
+    roundStartedAt:Date.now()
+  });
+};
+
+window.deleteGame = async () => {
+  clearInterval(timerInterval);
+  if(myCode) await remove(ref(db,`wr/${myCode}`));
+  myCode=null; currentGame=null; myClicks=0; myPath=[]; myFinished=false;
+  show('s-home');
+};
+
+window.joinGame = async () => {
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  const name = document.getElementById('join-name').value.trim();
+  const errEl = document.getElementById('join-err');
+  if(!code){ errEl.style.display='block'; errEl.textContent='Entre le code.'; return; }
+  if(!name){ errEl.style.display='block'; errEl.textContent='Entre ton prénom.'; return; }
+  errEl.style.display='none';
+  show('s-joining');
+  const snap = await get(ref(db,`wr/${code}`));
+  if(!snap.exists()){ show('s-join'); errEl.style.display='block'; errEl.textContent='Code introuvable.'; return; }
+  const game = snap.val();
+  const players = game.players||[];
+  const ex = players.findIndex(p=>p&&p.name.toLowerCase()===name.toLowerCase());
+  if(ex!==-1){ myCode=code; myName=name; myPnum=ex; isHost=ex===0; startListener(code); return; }
+  if(game.phase!=='lobby'){ show('s-join'); errEl.style.display='block'; errEl.textContent='Partie lancée.'; return; }
+  if(players.filter(Boolean).length>=11){ show('s-join'); errEl.style.display='block'; errEl.textContent='Partie pleine (11 joueurs max).'; return; }
+  const np = [...players, {name,score:0,clicks:0,currentTitle:'',finishedAt:null,path:[]}];
+  await update(ref(db,`wr/${code}`),{players:np});
+  myCode=code; myName=name; myPnum=np.length-1; isHost=false;
+  startListener(code);
+  document.getElementById('wait-msg').textContent=`Bienvenue ${name} !`;
+  show('s-wait');
+};
+
+function startListener(code){
+  if(gameListener) gameListener();
+  gameListener = onValue(ref(db,`wr/${code}`),snap=>{
+    if(!snap.exists()){ clearInterval(timerInterval); show('s-home'); return; }
+    currentGame = snap.val();
+    handlePhase(currentGame);
+  });
+}
+
+async function handlePhase(game){
+  const phase = game.phase;
+  const active = document.querySelector('.screen.active')?.id;
+
+  if(phase==='lobby'){
+    if(active!=='s-lobby' && active!=='s-wait'){
+      isHost ? show('s-lobby') : show('s-wait');
+    }
+    if(isHost) renderLobby(game);
+    else renderWait(game);
+    return;
+  }
+
+  if(phase==='playing'){
+    // If we're coming fresh into this round
+    if(active!=='s-game'){
+      myClicks=0; myPath=[]; myFinished=false;
+      document.getElementById('g-start-title').textContent=game.startTitle||'';
+      document.getElementById('g-target-title').textContent=game.targetTitle||'';
+      document.getElementById('g-round').textContent=game.round||1;
+      document.getElementById('g-rounds').textContent=game.rounds||3;
+      document.getElementById('g-clicks').textContent='0';
+      document.getElementById('g-breadcrumb').innerHTML=`<span class="bc-item">${game.startTitle||''}</span>`;
+      show('s-game');
+      startTimer();
+      await loadAndRenderArticle(game.startTitle);
+    }
+    // Always update leaderboard
+    renderLeaderboard(game);
+
+    // Check if all finished
+    const players = (game.players||[]).filter(Boolean);
+    const allDone = players.every(p=>p.finishedAt);
+    if(allDone && isHost){
+      await update(ref(db,`wr/${myCode}`),{phase:'round-over'});
+    }
+    return;
+  }
+
+  if(phase==='round-over'){
+    clearInterval(timerInterval);
+    renderRoundOver(game);
+    return;
+  }
+
+  if(phase==='game-over'){
+    clearInterval(timerInterval);
+    renderGameOver(game);
+    return;
+  }
+}
+
+function renderWait(game){
+  const c = document.getElementById('wait-players'); if(!c) return;
+  c.innerHTML = '';
+  (game.players||[]).forEach((p,i)=>{
+    if(!p) return;
+    const d = document.createElement('div'); d.className='prow';
+    d.innerHTML=`<div class="pdot" style="background:${playerColors(i)};"></div><span style="font-size:15px;">${p.name}</span>`;
+    c.appendChild(d);
+  });
+}
+
+function renderRoundOver(game){
+  const players = (game.players||[]).filter(Boolean);
+  const sorted = [...players].sort((a,b)=>{
+    if(a.finishedAt && b.finishedAt) return (a.clicks||999)-(b.clicks||999);
+    if(a.finishedAt) return -1;
+    if(b.finishedAt) return 1;
+    return 0;
+  });
+  const winner = sorted[0];
+  const isWinner = winner?.name===myName;
+  document.getElementById('ro-emoji').textContent = isWinner?'🏆':'😤';
+  document.getElementById('ro-title').textContent = isWinner?'Tu gagnes la manche !':`${winner?.name||'?'} gagne !`;
+  document.getElementById('ro-title').style.color = isWinner?'#4ade80':'#f87171';
+  document.getElementById('ro-sub').textContent = `Article cible : ${game.targetTitle}`;
+
+  const scoresText = players.map(p=>`${p.name} ${p.score||0} pt${(p.score||0)>1?'s':''}`).join(' · ');
+  document.getElementById('ro-score').textContent = `Scores : ${scoresText}`;
+
+  document.getElementById('ro-podium').innerHTML = sorted.map((p,i)=>{
+    const medals = ['🥇','🥈','🥉'];
+    const isMe = p.name===myName;
+    const info = p.finishedAt ? `${p.clicks} clic${p.clicks>1?'s':''} · ${p.time}s` : 'N\'a pas trouvé';
+    return `<div class="lb-row">
+      <div class="lb-rank">${medals[i]||i+1}</div>
+      <div class="lb-name${isMe?' me':''}">${p.name}</div>
+      <div class="lb-clicks">${info}</div>
+    </div>`;
+  }).join('');
+
+  const isGameOver = players.some(p=>(p.score||0)>=(game.rounds||1));
+  document.getElementById('ro-next-wrap').style.display = (!isGameOver && isHost) ? 'block':'none';
+  document.getElementById('ro-wait-wrap').style.display = (!isGameOver && !isHost) ? 'block':'none';
+  if(isGameOver){
+    // Auto-transition to game-over
+    setTimeout(()=>{ if(isHost) update(ref(db,`wr/${myCode}`),{phase:'game-over'}); },2000);
+  }
+  show('s-round-over');
+}
+
+window.hostNextRound = async () => {
+  const game = currentGame; if(!game) return;
+  const pairs = ARTICLE_PAIRS[game.lang||'fr'];
+  const pair = pairs[Math.floor(Math.random()*pairs.length)];
+  const players = (game.players||[]).map(p=>p?{...p,clicks:0,currentTitle:pair.start,finishedAt:null,path:[]}:null);
+  await update(ref(db,`wr/${myCode}`),{
+    phase:'playing',
+    round:(game.round||1)+1,
+    startTitle:pair.start,
+    targetTitle:pair.target,
+    players,
+    roundStartedAt:Date.now()
+  });
+  // Reset local state — listener will re-trigger handlePhase
+  myClicks=0; myPath=[]; myFinished=false;
+};
+
+function renderGameOver(game){
+  const players = (game.players||[]).filter(Boolean);
+  const sorted = [...players].sort((a,b)=>(b.score||0)-(a.score||0));
+  const winner = sorted[0];
+  const isWinner = winner?.name===myName;
+  document.getElementById('go-title').textContent = isWinner?'Tu gagnes la partie !':'Partie terminée !';
+  document.getElementById('go-sub').textContent = `Vainqueur : ${winner?.name||'?'} avec ${winner?.score||0} pt${(winner?.score||0)>1?'s':''}`;
+  document.getElementById('go-podium').innerHTML = sorted.map((p,i)=>{
+    const medals = ['🥇','🥈','🥉'];
+    const isMe = p.name===myName;
+    return `<div class="lb-row">
+      <div class="lb-rank">${medals[i]||i+1}</div>
+      <div class="lb-name${isMe?' me':''}">${p.name}</div>
+      <div class="lb-clicks">${p.score||0} pt${(p.score||0)>1?'s':''}</div>
+    </div>`;
+  }).join('');
+  show('s-game-over');
+}
+</script>
+</body>
+</html>
