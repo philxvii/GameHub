@@ -405,7 +405,7 @@ function normalizeName(str){
 }
 
 function isBannedName(name){
-  const n = normalizeName(name);
+  const n = normalize(name.replace(/[\s\-_\.]/g,""));
 
   if(n.includes("speedy") || n.includes("spedi") || n.includes("spidi")) return true;
 
@@ -533,6 +533,13 @@ function drawWheel(){
     ctx.beginPath(); ctx.arc(bx, by, br, 0, 2*Math.PI);
     ctx.fillStyle = grad; ctx.fill();
   }
+  // repère haut (debug)
+ctx.beginPath();
+ctx.moveTo(cx, cy - outerR);
+ctx.lineTo(cx, cy - outerR + 20);
+ctx.strokeStyle = "yellow";
+ctx.lineWidth = 3;
+ctx.stroke();
 }
 
 // ═══════════════════════════════════════
@@ -589,9 +596,15 @@ function animLoop(){
   } else {
     // Animation done — snap EXACTLY to finalWheelAngle stored in spinData
     // This guarantees the correct pocket is under the pointer regardless of float drift
-    wheelAngle = spinData.finalWheelAngle % (2*Math.PI);
+    wheelAngle = ((spinData.finalWheelAngle % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
     ballAngle = -Math.PI/2;
     ballR = ballEndR;
+
+     // 🔥 AJOUT ICI
+    console.log("RESULT:", spinData.targetResult);
+    console.log("FINAL ANGLE:", wheelAngle);
+    console.log("BALL ANGLE:", ballAngle);
+
     drawWheel();
     showResultOnWheel(spinData.targetResult);
   }
@@ -628,6 +641,7 @@ async function hostTriggerSpin(){
   // Pick random result
   const targetResult = Math.floor(Math.random() * 37);
   const pocketIdx = WHEEL_ORDER.indexOf(targetResult);
+  console.log("Résultat:", targetResult, "Index:", pocketIdx);
 
   // Calculate the wheel angle needed so pocket is at the pointer (top, -π/2)
   // Pocket center at angle: wheelAngle + pocketIdx*SLICE - π/2 + SLICE/2
@@ -636,7 +650,7 @@ async function hostTriggerSpin(){
   // Correct formula: for pocket pocketIdx to be under the pointer (top = -PI/2),
   // we need: wheelAngle + pocketIdx*SLICE - PI/2 + SLICE/2 = -PI/2
   // => finalWheelAngle = -SLICE/2 - pocketIdx*SLICE
- const finalWheelAngle = -Math.PI/2 - pocketIdx * SLICE;
+  const finalWheelAngle = -pocketIdx * SLICE;
   const currentW = wheelAngle;
   // How much we need to rotate forward (always forward, minimum 6 full turns)
   let diff = ((finalWheelAngle - currentW) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
