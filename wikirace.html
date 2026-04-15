@@ -3,331 +3,253 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WikiRace</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>WikiRace PRO</title>
 
 <style>
-:root{
-  --bg:#07090f;
-  --surface:#0e1118;
-  --surface2:#141820;
-  --border:rgba(255,255,255,0.08);
-  --text:#eef0f6;
-  --muted:#6b7280;
-  --accent:#facc15;
-  --green:#4ade80;
-}
-
 body{
   margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:'DM Sans',sans-serif;
-}
-
-.app{max-width:900px;margin:auto;padding:1rem;}
-
-.logo{
-  font-family:'Syne';
-  font-size:40px;
-  font-weight:800;
-  color:var(--accent);
-}
-
-.card{
-  background:var(--surface);
-  border-radius:16px;
-  padding:1rem;
-  margin-top:1rem;
-  border:1px solid var(--border);
-}
-
-input{
-  width:100%;
-  padding:12px;
-  border-radius:12px;
-  border:1px solid var(--border);
-  background:var(--surface2);
-  color:var(--text);
-  margin-top:8px;
-}
-
-.btn{
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:12px;
-  margin-top:10px;
-  cursor:pointer;
-}
-
-.btn-primary{
-  background:var(--accent);
-  color:#000;
-  font-weight:700;
-}
-
-.screen{display:none;}
-.screen.active{display:block;}
-
-.top{
-  display:flex;
-  justify-content:space-between;
-  font-size:13px;
-  margin-bottom:10px;
-}
-
-.target{color:var(--green);font-weight:700;}
-
-.article{
-  height:60vh;
-  overflow:auto;
-  background:var(--surface);
-  padding:1rem;
-  border-radius:12px;
-  border:1px solid var(--border);
-}
-
-a.wlink{
-  color:var(--accent);
-  cursor:pointer;
-  text-decoration:none;
-}
-a.wlink:hover{
+  font-family:sans-serif;
+  background:#07090f;
   color:white;
 }
 
-.win{
-  text-align:center;
-  margin-top:2rem;
+.screen{display:none;padding:20px;}
+.screen.active{display:block;}
+
+input,button{
+  width:100%;
+  padding:10px;
+  margin:5px 0;
 }
 
-.win h1{
-  font-family:'Syne';
-  font-size:32px;
+#article{
+  height:60vh;
+  overflow:auto;
+  background:#111;
+  padding:10px;
 }
 
-/* Toast */
-.toast{
+#ban{
   position:fixed;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  background:var(--accent);
-  color:black;
-  padding:10px 18px;
-  border-radius:999px;
-  font-weight:600;
-  opacity:0;
-  transition:0.3s;
+  inset:0;
+  background:red;
+  color:white;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:30px;
+  font-weight:bold;
 }
-.toast.show{opacity:1;}
 
-/* Wikipedia clean */
-.article *{color:var(--text)!important;background:transparent!important;}
-.article a{color:var(--accent)!important;}
-.article sup{display:none;}
-.article div,.article span{background:transparent!important;}
-.article .mw-editsection,
-.article .reference,
-.article .mw-references-wrap,
-.article .sidebar,
-.article .navbox,
-.article .metadata{display:none!important;}
-
+a{color:#e8d5a3;cursor:pointer;}
+.suggestions{background:#111;border:1px solid #333;}
+.suggestions div{padding:5px;cursor:pointer;}
+.suggestions div:hover{background:#222;}
 </style>
 </head>
 
 <body>
-<div class="app">
 
-<div class="screen active" id="home">
-  <div class="logo">WIKIRACE</div>
-  <div class="card">
-    <input id="name" placeholder="Ton prénom">
-    <button class="btn btn-primary" onclick="createGame()">Créer</button>
-    <input id="join" placeholder="Code">
-    <button class="btn" onclick="joinGame()">Rejoindre</button>
-  </div>
-</div>
+<div id="ban"></div>
 
-<div class="screen" id="lobby">
-  <div class="logo">Lobby</div>
-  <div class="card">
-    Code : <b id="code"></b>
-    <div id="players"></div>
-    <button class="btn btn-primary" onclick="startGame()">Lancer</button>
-  </div>
-</div>
+<!-- HOME -->
+<div id="home" class="screen active">
 
-<div class="screen" id="game">
-  <div class="top">
-    <div>🎯 <span id="target"></span></div>
-    <div>⏱ <span id="timer">0</span>s</div>
-    <div>🖱 <span id="clicks">0</span></div>
-  </div>
-  <div class="article" id="article"></div>
-</div>
+<h1>WikiRace</h1>
 
-<div class="screen" id="win">
-  <div class="win">
-    <h1 id="winner"></h1>
-    <p id="stats"></p>
-    <p id="path"></p>
-    <button class="btn btn-primary" onclick="location.reload()">Rejouer</button>
-  </div>
-</div>
+<input id="name" placeholder="Pseudo">
 
-<div class="toast" id="toast"></div>
+<h3>Départ</h3>
+<input id="startInput" oninput="searchWiki(this,'startSug')" placeholder="Nom ou lien">
+<div id="startSug" class="suggestions"></div>
+<button onclick="randomStart()">🎲 Aléatoire</button>
+
+<h3>Cible</h3>
+<input id="targetInput" oninput="searchWiki(this,'targetSug')" placeholder="Nom ou lien">
+<div id="targetSug" class="suggestions"></div>
+<button onclick="randomTarget()">🎲 Aléatoire</button>
+
+<button onclick="start()">Lancer</button>
 
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+<!-- GAME -->
+<div id="game" class="screen">
+<div>🎯 <span id="target"></span> | 🖱 <span id="clicks">0</span></div>
+<div id="article"></div>
+</div>
 
-const app = initializeApp({
-  apiKey:"AIzaSy...",
-  databaseURL:"https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app"
-});
-const db = getDatabase(app);
+<script>
 
-let myCode,myName,clicks=0,startTime,path=[];
-let timerInterval;
+// MESSAGE BAN
+const BANNED_MSG = "En vertu des très éclairées dispositions de l'article 16 de la loi SREN, il est solennellement institué un dispositif de bannissement numérique destiné à frapper d'indignité digitale les personnes soupçonnées d'avoir commis, ou reconnues coupables d'avoir commis, certaines infractions en ligne ; étant en outre précisé, avec toute la rigueur que commande l'ordre public numérique, que toute référence, explicite ou implicite, à « speedy » sera tenue pour prohibée et pourra, le cas échéant, justifier l'édiction d'une mesure de bannissement à caractère permanent.";
 
-function show(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+// VARIABLES
+let clicks=0;
+let target="";
+let path=[];
+let cache={};
+
+// NORMALISATION
+function normalize(str){
+  return str.toLowerCase()
+    .replace(/[^a-z0-9]/g,'')
+    .replace(/3/g,'e')
+    .replace(/1/g,'i')
+    .replace(/0/g,'o')
+    .replace(/5/g,'s');
 }
 
-function toast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2000);
+// BAN
+function isBanned(name){
+  return normalize(name).includes("speedy");
 }
 
-const ARTICLES=["France","Chat","Napoléon","Football","Internet","Musique","Lune","Soleil","Paris","Amazonie"];
+function ban(){
+  const b=document.getElementById("ban");
+  b.style.display="flex";
+  b.innerText=BANNED_MSG;
+}
+
+// EXTRACTION TITLE
+function extract(input){
+  if(input.includes("wikipedia")){
+    return decodeURIComponent(input.split("/").pop());
+  }
+  return input;
+}
+
+// RANDOM
+const ARTICLES=["France","Chat","Internet","Lune","Paris","Google","Pizza","Amazonie"];
+
+function randomStart(){
+  document.getElementById("startInput").value=ARTICLES[Math.floor(Math.random()*ARTICLES.length)];
+}
+
+function randomTarget(){
+  document.getElementById("targetInput").value=ARTICLES[Math.floor(Math.random()*ARTICLES.length)];
+}
+
+// SEARCH WIKI
+async function searchWiki(input,container){
+  const val=input.value;
+  if(val.length<2) return;
+
+  const res=await fetch(`https://fr.wikipedia.org/w/api.php?action=opensearch&search=${val}&limit=5&namespace=0&format=json&origin=*`);
+  const data=await res.json();
+
+  const box=document.getElementById(container);
+  box.innerHTML="";
+
+  data[1].forEach(title=>{
+    const div=document.createElement("div");
+    div.innerText=title;
+    div.onclick=()=>{
+      input.value=title;
+      box.innerHTML="";
+    };
+    box.appendChild(div);
+  });
+}
+
+// START
+function start(){
+
+  const name=document.getElementById("name").value.trim();
+
+  if(isBanned(name)){
+    ban();
+    return;
+  }
+
+  let start=extract(document.getElementById("startInput").value);
+  target=extract(document.getElementById("targetInput").value);
+
+  if(!start || !target){
+    alert("Remplis les champs");
+    return;
+  }
+
+  while(start===target){
+    target=randomArticle();
+  }
+
+  clicks=0;
+  path=[start];
+
+  document.getElementById("clicks").innerText=0;
+  document.getElementById("target").innerText=target;
+
+  show("game");
+  load(start);
+}
 
 function randomArticle(){
   return ARTICLES[Math.floor(Math.random()*ARTICLES.length)];
 }
 
-window.createGame=async()=>{
-  const name=document.getElementById('name').value.trim();
-  if(!name) return;
-  const code="WR-"+Math.floor(Math.random()*9000+1000);
+// LOAD FAST
+async function load(title){
 
-  await set(ref(db,'wr/'+code),{players:[{name}],phase:'lobby'});
-  myCode=code; myName=name;
-  listen();
-};
-
-window.joinGame=async()=>{
-  const code=document.getElementById('join').value.trim().toUpperCase();
-  const name=document.getElementById('name').value.trim();
-
-  const snap=await get(ref(db,'wr/'+code));
-  if(!snap.exists()) return alert("introuvable");
-
-  const g=snap.val();
-  g.players.push({name});
-  await update(ref(db,'wr/'+code),{players:g.players});
-
-  myCode=code; myName=name;
-  listen();
-};
-
-function listen(){
-  onValue(ref(db,'wr/'+myCode),snap=>{
-    const g=snap.val();
-
-    if(g.phase==='lobby'){
-      show('lobby');
-      code.textContent=myCode;
-      players.innerHTML=g.players.map(p=>p.name).join('<br>');
-    }
-
-    if(g.phase==='playing'){
-      show('game');
-      target.textContent=g.target;
-      loadArticle(g.current);
-      if(!timerInterval) startTimer();
-    }
-
-    if(g.phase==='finished'){
-      show('win');
-      winner.textContent="🏆 "+g.winner+" a gagné !";
-      stats.textContent=g.clicks+" clics";
-      path.innerHTML="🧭 "+g.path.join(" → ");
-      toast("🏆 "+g.winner+" a gagné !");
-    }
-  });
-}
-
-window.startGame=async()=>{
-  let start=randomArticle();
-  let target;
-  do{target=randomArticle();}while(target===start);
-
-  clicks=0;
-  path=[];
-  document.getElementById('clicks').textContent=0;
-
-  await update(ref(db,'wr/'+myCode),{
-    phase:'playing',
-    current:start,
-    target
-  });
-};
-
-async function loadArticle(title){
-  const res=await fetch(`https://fr.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title)}`);
-  const html=await res.text();
-
-  article.innerHTML=html;
-  article.querySelectorAll('script').forEach(s=>s.remove());
-
-  article.querySelectorAll('a').forEach(a=>{
-    const href=a.getAttribute('href');
-    if(href&&href.startsWith('./')){
-      const t=decodeURIComponent(href.replace('./',''));
-      a.onclick=(e)=>{e.preventDefault();click(t);}
-    }else a.removeAttribute('href');
-  });
-}
-
-async function click(title){
-  const snap=await get(ref(db,'wr/'+myCode));
-  const g=snap.val();
-  if(g.phase==='finished') return;
-
-  clicks++;
-  path.push(title);
-  document.getElementById('clicks').textContent=clicks;
-
-  if(title.toLowerCase()===g.target.toLowerCase()){
-    await update(ref(db,'wr/'+myCode),{
-      phase:'finished',
-      winner:myName,
-      clicks,
-      path
-    });
+  if(cache[title]){
+    render(cache[title]);
     return;
   }
 
-  await update(ref(db,'wr/'+myCode),{current:title});
+  const res=await fetch(`https://fr.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title)}`);
+  const html=await res.text();
+
+  cache[title]=html;
+  render(html);
 }
 
-function startTimer(){
-  startTime=Date.now();
-  clearInterval(timerInterval);
+// RENDER
+function render(html){
 
-  timerInterval=setInterval(()=>{
-    timer.textContent=Math.floor((Date.now()-startTime)/1000);
-  },1000);
+  const el=document.getElementById("article");
+  el.innerHTML=html;
+
+  el.querySelectorAll("script").forEach(s=>s.remove());
+
+  el.querySelectorAll("a").forEach(a=>{
+    const href=a.getAttribute("href");
+
+    if(href && href.startsWith("./")){
+      const t=decodeURIComponent(href.replace("./",""));
+
+      a.onclick=e=>{
+        e.preventDefault();
+        click(t);
+      };
+    }else a.removeAttribute("href");
+  });
 }
+
+// CLICK
+function click(title){
+
+  clicks++;
+  path.push(title);
+
+  document.getElementById("clicks").innerText=clicks;
+
+  if(title.toLowerCase()===target.toLowerCase()){
+    alert("🏆 Gagné en "+clicks+" clics\n\nChemin:\n"+path.join(" → "));
+    location.reload();
+    return;
+  }
+
+  load(title);
+}
+
+// UI
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
 </script>
+
 </body>
 </html>
