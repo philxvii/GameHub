@@ -405,17 +405,23 @@ function normalizeName(str){
 }
 
 function isBannedName(name){
-  const n = normalize(name.replace(/[\s\-_\.]/g,""));
 
+  const n = normalizeName(name.replace(/[\s\-_\.]/g,""));
+
+  // cas évidents
   if(n.includes("speedy") || n.includes("spedi") || n.includes("spidi")) return true;
 
-  if(/s+p+[e|i]+d+[e|i]+/.test(n)) return true;
+  // regex corrigée (important)
+  if(/s+p+[ei]+d+[ei]+/.test(n)) return true;
 
-  const vowels = n.replace(/[aeiou]/g,'a');
-  if(vowels.includes("spada")) return true;
+  // phonétique simple
+  const p = n.replace(/[aeiou]/g,'a');
+  if(p.includes("spada")) return true;
 
   return false;
 }
+
+  
 const BANNED_MSG = "En vertu des très éclairées dispositions de l'article 16 de la loi SREN, il est solennellement institué un dispositif de bannissement numérique destiné à frapper d'indignité digitale les personnes soupçonnées d'avoir commis, ou reconnues coupables d'avoir commis, certaines infractions en ligne ; étant en outre précisé, avec toute la rigueur que commande l'ordre public numérique, que toute référence, explicite ou implicite, à « speedy » sera tenue pour prohibée et pourra, le cas échéant, justifier l'édiction d'une mesure de bannissement à caractère permanent.";
 function showBan(){
   const b = document.getElementById("ban-screen");
