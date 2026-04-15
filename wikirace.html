@@ -3,36 +3,167 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WikiRace PRO</title>
+<title>WikiRace</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
 <style>
+:root{
+  --bg:#07090f;
+  --surface:#0e1118;
+  --surface2:#141820;
+  --border:rgba(255,255,255,0.08);
+  --text:#eef0f6;
+  --muted:#6b7280;
+  --accent:#e8d5a3;
+  --green:#4ade80;
+  --r:16px;
+}
+
 body{
   margin:0;
-  font-family:sans-serif;
-  background:#07090f;
-  color:white;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
 }
 
-.screen{display:none;padding:20px;}
+/* SCREEN */
+.screen{
+  display:none;
+  max-width:900px;
+  margin:auto;
+  padding:1rem;
+  animation:fade 0.4s ease;
+}
 .screen.active{display:block;}
 
-input,button{
-  width:100%;
-  padding:10px;
-  margin:5px 0;
+@keyframes fade{
+  from{opacity:0; transform:translateY(10px);}
+  to{opacity:1; transform:translateY(0);}
 }
 
+/* TITLE */
+.logo{
+  font-family:'Syne';
+  font-size:40px;
+  font-weight:800;
+  color:var(--accent);
+}
+
+/* CARD */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:1rem;
+  margin-top:1rem;
+}
+
+/* INPUT */
+input{
+  width:100%;
+  padding:12px;
+  border-radius:var(--r);
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text);
+  margin-top:8px;
+  transition:0.2s;
+}
+input:focus{
+  border-color:var(--accent);
+  outline:none;
+}
+
+/* BUTTON */
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:var(--r);
+  margin-top:10px;
+  cursor:pointer;
+  background:var(--accent);
+  color:#000;
+  font-weight:700;
+  transition:0.2s;
+}
+button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 20px rgba(0,0,0,0.4);
+}
+
+/* TOP */
+.top{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:10px;
+  font-size:14px;
+}
+
+.target{
+  color:var(--green);
+  font-weight:700;
+}
+
+/* ARTICLE */
 #article{
   height:60vh;
   overflow:auto;
-  background:#111;
-  padding:10px;
+  background:var(--surface);
+  padding:1rem;
+  border-radius:var(--r);
+  border:1px solid var(--border);
 }
 
+/* LINKS */
+a{
+  color:var(--accent);
+  text-decoration:none;
+  transition:0.15s;
+}
+a:hover{
+  color:white;
+}
+
+/* SUGGESTIONS */
+.suggestions{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+}
+.suggestions div{
+  padding:8px;
+  cursor:pointer;
+}
+.suggestions div:hover{
+  background:var(--surface2);
+}
+
+/* TOAST */
+.toast{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%) scale(0.9);
+  background:var(--accent);
+  color:#000;
+  padding:10px 20px;
+  border-radius:999px;
+  opacity:0;
+  transition:0.3s;
+}
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) scale(1);
+}
+
+/* BAN */
 #ban{
   position:fixed;
   inset:0;
-  background:red;
+  background:#7f1d1d;
   color:white;
   display:none;
   align-items:center;
@@ -41,57 +172,51 @@ input,button{
   padding:30px;
   font-weight:bold;
 }
-
-a{color:#e8d5a3;cursor:pointer;}
-.suggestions{background:#111;border:1px solid #333;}
-.suggestions div{padding:5px;cursor:pointer;}
-.suggestions div:hover{background:#222;}
 </style>
 </head>
 
 <body>
 
 <div id="ban"></div>
+<div class="toast" id="toast"></div>
 
 <!-- HOME -->
 <div id="home" class="screen active">
+  <div class="logo">WikiRace</div>
 
-<h1>WikiRace</h1>
+  <div class="card">
+    <input id="name" placeholder="Pseudo">
 
-<input id="name" placeholder="Pseudo">
+    <h3>Départ</h3>
+    <input id="startInput" oninput="searchWiki(this,'startSug')">
+    <div id="startSug" class="suggestions"></div>
+    <button onclick="randomStart()">🎲 Aléatoire</button>
 
-<h3>Départ</h3>
-<input id="startInput" oninput="searchWiki(this,'startSug')" placeholder="Nom ou lien">
-<div id="startSug" class="suggestions"></div>
-<button onclick="randomStart()">🎲 Aléatoire</button>
+    <h3>Cible</h3>
+    <input id="targetInput" oninput="searchWiki(this,'targetSug')">
+    <div id="targetSug" class="suggestions"></div>
+    <button onclick="randomTarget()">🎲 Aléatoire</button>
 
-<h3>Cible</h3>
-<input id="targetInput" oninput="searchWiki(this,'targetSug')" placeholder="Nom ou lien">
-<div id="targetSug" class="suggestions"></div>
-<button onclick="randomTarget()">🎲 Aléatoire</button>
-
-<button onclick="start()">Lancer</button>
-
+    <button onclick="start()">Lancer</button>
+  </div>
 </div>
 
 <!-- GAME -->
 <div id="game" class="screen">
-<div>🎯 <span id="target"></span> | 🖱 <span id="clicks">0</span></div>
-<div id="article"></div>
+  <div class="top">
+    🎯 <span id="target" class="target"></span>
+    🖱 <span id="clicks">0</span>
+  </div>
+  <div id="article"></div>
 </div>
 
 <script>
 
-// MESSAGE BAN
-const BANNED_MSG = "En vertu des très éclairées dispositions de l'article 16 de la loi SREN, il est solennellement institué un dispositif de bannissement numérique destiné à frapper d'indignité digitale les personnes soupçonnées d'avoir commis, ou reconnues coupables d'avoir commis, certaines infractions en ligne ; étant en outre précisé, avec toute la rigueur que commande l'ordre public numérique, que toute référence, explicite ou implicite, à « speedy » sera tenue pour prohibée et pourra, le cas échéant, justifier l'édiction d'une mesure de bannissement à caractère permanent.";
+const BANNED_MSG = "En vertu des très éclairées dispositions de l'article 16 de la loi SREN...";
 
-// VARIABLES
-let clicks=0;
-let target="";
-let path=[];
-let cache={};
+let clicks=0, target="", path=[], cache={};
 
-// NORMALISATION
+// NORMALIZE
 function normalize(str){
   return str.toLowerCase()
     .replace(/[^a-z0-9]/g,'')
@@ -101,7 +226,6 @@ function normalize(str){
     .replace(/5/g,'s');
 }
 
-// BAN
 function isBanned(name){
   return normalize(name).includes("speedy");
 }
@@ -112,90 +236,53 @@ function ban(){
   b.innerText=BANNED_MSG;
 }
 
-// EXTRACTION TITLE
-function extract(input){
-  if(input.includes("wikipedia")){
-    return decodeURIComponent(input.split("/").pop());
-  }
-  return input;
-}
-
 // RANDOM
-const ARTICLES=["France","Chat","Internet","Lune","Paris","Google","Pizza","Amazonie"];
+const ARTICLES=["France","Chat","Internet","Lune","Paris","Google","Pizza"];
 
-function randomStart(){
-  document.getElementById("startInput").value=ARTICLES[Math.floor(Math.random()*ARTICLES.length)];
-}
+function randomStart(){startInput.value=ARTICLES[Math.floor(Math.random()*ARTICLES.length)];}
+function randomTarget(){targetInput.value=ARTICLES[Math.floor(Math.random()*ARTICLES.length)];}
 
-function randomTarget(){
-  document.getElementById("targetInput").value=ARTICLES[Math.floor(Math.random()*ARTICLES.length)];
-}
-
-// SEARCH WIKI
-async function searchWiki(input,container){
+// SEARCH
+async function searchWiki(input,id){
   const val=input.value;
   if(val.length<2) return;
 
   const res=await fetch(`https://fr.wikipedia.org/w/api.php?action=opensearch&search=${val}&limit=5&namespace=0&format=json&origin=*`);
   const data=await res.json();
 
-  const box=document.getElementById(container);
+  const box=document.getElementById(id);
   box.innerHTML="";
-
-  data[1].forEach(title=>{
-    const div=document.createElement("div");
-    div.innerText=title;
-    div.onclick=()=>{
-      input.value=title;
-      box.innerHTML="";
-    };
-    box.appendChild(div);
+  data[1].forEach(t=>{
+    const d=document.createElement("div");
+    d.innerText=t;
+    d.onclick=()=>{input.value=t;box.innerHTML="";}
+    box.appendChild(d);
   });
 }
 
 // START
 function start(){
+  const name=nameInput.value.trim();
+  if(isBanned(name)){ban();return;}
 
-  const name=document.getElementById("name").value.trim();
+  let start=startInput.value;
+  target=targetInput.value;
 
-  if(isBanned(name)){
-    ban();
-    return;
-  }
-
-  let start=extract(document.getElementById("startInput").value);
-  target=extract(document.getElementById("targetInput").value);
-
-  if(!start || !target){
-    alert("Remplis les champs");
-    return;
-  }
-
-  while(start===target){
-    target=randomArticle();
-  }
+  if(!start||!target)return alert("Remplis");
 
   clicks=0;
   path=[start];
 
-  document.getElementById("clicks").innerText=0;
-  document.getElementById("target").innerText=target;
+  clicksEl.innerText=0;
+  targetEl.innerText=target;
 
   show("game");
   load(start);
 }
 
-function randomArticle(){
-  return ARTICLES[Math.floor(Math.random()*ARTICLES.length)];
-}
-
-// LOAD FAST
+// LOAD
 async function load(title){
-
-  if(cache[title]){
-    render(cache[title]);
-    return;
-  }
+  if(cache[title]) return render(cache[title]);
 
   const res=await fetch(`https://fr.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title)}`);
   const html=await res.text();
@@ -206,41 +293,42 @@ async function load(title){
 
 // RENDER
 function render(html){
+  article.innerHTML=html;
+  article.querySelectorAll("script").forEach(s=>s.remove());
 
-  const el=document.getElementById("article");
-  el.innerHTML=html;
-
-  el.querySelectorAll("script").forEach(s=>s.remove());
-
-  el.querySelectorAll("a").forEach(a=>{
+  article.querySelectorAll("a").forEach(a=>{
     const href=a.getAttribute("href");
-
     if(href && href.startsWith("./")){
       const t=decodeURIComponent(href.replace("./",""));
-
-      a.onclick=e=>{
-        e.preventDefault();
-        click(t);
-      };
-    }else a.removeAttribute("href");
+      a.onclick=e=>{e.preventDefault();click(t);}
+    } else a.removeAttribute("href");
   });
 }
 
 // CLICK
 function click(title){
-
   clicks++;
   path.push(title);
-
-  document.getElementById("clicks").innerText=clicks;
+  clicksEl.innerText=clicks;
 
   if(title.toLowerCase()===target.toLowerCase()){
-    alert("🏆 Gagné en "+clicks+" clics\n\nChemin:\n"+path.join(" → "));
-    location.reload();
+    showToast("🏆 Victoire !");
+    setTimeout(()=>{
+      alert("Chemin :\n"+path.join(" → "));
+      location.reload();
+    },800);
     return;
   }
 
   load(title);
+}
+
+// TOAST
+function showToast(msg){
+  const t=toast;
+  t.innerText=msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2000);
 }
 
 // UI
@@ -248,6 +336,15 @@ function show(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
+
+// SHORTCUTS
+const nameInput=document.getElementById("name");
+const startInput=document.getElementById("startInput");
+const targetInput=document.getElementById("targetInput");
+const article=document.getElementById("article");
+const clicksEl=document.getElementById("clicks");
+const targetEl=document.getElementById("target");
+const toast=document.getElementById("toast");
 
 </script>
 
