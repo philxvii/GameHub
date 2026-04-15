@@ -212,28 +212,56 @@ a:hover{
 
 <script>
 
-const BANNED_MSG = "En vertu des très éclairées dispositions de l'article 16 de la loi SREN...";
+const BANNED_MSG = "En vertu des très éclairées dispositions de l'article 16 de la loi SREN, il est solennellement institué un dispositif de bannissement numérique destiné à frapper d'indignité digitale les personnes soupçonnées d'avoir commis, ou reconnues coupables d'avoir commis, certaines infractions en ligne ; étant en outre précisé, avec toute la rigueur que commande l'ordre public numérique, que toute référence, explicite ou implicite, à « speedy » sera tenue pour prohibée et pourra, le cas échéant, justifier l'édiction d'une mesure de bannissement à caractère permanent.";
 
 let clicks=0, target="", path=[], cache={};
 
-// NORMALIZE
+// ─────────────────────────────
+// NORMALISATION ULTRA
+// ─────────────────────────────
 function normalize(str){
-  return str.toLowerCase()
-    .replace(/[^a-z0-9]/g,'')
-    .replace(/3/g,'e')
-    .replace(/1/g,'i')
-    .replace(/0/g,'o')
-    .replace(/5/g,'s');
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,'') // accents
+    .replace(/[^a-z0-9]/g,'')       // symboles
+    .replace(/[3€]/g,'e')
+    .replace(/[1!]/g,'i')
+    .replace(/[0]/g,'o')
+    .replace(/[5$]/g,'s')
+    .replace(/[7]/g,'t')
+    .replace(/ph/g,'f')
+    .replace(/y/g,'i')              // y → i (phonétique)
+    .replace(/(.)\1+/g,'$1');       // répétitions
 }
 
+// ─────────────────────────────
+// PHONÉTIQUE SIMPLE
+// ─────────────────────────────
+function phonetic(str){
+  return str
+    .replace(/[aeiou]/g,'a')  // toutes voyelles → a
+    .replace(/[^a-z]/g,'');
+}
+
+// ─────────────────────────────
+// DÉTECTION SPEEDY MAX
+// ─────────────────────────────
 function isBanned(name){
-  return normalize(name).includes("speedy");
-}
 
-function ban(){
-  const b=document.getElementById("ban");
-  b.style.display="flex";
-  b.innerText=BANNED_MSG;
+  const n = normalize(name);
+  const p = phonetic(n);
+
+  // mots interdits directs
+  if(n.includes("speedy") || n.includes("spedi") || n.includes("spidi")) return true;
+
+  // phonétique (oral)
+  if(p.includes("spada") || p.includes("spada")) return true;
+
+  // regex large (très permissif)
+  if(/s+p+[e|i]+d+[e|i]+/.test(n)) return true;
+
+  return false;
 }
 
 // RANDOM
