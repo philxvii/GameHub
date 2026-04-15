@@ -159,6 +159,19 @@ canvas#rwheel{display:block;border-radius:50%;}
 </head>
 <body>
 
+<div id="ban-screen" style="
+  position:fixed;
+  inset:0;
+  background:#7f1d1d;
+  color:white;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:40px;
+  z-index:9999;
+"></div>
+
 <!-- HOME -->
 <div class="screen active" id="s-home">
 <div class="page-wrap">
@@ -375,12 +388,64 @@ window.copyCode = () => { if(!myCode)return; navigator.clipboard.writeText(myCod
 function genCode(){ const w=['SPIN','ROUL','ZERO','BALL','LUCK']; return w[Math.floor(Math.random()*w.length)]+'-'+Math.floor(10+Math.random()*90); }
 function fmt(n){ return Number(n).toLocaleString('fr-FR'); }
 
+function normalizeName(str){
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]/g,'')
+    .replace(/[3€]/g,'e')
+    .replace(/[1!]/g,'i')
+    .replace(/[0]/g,'o')
+    .replace(/[5$]/g,'s')
+    .replace(/[7]/g,'t')
+    .replace(/ph/g,'f')
+    .replace(/y/g,'i')
+    .replace(/(.)\1+/g,'$1');
+}
+
 function isBannedName(name){
-  const n=name.toLowerCase().replace(/[^a-z0-9]/g,'');
-  return [/sp[ei][ei]?d/,/sp[iy]d/,/speedlov/,/speedit/,/speedi/,/speedy/,/67(?:speed|spid|spyd)?/,/(?:speed|spid|spyd).*67/,/^67$/].some(r=>r.test(n));
+  const n = normalizeName(name);
+
+  if(n.includes("speedy") || n.includes("spedi") || n.includes("spidi")) return true;
+
+  if(/s+p+[e|i]+d+[e|i]+/.test(n)) return true;
+
+  const vowels = n.replace(/[aeiou]/g,'a');
+  if(vowels.includes("spada")) return true;
+
+  return false;
 }
 const BANNED_MSG = "En vertu des très éclairées dispositions de l'article 16 de la loi SREN, il est solennellement institué un dispositif de bannissement numérique destiné à frapper d'indignité digitale les personnes soupçonnées d'avoir commis, ou reconnues coupables d'avoir commis, certaines infractions en ligne ; étant en outre précisé, avec toute la rigueur que commande l'ordre public numérique, que toute référence, explicite ou implicite, à « speedy » sera tenue pour prohibée et pourra, le cas échéant, justifier l'édiction d'une mesure de bannissement à caractère permanent.";
+function showBan(){
+  const b = document.getElementById("ban-screen");
 
+  b.style.display = "flex";
+
+  b.innerHTML = `
+    <div style="
+      max-width:700px;
+      background:rgba(0,0,0,0.4);
+      padding:30px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,0.2);
+    ">
+      <div style="font-size:42px;margin-bottom:10px;">🚫</div>
+      <div style="line-height:1.8;">
+        ${BANNED_MSG}
+      </div>
+      <button onclick="location.reload()" style="
+        margin-top:20px;
+        padding:12px;
+        border:none;
+        border-radius:10px;
+        cursor:pointer;
+      ">
+        Revenir
+      </button>
+    </div>
+  `;
+}
 // ═══════════════════════════════════════
 // CANVAS & DRAWING
 // ═══════════════════════════════════════
@@ -524,7 +589,7 @@ function animLoop(){
   } else {
     // Animation done — snap EXACTLY to finalWheelAngle stored in spinData
     // This guarantees the correct pocket is under the pointer regardless of float drift
-    wheelAngle = spinData.finalWheelAngle;
+    wheelAngle = spinData.finalWheelAngle % (2*Math.PI);
     ballAngle = -Math.PI/2;
     ballR = ballEndR;
     drawWheel();
@@ -571,7 +636,7 @@ async function hostTriggerSpin(){
   // Correct formula: for pocket pocketIdx to be under the pointer (top = -PI/2),
   // we need: wheelAngle + pocketIdx*SLICE - PI/2 + SLICE/2 = -PI/2
   // => finalWheelAngle = -SLICE/2 - pocketIdx*SLICE
-  const finalWheelAngle = -SLICE/2 - pocketIdx * SLICE;
+ const finalWheelAngle = -Math.PI/2 - pocketIdx * SLICE;
   const currentW = wheelAngle;
   // How much we need to rotate forward (always forward, minimum 6 full turns)
   let diff = ((finalWheelAngle - currentW) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
@@ -774,7 +839,10 @@ window.createGame = async()=>{
   const spinDelay=parseInt(document.getElementById('create-delay').value);
   const errEl=document.getElementById('create-err');
   if(!name){ errEl.style.display='block'; errEl.textContent='Entre ton prénom.'; return; }
-  if(isBannedName(name)){ errEl.style.display='block'; errEl.textContent=BANNED_MSG; return; }
+  if(isBannedName(name)){
+    showBan();
+    return;
+}
   errEl.style.display='none';
   const code=genCode();
   const game={code,startBalance,spinDelay,players:[{name,balance:startBalance,bets:{},betTotal:0}],phase:'lobby',round:0,spinData:null,createdAt:Date.now()};
@@ -807,7 +875,10 @@ window.joinGame = async()=>{
   const errEl=document.getElementById('join-err');
   if(!code){ errEl.style.display='block'; errEl.textContent='Entre le code.'; return; }
   if(!name){ errEl.style.display='block'; errEl.textContent='Entre ton prénom.'; return; }
-  if(isBannedName(name)){ errEl.style.display='block'; errEl.textContent=BANNED_MSG; return; }
+  if(isBannedName(name)){
+  showBan();
+  return;
+}
   errEl.style.display='none'; show('s-joining');
   const snap=await get(ref(db,`rl/${code}`)); if(!snap.exists()){ show('s-join'); errEl.style.display='block'; errEl.textContent='Code introuvable.'; return; }
   const game=snap.val(); const players=game.players||[];
@@ -954,6 +1025,7 @@ window.closeResult = async()=>{
     await update(ref(db,`rl/${myCode}`),{phase:'betting',lastResult:null});
     resetAutoSpin(currentGame);
   }
+
 };
 
 // ── Init ──
