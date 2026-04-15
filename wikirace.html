@@ -15,7 +15,7 @@
   --border:rgba(255,255,255,0.08);
   --text:#eef0f6;
   --muted:#6b7280;
-  --accent:#e8d5a3;
+  --accent:#facc15;
   --green:#4ade80;
 }
 
@@ -94,6 +94,9 @@ a.wlink{
   cursor:pointer;
   text-decoration:none;
 }
+a.wlink:hover{
+  color:white;
+}
 
 .win{
   text-align:center;
@@ -105,56 +108,40 @@ a.wlink{
   font-size:32px;
 }
 
-  /* ─── FIX WIKIPEDIA DARK MODE ─── */
-
-.article * {
-  color: var(--text) !important;
-  background: transparent !important;
+/* Toast */
+.toast{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:var(--accent);
+  color:black;
+  padding:10px 18px;
+  border-radius:999px;
+  font-weight:600;
+  opacity:0;
+  transition:0.3s;
 }
+.toast.show{opacity:1;}
 
-.article a {
-  color: var(--accent) !important;
-}
+/* Wikipedia clean */
+.article *{color:var(--text)!important;background:transparent!important;}
+.article a{color:var(--accent)!important;}
+.article sup{display:none;}
+.article div,.article span{background:transparent!important;}
+.article .mw-editsection,
+.article .reference,
+.article .mw-references-wrap,
+.article .sidebar,
+.article .navbox,
+.article .metadata{display:none!important;}
 
-.article h1,
-.article h2,
-.article h3 {
-  color: var(--text) !important;
-}
-
-.article p {
-  color: var(--text) !important;
-}
-
-.article table {
-  background: var(--surface2) !important;
-  border: 1px solid var(--border) !important;
-}
-
-.article th,
-.article td {
-  border: 1px solid var(--border) !important;
-  padding: 6px;
-}
-
-.article img {
-  max-width: 100%;
-  border-radius: 8px;
-}
-
-.article sup {
-  display: none; /* enlève les [1] [2] */
-}
-  
 </style>
-
-  
 </head>
 
 <body>
 <div class="app">
 
-<!-- HOME -->
 <div class="screen active" id="home">
   <div class="logo">WIKIRACE</div>
   <div class="card">
@@ -165,7 +152,6 @@ a.wlink{
   </div>
 </div>
 
-<!-- LOBBY -->
 <div class="screen" id="lobby">
   <div class="logo">Lobby</div>
   <div class="card">
@@ -175,25 +161,25 @@ a.wlink{
   </div>
 </div>
 
-<!-- GAME -->
 <div class="screen" id="game">
   <div class="top">
     <div>🎯 <span id="target"></span></div>
     <div>⏱ <span id="timer">0</span>s</div>
     <div>🖱 <span id="clicks">0</span></div>
   </div>
-
   <div class="article" id="article"></div>
 </div>
 
-<!-- WIN -->
 <div class="screen" id="win">
   <div class="win">
     <h1 id="winner"></h1>
     <p id="stats"></p>
+    <p id="path"></p>
     <button class="btn btn-primary" onclick="location.reload()">Rejouer</button>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 </div>
 
@@ -202,47 +188,43 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const app = initializeApp({
-  apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
+  apiKey:"AIzaSy...",
   databaseURL:"https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app"
 });
 const db = getDatabase(app);
 
-let myCode, myName, clicks=0, startTime;
+let myCode,myName,clicks=0,startTime,path=[];
+let timerInterval;
 
 function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-function genCode(){return "WR-"+Math.floor(Math.random()*9000+1000);}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
 
-// ARTICLES RANDOM
-const ARTICLES = [
-"France","Chat","Napoléon","Football","Internet",
-"Musique","Lune","Soleil","Paris","Amazonie",
-"Einstein","Titanic","Google","YouTube","Pizza"
-];
+const ARTICLES=["France","Chat","Napoléon","Football","Internet","Musique","Lune","Soleil","Paris","Amazonie"];
 
 function randomArticle(){
   return ARTICLES[Math.floor(Math.random()*ARTICLES.length)];
 }
 
-window.createGame = async ()=>{
+window.createGame=async()=>{
   const name=document.getElementById('name').value.trim();
   if(!name) return;
+  const code="WR-"+Math.floor(Math.random()*9000+1000);
 
-  const code=genCode();
-
-  await set(ref(db,'wr/'+code),{
-    players:[{name}],
-    phase:'lobby'
-  });
-
+  await set(ref(db,'wr/'+code),{players:[{name}],phase:'lobby'});
   myCode=code; myName=name;
   listen();
 };
 
-window.joinGame = async ()=>{
+window.joinGame=async()=>{
   const code=document.getElementById('join').value.trim().toUpperCase();
   const name=document.getElementById('name').value.trim();
 
@@ -251,7 +233,6 @@ window.joinGame = async ()=>{
 
   const g=snap.val();
   g.players.push({name});
-
   await update(ref(db,'wr/'+code),{players:g.players});
 
   myCode=code; myName=name;
@@ -264,30 +245,40 @@ function listen(){
 
     if(g.phase==='lobby'){
       show('lobby');
-      document.getElementById('code').textContent=myCode;
-      document.getElementById('players').innerHTML=g.players.map(p=>p.name).join('<br>');
+      code.textContent=myCode;
+      players.innerHTML=g.players.map(p=>p.name).join('<br>');
     }
 
     if(g.phase==='playing'){
       show('game');
-      document.getElementById('target').textContent=g.target;
+      target.textContent=g.target;
       loadArticle(g.current);
-      startTimer();
+      if(!timerInterval) startTimer();
     }
 
     if(g.phase==='finished'){
       show('win');
-      document.getElementById('winner').textContent="🏆 "+g.winner+" a gagné !";
-      document.getElementById('stats').textContent=g.clicks+" clics";
+      winner.textContent="🏆 "+g.winner+" a gagné !";
+      stats.textContent=g.clicks+" clics";
+      path.innerHTML="🧭 "+g.path.join(" → ");
+      toast("🏆 "+g.winner+" a gagné !");
     }
   });
 }
 
-window.startGame = async ()=>{
+window.startGame=async()=>{
+  let start=randomArticle();
+  let target;
+  do{target=randomArticle();}while(target===start);
+
+  clicks=0;
+  path=[];
+  document.getElementById('clicks').textContent=0;
+
   await update(ref(db,'wr/'+myCode),{
     phase:'playing',
-    current:randomArticle(),
-    target:randomArticle()
+    current:start,
+    target
   });
 };
 
@@ -295,47 +286,46 @@ async function loadArticle(title){
   const res=await fetch(`https://fr.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title)}`);
   const html=await res.text();
 
-  const el=document.getElementById('article');
-  el.innerHTML=html;
+  article.innerHTML=html;
+  article.querySelectorAll('script').forEach(s=>s.remove());
 
-  el.querySelectorAll('script').forEach(s=>s.remove());
-
-  el.querySelectorAll('a').forEach(a=>{
+  article.querySelectorAll('a').forEach(a=>{
     const href=a.getAttribute('href');
-    if(href && href.startsWith('./')){
+    if(href&&href.startsWith('./')){
       const t=decodeURIComponent(href.replace('./',''));
-      a.classList.add('wlink');
       a.onclick=(e)=>{e.preventDefault();click(t);}
-    } else a.removeAttribute('href');
+    }else a.removeAttribute('href');
   });
 }
 
 async function click(title){
-  clicks++;
-  document.getElementById('clicks').textContent=clicks;
-
   const snap=await get(ref(db,'wr/'+myCode));
   const g=snap.val();
+  if(g.phase==='finished') return;
+
+  clicks++;
+  path.push(title);
+  document.getElementById('clicks').textContent=clicks;
 
   if(title.toLowerCase()===g.target.toLowerCase()){
     await update(ref(db,'wr/'+myCode),{
       phase:'finished',
       winner:myName,
-      clicks
+      clicks,
+      path
     });
     return;
   }
 
-  await update(ref(db,'wr/'+myCode),{
-    current:title
-  });
+  await update(ref(db,'wr/'+myCode),{current:title});
 }
 
 function startTimer(){
   startTime=Date.now();
-  setInterval(()=>{
-    const s=Math.floor((Date.now()-startTime)/1000);
-    document.getElementById('timer').textContent=s;
+  clearInterval(timerInterval);
+
+  timerInterval=setInterval(()=>{
+    timer.textContent=Math.floor((Date.now()-startTime)/1000);
   },1000);
 }
 </script>
