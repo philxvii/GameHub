@@ -104,7 +104,51 @@ a.wlink{
   font-family:'Syne';
   font-size:32px;
 }
+
+  /* ─── FIX WIKIPEDIA DARK MODE ─── */
+
+.article * {
+  color: var(--text) !important;
+  background: transparent !important;
+}
+
+.article a {
+  color: var(--accent) !important;
+}
+
+.article h1,
+.article h2,
+.article h3 {
+  color: var(--text) !important;
+}
+
+.article p {
+  color: var(--text) !important;
+}
+
+.article table {
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.article th,
+.article td {
+  border: 1px solid var(--border) !important;
+  padding: 6px;
+}
+
+.article img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.article sup {
+  display: none; /* enlève les [1] [2] */
+}
+  
 </style>
+
+  
 </head>
 
 <body>
