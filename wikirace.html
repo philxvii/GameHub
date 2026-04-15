@@ -99,6 +99,13 @@ button:hover{
   justify-content:space-between;
   margin-bottom:10px;
   font-size:14px;
+
+  position:sticky;
+  top:0;
+  background:var(--bg);
+  padding:10px;
+  border-bottom:1px solid var(--border);
+  z-index:10;
 }
 
 .target{
@@ -108,12 +115,14 @@ button:hover{
 
 /* ARTICLE */
 #article{
-  height:60vh;
+  height:80vh;
   overflow:auto;
   background:var(--surface);
-  padding:1rem;
+  padding:1.5rem;
   border-radius:var(--r);
   border:1px solid var(--border);
+  line-height:1.7;
+  font-size:15px;
 }
 
 /* LINKS */
@@ -172,6 +181,71 @@ a:hover{
   padding:30px;
   font-weight:bold;
 }
+
+  /* ─── FIX WIKIPEDIA DARK MODE ─── */
+
+#article * {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+
+/* liens */
+#article a {
+  color: var(--accent) !important;
+  text-decoration: none;
+}
+#article a:hover {
+  text-decoration: underline;
+}
+
+/* titres */
+#article h1 {
+  font-size:26px;
+  margin-bottom:10px;
+}
+#article h2 {
+  font-size:20px;
+  margin-top:20px;
+}
+#article h3 {
+  font-size:16px;
+}
+
+/* paragraphes */
+#article p {
+  margin-bottom:12px;
+  color: var(--text);
+}
+
+/* tableaux */
+#article table {
+  background: var(--surface2) !important;
+  border:1px solid var(--border);
+  border-radius:8px;
+  overflow:hidden;
+}
+#article td, #article th {
+  border:1px solid var(--border);
+  padding:6px;
+}
+
+/* images */
+#article img {
+  max-width:100%;
+  border-radius:8px;
+  margin:10px 0;
+}
+
+/* supprime éléments inutiles */
+#article sup,
+#article .reference,
+#article .mw-editsection,
+#article .sidebar,
+#article .navbox,
+#article .metadata,
+#article .infobox {
+  display:none !important;
+}
 </style>
 </head>
 
@@ -207,6 +281,8 @@ a:hover{
     🎯 <span id="target" class="target"></span>
     🖱 <span id="clicks">0</span>
   </div>
+
+  
   <div id="article"></div>
 </div>
 
@@ -249,7 +325,7 @@ function phonetic(str){
 // ─────────────────────────────
 function isBanned(name){
 
-  const n = normalize(name);
+  const n = normalize(name.replace(/[\s\-_\.]/g,""));
   const p = phonetic(n);
 
   // mots interdits directs
@@ -310,26 +386,53 @@ function start(){
 
 // LOAD
 async function load(title){
-  if(cache[title]) return render(cache[title]);
 
-  const res=await fetch(`https://fr.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title)}`);
-  const html=await res.text();
+  article.innerHTML = "<div style='padding:20px'>Chargement...</div>";
 
-  cache[title]=html;
-  render(html);
+  if(cache[title]){
+    render(cache[title]);
+    return;
+  }
+
+  try{
+    const res = await fetch(`https://fr.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title)}`);
+    const html = await res.text();
+
+    cache[title] = html;
+    render(html);
+
+  }catch{
+    article.innerHTML = "Erreur de chargement";
+  }
 }
 
 // RENDER
 function render(html){
-  article.innerHTML=html;
+  article.innerHTML = html;
+
+  // 🔥 supprime scripts
   article.querySelectorAll("script").forEach(s=>s.remove());
 
+  // 🔥 enlève les trucs lourds
+  article.querySelectorAll("style").forEach(s=>s.remove());
+
+  // 🔥 nettoie attributs inline
+article.querySelectorAll("*").forEach(el=>{
+  el.removeAttribute("style");
+});
+
+  // 🔥 liens cliquables
   article.querySelectorAll("a").forEach(a=>{
     const href=a.getAttribute("href");
     if(href && href.startsWith("./")){
       const t=decodeURIComponent(href.replace("./",""));
-      a.onclick=e=>{e.preventDefault();click(t);}
-    } else a.removeAttribute("href");
+      a.onclick=e=>{
+        e.preventDefault();
+        click(t);
+      };
+    } else {
+      a.removeAttribute("href");
+    }
   });
 }
 
