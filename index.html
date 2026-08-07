@@ -392,7 +392,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue, remove, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, get, update, onValue, remove, increment, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
@@ -416,17 +416,18 @@ const GAMES = [
   {id:'bataille',   name:'Bataille Navale', emoji:'⚓', db:'bn'},
   {id:'roulette',   name:'Roulette',        emoji:'🎰', db:'rl'},
   {id:'minigolf',   name:'Mini Golf',       emoji:'⛳', db:'mg'},
-  {id:'uno',        name:'UNO',             emoji:'🃏', db:null},
+  {id:'uno',        name:'UNO',             emoji:'🃏', db:'uno'},
+  {id:'wikirace',   name:'WikiRace',        emoji:'🌍', db:'wr'},
 ];
 
 // ── Presence ──
 const presenceKey = Math.random().toString(36).slice(2);
 const onlineRef = ref(db, `hub/online/${presenceKey}`);
+import { onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 onValue(ref(db, '.info/connected'), snap => {
   if(snap.val()){
     set(onlineRef, {t:Date.now()});
-    import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js")
-      .then(m => m.onDisconnect(onlineRef).remove());
+    onDisconnect(onlineRef).remove();
   }
 });
 onValue(ref(db, 'hub/online'), snap => {
@@ -456,12 +457,13 @@ onValue(ref(db, 'hub/hidden'), snap => {
 });
 
 // ── Age gate setting ──
+// ageGate: one-time read at startup + realtime for admin toggle only
 onValue(ref(db, 'hub/settings/ageGate'), snap => {
   const enabled = snap.exists() ? snap.val() : true;
   const toggle = document.getElementById('age-gate-toggle');
   if(toggle) toggle.checked = enabled;
-  // If admin disabled age gate, auto-bypass for everyone
-  if(!enabled && !document.getElementById('hub').classList.contains('visible')){
+  // Only bypass if disabled AND hub not already shown AND age not already verified
+  if(!enabled && sessionStorage.getItem('age_ok') !== '1' && !document.getElementById('hub').classList.contains('visible')){
     document.getElementById('age-gate').classList.add('hidden');
     document.getElementById('hub').classList.add('visible');
   }
