@@ -312,8 +312,7 @@ const BOARD = [
   {id:'event',name:'Événement',type:'event'},
   {id:'lumen',name:'Rue Lumen',type:'property',price:380,rent:38,group:'Lumen'},
   {id:'crystal',name:'Arcade Crystal',type:'property',price:400,rent:40,group:'Crystal'},
-  {id:'chance3',name:'Chance',type:'chance'},
-  {id:'tax4',name:'Taxe de Fortune',type:'tax',amount:240}
+  {id:'chance3',name:'Chance',type:'chance'}
 ];
 
 let myCode = null;
@@ -341,7 +340,7 @@ function clearLocal(){localStorage.removeItem('banqueroll-code');localStorage.re
 function boardLayout(){const layout=[];for(let c=1;c<=11;c++)layout.push({r:11,c});for(let r=10;r>=2;r--)layout.push({r,c:11});for(let c=11;c>=1;c--)layout.push({r:1,c});for(let r=2;r<=10;r++)layout.push({r,c:1});return layout;}
 const BOARD_LAYOUT = boardLayout();
 
-function initBoard(){const grid=document.getElementById('board-grid');grid.innerHTML='';boardNodes=[];BOARD.forEach((square,index)=>{const node=document.createElement('div');node.className='square '+square.type;node.dataset.index=index;node.style.gridRowStart=BOARD_LAYOUT[index].r;node.style.gridColumnStart=BOARD_LAYOUT[index].c;node.innerHTML=`<div class="square-top"><span class="square-name">${square.name}</span><span class="square-label">${square.type==='start'?'DÉPART':square.type==='jail'?'PRISON':square.type==='free'?'LIBRE':square.type.toUpperCase()}</span></div><div class="square-price">${square.type==='property'||square.type==='station'||square.type==='airport'?square.price+' 💰':square.type==='tax'?('-'+square.amount+' 💸'):''}</div><div class="square-band"></div><div class="pawn-container"></div>`;grid.appendChild(node);boardNodes.push(node);});const center=document.createElement('div');center.className='board-center';center.innerHTML=`<div class="center-logo">BANQUEROLL</div><div class="center-sub">Un nouveau plateau d'investissement moderne, fluide et stratégique.</div><div class="center-tags"><span class="center-tag">Propriétés</span><span class="center-tag">Gares & Aéroports</span><span class="center-tag">Enchères</span><span class="center-tag">Échanges</span></div>`;grid.appendChild(center);} 
+function initBoard(){const grid=document.getElementById('board-grid');grid.innerHTML='';boardNodes=[];BOARD.forEach((square,index)=>{const coords=BOARD_LAYOUT[index]||{r:1,c:1};const node=document.createElement('div');node.className='square '+square.type;node.dataset.index=index;node.style.gridRowStart=coords.r;node.style.gridColumnStart=coords.c;node.innerHTML=`<div class="square-top"><span class="square-name">${square.name}</span><span class="square-label">${square.type==='start'?'DÉPART':square.type==='jail'?'PRISON':square.type==='free'?'LIBRE':square.type.toUpperCase()}</span></div><div class="square-price">${square.type==='property'||square.type==='station'||square.type==='airport'?square.price+' 💰':square.type==='tax'?('-'+square.amount+' 💸'):''}</div><div class="square-band"></div><div class="pawn-container"></div>`;grid.appendChild(node);boardNodes.push(node);});const center=document.createElement('div');center.className='board-center';center.innerHTML=`<div class="center-logo">BANQUEROLL</div><div class="center-sub">Un nouveau plateau d'investissement moderne, fluide et stratégique.</div><div class="center-tags"><span class="center-tag">Propriétés</span><span class="center-tag">Gares & Aéroports</span><span class="center-tag">Enchères</span><span class="center-tag">Échanges</span></div>`;grid.appendChild(center);} 
 
 function getGameRef(code){return ref(db,`banqueroll/${code}`);} 
 function getPresenceRef(code,playerId){return ref(db,`banqueroll/${code}/presence/${playerId}`);} 
@@ -436,6 +435,12 @@ function copyCode(){if(!myCode) return;navigator.clipboard.writeText(myCode).the
 function sendChat(){const input=document.getElementById('chat-input');const text=input.value.trim();if(!text||!currentGame) return;pushChat(currentGame.code,myName,text);input.value='';}
 
 function autoReconnect(){parseStored();if(myCode && myPlayerId){get(getGameRef(myCode)).then(snap=>{if(!snap.exists()){clearLocal();return;}const game=snap.val();const existing=game.players.find(p=>p.id===myPlayerId);if(existing){myName=existing.name;myColor=existing.color;isHost=game.hostId===myPlayerId;saveLocal();attachPresence();startGameListener(myCode);if(game.phase==='lobby') show('s-lobby'); else show('s-game');} else {clearLocal();}});}}
+
+Object.assign(window,{
+  show,createGame,joinGame,copyCode,startGame,deleteGame,sendChat,
+  closeAuctionModal,placeBid,closeTradeModal,proposeTrade,acceptTrade,
+  declineTrade,payBail,serveJailTurn,openTradeModal,rollDice
+});
 
 function updateAuctionCountdown(auction){const countdown=document.getElementById('auction-countdown');const status=document.getElementById('auction-status');if(auctionTimer) clearInterval(auctionTimer);function tick(){const remaining=Math.max(0,Math.round((auction.endAt-Date.now())/1000));countdown.textContent=`${remaining}s`;status.textContent=remaining?`Temps restant`:'Calcul en cours...';if(remaining<=0){clearInterval(auctionTimer);}}tick();auctionTimer=setInterval(tick,1000);} 
 

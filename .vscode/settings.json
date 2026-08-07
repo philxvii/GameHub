@@ -3,6 +3,10 @@
         "/^cd /c/Java/GameHub && node --input-type=module -e \"import fs from 'fs'; const html=fs\\.readFileSync\\('banqueroll\\.html','utf8'\\); const idx=html\\.indexOf\\('function renderAction\\(game\\)'\\); const snippet=html\\.slice\\(idx, idx\\+3500\\); console\\.log\\(snippet\\);\"$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^cd /c/Java/GameHub && node -e \"const fs=require\\('fs'\\);const text=fs\\.readFileSync\\('banqueroll\\.html','utf8'\\);const m=text\\.match\\(/const BOARD = \\\\\\[\\(\\[\\\\s\\\\S\\]\\*\\?\\)\\\\\\];/m\\);if\\(!m\\)\\{console\\.log\\('no'\\);process\\.exit\\(1\\);\\}const entries=m\\[1\\]\\.split\\(/\\\\n/\\)\\.map\\(l=>l\\.trim\\(\\)\\)\\.filter\\(l=>l\\.startsWith\\('\\{'\\)\\);console\\.log\\('BOARD entries',entries\\.length\\);const board=text\\.match\\(/const BOARD_LAYOUT = \\(\\[\\\\s\\\\S\\]\\*\\?\\);/m\\);if\\(board\\)\\{const str=board\\[1\\];const layoutCount=str\\.split\\(/\\\\\\{r:/g\\)\\.length-1;console\\.log\\('LAYOUT entries',layoutCount\\);\\}else console\\.log\\('no layout'\\);\"$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }
