@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^cd /c/Java/GameHub && node --input-type=module -e \"import fs from 'fs'; const html=fs\\.readFileSync\\('banqueroll\\.html','utf8'\\); const idx=html\\.indexOf\\('function renderAction\\(game\\)'\\); const snippet=html\\.slice\\(idx, idx\\+3500\\); console\\.log\\(snippet\\);\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
