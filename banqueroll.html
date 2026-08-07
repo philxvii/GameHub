@@ -57,21 +57,20 @@
   .screen-panel{display:grid;gap:1.5rem;}
   .screen-panel .top-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;}
 
-  .board-shell{position:relative;width:100%;aspect-ratio:1/1;max-width:860px;margin:0 auto;background:#e9eef8;border:1px solid rgba(15,23,42,0.08);border-radius:46px;padding:30px;display:flex;align-items:center;justify-content:center;box-shadow:0 42px 96px rgba(19,33,58,0.12);}
-  .board-grid{position:relative;width:100%;height:100%;background:#f8fbff;border:1px solid rgba(19,33,58,0.08);border-radius:38px;display:grid;grid-template-columns:repeat(11,minmax(0,1fr));grid-template-rows:repeat(11,minmax(0,1fr));gap:12px;box-shadow:inset 0 0 0 1px rgba(19,33,58,0.04);padding:26px;}
+  .board-shell{position:relative;width:100%;aspect-ratio:1/1;max-width:1480px;margin:0 auto;background:#e9eef8;border:1px solid rgba(15,23,42,0.08);border-radius:46px;padding:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 42px 96px rgba(19,33,58,0.12);}
+  .board-grid{position:relative;width:100%;height:100%;background:#f8fbff;border:1px solid rgba(19,33,58,0.08);border-radius:38px;display:grid;grid-template-columns:repeat(11,minmax(110px,1fr));grid-template-rows:repeat(11,minmax(110px,1fr));gap:16px;box-shadow:inset 0 0 0 1px rgba(19,33,58,0.04);padding:20px;}
   .board-center{grid-row:2/11;grid-column:2/11;background:#ffffff;border:1px solid rgba(19,33,58,0.05);border-radius:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 2.4rem;}
   .center-logo{font-family:'Lato',sans-serif;font-size:3.4rem;font-weight:900;letter-spacing:0.28em;margin-bottom:0.6rem;color:var(--accent);text-transform:uppercase;}
   .center-sub{color:#546580;font-size:0.96rem;line-height:1.7;text-align:center;max-width:380px;}
   .center-tags{display:flex;flex-wrap:wrap;justify-content:center;gap:0.65rem;margin-top:1.3rem;}
   .center-tag{font-size:0.78rem;padding:9px 16px;border-radius:999px;background:rgba(15,90,255,0.12);color:var(--accent);font-weight:700;}
-  .square{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;padding:8px;position:relative;min-height:0;aspect-ratio:1/1;width:100%;border-radius:12px;border:1px solid rgba(19,33,58,0.06);background:#ffffff;box-shadow:0 8px 18px rgba(19,33,58,0.06);transition:transform 0.18s,border-color 0.18s,box-shadow 0.18s;overflow:hidden;}
-  .square:hover{transform:translateY(-2px);border-color:rgba(15,90,255,0.25);box-shadow:0 18px 32px rgba(19,33,58,0.14);}
-  .square-top{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;text-align:center;}
-  .square-name{font-size:0.73rem;font-weight:700;line-height:1.2;color:#121d34;white-space:normal;overflow-wrap:anywhere;word-break:break-word;max-width:100%;}
-  .square-label{font-size:0.66rem;color:#7b8ba4;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;}
-  .square-price{font-size:0.8rem;font-weight:700;color:#1767ff;}
-  .square-price{display:inline-block;margin-top:6px;padding:4px 6px;border-radius:8px;background:transparent;color:inherit;}
-  .square-band{height:6px;border-radius:999px;background:rgba(226,232,240,0.8);margin-top:6px;}
+  .square{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;padding:14px 12px;position:relative;min-height:0;aspect-ratio:1/1;width:100%;border-radius:20px;border:1px solid rgba(19,33,58,0.1);background:#ffffff;box-shadow:0 14px 28px rgba(19,33,58,0.12);transition:transform 0.18s,border-color 0.18s,box-shadow 0.18s;overflow:hidden;}
+  .square:hover{transform:translateY(-2px);border-color:rgba(15,90,255,0.28);box-shadow:0 20px 34px rgba(19,33,58,0.16);}
+  .square-top{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;text-align:center;flex:1;min-width:0;}
+  .square-name{font-size:1.05rem;font-weight:800;line-height:1.25;color:#121d34;white-space:normal;overflow-wrap:anywhere;word-break:break-word;max-width:100%;text-align:center;}
+  .square-label{font-size:0.82rem;color:#4f5f7a;text-transform:uppercase;letter-spacing:0.1em;white-space:nowrap;}
+  .square-price{font-size:1rem;font-weight:800;color:#1842d5;display:inline-block;margin-top:8px;padding:6px 12px;border-radius:999px;background:rgba(23,103,255,0.16);color:inherit;}
+  .square-band{height:7px;border-radius:999px;background:rgba(226,232,240,0.8);margin-top:4px;width:72%;min-height:7px;}
   .square.property .square-band{background:linear-gradient(90deg,#8ecae6,#219ebc);}
   .square.station .square-band{background:linear-gradient(90deg,#9d7cd8,#7b6bf5);}
   .square.airport .square-band{background:linear-gradient(90deg,#ffb703,#fb8500);}
@@ -121,7 +120,13 @@
   .select-small{width:100%;max-width:260px;}
   .input-inline{width:100%;max-width:160px;}
   .timer-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:16px 20px;border-radius:28px;background:#ffffff;border:1px solid rgba(19,33,58,0.08);font-size:0.95rem;box-shadow:0 12px 32px rgba(15,23,42,0.06);}
+  .timer-meta{display:grid;gap:0.25rem;flex:1;}
   .timer-value{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--accent);}
+  .dice-stage{display:flex;gap:0.7rem;align-items:center;}
+  .die{width:64px;height:64px;border-radius:18px;background:linear-gradient(145deg,#ffffff,#eef4ff);border:1px solid rgba(15,90,255,0.16);box-shadow:0 12px 24px rgba(15,23,42,0.12);display:flex;align-items:center;justify-content:center;font-size:1.75rem;font-weight:900;color:#123;transition:transform 0.2s ease;}
+  .die.rolling{animation:dice-roll 0.7s ease infinite;transform-origin:center;}
+  .die-value{line-height:1;}
+  @keyframes dice-roll{0%,100%{transform:translateY(0) rotate(0) scale(1);}25%{transform:translateY(-10px) rotate(-16deg) scale(1.04);}50%{transform:translateY(4px) rotate(12deg) scale(0.97);}75%{transform:translateY(-6px) rotate(-8deg) scale(1.02);}}
   .modal{background:rgba(239,244,255,0.92);position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:1.25rem;backdrop-filter:blur(4px);}
   .modal.active{display:flex;}
   .modal-card{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--border);border-radius:28px;padding:1.5rem;box-shadow:var(--shadow);}
@@ -205,8 +210,14 @@
           <div id="board-grid" class="board-grid"></div>
         </div>
         <div class="timer-bar" style="margin-top:1rem;">
-          <span id="roll-result">Prêt à lancer.</span>
-          <strong class="timer-value" id="turn-timer">00:00</strong>
+          <div class="dice-stage">
+            <div class="die" id="die-1"><span class="die-value">⚀</span></div>
+            <div class="die" id="die-2"><span class="die-value">⚀</span></div>
+          </div>
+          <div class="timer-meta">
+            <span id="roll-result">Prêt à lancer.</span>
+            <strong class="timer-value" id="turn-timer">00:00</strong>
+          </div>
         </div>
       </div>
       <div class="sidebar">
@@ -444,6 +455,10 @@ function renderAction(game){clearInterval(countdownTimer);const actionText=docum
 
 function renderTimer(seconds){const timer=document.getElementById('turn-timer');if(countdownTimer) clearInterval(countdownTimer);function refresh(){const m=Math.floor(seconds/60).toString().padStart(2,'0');const s=(seconds%60).toString().padStart(2,'0');timer.textContent=`${m}:${s}`;if(seconds<=0){clearInterval(countdownTimer);timer.textContent='00:00';}seconds=Math.max(0,seconds-1);}refresh();countdownTimer=setInterval(()=>{refresh();},1000);} 
 
+function setDieValue(dieEl,value){if(!dieEl) return;dieEl.dataset.value=value;const label=dieEl.querySelector('.die-value');if(label){label.textContent=['⚀','⚁','⚂','⚃','⚄','⚅'][value-1];}}
+
+function animateDiceRoll(die1Value,die2Value){const die1=document.getElementById('die-1');const die2=document.getElementById('die-2');if(!die1||!die2) return Promise.resolve();die1.classList.add('rolling');die2.classList.add('rolling');return new Promise(resolve=>{let step=0;const interval=setInterval(()=>{step+=1;setDieValue(die1,Math.ceil(Math.random()*6));setDieValue(die2,Math.ceil(Math.random()*6));if(step>=10){clearInterval(interval);die1.classList.remove('rolling');die2.classList.remove('rolling');setDieValue(die1,die1Value);setDieValue(die2,die2Value);resolve();}},70);});}
+
 function maybeResolveAuction(game){if(!game.auction||game.auction.status!=='open') return;if(Date.now() > game.auction.endAt){const nextIndex=(game.turnIndex+1)%game.players.length;const updates={};const auction=game.auction;const winner=findPlayerById(auction.highestBidder);if(winner){updates[`ownership/${auction.position}`]=winner.id;updates[`players/${game.players.findIndex(p=>p.id===winner.id)}/cash`]=winner.cash-auction.highestBid;const note=`${winner.name} remporte ${BOARD[auction.position].name} pour ${auction.highestBid} 💰.`;pushHistory(game.code,note);} else {pushHistory(game.code,`Aucune offre pour ${BOARD[auction.position].name}.`);}updates['auction/status']='closed';updates['turnIndex']=nextIndex;updates['turnDeadline']=Date.now()+currentGame.turnTimer*1000;updates['updatedAt']=Date.now();update(getGameRef(game.code),updates);}}
 
 function maybeResolveTradeTimeout(game){if(!game.trade||game.trade.status!=='pending') return;if(Date.now() > game.trade.expiresAt){update(getGameRef(game.code),{'trade/status':'cancelled','trade/updatedAt':Date.now()});pushHistory(game.code,'La proposition d’échange a expiré.');}}
@@ -451,7 +466,7 @@ function maybeResolveTradeTimeout(game){if(!game.trade||game.trade.status!=='pen
 function pushHistory(code,text){push(ref(db,`banqueroll/${code}/history`),{text,ts:Date.now()});}
 function pushChat(code,author,text){push(ref(db,`banqueroll/${code}/chat`),{author,text,ts:Date.now()});}
 
-async function rollDice(){if(!currentGame||currentGame.phase!=='playing') return;const player=currentGame.players[currentGame.turnIndex];if(player.id!==myPlayerId) return; if(player.inJail){toast('Tu dois d’abord gérer ta situation en prison.');return;}const die1=Math.ceil(Math.random()*6);const die2=Math.ceil(Math.random()*6);const total=die1+die2;const nextPos=(player.position+total)%BOARD.length;const passedStart=(player.position+total)>=BOARD.length;const updates={};updates[`players/${currentGame.turnIndex}/position`]=nextPos; if(passedStart){updates[`players/${currentGame.turnIndex}/cash`]=player.cash+200;pushHistory(currentGame.code,`${player.name} passe par la case Départ et encaisse 200 💰.`);}updates['updatedAt']=Date.now();await update(getGameRef(currentGame.code),updates);pushHistory(currentGame.code,`${player.name} lance ${die1} + ${die2} et avance de ${total} cases vers ${BOARD[nextPos].name}.`);setTimeout(()=>handleLanding(nextPos),300);}
+async function rollDice(){if(!currentGame||currentGame.phase!=='playing') return;const player=currentGame.players[currentGame.turnIndex];if(player.id!==myPlayerId) return; if(player.inJail){toast('Tu dois d’abord gérer ta situation en prison.');return;}const die1=Math.ceil(Math.random()*6);const die2=Math.ceil(Math.random()*6);const total=die1+die2;const nextPos=(player.position+total)%BOARD.length;const passedStart=(player.position+total)>=BOARD.length;const result=document.getElementById('roll-result');result.textContent='Lancement des dés...';await animateDiceRoll(die1,die2);const updates={};updates[`players/${currentGame.turnIndex}/position`]=nextPos; if(passedStart){updates[`players/${currentGame.turnIndex}/cash`]=player.cash+200;pushHistory(currentGame.code,`${player.name} passe par la case Départ et encaisse 200 💰.`);}updates['updatedAt']=Date.now();await update(getGameRef(currentGame.code),updates);pushHistory(currentGame.code,`${player.name} lance ${die1} + ${die2} et avance de ${total} cases vers ${BOARD[nextPos].name}.`);result.textContent=`${player.name} a lancé ${die1} et ${die2}.`;setTimeout(()=>handleLanding(nextPos),300);}
 
 async function handleLanding(position){const game=currentGame;const player=game.players[game.turnIndex];const square=BOARD[position];const updates={updatedAt:Date.now()};if(square.type==='start'){updates['turnDeadline']=Date.now()+game.turnTimer*1000;await update(getGameRef(game.code),updates);pushHistory(game.code,`${player.name} a touché Départ.`);return;}if(square.type==='property'||square.type==='station'||square.type==='airport'){const owner=game.ownership?.[position]||null;if(!owner){updates.currentAction={type:'buy',position,playerId:player.id};updates.turnDeadline=Date.now()+game.turnTimer*1000;await update(getGameRef(game.code),updates);return;}if(owner!==player.id){await payRent(position);return;}updates.turnDeadline=Date.now()+game.turnTimer*1000;await update(getGameRef(game.code),updates);return;}if(square.type==='tax'){await payAmount(player.id,square.amount,`${square.name}`);return;}if(square.type==='bank'){await handleBank(position);return;}if(square.type==='event'){await handleEvent(position);return;}if(square.type==='chance'){await handleChance(position);return;}if(square.type==='jail'){updates.turnDeadline=Date.now()+game.turnTimer*1000;await update(getGameRef(game.code),updates);pushHistory(game.code,`${player.name} se repose en prison.`);return;}if(square.type==='free'){updates.turnDeadline=Date.now()+game.turnTimer*1000;await update(getGameRef(game.code),updates);pushHistory(game.code,`${player.name} profite de la zone libre.`);return;}await update(getGameRef(game.code),updates);}
 
