@@ -151,7 +151,7 @@ function initBoard(){
   });
   const center=document.createElement('div');
   center.className='board-center';
-  center.innerHTML=`<div class="center-logo">BANQUEROLL</div><div class="center-sub">Un nouveau plateau d'investissement moderne, fluide et stratégique.</div><div class="center-tags"><span class="center-tag">Propriétés</span><span class="center-tag">Gares & Aéroports</span><span class="center-tag">Enchères</span><span class="center-tag">Échanges</span></div>`;
+  center.innerHTML=`<div class="trade-reference"><strong>$10<br><small>RIO</small></strong><div>Choose your property to trade</div><div class="trade-slots"><div class="trade-slot"></div><div class="trade-pass">×<small>PASS</small></div><div class="trade-slot blue"></div></div><div class="auction-copy">Auction closing in <b>49 sec</b></div></div>`;
   grid.appendChild(center);
 }
 

@@ -139,6 +139,51 @@
   @media(max-width:1130px){.game-columns{grid-template-columns:1fr;} .board-shell{max-width:100%;}} 
   @media(max-width:860px){.hero{flex-direction:column;} .hero-title{font-size:2.35rem;} .board-shell{aspect-ratio:0.95/1;} .sidebar{order:2;}}
 </style>
+<style id="reference-theme">
+  /* Banque Roll reference skin: dark game surface, compact property tiles. */
+  :root{--ref-bg:#22242a;--ref-panel:#504951;--ref-board:#c1d3dd;--ref-ink:#fff;--ref-muted:#bdb8c0;--ref-green:#a8e53b;}
+  html,body{background:var(--ref-bg);color:var(--ref-ink);font-family:Arial,Helvetica,sans-serif;}
+  body{overflow-x:hidden;}
+  .app{max-width:1180px;padding:16px 20px 32px;}
+  .screen{animation:none;}
+  .screen.active{display:block;}
+  .hero,.screen-panel{display:none;}
+  #s-game{display:none;}
+  #s-game.active{display:block;}
+  .game-columns{display:grid;grid-template-columns:minmax(0,780px) 290px;gap:18px;align-items:start;width:100%;}
+  .board-shell{width:100%;max-width:none;aspect-ratio:1/1;background:#f4f6f1;border:0;border-radius:0;padding:8px;box-shadow:none;}
+  .board-grid{width:100%;height:100%;background:#f8faf7;border:0;border-radius:0;grid-template-columns:repeat(11,minmax(0,1fr));grid-template-rows:repeat(11,minmax(0,1fr));gap:3px;padding:0;box-shadow:none;}
+  .board-center{grid-row:2/11;grid-column:2/11;background:var(--ref-board);border:0;border-radius:0;padding:0 12px;gap:10px;}
+  .trade-reference{width:min(100%,208px);display:grid;gap:10px;text-align:center;color:#526970;font-size:clamp(.7rem,1.3vw,.9rem)}
+  .trade-reference strong{display:block;background:#62b955;color:#fff;padding:5px 12px;font-size:.72rem;width:max-content;margin:0 auto}
+  .trade-slots{display:grid;grid-template-columns:1fr 38px 1fr;align-items:center;gap:7px}
+  .trade-slot{height:38px;background:#fff;border-radius:2px;position:relative}
+  .trade-slot::before{content:'';position:absolute;width:13px;height:13px;border:3px solid #fff;border-radius:50%;left:-8px;top:10px;background:#ef5d52;box-shadow:0 0 0 1px #e4eff1}
+  .trade-slot.blue::before{background:#2e9ed0}.trade-pass{font-size:1.7rem;font-weight:700;color:#94aeb6;line-height:1}.trade-pass small{display:block;font-size:.55rem;font-weight:700}
+  .trade-reference .auction-copy{font-size:clamp(.65rem,1.2vw,.82rem)}
+  .center-logo{display:none}
+  .center-sub{display:none}
+  .center-tags{gap:4px;margin-top:12px;}
+  .center-tag{font-size:.6rem;padding:5px 7px;border-radius:2px;background:#fff;color:#71878c;}
+  .square{padding:2px 2px 4px;gap:1px;border-radius:0;border:1px solid #fff;background:#f8faf7;box-shadow:none;min-width:0;}
+  .square:hover{transform:none;box-shadow:none;}
+  .square-top{gap:1px;}
+  .square-name{font-size:clamp(.42rem,1vw,.72rem);font-weight:700;line-height:1.05;color:#fff;text-transform:uppercase;}
+  .square-label{font-size:clamp(.35rem,.75vw,.56rem);letter-spacing:.02em;color:#fff;}
+  .square-price{font-size:clamp(.46rem,1vw,.72rem);padding:2px 3px;margin:0;border-radius:0;background:transparent;color:#fff!important;}
+  .square-band{position:absolute;inset:0 0 auto;height:11px;width:100%;margin:0;border-radius:0;background:#d8e3e4!important;}
+  .square.property .square-band{background:#e87887!important}.square.station .square-band{background:#9ba8ae!important}.square.airport .square-band{background:#f4a936!important}.square.bank .square-band{background:#8bcf74!important}.square.tax .square-band{background:#ee7a80!important}.square.event .square-band{background:#f4c43d!important}.square.chance .square-band{background:#a7a9ad!important}.square.jail .square-band{background:#d5d8d2!important}.square.free .square-band{background:#b4d3d5!important}
+  .square.property{background:#e87887}.square.station{background:#9ba8ae}.square.airport{background:#f4a936}.square.bank{background:#8bcf74}.square.tax{background:#ee7a80}.square.event{background:#f4c43d}.square.chance{background:#d7dadd}.square.jail{background:#d5d8d2}.square.free{background:#b4d3d5}.square.start{background:#d7dadd}
+  .square.current{border:2px solid var(--ref-green);box-shadow:none;}
+  .pawn-container{right:3px;bottom:3px;gap:1px;max-width:70%;}.pawn{width:16px;height:16px;font-size:.5rem;border:2px solid #fff;}
+  .sidebar{max-width:none;gap:12px;}
+  .panel,.timer-bar{background:var(--ref-panel);border:0;border-radius:0;padding:14px;box-shadow:none;color:#fff;}
+  .panel h3{font-size:.85rem;color:#fff;margin-bottom:10px;}.player-list{gap:8px;}.player-card{padding:8px;border-radius:0;border:0;background:#5b5560;color:#fff;}.player-card.current{border:1px solid var(--ref-green);background:#5b5560;}.player-name{font-size:.8rem}.player-sub{font-size:.7rem;color:#ded9df}.player-chip{width:30px;height:30px;box-shadow:none;border:2px solid #fff;}
+  .action-panel{min-height:0;}.action-box{background:#bcd5dc;border:0;border-radius:0;padding:14px;color:#526970}.action-title{color:#526970;font-size:.85rem}.action-text{color:#526970;font-size:.8rem;line-height:1.45}.btn{border-radius:2px;padding:8px 10px;font-size:.75rem}.btn-primary{background:#8bd12e;border-color:#8bd12e;color:#fff}.btn-secondary{background:#dce8e9;border-color:#dce8e9;color:#587077}.btn-danger{background:#d76370;color:#fff}.badge,.accent-pill{border-radius:2px;padding:5px 7px;background:#8bd12e;color:#fff;font-size:.7rem}.stat-grid{gap:6px}.stat-card{border:0;border-radius:0;background:#605963;padding:9px}.stat-card strong{font-size:.9rem;color:var(--ref-green)}.stat-card span{color:#ddd7de;font-size:.65rem}.chat-item,.history-item{border:0;border-radius:0;background:#605963;padding:8px}.chat-item strong{font-size:.75rem;color:#fff}.chat-item span{font-size:.7rem;color:#ddd7de}.chat-list,.history-list{max-height:180px}.tool-row input,input,select,textarea{border-radius:2px;background:#615a64;border-color:#77707a;color:#fff;padding:8px}.timer-bar{margin-top:8px!important;}.die{width:42px;height:42px;border-radius:2px;font-size:1.2rem;background:#fff;border:0;box-shadow:none}.timer-value{color:var(--ref-green)}
+  .reference-top{display:flex;justify-content:space-between;align-items:center;color:#fff;margin:0 0 10px;font-size:.8rem}.reference-top strong{color:var(--ref-green)}.reference-top button{background:none;border:0;color:#fff;font-size:1.1rem}
+  @media(max-width:900px){.app{padding:10px 0 0}.game-columns{display:block}.sidebar{display:grid;grid-template-columns:1fr 1fr;padding:0 10px}.board-shell{padding:4px}.reference-top{padding:0 10px}.panel.chat-window{grid-column:1/-1}}
+  @media(max-width:560px){body{background:#000}.app{max-width:295px;margin:0 auto;background:var(--ref-panel);min-height:100vh}.sidebar{grid-template-columns:1fr}.board-center{padding:16px 8px}.center-sub{font-size:.66rem}.center-tags{display:none}.square-name{font-size:clamp(.36rem,1.5vw,.55rem)}.square-label{font-size:clamp(.3rem,1.2vw,.45rem)}.square-price{font-size:clamp(.38rem,1.5vw,.58rem)}.pawn{width:12px;height:12px}.timer-bar{border-top:1px solid #655f67}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -204,6 +249,7 @@
   </div>
 
   <div class="screen" id="s-game">
+    <div class="reference-top"><button type="button" onclick="show('s-home')">‹</button><span><strong>$3,000</strong> net worth to win. Rounds left: 34</span><button type="button" aria-label="Menu">⋮</button></div>
     <div class="game-columns">
       <div>
         <div class="board-shell">
@@ -422,7 +468,7 @@ function initBoard(){
   });
   const center=document.createElement('div');
   center.className='board-center';
-  center.innerHTML=`<div class="center-logo">BANQUEROLL</div><div class="center-sub">Un nouveau plateau d'investissement moderne, fluide et stratégique.</div><div class="center-tags"><span class="center-tag">Propriétés</span><span class="center-tag">Gares & Aéroports</span><span class="center-tag">Enchères</span><span class="center-tag">Échanges</span></div>`;
+  center.innerHTML=`<div class="trade-reference"><strong>$10<br><small>RIO</small></strong><div>Choose your property to trade</div><div class="trade-slots"><div class="trade-slot"></div><div class="trade-pass">×<small>PASS</small></div><div class="trade-slot blue"></div></div><div class="auction-copy">Auction closing in <b>49 sec</b></div></div>`;
   grid.appendChild(center);
 }
 
