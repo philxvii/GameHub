@@ -1,0 +1,13 @@
+# Proxy du presentateur IA de Banqueroll — Cloudflare Workers (offre gratuite).
+# La cle OpenRouter n'est PAS ici : `npx wrangler secret put OPENROUTER_API_KEY`.
+name = "banqueroll-host"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+# Origines autorisees a appeler le Worker (le jeu en production + le serveur de test local).
+ALLOWED_ORIGINS = "https://roulia.me,https://www.roulia.me,http://localhost:4173,http://127.0.0.1:4173"
+# Modeles gratuits de conversation, par ordre de preference (3 au plus) : OpenRouter
+# bascule sur le suivant si le premier est indisponible. Pas de `openrouter/free` :
+# ce routeur tire aussi des classifieurs et des modeles de code.
+OPENROUTER_MODELS = "google/gemma-4-31b-it:free,dots-studio/dots-3-note-preview:free,google/gemma-4-26b-a4b-it:free"

@@ -1,0 +1,5 @@
+# Cache local de wrangler (dev, apercus).
+.wrangler/
+# Secrets de developpement local : ne JAMAIS les versionner.
+.dev.vars
+.dev.vars.*
