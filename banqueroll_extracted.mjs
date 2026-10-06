@@ -122,6 +122,12 @@ let resolvedAuctionKey = null;
 let resolvedTradeKey = null;
 let finishedKey = null;
 let enforcedDeadline = null;
+// Rendu : etat purement visuel, jamais lu par la logique de jeu.
+const pawnEls = new Map();      // playerId -> element du pion
+const pawnAt = new Map();       // playerId -> case actuellement affichee
+const cashSeen = new Map();     // playerId -> dernier solde affiche
+let ownershipSeen = null;       // snapshot des proprietes, pour detecter les achats
+let victoryShownFor = null;
 
 function show(id){document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function toast(message){const toastEl=document.createElement('div');toastEl.textContent=message;toastEl.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(20,28,42,0.95);color:#f8d68d;padding:12px 18px;border-radius:999px;z-index:60;opacity:0;transition:opacity 0.18s';document.body.appendChild(toastEl);requestAnimationFrame(()=>toastEl.style.opacity='1');setTimeout(()=>{toastEl.style.opacity='0';setTimeout(()=>toastEl.remove(),250);},2400);}
@@ -140,6 +146,197 @@ function clearLocal(){localStorage.removeItem('banqueroll-code');localStorage.re
 function boardLayout(){const layout=[];for(let c=1;c<=8;c++)layout.push({r:1,c});for(let r=2;r<=7;r++)layout.push({r,c:8});for(let c=8;c>=1;c--)layout.push({r:8,c});for(let r=7;r>=2;r--)layout.push({r,c:1});return layout;}
 const BOARD_LAYOUT = boardLayout();
 
+const hasGsap = () => typeof gsap !== 'undefined';
+const PAWN_FAN = 11;
+
+function squareCenter(index){
+  const node = boardNodes[index];
+  const layer = document.getElementById('pawn-layer');
+  if(!node || !layer) return null;
+  const nb = node.getBoundingClientRect(), lb = layer.getBoundingClientRect();
+  if(!nb.width) return null;
+  // 78 % de la hauteur : le jeton se pose sous le nom de la ville au lieu de le masquer.
+  return { x: nb.left - lb.left + nb.width/2, y: nb.top - lb.top + nb.height*0.80 };
+}
+
+// Plusieurs joueurs sur la meme case : on les dispose en petit cercle.
+function pawnOffset(game, player, index){
+  const occupants = game.players.filter(p => p.position === index);
+  const i = occupants.findIndex(p => p.id === player.id);
+  if(occupants.length <= 1 || i < 0) return { dx:0, dy:0 };
+  const perRow = Math.min(occupants.length, 3);
+  const row = Math.floor(i / perRow);
+  const col = i % perRow;
+  const inRow = Math.min(perRow, occupants.length - row * perRow);
+  return { dx: (col - (inRow - 1) / 2) * PAWN_FAN, dy: -row * PAWN_FAN };
+}
+
+function pawnTarget(game, player, index, centered){
+  const c = squareCenter(index);
+  if(!c) return null;
+  const el = pawnEls.get(player.id);
+  const half = (el ? el.offsetWidth : 18) / 2;
+  const o = centered ? { dx:0, dy:0 } : pawnOffset(game, player, index);
+  return { x: c.x + o.dx - half, y: c.y + o.dy - half };
+}
+
+function placePawn(game, player, index){
+  const el = pawnEls.get(player.id);
+  const t = pawnTarget(game, player, index, false);
+  if(!el || !t) return;
+  if(hasGsap()) gsap.set(el, { x:t.x, y:t.y });
+  else el.style.transform = `translate(${t.x}px,${t.y}px)`;
+}
+
+// Chemin case par case, dans le sens le plus court (les cartes Chance font reculer).
+function pawnPath(from, to){
+  const max = BOARD.length;
+  const forward = (to - from + max) % max;
+  const backward = (from - to + max) % max;
+  const path = [];
+  if(forward <= backward){ for(let i=1;i<=forward;i++) path.push((from+i)%max); }
+  else { for(let i=1;i<=backward;i++) path.push((from-i+max)%max); }
+  return path;
+}
+
+function movePawn(game, player, from, to){
+  const el = pawnEls.get(player.id);
+  const path = pawnPath(from, to);
+  if(!el || !path.length || !hasGsap() || document.hidden){ placePawn(game, player, to); return; }
+  gsap.killTweensOf(el);
+  const step = Math.max(0.085, Math.min(0.16, 1.0 / path.length));
+  const tl = gsap.timeline();
+  path.forEach((index, i) => {
+    const last = i === path.length - 1;
+    const t = pawnTarget(game, player, index, !last);
+    if(!t) return;
+    tl.to(el, { x:t.x, y:t.y, duration:step, ease:'power1.inOut' })
+      .to(el, { scale:1.16, duration:step/2, ease:'power1.out' }, '<')
+      .to(el, { scale:1, duration:step/2, ease:'power1.in' }, '>-' + (step/2));
+  });
+  tl.to(el, { scale:1.28, duration:0.1, ease:'power2.out' })
+    .to(el, { scale:1, duration:0.5, ease:'elastic.out(1,0.42)' });
+}
+
+function syncPawns(game, animate){
+  const layer = document.getElementById('pawn-layer');
+  if(!layer || !boardNodes.length || !game) return;
+  const alive = new Set(game.players.map(p => p.id));
+  pawnEls.forEach((el, id) => { if(!alive.has(id)){ el.remove(); pawnEls.delete(id); pawnAt.delete(id); } });
+  game.players.forEach((player, idx) => {
+    let el = pawnEls.get(player.id);
+    if(!el){
+      el = document.createElement('div');
+      el.className = 'pawn';
+      el.style.setProperty('--pawn', player.color || '#888');
+      el.innerHTML = `<span>${initial(player.name)}</span>`;
+      el.title = player.name;
+      layer.appendChild(el);
+      pawnEls.set(player.id, el);
+    }
+    el.classList.toggle('pawn-active', game.phase === 'playing' && game.turnIndex === idx);
+    el.classList.toggle('pawn-jailed', !!player.inJail);
+    const from = pawnAt.get(player.id);
+    pawnAt.set(player.id, player.position);
+    if(from === undefined || from === player.position || !animate) placePawn(game, player, player.position);
+    else movePawn(game, player, from, player.position);
+  });
+}
+
+// Le plateau est fluide : on repositionne les pions quand sa geometrie change.
+let resizeRaf = null;
+window.addEventListener('resize', () => {
+  if(resizeRaf) cancelAnimationFrame(resizeRaf);
+  resizeRaf = requestAnimationFrame(() => { if(currentGame) syncPawns(currentGame, false); });
+});
+
+// ---- Feedbacks visuels ----
+function floatDelta(anchor, amount){
+  if(!anchor) return;
+  const el = document.createElement('span');
+  el.className = 'money-delta ' + (amount > 0 ? 'up' : 'down');
+  el.textContent = (amount > 0 ? '+$' : '-$') + Math.abs(amount);
+  anchor.appendChild(el);
+  if(hasGsap()){
+    gsap.fromTo(el, { y:4, opacity:0, scale:.85 },
+      { y:-26, opacity:1, scale:1, duration:.42, ease:'back.out(2)',
+        onComplete(){ gsap.to(el, { y:-40, opacity:0, duration:.5, delay:.45, onComplete(){ el.remove(); } }); } });
+  } else setTimeout(() => el.remove(), 1400);
+}
+
+function flashMoney(game){
+  game.players.forEach(player => {
+    const before = cashSeen.get(player.id);
+    cashSeen.set(player.id, player.cash);
+    if(before === undefined || before === player.cash) return;
+    const card = document.querySelector('.reference-player[data-player="' + player.id + '"]');
+    floatDelta(card, player.cash - before);
+  });
+}
+
+function pulseSquare(node){
+  if(!node) return;
+  node.classList.remove('just-bought');
+  void node.offsetWidth;
+  node.classList.add('just-bought');
+  setTimeout(() => node.classList.remove('just-bought'), 900);
+}
+
+function flashPurchases(game){
+  const owned = game.ownership || {};
+  if(ownershipSeen !== null){
+    Object.keys(owned).forEach(key => {
+      if(ownershipSeen[key] !== owned[key]) pulseSquare(boardNodes[Number(key)]);
+    });
+  }
+  ownershipSeen = Object.assign({}, owned);
+}
+
+function renderVictory(game){
+  const overlay = document.getElementById('victory');
+  if(!overlay) return;
+  if(game.phase !== 'finished'){
+    overlay.classList.remove('active');
+    victoryShownFor = null;
+    return;
+  }
+  const winner = findPlayerById(game.winnerId);
+  document.getElementById('victory-name').textContent = winner ? winner.name : 'Personne';
+  document.getElementById('victory-worth').textContent = '$' + (winner ? netWorth(game, winner) : 0);
+  const chip = document.getElementById('victory-chip');
+  chip.style.setProperty('--pawn', (winner && winner.color) || '#8AD21F');
+  chip.textContent = initial(winner && winner.name);
+  document.getElementById('victory-restart').classList.toggle('hidden', !isHost);
+  if(victoryShownFor === game.code) return;
+  victoryShownFor = game.code;
+  overlay.classList.add('active');
+  rainCoins(overlay);
+}
+
+// Quelques pieces, pas une tempete : 18 elements, retires a la fin.
+function rainCoins(overlay){
+  if(!hasGsap()) return;
+  const stage = overlay.querySelector('.victory-coins');
+  if(!stage) return;
+  stage.innerHTML = '';
+  for(let i=0;i<18;i++){
+    const coin = document.createElement('i');
+    stage.appendChild(coin);
+    gsap.fromTo(coin,
+      { x: Math.random()*100 + '%', y:-30, opacity:0, rotation: Math.random()*180 },
+      { y: '110%', opacity:1, rotation:'+=360', duration: 1.6 + Math.random()*1.2,
+        delay: Math.random()*0.9, ease:'none', onComplete(){ coin.remove(); } });
+  }
+}
+
+function resetVisualState(){
+  pawnEls.forEach(el => { if(hasGsap()) gsap.killTweensOf(el); el.remove(); });
+  pawnEls.clear(); pawnAt.clear(); cashSeen.clear();
+  ownershipSeen = null; victoryShownFor = null;
+  const overlay = document.getElementById('victory');
+  if(overlay) overlay.classList.remove('active');
+}
+
 function initBoard(){
   const grid=document.getElementById('board-grid');
   // Le centre du plateau est statique dans le HTML (messages, dés, panneau d'action) :
@@ -156,7 +353,7 @@ function initBoard(){
     const color=getSquareColor(square);
     node.style.setProperty('--sq',color);
     node.style.setProperty('--sq-ink',readableInk(color));
-    node.innerHTML=`<div class="square-band"></div><div class="square-price">${squarePriceText(square)}</div><div class="square-top"><span class="square-name">${esc(square.name)}</span><span class="square-label">${squareLabelText(square)}</span></div><div class="pawn-container"></div>`;
+    node.innerHTML=`<div class="square-band"></div><div class="square-price">${squarePriceText(square)}</div><div class="square-top"><span class="square-name">${esc(square.name)}</span><span class="square-label">${squareLabelText(square)}</span></div>`;
     grid.appendChild(node);
     boardNodes.push(node);
   });
@@ -169,7 +366,7 @@ function getPresenceRef(code,playerId){return ref(db,`banqueroll/${code}/presenc
 
 async function freeCode(){for(let attempt=0;attempt<12;attempt++){const candidate=genCode();const snap=await get(getGameRef(candidate));if(!snap.exists()) return candidate;}return genCode()+'-'+makeId().slice(0,3);}
 
-async function createGame(){const name=document.getElementById('create-name').value.trim();const players=parseInt(document.getElementById('create-players').value,10);const timer=parseInt(document.getElementById('create-timer').value,10);const err=document.getElementById('create-error');err.textContent='';if(!name){err.textContent='Entre ton prénom.';return;}if(players<2||players>8){err.textContent='Choisis entre 2 et 8 joueurs.';return;}myCode=await freeCode();myPlayerId=makeId();myName=name;myColor=PLAYER_COLORS[0];isHost=true;saveLocal();const player={id:myPlayerId,name,position:START_INDEX,cash:START_CASH,jailTurns:0,inJail:false,color:myColor,ready:true};const game={code:myCode,hostId:myPlayerId,maxPlayers:players,turnTimer:timer,players:[player],phase:'lobby',turnIndex:0,round:1,currentAction:null,ownership:{},auction:null,trade:null,winnerId:null,turnDeadline:null,createdAt:Date.now(),updatedAt:Date.now()};await set(getGameRef(myCode),game);attachPresence();startGameListener(myCode);renderLobby(game);show('s-lobby');}
+async function createGame(){const name=document.getElementById('create-name').value.trim();const players=parseInt(document.getElementById('create-players').value,10);const timer=parseInt(document.getElementById('create-timer').value,10);const err=document.getElementById('create-error');err.textContent='';if(!name){err.textContent='Entre ton prénom.';return;}if(players<2||players>8){err.textContent='Choisis entre 2 et 8 joueurs.';return;}if(!Number.isFinite(timer)||timer<10||timer>120){err.textContent='Durée de tour invalide.';return;}myCode=await freeCode();myPlayerId=makeId();myName=name;myColor=PLAYER_COLORS[0];isHost=true;saveLocal();const player={id:myPlayerId,name,position:START_INDEX,cash:START_CASH,jailTurns:0,inJail:false,color:myColor,ready:true};const game={code:myCode,hostId:myPlayerId,maxPlayers:players,turnTimer:timer,players:[player],phase:'lobby',turnIndex:0,round:1,currentAction:null,ownership:{},auction:null,trade:null,winnerId:null,turnDeadline:null,createdAt:Date.now(),updatedAt:Date.now()};await set(getGameRef(myCode),game);attachPresence();startGameListener(myCode);renderLobby(game);show('s-lobby');}
 
 // Deux joueurs qui rejoignaient en meme temps s'ecrasaient mutuellement :
 // l'ajout dans le tableau players passe desormais par une transaction.
@@ -221,9 +418,9 @@ function resetGuards(){resolvedAuctionKey=null;resolvedTradeKey=null;finishedKey
 
 function toggleDrawer(force){const drawer=document.getElementById('drawer');if(!drawer) return;if(force===undefined) drawer.classList.toggle('mobile-open');else drawer.classList.toggle('mobile-open',!!force);}
 
-function leaveGame(){stopGameListener();resetGuards();toggleDrawer(false);if(myCode&&myPlayerId) remove(getPresenceRef(myCode,myPlayerId));if(countdownTimer) clearInterval(countdownTimer);if(auctionTimer) clearInterval(auctionTimer);closeAuctionModal();closeTradeModal();currentGame=null;clearLocal();myCode=null;myPlayerId=null;myName=null;myColor=null;isHost=false;rolling=false;show('s-home');}
+function leaveGame(){stopGameListener();resetGuards();toggleDrawer(false);resetVisualState();if(myCode&&myPlayerId) remove(getPresenceRef(myCode,myPlayerId));if(countdownTimer) clearInterval(countdownTimer);if(auctionTimer) clearInterval(auctionTimer);closeAuctionModal();closeTradeModal();currentGame=null;clearLocal();myCode=null;myPlayerId=null;myName=null;myColor=null;isHost=false;rolling=false;show('s-home');}
 
-function renderState(game){document.getElementById('stat-players').textContent=`${game.players.length} / ${game.maxPlayers}`;document.getElementById('stat-pot').textContent=`${game.players.reduce((sum,p)=>sum+(p.cash||0),0)} 💰`;renderObjective(game);renderChat(game);renderHistory(game);renderPlayers(game);renderBoard(game);if(game.phase==='lobby'){renderLobby(game);renderAction(game);if(!document.getElementById('s-lobby').classList.contains('active')) show('s-lobby');}else{renderAction(game);show('s-game');}if(game.auction && game.auction.status==='open'){openAuctionModal(game.auction);}else{closeAuctionModal();}maybeResolveAuction(game);maybeResolveTradeTimeout(game);maybeFinishGame(game);}
+function renderState(game){document.getElementById('stat-players').textContent=`${game.players.length} / ${game.maxPlayers}`;document.getElementById('stat-pot').textContent=`${game.players.reduce((sum,p)=>sum+(p.cash||0),0)} 💰`;renderObjective(game);renderChat(game);renderHistory(game);renderPlayers(game);renderBoard(game);flashMoney(game);flashPurchases(game);if(game.phase==='lobby'){renderLobby(game);renderAction(game);if(!document.getElementById('s-lobby').classList.contains('active')) show('s-lobby');}else{renderAction(game);show('s-game');}if(game.auction && game.auction.status==='open'){openAuctionModal(game.auction);}else{closeAuctionModal();}requestAnimationFrame(()=>{syncPawns(game,true);renderVictory(game);});maybeResolveAuction(game);maybeResolveTradeTimeout(game);maybeFinishGame(game);}
 
 function renderObjective(game){const el=document.getElementById('ref-objective');if(!el) return;if(game.phase==='lobby'){el.innerHTML=`Salon &middot; <strong>${game.players.length}/${game.maxPlayers}</strong> joueurs`;return;}if(game.phase==='finished'){const win=findPlayerById(game.winnerId);el.innerHTML=`Partie terminée &middot; <strong>${esc(win?win.name:'—')}</strong>`;return;}const roundsLeft=Math.max(0,MAX_ROUNDS-((game.round||1)-1));el.innerHTML=`<strong>$${WIN_NET_WORTH}</strong> de valeur nette pour gagner. Manches restantes : <strong>${roundsLeft}</strong>`;}
 
@@ -247,7 +444,7 @@ function renderReferencePlayers(game){
     const index=game.players.indexOf(player);
     const active=game.phase==='playing' && game.turnIndex===index;
     const status=player.inJail?'En prison':(player.id===game.hostId?'Hôte':'');
-    return `<div class="reference-player${active?' current':''}">`
+    return `<div class="reference-player${active?' current':''}" data-player="${esc(player.id)}">`
       + `<span class="player-avatar" style="background:${esc(player.color)}">${initial(player.name)}</span>`
       + `<span class="player-copy"><strong>${esc(player.name)}</strong>`
       + `<small>$${player.cash} <em>($${netWorth(game,player)})</em></small>`
@@ -265,9 +462,9 @@ function renderChat(game){const chatList=document.getElementById('chat-list');if
 
 function renderHistory(game){const historyList=document.getElementById('history-list');if(!historyList) return;historyList.innerHTML='';const events=game.history?Object.values(game.history).sort((a,b)=>a.ts-b.ts):[];events.slice(-18).reverse().forEach(item=>{const el=document.createElement('div');el.className='history-item';el.textContent=item.text;historyList.appendChild(el);});const message=document.getElementById('event-message');if(message){const latest=events[events.length-1];message.textContent=latest?latest.text:(game.phase==='lobby'?'En attente du lancement…':'La partie va commencer…');}}
 
-function renderBoard(game){if(!boardNodes.length) initBoard();boardNodes.forEach((node,index)=>{const square=BOARD[index];node.className='square '+square.type;const ownerId=game.ownership?.[index]||null;const owner=findPlayerById(ownerId);node.querySelector('.square-name').textContent=square.name;node.querySelector('.square-label').textContent=squareLabelText(square);node.querySelector('.square-price').textContent=squarePriceText(square);const pawnContainer=node.querySelector('.pawn-container');pawnContainer.innerHTML='';const occupants=game.players.filter(p=>p.position===index);occupants.forEach(p=>{const pawn=document.createElement('div');pawn.className='pawn';pawn.style.background=p.color;pawn.title=p.name;pawn.textContent=String(p.name||'?').charAt(0).toUpperCase();pawnContainer.appendChild(pawn);});let ownerPill=node.querySelector('.owner-pill');if(ownerId&&owner){if(!ownerPill){ownerPill=document.createElement('div');ownerPill.className='owner-pill';node.appendChild(ownerPill);}ownerPill.textContent=owner.name;ownerPill.title='Propriété de '+owner.name;ownerPill.style.background=owner.color;}else if(ownerPill){ownerPill.remove();}if(game.turnIndex!==undefined && game.players[game.turnIndex]?.position===index){node.classList.add('current');} else node.classList.remove('current');});}
+function renderBoard(game){if(!boardNodes.length) initBoard();const action=game.currentAction;boardNodes.forEach((node,index)=>{const square=BOARD[index];const ownerId=game.ownership?.[index]||null;const owner=findPlayerById(ownerId);node.querySelector('.square-name').textContent=square.name;node.querySelector('.square-label').textContent=squareLabelText(square);node.querySelector('.square-price').textContent=squarePriceText(square);let ownerPill=node.querySelector('.owner-pill');if(ownerId&&owner){node.classList.add('owned');node.style.setProperty('--owner',owner.color);if(!ownerPill){ownerPill=document.createElement('div');ownerPill.className='owner-pill';node.appendChild(ownerPill);}ownerPill.textContent=owner.name;ownerPill.title='Propriété de '+owner.name;}else{node.classList.remove('owned');node.style.removeProperty('--owner');if(ownerPill) ownerPill.remove();}node.classList.toggle('target',!!(action&&action.position===index));node.classList.toggle('current',game.turnIndex!==undefined && game.players[game.turnIndex]?.position===index);});}
 
-function renderAction(game){clearInterval(countdownTimer);const turnName=document.getElementById('turn-player');const turnStatus=document.getElementById('turn-status');const result=document.getElementById('roll-result');const deadline=game.turnDeadline?Math.max(0,Math.round((game.turnDeadline-Date.now())/1000)):0;turnName.textContent=`${game.players[game.turnIndex]?.name || '...'} (${game.players.length} joueurs)`;turnStatus.textContent=game.phase==='playing'?'En cours':game.phase==='finished'?'Terminée':'Salon';result.textContent=game.currentAction?`Action en attente: ${game.currentAction.type}`:'Prêt à jouer';renderTimer(deadline);const panel=document.getElementById('action-panel');panel.innerHTML='';if(game.phase==='lobby'){const box=document.createElement('div');box.className='action-box';box.innerHTML=`<div class="action-title">Salon</div><div class="action-text">Attends que l'hôte démarre la partie. Le code de la partie est <strong>${game.code}</strong>.</div>`;panel.appendChild(box);return;}if(game.phase==='finished'){const win=findPlayerById(game.winnerId);const box=document.createElement('div');box.className='action-box';box.innerHTML=`<div class="action-title">Partie terminée</div><div class="action-text"><strong>${esc(win?win.name:'Personne')}</strong> remporte la partie avec <strong>${win?netWorth(game,win):0} 💰</strong> de valeur nette.</div><div class="action-buttons">${isHost?'<button class="btn btn-primary" onclick="restartGame()">Nouvelle partie</button>':''}<button class="btn btn-secondary" onclick="leaveGame()">Quitter</button></div>`;panel.appendChild(box);return;}const currentPlayer=game.players[game.turnIndex];const isMyTurn=currentPlayer?.id===myPlayerId;const title=game.currentAction?`Action requise`:'À ton tour';const textEl=document.createElement('div');textEl.className='action-box';let html='';if(game.trade && game.trade.status==='pending' && [game.trade.fromId,game.trade.toId].includes(myPlayerId)){const offerPlayer=findPlayerById(game.trade.fromId)||{name:'?'};const targetPlayer=findPlayerById(game.trade.toId)||{name:'?'};const offerItem=game.trade.offerProperty?BOARD[game.trade.offerProperty].name:'Aucun';const requestItem=game.trade.requestProperty?BOARD[game.trade.requestProperty].name:'Aucun';html=`<div class="action-title">Échange proposé</div><div class="action-text"><strong>${esc(offerPlayer.name)}</strong> propose ${game.trade.offerCash} 💰 et ${offerItem} contre ${game.trade.requestCash} 💰 et ${requestItem} de <strong>${esc(targetPlayer.name)}</strong>.</div>`;if(myPlayerId===game.trade.toId){html+=`<div class="action-buttons"><button class="btn btn-primary" onclick="acceptTrade()">Accepter</button><button class="btn btn-secondary" onclick="declineTrade()">Refuser</button></div>`;}else{html+=`<div class="action-text">Attends la décision de ${esc(targetPlayer.name)}.</div>`;}textEl.innerHTML=html;panel.appendChild(textEl);return;}if(game.auction && game.auction.status==='open'){const item=BOARD[game.auction.position];const min=game.auction.nextBid;const bidder=findPlayerById(game.auction.highestBidder);html=`<div class="action-title">Enchère active</div><div class="action-text">${item.name} est proposé à l'enchère. Mise actuelle ${game.auction.highestBid || 0} 💰 par ${esc(bidder?bidder.name:'aucun')}. Mise minimale ${min} 💰.</div><div class="action-buttons"><button class="btn btn-primary" onclick="openAuctionModal()">Faire une offre</button></div>`;textEl.innerHTML=html;panel.appendChild(textEl);return;}if(game.currentAction && game.currentAction.type==='buy' && game.currentAction.playerId===myPlayerId){const square=BOARD[game.currentAction.position];html=`<div class="action-title">Acheter une propriété</div><div class="action-text">Tu as atterri sur <strong>${square.name}</strong>. Prix ${square.price} 💰. Veux-tu l'acheter ou lancer une enchère ?</div><div class="action-buttons"><button class="btn btn-primary" onclick="buyProperty()">Acheter</button><button class="btn btn-secondary" onclick="startAuction()">Mettre aux enchères</button></div>`;textEl.innerHTML=html;panel.appendChild(textEl);return;}if(isMyTurn && currentPlayer && currentPlayer.inJail){const text=`<div class="action-title">En prison</div><div class="action-text">Tu es en prison (${currentPlayer.jailTurns||0} tour${(currentPlayer.jailTurns||0)>1?'s':''} restant${(currentPlayer.jailTurns||0)>1?'s':''}). Paye 120 💰 pour sortir immédiatement et jouer ce tour, ou passe ton tour.</div><div class="action-buttons"><button class="btn btn-primary" onclick="payBail()">Payer 120 💰</button><button class="btn btn-secondary" onclick="serveJailTurn()">Passer mon tour</button></div>`;textEl.innerHTML=text;panel.appendChild(textEl);return;}if(isMyTurn){html=`<div class="action-title">C'est ton tour</div><div class="action-text">Lance les dés pour te déplacer et prendre le contrôle du plateau.</div><div class="action-buttons"><button class="btn btn-primary" onclick="rollDice()">Lancer les dés</button><button class="btn btn-secondary" onclick="openTradeModal()">Proposer un échange</button></div>`;textEl.innerHTML=html;panel.appendChild(textEl);return;}html=`<div class="action-title">Tour de ${esc(currentPlayer?.name)}</div><div class="action-text">Ta partie est synchronisée. Attends que ${esc(currentPlayer?.name)} joue.</div>`;textEl.innerHTML=html;panel.appendChild(textEl);} 
+function renderAction(game){clearInterval(countdownTimer);const turnName=document.getElementById('turn-player');const turnStatus=document.getElementById('turn-status');const result=document.getElementById('roll-result');const deadline=game.turnDeadline?Math.max(0,Math.round((game.turnDeadline-Date.now())/1000)):0;turnName.textContent=`${game.players[game.turnIndex]?.name || '...'} (${game.players.length} joueurs)`;turnStatus.textContent=game.phase==='playing'?'En cours':game.phase==='finished'?'Terminée':'Salon';const d1=document.getElementById('die-1');const d2=document.getElementById('die-2');const faces=d1&&d2&&d1.dataset.value&&d2.dataset.value?`Dernier lancer : ${d1.dataset.value} et ${d2.dataset.value}`:'Prêt à lancer.';const pending={buy:'Achat en attente',jail:'Sortie de prison en attente'}[game.currentAction&&game.currentAction.type];result.textContent=pending||faces;renderTimer(deadline);const panel=document.getElementById('action-panel');panel.innerHTML='';if(game.phase==='lobby'){const box=document.createElement('div');box.className='action-box';box.innerHTML=`<div class="action-title">Salon</div><div class="action-text">Attends que l'hôte démarre la partie. Le code de la partie est <strong>${game.code}</strong>.</div>`;panel.appendChild(box);return;}if(game.phase==='finished'){const win=findPlayerById(game.winnerId);const box=document.createElement('div');box.className='action-box';box.innerHTML=`<div class="action-title">Partie terminée</div><div class="action-text"><strong>${esc(win?win.name:'Personne')}</strong> remporte la partie avec <strong>${win?netWorth(game,win):0} 💰</strong> de valeur nette.</div><div class="action-buttons">${isHost?'<button class="btn btn-primary" onclick="restartGame()">Nouvelle partie</button>':''}<button class="btn btn-secondary" onclick="leaveGame()">Quitter</button></div>`;panel.appendChild(box);return;}const currentPlayer=game.players[game.turnIndex];const isMyTurn=currentPlayer?.id===myPlayerId;const title=game.currentAction?`Action requise`:'À ton tour';const textEl=document.createElement('div');textEl.className='action-box';let html='';if(game.trade && game.trade.status==='pending' && [game.trade.fromId,game.trade.toId].includes(myPlayerId)){const offerPlayer=findPlayerById(game.trade.fromId)||{name:'?'};const targetPlayer=findPlayerById(game.trade.toId)||{name:'?'};const offerItem=game.trade.offerProperty?BOARD[game.trade.offerProperty].name:'Aucun';const requestItem=game.trade.requestProperty?BOARD[game.trade.requestProperty].name:'Aucun';html=`<div class="action-title">Échange proposé</div><div class="action-text"><strong>${esc(offerPlayer.name)}</strong> propose ${game.trade.offerCash} 💰 et ${offerItem} contre ${game.trade.requestCash} 💰 et ${requestItem} de <strong>${esc(targetPlayer.name)}</strong>.</div>`;if(myPlayerId===game.trade.toId){html+=`<div class="action-buttons"><button class="btn btn-primary" onclick="acceptTrade()">Accepter</button><button class="btn btn-secondary" onclick="declineTrade()">Refuser</button></div>`;}else{html+=`<div class="action-text">Attends la décision de ${esc(targetPlayer.name)}.</div>`;}textEl.innerHTML=html;panel.appendChild(textEl);return;}if(game.auction && game.auction.status==='open'){const item=BOARD[game.auction.position];const min=game.auction.nextBid;const bidder=findPlayerById(game.auction.highestBidder);html=`<div class="action-title">Enchère active</div><div class="action-text">${item.name} est proposé à l'enchère. Mise actuelle ${game.auction.highestBid || 0} 💰 par ${esc(bidder?bidder.name:'aucun')}. Mise minimale ${min} 💰.</div><div class="action-buttons"><button class="btn btn-primary" onclick="openAuctionModal()">Faire une offre</button></div>`;textEl.innerHTML=html;panel.appendChild(textEl);return;}if(game.currentAction && game.currentAction.type==='buy' && game.currentAction.playerId===myPlayerId){const square=BOARD[game.currentAction.position];html=`<div class="action-title">Acheter une propriété</div><div class="action-text">Tu as atterri sur <strong>${square.name}</strong>. Prix ${square.price} 💰. Veux-tu l'acheter ou lancer une enchère ?</div><div class="action-buttons"><button class="btn btn-primary" onclick="buyProperty()">Acheter</button><button class="btn btn-secondary" onclick="startAuction()">Mettre aux enchères</button></div>`;textEl.innerHTML=html;panel.appendChild(textEl);return;}if(isMyTurn && currentPlayer && currentPlayer.inJail){const text=`<div class="action-title">En prison</div><div class="action-text">${currentPlayer.jailTurns||0} tour${(currentPlayer.jailTurns||0)>1?'s':''} restant${(currentPlayer.jailTurns||0)>1?'s':''}. Paye la caution pour sortir et jouer ce tour.</div><div class="action-buttons"><button class="btn btn-primary" onclick="payBail()">Payer 120 💰</button><button class="btn btn-secondary" onclick="serveJailTurn()">Passer mon tour</button></div>`;textEl.innerHTML=text;panel.appendChild(textEl);return;}if(isMyTurn){html=`<div class="action-title">C'est ton tour</div><div class="action-text">Lance les dés pour te déplacer et prendre le contrôle du plateau.</div><div class="action-buttons"><button class="btn btn-primary" onclick="rollDice()">Lancer les dés</button><button class="btn btn-secondary" onclick="openTradeModal()">Proposer un échange</button></div>`;textEl.innerHTML=html;panel.appendChild(textEl);return;}html=`<div class="action-title">Tour de ${esc(currentPlayer?.name)}</div><div class="action-text">Ta partie est synchronisée. Attends que ${esc(currentPlayer?.name)} joue.</div>`;textEl.innerHTML=html;panel.appendChild(textEl);} 
 
 function renderTimer(seconds){const timer=document.getElementById('turn-timer');if(countdownTimer) clearInterval(countdownTimer);function refresh(){const m=Math.floor(seconds/60).toString().padStart(2,'0');const s=(seconds%60).toString().padStart(2,'0');timer.textContent=`${m}:${s}`;if(seconds<=0){clearInterval(countdownTimer);timer.textContent='00:00';}seconds=Math.max(0,seconds-1);}refresh();countdownTimer=setInterval(()=>{refresh();},1000);} 
 
@@ -300,7 +497,34 @@ function updateDiceTotal(){
   out.textContent=(a&&b)?`${a} + ${b} = ${a+b}`:'—';
 }
 
-function animateDiceRoll(die1Value,die2Value){const die1=document.getElementById('die-1');const die2=document.getElementById('die-2');if(!die1||!die2) return Promise.resolve();if(document.hidden){setDieValue(die1,die1Value);setDieValue(die2,die2Value);return Promise.resolve();}die1.classList.add('rolling');die2.classList.add('rolling');return new Promise(resolve=>{let step=0;const interval=setInterval(()=>{step+=1;setDieValue(die1,Math.ceil(Math.random()*6));setDieValue(die2,Math.ceil(Math.random()*6));if(step>=10){clearInterval(interval);die1.classList.remove('rolling');die2.classList.remove('rolling');setDieValue(die1,die1Value);setDieValue(die2,die2Value);resolve();}},70);});}
+// Les faces affichees restent celles produites par rollDice : l'animation ne fait
+// que brasser l'affichage, puis repose TOUJOURS sur die1Value / die2Value.
+function animateDiceRoll(die1Value,die2Value){
+  const die1=document.getElementById('die-1');
+  const die2=document.getElementById('die-2');
+  if(!die1||!die2) return Promise.resolve();
+  const settle=()=>{setDieValue(die1,die1Value);setDieValue(die2,die2Value);};
+  if(document.hidden||!hasGsap()){settle();return Promise.resolve();}
+  die1.classList.add('rolling');die2.classList.add('rolling');
+  updateDiceTotal();
+  return new Promise(resolve=>{
+    const shuffle=setInterval(()=>{
+      setDieValue(die1,Math.ceil(Math.random()*6));
+      setDieValue(die2,Math.ceil(Math.random()*6));
+    },55);
+    gsap.timeline({onComplete(){
+      clearInterval(shuffle);
+      die1.classList.remove('rolling');die2.classList.remove('rolling');
+      settle();
+      gsap.fromTo([die1,die2],{scale:1.22},{scale:1,duration:.4,ease:'elastic.out(1,.4)',stagger:.04});
+      const stage=document.querySelector('.dice-stage');
+      if(stage){stage.classList.add('impact');setTimeout(()=>stage.classList.remove('impact'),320);}
+      resolve();
+    }})
+    .to([die1,die2],{y:-20,rotation:'+=180',duration:.22,ease:'power2.out',stagger:.05})
+    .to([die1,die2],{y:0,rotation:'+=150',duration:.34,ease:'bounce.out',stagger:.05});
+  });
+}
 
 // Auparavant chaque client resolvait l'enchere : historique duplique et ecritures concurrentes.
 function maybeResolveAuction(game){if(!isHost) return;if(!game.auction||game.auction.status!=='open') return;if(Date.now() <= game.auction.endAt) return;const auctionKey=`${game.auction.position}@${game.auction.endAt}`;if(resolvedAuctionKey===auctionKey) return;resolvedAuctionKey=auctionKey;const auction=game.auction;const winner=auction.highestBidder?findPlayerById(auction.highestBidder):null;const extra={'auction/status':'closed'};if(winner){const winnerIndex=game.players.findIndex(p=>p.id===winner.id);extra[`ownership/${auction.position}`]=winner.id;extra[`players/${winnerIndex}/cash`]=winner.cash-auction.highestBid;}update(getGameRef(game.code),nextTurnUpdates(game,extra));pushHistory(game.code,winner?`${winner.name} remporte ${BOARD[auction.position].name} pour ${auction.highestBid} 💰.`:`Aucune offre pour ${BOARD[auction.position].name}.`);}
@@ -384,7 +608,7 @@ async function serveJailTurn(){const game=currentGame;const playerIndex=game.pla
 async function startGame(){if(!currentGame||!isHost) return;resetGuards();if(currentGame.players.length < 2){toast('Il faut au moins 2 joueurs pour démarrer.');return;}const players=currentGame.players.map(p=>({...p,position:START_INDEX,cash:START_CASH,jailTurns:0,inJail:false}));await update(getGameRef(currentGame.code),{players,phase:'playing',turnIndex:0,round:1,currentAction:null,ownership:null,auction:null,trade:null,winnerId:null,turnDeadline:Date.now()+currentGame.turnTimer*1000,updatedAt:Date.now()});pushHistory(currentGame.code,`La partie commence : ${WIN_NET_WORTH} 💰 de valeur nette ou ${MAX_ROUNDS} manches.`);}
 
 // Relance une partie terminee en repartant du salon, sans perdre les joueurs.
-async function restartGame(){if(!currentGame||!isHost) return;resetGuards();const players=currentGame.players.map(p=>({...p,position:START_INDEX,cash:START_CASH,jailTurns:0,inJail:false}));await update(getGameRef(currentGame.code),{players,phase:'lobby',turnIndex:0,round:1,currentAction:null,ownership:null,auction:null,trade:null,winnerId:null,history:null,turnDeadline:null,updatedAt:Date.now()});toast('Nouvelle partie prête.');}
+async function restartGame(){if(!currentGame||!isHost) return;resetGuards();ownershipSeen=null;victoryShownFor=null;const players=currentGame.players.map(p=>({...p,position:START_INDEX,cash:START_CASH,jailTurns:0,inJail:false}));await update(getGameRef(currentGame.code),{players,phase:'lobby',turnIndex:0,round:1,currentAction:null,ownership:null,auction:null,trade:null,winnerId:null,history:null,turnDeadline:null,updatedAt:Date.now()});toast('Nouvelle partie prête.');}
 async function deleteGame(){if(!currentGame){leaveGame();return;}if(!confirm('Supprimer la partie ?')) return;const code=currentGame.code;stopGameListener();currentGame=null;await remove(getGameRef(code));clearLocal();myCode=null;myPlayerId=null;isHost=false;show('s-home');}
 
 // Condition de victoire : premier joueur a atteindre WIN_NET_WORTH, ou meilleure
@@ -447,4 +671,16 @@ Object.assign(window,{
 
 function updateAuctionCountdown(auction){const countdown=document.getElementById('auction-countdown');const status=document.getElementById('auction-status');if(auctionTimer) clearInterval(auctionTimer);function tick(){const remaining=Math.max(0,Math.round((auction.endAt-Date.now())/1000));countdown.textContent=`${remaining}s`;status.textContent=remaining?`Temps restant`:'Calcul en cours...';if(remaining<=0){clearInterval(auctionTimer);}}tick();auctionTimer=setInterval(tick,1000);} 
 
-document.addEventListener('DOMContentLoaded',()=>{initBoard();parseStored();if(myCode) autoReconnect();});
+// Le bandeau du lobby reprend les couleurs reelles des cases : un rappel du
+// plateau, pas un ornement arbitraire.
+function paintLobbyStrip(){
+  const strip=document.getElementById('lobby-strip');
+  if(!strip||strip.childElementCount) return;
+  BOARD.filter(sq=>sq.type==='property').slice(0,10).forEach(sq=>{
+    const seg=document.createElement('i');
+    seg.style.background=getSquareColor(sq);
+    strip.appendChild(seg);
+  });
+}
+
+document.addEventListener('DOMContentLoaded',()=>{initBoard();paintLobbyStrip();parseStored();if(myCode) autoReconnect();});
