@@ -5,319 +5,380 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Banqueroll</title>
 <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg:#edf2f7;
-    --surface:#f5f7fb;
-    --surface2:#eef3f8;
-    --panel:#f8fafc;
-    --border:#dfe7f1;
-    --border-strong:#c4cfdf;
-    --text:#1a2438;
-    --muted:#5f6f86;
-    --accent:#335ef7;
-    --accent-strong:#2149c7;
-    --danger:#db5a5a;
-    --success:#2d8d7c;
-    --r:24px;
-    --shadow:0 18px 40px rgba(28,38,56,0.08);
+<style id="banqueroll-ui">
+  /* ============ Jetons de design ============ */
+  :root{
+    --bg:#15161A;            /* page */
+    --shell:#2B2D33;         /* cadre de l'application */
+    --panel:#35373F;         /* bandeaux joueurs / tiroir */
+    --panel-2:#3F424B;       /* cartes internes */
+    --line:rgba(255,255,255,.08);
+    --board:#EDF0EA;         /* fond du plateau */
+    --center:#C3D6DE;        /* centre du plateau */
+    --ink:#1D242C;           /* texte foncé */
+    --ink-soft:#52646F;
+    --text:#FFFFFF;
+    --muted:#A7ADB8;
+    --green:#8AD21F;
+    --green-700:#6FAE13;
+    --danger:#E2574C;
+    --r:10px;
+    --r-sm:6px;
+    --shadow:0 10px 28px rgba(0,0,0,.35);
+    --font:'Lato',system-ui,-apple-system,'Segoe UI',sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{min-height:100%;background:linear-gradient(180deg, #edf2f7 0%, #f3f6fb 100%);color:var(--text);font-family:'Lato',sans-serif;}
-  body{padding:0;margin:0;}
-  button,input,select,textarea{font:inherit;}
-  .app{width:100%;max-width:1300px;margin:0 auto;padding:2.5rem 1.5rem 3rem;}
-  .screen{display:none;opacity:0;animation:fadeIn 0.18s ease forwards;}
-  .screen.active{display:block;}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);} }
-  .hero{display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;margin-bottom:2rem;}
-  .hero-title{font-family:'Lato',sans-serif;font-size:3rem;font-weight:900;line-height:1;letter-spacing:-1px;color:var(--accent);}
-  .hero-title small{display:block;font-size:1rem;font-weight:400;color:var(--muted);margin-top:0.5rem;}
-  .hero-sub{max-width:620px;font-size:1rem;line-height:1.8;color:var(--muted);}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:28px;box-shadow:var(--shadow);padding:1.5rem;}
-  .card h2{font-family:'Lato',sans-serif;font-size:1.7rem;font-weight:900;margin-bottom:1rem;}
-  .card p{color:var(--muted);line-height:1.8;font-size:0.96rem;}
-  .form-group{margin-top:1.2rem;}
-  label{display:block;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:0.5rem;}
-  input,select,textarea{width:100%;border-radius:18px;border:1px solid var(--border);background:var(--surface2);color:var(--text);padding:14px 16px;outline:none;transition:border-color 0.18s,box-shadow 0.18s;}
-  input:focus,select:focus,textarea:focus{border-color:rgba(12,74,216,0.35);box-shadow:0 0 0 4px rgba(12,74,216,0.12);}
-  input::placeholder,textarea::placeholder{color:rgba(91,112,131,0.5);}
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:14px 20px;border-radius:18px;border:1px solid var(--border);cursor:pointer;background:var(--surface);color:var(--text);font-weight:700;transition:all 0.18s;}
-  .btn:hover{transform:translateY(-1px);background:#eff6ff;border-color:var(--border-strong);}
-  .btn-primary{background:var(--accent);color:#ffffff;border-color:transparent;}
-  .btn-primary:hover{filter:brightness(1.05);}
-  .btn-secondary{background:var(--surface2);color:var(--accent);border-color:var(--border);}
-  .btn-danger{background:rgba(239,68,68,0.12);color:var(--danger);border-color:rgba(239,68,68,0.2);}
-  .btn-small{padding:10px 14px;font-size:0.88rem;}
-  .compact{font-size:0.9rem;}
-  .accent-pill{display:inline-flex;align-items:center;gap:0.4rem;padding:8px 12px;border-radius:999px;background:rgba(12,74,216,0.12);color:var(--accent);font-size:0.85rem;font-weight:700;}
-  .muted-text{color:var(--muted);font-size:0.95rem;line-height:1.7; }
-  .alert{margin-top:1rem;font-size:0.92rem;color:#f59e0b;}
-  .error-msg{color:var(--danger);font-size:0.92rem;margin-top:0.8rem;min-height:1.2rem;}
-  .screen-panel{display:grid;gap:1.5rem;}
-  .screen-panel .top-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;}
-
-  .board-shell{position:relative;width:100%;aspect-ratio:1/1;max-width:900px;margin:0 auto;background:#edf3f9;border:1px solid rgba(15,23,42,0.08);border-radius:36px;padding:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 24px 60px rgba(19,33,58,0.08);}
-  .board-grid{position:relative;width:100%;height:100%;background:#f7f9fc;border:1px solid rgba(19,33,58,0.06);border-radius:30px;display:grid;grid-template-columns:repeat(11,minmax(72px,1fr));grid-template-rows:repeat(11,minmax(72px,1fr));gap:12px;box-shadow:inset 0 0 0 1px rgba(19,33,58,0.02);padding:16px;}
-  .board-center{grid-row:2/11;grid-column:2/11;background:#fdfdff;border:1px solid rgba(19,33,58,0.05);border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem 2rem;}
-  .center-logo{font-family:'Lato',sans-serif;font-size:3.4rem;font-weight:900;letter-spacing:0.28em;margin-bottom:0.6rem;color:var(--accent);text-transform:uppercase;}
-  .center-sub{color:#546580;font-size:0.96rem;line-height:1.7;text-align:center;max-width:380px;}
-  .center-tags{display:flex;flex-wrap:wrap;justify-content:center;gap:0.65rem;margin-top:1.3rem;}
-  .center-tag{font-size:0.78rem;padding:9px 16px;border-radius:999px;background:rgba(15,90,255,0.12);color:var(--accent);font-weight:700;}
-  .square{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;padding:10px 8px 28px;position:relative;min-height:0;aspect-ratio:1/1;width:100%;border-radius:16px;border:1px solid rgba(19,33,58,0.08);background:#f9fafc;box-shadow:0 10px 20px rgba(19,33,58,0.06);transition:transform 0.18s,border-color 0.18s,box-shadow 0.18s;overflow:hidden;}
-  .square:hover{transform:translateY(-1px);border-color:rgba(15,90,255,0.2);box-shadow:0 14px 26px rgba(19,33,58,0.08);}
-  .square-top{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;text-align:center;flex:1;min-width:0;}
-  .square-name{font-size:0.92rem;font-weight:800;line-height:1.2;color:#1f2a3d;white-space:normal;overflow-wrap:anywhere;word-break:break-word;max-width:100%;text-align:center;}
-  .square-label{font-size:0.72rem;color:#5f6e84;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;}
-  .square-price{font-size:0.9rem;font-weight:800;color:#1d2b43;display:inline-block;margin-top:4px;padding:5px 10px;border-radius:999px;background:rgba(17,24,39,0.06);color:inherit;}
-  .square-band{height:7px;border-radius:999px;background:rgba(226,232,240,0.8);margin-top:4px;width:72%;min-height:7px;}
-  .square.property .square-band{background:linear-gradient(90deg,#8ecae6,#219ebc);}
-  .square.station .square-band{background:linear-gradient(90deg,#9d7cd8,#7b6bf5);}
-  .square.airport .square-band{background:linear-gradient(90deg,#ffb703,#fb8500);}
-  .square.bank .square-band{background:linear-gradient(90deg,#8dd49d,#38b57c);}
-  .square.tax .square-band{background:linear-gradient(90deg,#ef4444,#f97316);}
-  .square.event .square-band{background:linear-gradient(90deg,#facc15,#fcd34d);}
-  .square.chance .square-band{background:linear-gradient(90deg,#c084fc,#a78bfa);}
-  .square.jail .square-band{background:linear-gradient(90deg,#fb7185,#ef4444);}
-  .square.free .square-band{background:linear-gradient(90deg,#94a3b8,#64748b);}
-  .square.current{border-color:rgba(11,105,255,0.35);box-shadow:0 18px 36px rgba(11,105,255,0.15);}
-  .square .owner-pill{display:inline-flex;align-items:center;gap:0.3rem;padding:4px 8px;border-radius:999px;background:rgba(14,102,255,0.08);font-size:0.72rem;color:var(--accent);}
-  .pawn-container{position:absolute;right:8px;bottom:8px;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:flex-end;gap:4px;max-width:58%;pointer-events:none;}
-  .pawn{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.68rem;color:#ffffff;border:2px solid rgba(255,255,255,0.8);font-weight:800;box-shadow:0 4px 10px rgba(15,23,42,0.22);}
-  .board-hint{font-size:0.82rem;color:var(--muted);line-height:1.5;}
-
-  .game-columns{display:grid;grid-template-columns:1.4fr 0.85fr;gap:1.6rem;align-items:start;justify-items:center;width:min(100%,1240px);margin:0 auto;}
-  .sidebar{display:grid;gap:1.25rem;max-width:360px;}
-  .panel{background:rgba(255,255,255,0.72);border:1px solid rgba(15,23,42,0.06);border-radius:30px;padding:1.5rem;box-shadow:0 12px 30px rgba(15,23,42,0.04);backdrop-filter:blur(2px);}
-  .panel h3{font-family:'Lato',sans-serif;font-size:1.05rem;font-weight:900;color:#111827;margin-bottom:1rem;}
-  .panel .panel-row{display:flex;align-items:center;justify-content:space-between;gap:0.75rem;}
-  .player-list{display:grid;gap:0.95rem;}
-  .badge{font-size:0.78rem;font-weight:700;padding:10px 14px;border-radius:999px;background:rgba(15,90,255,0.12);color:#0c4ad8;}
-  .status-badge{background:rgba(65,109,255,0.12);color:#2653ff;}
-  .stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.9rem;}
-  .stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:18px;padding:14px;}
-  .stat-card strong{display:block;font-size:1.1rem;color:var(--accent);margin-bottom:0.25rem;}
-  .stat-card span{font-size:0.78rem;color:var(--muted);}
-  .player-card{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px;border-radius:28px;border:1px solid rgba(15,90,255,0.12);background:#f5f9ff;transition:transform 0.18s,box-shadow 0.18s;}
-  .player-card:hover{transform:translateY(-1px);box-shadow:0 14px 30px rgba(15,90,255,0.08);}
-  .player-meta{display:grid;gap:4px;}
-  .player-name{font-size:0.95rem;font-weight:700;}
-  .player-sub{font-size:0.82rem;color:#6c7a96;}
-  .player-chip{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0c4ad8;box-shadow:0 0 0 4px rgba(255,255,255,0.75);background:#ffffff;border:1px solid rgba(15,90,255,0.14);}
-  .player-card.current{border-color:rgba(15,90,255,0.35);background:#eff4ff;}
-  .action-panel{display:grid;gap:1rem;min-height:210px;}
-  .action-box{background:#ffffff;border:1px solid rgba(19,33,58,0.08);border-radius:28px;padding:1.55rem;}
-  .action-title{font-family:'Lato',sans-serif;font-size:1rem;font-weight:900;margin-bottom:0.6rem;color:#111827;}
-  .action-text{color:var(--muted);font-size:0.95rem;line-height:1.7;}
-  .action-buttons{display:grid;gap:0.85rem;}
-  .chat-window{display:grid;gap:0.85rem;}
+  html,body{min-height:100%;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex;justify-content:center;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit;color:inherit;}
+  .app{width:100%;max-width:520px;min-height:100vh;background:var(--shell);display:flex;flex-direction:column;}
+  .screen{display:none;}
+  .screen.active{display:flex;flex-direction:column;flex:1;min-height:0;}
   .hidden{display:none !important;}
-  .chat-list,.history-list{max-height:320px;overflow:auto;padding-right:6px;display:grid;gap:0.75rem;}
-  .chat-item,.history-item{padding:14px 16px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);}
-  .chat-item strong{font-size:0.9rem;display:block;margin-bottom:0.15rem;}
-  .chat-item span{font-size:0.85rem;color:var(--muted);}
-  .tool-row{display:flex;gap:0.8rem;flex-wrap:wrap;align-items:center;}
-  .select-small{width:100%;max-width:260px;}
-  .input-inline{width:100%;max-width:160px;}
-  .timer-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:16px 20px;border-radius:28px;background:#ffffff;border:1px solid rgba(19,33,58,0.08);font-size:0.95rem;box-shadow:0 12px 32px rgba(15,23,42,0.06);}
-  .timer-meta{display:grid;gap:0.25rem;flex:1;}
-  .timer-value{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--accent);}
-  .dice-stage{display:flex;gap:0.7rem;align-items:center;}
-  .die{width:68px;height:68px;border-radius:18px;background:linear-gradient(145deg,#ffffff,#eef4ff);border:2px solid rgba(15,90,255,0.18);box-shadow:0 12px 24px rgba(15,23,42,0.12);display:flex;align-items:center;justify-content:center;font-size:1.9rem;font-weight:900;color:#123;transition:transform 0.2s ease;}
-  .die.rolling{animation:dice-roll 0.7s ease infinite;transform-origin:center;}
-  .die-value{line-height:1;}
-  @keyframes dice-roll{0%,100%{transform:translateY(0) rotate(0) scale(1);}25%{transform:translateY(-10px) rotate(-16deg) scale(1.04);}50%{transform:translateY(4px) rotate(12deg) scale(0.97);}75%{transform:translateY(-6px) rotate(-8deg) scale(1.02);}}
-  .modal{background:rgba(239,244,255,0.92);position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:1.25rem;backdrop-filter:blur(4px);}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ============ Boutons ============ */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;padding:12px 18px;border:1px solid transparent;border-radius:var(--r-sm);cursor:pointer;font-weight:800;font-size:.9rem;letter-spacing:.01em;background:var(--panel-2);color:var(--text);transition:transform .12s ease,filter .12s ease,background .12s ease;}
+  .btn:hover{filter:brightness(1.08);}
+  .btn:active{transform:translateY(1px);}
+  .btn:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
+  .btn[disabled],.btn:disabled{background:#4A4D56;color:#8E939C;cursor:not-allowed;filter:none;transform:none;}
+  .btn-primary{background:var(--green);color:#15200A;}
+  .btn-primary:hover{background:var(--green-700);color:#fff;}
+  .btn-secondary{background:#E8EFF3;color:#27404D;}
+  .btn-secondary:hover{background:#fff;}
+  .btn-ghost{background:transparent;border-color:var(--line);color:var(--muted);}
+  .btn-ghost:hover{background:rgba(255,255,255,.06);color:#fff;}
+  .btn-danger{background:rgba(226,87,76,.16);color:#FF9A91;border-color:rgba(226,87,76,.4);}
+  .btn-small{padding:8px 12px;font-size:.78rem;}
+  .btn-block{width:100%;}
+  .btn-row{display:grid;gap:8px;margin-top:14px;}
+  .icon-btn{background:none;border:0;color:var(--text);font-size:1.2rem;line-height:1;width:34px;height:34px;border-radius:var(--r-sm);cursor:pointer;display:grid;place-items:center;}
+  .icon-btn:hover{background:rgba(255,255,255,.1);}
+
+  /* ============ Formulaires ============ */
+  .field{display:grid;gap:6px;margin-top:12px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  label{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);}
+  input,select,textarea{width:100%;border-radius:var(--r-sm);border:1px solid var(--line);background:#2A2C33;padding:12px 14px;outline:none;transition:border-color .15s,box-shadow .15s;}
+  input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(138,210,31,.2);}
+  input::placeholder{color:#767C87;}
+  .input-code{letter-spacing:.22em;font-weight:900;text-transform:uppercase;}
+  .error-msg{color:#FF9A91;font-size:.82rem;min-height:1.1rem;margin-top:8px;}
+  .muted-text{color:var(--muted);font-size:.88rem;line-height:1.6;}
+
+  /* ============ Lobby ============ */
+  .lobby{padding:26px 18px 34px;display:grid;gap:16px;animation:fadeIn .2s ease both;}
+  .lobby-brand{text-align:center;display:grid;gap:6px;justify-items:center;margin-bottom:4px;}
+  .lobby-mark{width:54px;height:54px;border-radius:14px;background:var(--green);color:#15200A;display:grid;place-items:center;font-size:1.7rem;font-weight:900;box-shadow:0 8px 20px rgba(138,210,31,.3);}
+  .lobby-brand h1{font-size:1.9rem;font-weight:900;letter-spacing:.1em;}
+  .lobby-brand p{color:var(--muted);font-size:.84rem;}
+  .lobby-brand--sm h1{font-size:1.4rem;letter-spacing:.04em;}
+  .lobby-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);}
+  .lobby-card--primary{border-color:rgba(138,210,31,.35);}
+  .lobby-card--center{text-align:center;display:grid;gap:10px;justify-items:center;padding:34px 20px;}
+  .lobby-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .lobby-card h2{font-size:1.05rem;font-weight:900;}
+  .lobby-card .btn-block{margin-top:4px;}
+  .lobby-foot{color:#8A909B;font-size:.76rem;line-height:1.6;text-align:center;}
+  .tag{font-size:.64rem;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--muted);}
+  .tag-green{background:rgba(138,210,31,.18);color:var(--green);}
+  .spinner{width:34px;height:34px;border:3px solid rgba(255,255,255,.18);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;}
+  .code-chip{display:block;width:100%;margin-bottom:16px;padding:14px;border:1px dashed rgba(138,210,31,.5);background:rgba(138,210,31,.1);color:var(--green);border-radius:var(--r-sm);font-size:1.5rem;font-weight:900;letter-spacing:.22em;cursor:pointer;}
+  .code-chip:hover{background:rgba(138,210,31,.18);}
+
+  /* ============ Barre supérieure ============ */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;background:var(--shell);border-bottom:1px solid var(--line);min-height:46px;}
+  .topbar>span{flex:1;text-align:center;font-size:.76rem;color:#D3D7DE;line-height:1.3;}
+  .topbar strong{color:var(--green);font-weight:900;}
+
+  /* ============ Bandeaux joueurs ============ */
+  .reference-players,.reference-footer{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,150px));justify-content:center;gap:8px;padding:10px 12px;background:var(--panel);}
+  .reference-player{display:grid;gap:3px;justify-items:center;text-align:center;padding:7px 4px;border-radius:var(--r-sm);border:1px solid transparent;background:rgba(255,255,255,.03);min-width:0;}
+  .reference-player.current{border-color:var(--green);background:rgba(138,210,31,.12);}
+  .player-avatar{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.85);display:grid;place-items:center;font-size:.76rem;font-weight:900;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45);}
+  .reference-player.current .player-avatar{box-shadow:0 0 0 3px rgba(138,210,31,.45);}
+  .player-copy{display:grid;gap:1px;min-width:0;width:100%;}
+  .player-copy strong{font-size:.74rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .player-copy small{font-size:.68rem;color:#D7DBE2;}
+  .player-copy em{font-style:normal;color:var(--green);font-weight:800;}
+
+  /* ============ Plateau ============ */
+  .board-shell{background:var(--board);padding:5px;}
+  .board-grid{width:100%;aspect-ratio:1/1;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));gap:2px;}
+  .square{position:relative;background:#FBFCFA;border-radius:3px;overflow:hidden;min-width:0;min-height:0;}
+  .square-band{position:absolute;left:0;right:0;top:0;height:38%;background:var(--sq,#D5D7D8);}
+  .square-price{position:absolute;left:0;right:0;top:0;height:38%;z-index:2;display:flex;align-items:center;justify-content:center;font-size:min(.66rem,2.5vw);font-weight:900;color:var(--sq-ink,#1D242C);white-space:nowrap;}
+  .square-top{position:absolute;left:0;right:0;top:38%;bottom:0;z-index:1;display:flex;align-items:center;justify-content:center;padding:1px 2px;}
+  .square-name{font-size:min(.58rem,1.95vw);font-weight:800;line-height:1.05;letter-spacing:-.02em;color:var(--ink);text-transform:uppercase;text-align:center;overflow-wrap:anywhere;}
+  .square-label{display:none;}
+  .square.start,.square.jail,.square.chance,.square.event{background:#F4F6F3;}
+  .square.start .square-top,.square.jail .square-top,.square.chance .square-top,.square.event .square-top{top:30%;}
+  .square.start .square-band,.square.jail .square-band,.square.chance .square-band,.square.event .square-band{height:30%;}
+  .square.current{outline:2px solid var(--green);outline-offset:-2px;z-index:4;}
+  .owner-pill{position:absolute;left:0;right:0;bottom:0;height:5px;z-index:3;font-size:0;line-height:0;overflow:hidden;background:#888;}
+  .pawn-container{position:absolute;right:2px;bottom:5px;z-index:5;display:flex;flex-wrap:wrap-reverse;justify-content:flex-end;gap:1px;max-width:82%;pointer-events:none;}
+  .pawn{width:15px;height:15px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45);display:grid;place-items:center;font-size:.46rem;font-weight:900;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.5);}
+
+  /* ============ Centre du plateau ============ */
+  .board-center{grid-row:2/8;grid-column:2/8;background:var(--center);border-radius:5px;display:flex;flex-direction:column;align-items:center;gap:7px;padding:9px 10px;overflow:auto;color:var(--ink);}
+  .event-message{width:100%;background:#fff;border:1px solid #D2DDE1;border-radius:var(--r-sm);padding:7px 9px;font-size:.72rem;line-height:1.35;color:#4A5C66;text-align:center;}
+  .dice-stage{display:flex;gap:10px;align-items:center;justify-content:center;}
+  .die{width:46px;height:46px;border-radius:9px;background:#fff;box-shadow:0 3px 8px rgba(29,36,44,.25),inset 0 -2px 0 rgba(0,0,0,.06);display:grid;place-items:center;padding:6px;}
+  .die-value{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);width:100%;height:100%;gap:1px;place-items:center;}
+  .die-pip{width:8px;height:8px;border-radius:50%;background:#20272E;}
+  .die-idle{grid-area:2/2;font-size:1.3rem;font-weight:900;color:#9FB0B8;}
+  .die.rolling{animation:dice-roll .5s ease-in-out infinite;}
+  @keyframes dice-roll{0%,100%{transform:translateY(0) rotate(0);}25%{transform:translateY(-7px) rotate(-14deg);}50%{transform:translateY(3px) rotate(10deg);}75%{transform:translateY(-4px) rotate(-6deg);}}
+  .dice-meta{display:grid;justify-items:center;gap:1px;text-align:center;}
+  .dice-meta strong{font-size:.86rem;font-weight:900;color:#2C4049;}
+  .dice-meta span{font-size:.66rem;color:#5B6E78;}
+
+  /* ============ Panneau d'action (dans le centre) ============ */
+  .action-panel{width:100%;display:grid;gap:8px;margin-top:auto;}
+  .action-box{background:#fff;border:1px solid #D2DDE1;border-radius:var(--r-sm);padding:10px 11px;color:var(--ink);}
+  .action-title{font-size:.8rem;font-weight:900;margin-bottom:3px;}
+  .action-text{font-size:.72rem;line-height:1.45;color:#52646F;}
+  .action-buttons{display:grid;gap:6px;margin-top:9px;}
+  .action-buttons .btn{padding:10px 12px;font-size:.78rem;}
+
+  /* ============ Barre de tour / chat ============ */
+  .turnbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--shell);border-top:1px solid var(--line);}
+  .turnbar-who{flex:1;font-size:.76rem;color:#D3D7DE;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .badge{font-size:.64rem;font-weight:900;text-transform:uppercase;letter-spacing:.07em;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.1);color:var(--muted);}
+  .status-badge{background:rgba(138,210,31,.18);color:var(--green);}
+  .timer-value{font-size:.86rem;font-weight:900;color:var(--green);font-variant-numeric:tabular-nums;}
+  .reference-chat{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:9px 12px;background:#0C0D10;border:0;border-top:1px solid var(--line);color:#9AA0AA;font-size:.7rem;cursor:pointer;text-align:left;}
+  .reference-chat:hover{color:#fff;}
+  .reference-chat span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .reference-chat span:last-child{flex:none;color:var(--green);font-weight:800;}
+
+  /* ============ Tiroir ============ */
+  .drawer{position:fixed;inset:0 0 0 auto;width:min(380px,100%);background:var(--panel);z-index:60;transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column;box-shadow:var(--shadow);}
+  .drawer.mobile-open{transform:none;}
+  .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);font-weight:900;}
+  .drawer-body{flex:1;overflow:auto;padding:12px;display:grid;gap:12px;align-content:start;}
+  .panel{background:var(--panel-2);border-radius:var(--r-sm);padding:12px;}
+  .panel h3{font-size:.82rem;font-weight:900;margin-bottom:9px;}
+  .player-list{display:grid;gap:7px;}
+  .player-card{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border-radius:var(--r-sm);background:rgba(255,255,255,.05);border:1px solid transparent;}
+  .player-card.current{border-color:var(--green);background:rgba(138,210,31,.12);}
+  .player-meta{display:grid;gap:2px;min-width:0;}
+  .player-name{font-size:.82rem;font-weight:800;}
+  .player-sub{font-size:.7rem;color:#C3C8D1;}
+  .player-chip{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.85);display:grid;place-items:center;font-weight:900;font-size:.8rem;color:#fff;flex:none;text-shadow:0 1px 2px rgba(0,0,0,.45);}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .stat-card{background:rgba(255,255,255,.05);border-radius:var(--r-sm);padding:10px;}
+  .stat-card strong{display:block;font-size:1rem;font-weight:900;color:var(--green);}
+  .stat-card span{font-size:.66rem;color:var(--muted);}
+  .chat-list,.history-list{display:grid;gap:7px;max-height:230px;overflow:auto;}
+  .chat-item,.history-item{background:rgba(255,255,255,.05);border-radius:var(--r-sm);padding:8px 10px;font-size:.74rem;line-height:1.4;color:#D7DBE2;}
+  .chat-item strong{display:block;font-size:.72rem;color:#fff;}
+  .chat-item span{color:#C3C8D1;}
+  .tool-row{display:flex;gap:8px;margin-top:9px;}
+  .tool-row input{flex:1;}
+
+  /* ============ Modales ============ */
+  .modal{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(10,11,14,.72);backdrop-filter:blur(3px);}
   .modal.active{display:flex;}
-  .modal-card{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--border);border-radius:28px;padding:1.5rem;box-shadow:var(--shadow);}
-  .modal-card h3{margin-bottom:1rem;}
-  .modal-close{position:absolute;top:22px;right:22px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(16,39,77,0.08);display:flex;align-items:center;justify-content:center;color:var(--text);cursor:pointer;}
-  .modal-close:hover{background:rgba(11,105,255,0.08);}
-  .label-pill{padding:6px 10px;border-radius:999px;background:rgba(226,232,240,0.85);color:var(--muted);font-size:0.8rem;}
-  .property-badge{display:inline-flex;align-items:center;gap:0.35rem;padding:6px 10px;border-radius:999px;background:rgba(238,245,255,0.9);font-size:0.8rem;color:var(--text);border:1px solid rgba(226,232,240,0.9);}
-  .footer-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;margin-top:1rem;color:var(--muted);font-size:0.9rem;}
-  @media(max-width:1130px){.game-columns{grid-template-columns:1fr;} .board-shell{max-width:100%;}} 
-  @media(max-width:860px){.hero{flex-direction:column;} .hero-title{font-size:2.35rem;} .board-shell{aspect-ratio:0.95/1;} .sidebar{order:2;}}
-</style>
-<style id="reference-theme">
-  /* Banque Roll reference skin: dark game surface, compact property tiles. */
-  :root{--ref-bg:#22242a;--ref-panel:#504951;--ref-board:#c1d3dd;--ref-ink:#fff;--ref-muted:#bdb8c0;--ref-green:#a8e53b;}
-  html,body{background:var(--ref-bg);color:var(--ref-ink);font-family:Arial,Helvetica,sans-serif;}
-  body{overflow-x:hidden;}
-  .app{max-width:1180px;padding:16px 20px 32px;}
-  .screen{animation:none;}
-  .screen.active{display:block;}
-  .hero,.screen-panel{display:none;}
-  #s-game{display:none;}
-  #s-game.active{display:block;}
-  .game-columns{display:grid;grid-template-columns:minmax(0,780px) 290px;gap:18px;align-items:start;width:100%;}
-  .board-shell{width:100%;max-width:none;aspect-ratio:1/1;background:#f4f6f1;border:0;border-radius:0;padding:8px;box-shadow:none;}
-  .board-grid{width:100%;height:100%;background:#f8faf7;border:0;border-radius:0;grid-template-columns:repeat(11,minmax(0,1fr));grid-template-rows:repeat(11,minmax(0,1fr));gap:3px;padding:0;box-shadow:none;}
-  .board-center{grid-row:2/11;grid-column:2/11;background:var(--ref-board);border:0;border-radius:0;padding:0 12px;gap:10px;}
-  .trade-reference{width:min(100%,208px);display:grid;gap:10px;text-align:center;color:#526970;font-size:clamp(.7rem,1.3vw,.9rem)}
-  .trade-reference strong{display:block;background:#62b955;color:#fff;padding:5px 12px;font-size:.72rem;width:max-content;margin:0 auto}
-  .trade-slots{display:grid;grid-template-columns:1fr 38px 1fr;align-items:center;gap:7px}
-  .trade-slot{height:38px;background:#fff;border-radius:2px;position:relative}
-  .trade-slot::before{content:'';position:absolute;width:13px;height:13px;border:3px solid #fff;border-radius:50%;left:-8px;top:10px;background:#ef5d52;box-shadow:0 0 0 1px #e4eff1}
-  .trade-slot.blue::before{background:#2e9ed0}.trade-pass{font-size:1.7rem;font-weight:700;color:#94aeb6;line-height:1}.trade-pass small{display:block;font-size:.55rem;font-weight:700}
-  .trade-reference .auction-copy{font-size:clamp(.65rem,1.2vw,.82rem)}
-  .center-logo{display:none}
-  .center-sub{display:none}
-  .center-tags{gap:4px;margin-top:12px;}
-  .center-tag{font-size:.6rem;padding:5px 7px;border-radius:2px;background:#fff;color:#71878c;}
-  .square{padding:2px 2px 4px;gap:1px;border-radius:0;border:1px solid #fff;background:#f8faf7;box-shadow:none;min-width:0;}
-  .square:hover{transform:none;box-shadow:none;}
-  .square-top{gap:1px;}
-  .square-name{font-size:clamp(.42rem,1vw,.72rem);font-weight:700;line-height:1.05;color:#fff;text-transform:uppercase;}
-  .square-label{font-size:clamp(.35rem,.75vw,.56rem);letter-spacing:.02em;color:#fff;}
-  .square-price{font-size:clamp(.46rem,1vw,.72rem);padding:2px 3px;margin:0;border-radius:0;background:transparent;color:#fff!important;}
-  .square-band{position:absolute;inset:0 0 auto;height:11px;width:100%;margin:0;border-radius:0;background:#d8e3e4!important;}
-  .square.property .square-band{background:#e87887!important}.square.station .square-band{background:#9ba8ae!important}.square.airport .square-band{background:#f4a936!important}.square.bank .square-band{background:#8bcf74!important}.square.tax .square-band{background:#ee7a80!important}.square.event .square-band{background:#f4c43d!important}.square.chance .square-band{background:#a7a9ad!important}.square.jail .square-band{background:#d5d8d2!important}.square.free .square-band{background:#b4d3d5!important}
-  .square.property{background:#e87887}.square.station{background:#9ba8ae}.square.airport{background:#f4a936}.square.bank{background:#8bcf74}.square.tax{background:#ee7a80}.square.event{background:#f4c43d}.square.chance{background:#d7dadd}.square.jail{background:#d5d8d2}.square.free{background:#b4d3d5}.square.start{background:#d7dadd}
-  .square.current{border:2px solid var(--ref-green);box-shadow:none;}
-  .pawn-container{right:3px;bottom:3px;gap:1px;max-width:70%;}.pawn{width:16px;height:16px;font-size:.5rem;border:2px solid #fff;}
-  .sidebar{max-width:none;gap:12px;}
-  .panel,.timer-bar{background:var(--ref-panel);border:0;border-radius:0;padding:14px;box-shadow:none;color:#fff;}
-  .panel h3{font-size:.85rem;color:#fff;margin-bottom:10px;}.player-list{gap:8px;}.player-card{padding:8px;border-radius:0;border:0;background:#5b5560;color:#fff;}.player-card.current{border:1px solid var(--ref-green);background:#5b5560;}.player-name{font-size:.8rem}.player-sub{font-size:.7rem;color:#ded9df}.player-chip{width:30px;height:30px;box-shadow:none;border:2px solid #fff;}
-  .action-panel{min-height:0;}.action-box{background:#bcd5dc;border:0;border-radius:0;padding:14px;color:#526970}.action-title{color:#526970;font-size:.85rem}.action-text{color:#526970;font-size:.8rem;line-height:1.45}.btn{border-radius:2px;padding:8px 10px;font-size:.75rem}.btn-primary{background:#8bd12e;border-color:#8bd12e;color:#fff}.btn-secondary{background:#dce8e9;border-color:#dce8e9;color:#587077}.btn-danger{background:#d76370;color:#fff}.badge,.accent-pill{border-radius:2px;padding:5px 7px;background:#8bd12e;color:#fff;font-size:.7rem}.stat-grid{gap:6px}.stat-card{border:0;border-radius:0;background:#605963;padding:9px}.stat-card strong{font-size:.9rem;color:var(--ref-green)}.stat-card span{color:#ddd7de;font-size:.65rem}.chat-item,.history-item{border:0;border-radius:0;background:#605963;padding:8px}.chat-item strong{font-size:.75rem;color:#fff}.chat-item span{font-size:.7rem;color:#ddd7de}.chat-list,.history-list{max-height:180px}.tool-row input,input,select,textarea{border-radius:2px;background:#615a64;border-color:#77707a;color:#fff;padding:8px}.timer-bar{margin-top:8px!important;}.die{width:42px;height:42px;border-radius:2px;font-size:1.2rem;background:#fff;border:0;box-shadow:none}.timer-value{color:var(--ref-green)}
-  .reference-top{display:flex;justify-content:space-between;align-items:center;color:#fff;margin:0 0 10px;font-size:.8rem}.reference-top strong{color:var(--ref-green)}.reference-top button{background:none;border:0;color:#fff;font-size:1.1rem}
-  @media(max-width:900px){.app{padding:10px 0 0}.game-columns{display:block}.sidebar{display:grid;grid-template-columns:1fr 1fr;padding:0 10px}.board-shell{padding:4px}.reference-top{padding:0 10px}.panel.chat-window{grid-column:1/-1}}
-  @media(max-width:560px){body{background:#000}.app{max-width:295px;margin:0 auto;background:var(--ref-panel);min-height:100vh}.sidebar{grid-template-columns:1fr}.board-center{padding:16px 8px}.center-sub{font-size:.66rem}.center-tags{display:none}.square-name{font-size:clamp(.36rem,1.5vw,.55rem)}.square-label{font-size:clamp(.3rem,1.2vw,.45rem)}.square-price{font-size:clamp(.38rem,1.5vw,.58rem)}.pawn{width:12px;height:12px}.timer-bar{border-top:1px solid #655f67}}
+  .modal-card{width:100%;max-width:440px;max-height:88vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .modal-head h3{font-size:1.05rem;font-weight:900;}
+  .modal-close{background:none;border:0;color:var(--muted);font-size:1.1rem;cursor:pointer;width:32px;height:32px;border-radius:var(--r-sm);display:grid;place-items:center;}
+  .modal-close:hover{background:rgba(255,255,255,.1);color:#fff;}
+  .modal-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;font-size:.8rem;color:var(--muted);}
+  .modal-foot strong{color:var(--green);font-size:1rem;font-weight:900;}
+  .select-small,.input-inline{width:100%;}
+
+  /* ============ Responsive ============ */
+  @media(max-width:420px){
+    .lobby{padding:18px 12px 26px;}
+    .reference-players,.reference-footer{padding:8px 9px;gap:6px;grid-template-columns:repeat(auto-fit,minmax(76px,130px));}
+    .player-avatar{width:26px;height:26px;}
+    .die{width:40px;height:40px;border-radius:8px;padding:5px;}
+    .die-pip{width:6px;height:6px;}
+    .board-center{padding:7px;gap:5px;}
+    .event-message{font-size:.66rem;padding:5px 7px;}
+    .action-box{padding:8px 9px;}
+  }
+  @media(min-width:560px){
+    .app{box-shadow:var(--shadow);}
+    .die{width:54px;height:54px;}
+    .die-pip{width:9px;height:9px;}
+    .board-center{padding:14px;gap:10px;}
+    .event-message{font-size:.8rem;}
+    .action-title{font-size:.9rem;}
+    .action-text{font-size:.8rem;}
+    .square-name{font-size:.62rem;}
+    .square-price{font-size:.68rem;}
+  }
 </style>
 </head>
 <body>
 <div class="app">
+
+  <!-- ====================== LOBBY (creer + rejoindre) ====================== -->
   <div class="screen active" id="s-home">
-    <div class="hero">
-      <div>
-        <div class="hero-title">Banqueroll<small>Expérience de plateau financier en ligne</small></div>
-        <div class="hero-sub">Crée ou rejoins une partie, achète des quartiers, enchéris, échange et domine le marché dans une expérience fluide et moderne, inspirée des meilleures tables digitales.</div>
-      </div>
-      <div style="display:grid;gap:12px;min-width:240px;">
-        <button class="btn btn-primary" onclick="show('s-create')">Créer une partie</button>
-        <button class="btn btn-secondary" onclick="show('s-join')">Rejoindre une partie</button>
-      </div>
-    </div>
-    <div class="card">
-      <h2>Fonctionnalités</h2>
-      <p>Banqueroll est conçu pour offrir une interface native, des animations fluides, un plateau lisible, des enchères en temps réel, un chat intégré, un historique d’actions et une synchronisation Firebase pour 2 à 8 joueurs.</p>
-      <div class="footer-row">
-        <span class="accent-pill">Multijoueur 2–8</span>
-        <span class="accent-pill">Plateau carré</span>
-        <span class="accent-pill">Cartes d’événements</span>
-        <span class="accent-pill">Enchères & échanges</span>
-      </div>
+    <div class="lobby">
+      <header class="lobby-brand">
+        <div class="lobby-mark">B</div>
+        <h1>BANQUEROLL</h1>
+        <p>Plateau financier en ligne &mdash; 2 &agrave; 8 joueurs</p>
+      </header>
+
+      <section class="lobby-card lobby-card--primary">
+        <div class="lobby-card-head"><h2>Cr&eacute;er une partie</h2><span class="tag tag-green">H&ocirc;te</span></div>
+        <div class="field"><label for="create-name">Ton pr&eacute;nom</label><input type="text" id="create-name" maxlength="20" placeholder="Ton pr&eacute;nom"></div>
+        <div class="field-row">
+          <div class="field"><label for="create-players">Joueurs</label><select id="create-players"><option value="2">2 joueurs</option><option value="3">3 joueurs</option><option value="4" selected>4 joueurs</option><option value="5">5 joueurs</option><option value="6">6 joueurs</option><option value="7">7 joueurs</option><option value="8">8 joueurs</option></select></div>
+          <div class="field"><label for="create-timer">Dur&eacute;e du tour</label><select id="create-timer"><option value="20">20 s</option><option value="25">25 s</option><option value="30" selected>30 s</option><option value="40">40 s</option></select></div>
+        </div>
+        <div class="error-msg" id="create-error"></div>
+        <button class="btn btn-primary btn-block" onclick="createGame()">Cr&eacute;er la partie</button>
+      </section>
+
+      <section class="lobby-card">
+        <div class="lobby-card-head"><h2>Rejoindre une partie</h2></div>
+        <div class="field"><label for="join-code">Code de la partie</label><input id="join-code" type="text" maxlength="12" placeholder="ROLL-42" class="input-code" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="field"><label for="join-name">Ton pr&eacute;nom</label><input id="join-name" type="text" maxlength="20" placeholder="Ton pr&eacute;nom"></div>
+        <div class="error-msg" id="join-error"></div>
+        <button class="btn btn-secondary btn-block" onclick="joinGame()">Rejoindre</button>
+      </section>
+
+      <p class="lobby-foot">L'h&ocirc;te partage le code de la partie. Objectif : 3&nbsp;000 &#128176; de valeur nette, ou la meilleure fortune au bout de 34 manches.</p>
     </div>
   </div>
 
-  <div class="screen" id="s-create">
-    <div class="card">
-      <h2>Créer une partie</h2>
-      <div class="form-group"><label>Ton prénom</label><input type="text" id="create-name" maxlength="20" placeholder="Ton prénom"></div>
-      <div class="form-group"><label>Nombre de joueurs</label><select id="create-players"><option value="2">2 joueurs</option><option value="3">3 joueurs</option><option value="4" selected>4 joueurs</option><option value="5">5 joueurs</option><option value="6">6 joueurs</option><option value="7">7 joueurs</option><option value="8">8 joueurs</option></select></div>
-      <div class="form-group"><label>Durée du tour</label><select id="create-timer"><option value="20">20 s</option><option value="25">25 s</option><option value="30" selected>30 s</option><option value="40">40 s</option></select></div>
-      <div class="error-msg" id="create-error"></div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:1.2rem;"><button class="btn btn-primary" onclick="createGame()">Créer</button><button class="btn btn-secondary" onclick="show('s-home')">Retour</button></div>
-    </div>
-  </div>
-
-  <div class="screen" id="s-join">
-    <div class="card">
-      <h2>Rejoindre une partie</h2>
-      <div class="form-group"><label>Code de la partie</label><input id="join-code" type="text" maxlength="10" placeholder="ex: ROLL-42" oninput="this.value=this.value.toUpperCase()" style="letter-spacing:0.18em;font-family:'Syne',sans-serif;font-weight:700;"></div>
-      <div class="form-group"><label>Ton prénom</label><input id="join-name" type="text" maxlength="20" placeholder="Ton prénom"></div>
-      <div class="error-msg" id="join-error"></div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:1.2rem;"><button class="btn btn-primary" onclick="joinGame()">Rejoindre</button><button class="btn btn-secondary" onclick="show('s-home')">Retour</button></div>
-    </div>
-  </div>
-
+  <!-- ====================== CONNEXION ====================== -->
   <div class="screen" id="s-joining">
-    <div class="card" style="text-align:center;max-width:420px;margin:0 auto;">
-      <h2>Connexion en cours…</h2>
-      <p class="muted-text">Vérification du code, récupération de la partie et synchronisation du plateau en temps réel.</p>
-      <div style="margin-top:2rem;display:flex;align-items:center;justify-content:center;gap:12px;"><div style="width:28px;height:28px;border:3px solid rgba(255,255,255,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;"></div><span style="color:var(--muted);font-weight:700;">Chargement…</span></div>
+    <div class="lobby">
+      <div class="lobby-card lobby-card--center">
+        <div class="spinner"></div>
+        <h2>Connexion&hellip;</h2>
+        <p class="muted-text">R&eacute;cup&eacute;ration de la partie et synchronisation du plateau.</p>
+      </div>
     </div>
   </div>
 
+  <!-- ====================== SALON ====================== -->
   <div class="screen" id="s-lobby">
-    <div class="card">
-      <div class="top-row"><div><h2>Salon de la partie</h2><p class="muted-text">Partage ce code avec tes amis pour qu'ils rejoignent.</p></div><button class="btn btn-secondary btn-small" onclick="copyCode()">Copier le code</button></div>
-      <div class="accent-pill" id="lobby-code">—</div>
-      <div class="panel" style="margin-top:1.2rem;"><h3>Joueurs</h3><div id="lobby-players" class="player-list" style="display:grid;gap:0.85rem;"></div></div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:1rem;"><button class="btn btn-primary" id="start-game-btn" onclick="startGame()">Lancer la partie</button><button class="btn btn-danger" onclick="deleteGame()">Abandonner</button></div>
+    <div class="lobby">
+      <header class="lobby-brand lobby-brand--sm">
+        <div class="lobby-mark">B</div>
+        <h1>Salon de la partie</h1>
+        <p>Partage ce code pour que tes amis rejoignent.</p>
+      </header>
+      <section class="lobby-card">
+        <button class="code-chip" id="lobby-code" onclick="copyCode()" title="Copier le code">&mdash;</button>
+        <div class="lobby-card-head"><h2>Joueurs</h2></div>
+        <div id="lobby-players" class="player-list"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-block" id="start-game-btn" onclick="startGame()">Lancer la partie</button>
+          <button class="btn btn-danger btn-block" onclick="deleteGame()">Abandonner la partie</button>
+        </div>
+      </section>
     </div>
   </div>
 
+  <!-- ====================== PARTIE ====================== -->
   <div class="screen" id="s-game">
-    <div class="reference-top"><button type="button" onclick="show('s-home')">‹</button><span><strong>$3,000</strong> net worth to win. Rounds left: 34</span><button type="button" aria-label="Menu">⋮</button></div>
-    <div class="game-columns">
-      <div>
-        <div class="board-shell">
-          <div id="board-grid" class="board-grid"></div>
-        </div>
-        <div class="timer-bar" style="margin-top:1rem;">
+    <div class="topbar">
+      <button class="icon-btn" type="button" aria-label="Quitter la partie" onclick="leaveGame()">&lsaquo;</button>
+      <span id="ref-objective">&mdash;</span>
+      <button class="icon-btn" type="button" aria-label="Ouvrir le menu" onclick="toggleDrawer()">&#8942;</button>
+    </div>
+
+    <div class="reference-players" id="players-top"></div>
+
+    <div class="board-shell">
+      <div id="board-grid" class="board-grid">
+        <div class="board-center">
+          <div class="event-message" id="event-message">La partie va commencer&hellip;</div>
           <div class="dice-stage">
-            <div class="die" id="die-1"><span class="die-value">⚀</span></div>
-            <div class="die" id="die-2"><span class="die-value">⚀</span></div>
+            <div class="die" id="die-1"><span class="die-value"><span class="die-idle">?</span></span></div>
+            <div class="die" id="die-2"><span class="die-value"><span class="die-idle">?</span></span></div>
           </div>
-          <div class="timer-meta">
-            <span id="roll-result">Prêt à lancer.</span>
-            <strong class="timer-value" id="turn-timer">00:00</strong>
-          </div>
-        </div>
-      </div>
-      <div class="sidebar">
-        <div class="panel" id="players-panel"></div>
-        <div class="panel">
-          <div class="panel-row"><div><h3>Tour actuel</h3><div id="turn-player" class="muted-text">Chargement...</div></div><span class="badge status-badge" id="turn-status">En attente</span></div>
-          <div class="stat-grid" style="margin-top:1rem;">
-            <div class="stat-card"><strong id="stat-players">0 / 0</strong><span>Joueurs connectés</span></div>
-            <div class="stat-card"><strong id="stat-pot">0</strong><span>Trésorerie</span></div>
-          </div>
-        </div>
-        <div class="panel action-panel" id="action-panel"></div>
-        <div class="panel chat-window">
-          <h3>Chat de partie</h3>
-          <div class="chat-list" id="chat-list"></div>
-          <div class="tool-row" style="margin-top:0.85rem;">
-            <input id="chat-input" type="text" maxlength="120" placeholder="Écris un message" style="max-width:none;">
-            <button class="btn btn-primary btn-small" onclick="sendChat()">Envoyer</button>
-          </div>
-        </div>
-        <div class="panel chat-window">
-          <h3>Historique</h3>
-          <div class="history-list" id="history-list"></div>
+          <div class="dice-meta"><strong id="dice-total">&mdash;</strong><span id="roll-result">Pr&ecirc;t &agrave; lancer.</span></div>
+          <div class="action-panel" id="action-panel"></div>
         </div>
       </div>
     </div>
+
+    <div class="turnbar">
+      <span class="turnbar-who" id="turn-player">Chargement&hellip;</span>
+      <span class="badge status-badge" id="turn-status">En attente</span>
+      <strong class="timer-value" id="turn-timer">00:00</strong>
+    </div>
+
+    <div class="reference-footer" id="players-bottom"></div>
+
+    <button class="reference-chat" type="button" onclick="toggleDrawer()">
+      <span id="ref-chat-last">Aucun message</span><span id="ref-chat-count">0 message</span>
+    </button>
   </div>
 </div>
 
+<!-- ====================== TIROIR : joueurs, chat, historique ====================== -->
+<aside class="drawer sidebar" id="drawer">
+  <div class="drawer-head"><strong>Partie</strong><button class="icon-btn" type="button" aria-label="Fermer le menu" onclick="toggleDrawer()">&#10005;</button></div>
+  <div class="drawer-body">
+    <section class="panel" id="players-panel"></section>
+    <section class="panel">
+      <h3>Statistiques</h3>
+      <div class="stat-grid">
+        <div class="stat-card"><strong id="stat-players">0 / 0</strong><span>Joueurs connect&eacute;s</span></div>
+        <div class="stat-card"><strong id="stat-pot">0</strong><span>Argent en jeu</span></div>
+      </div>
+    </section>
+    <section class="panel">
+      <h3>Chat de partie</h3>
+      <div class="chat-list" id="chat-list"></div>
+      <div class="tool-row">
+        <input id="chat-input" type="text" maxlength="120" placeholder="&Eacute;cris un message">
+        <button class="btn btn-primary btn-small" onclick="sendChat()">Envoyer</button>
+      </div>
+    </section>
+    <section class="panel">
+      <h3>Historique</h3>
+      <div class="history-list" id="history-list"></div>
+    </section>
+  </div>
+</aside>
+
+<!-- ====================== MODALE ENCHERE ====================== -->
 <div class="modal" id="modal-auction">
   <div class="modal-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;"><h3>Enchère en cours</h3><div class="modal-close" onclick="closeAuctionModal()">✕</div></div>
-    <div id="auction-details" class="muted-text" style="margin-bottom:1rem;"></div>
-    <div class="tool-row"><input id="auction-bid" type="number" min="0" placeholder="Montant" class="input-inline"><button class="btn btn-primary btn-small" onclick="placeBid()">Enchérir</button></div>
-    <div class="footer-row" style="margin-top:1rem;"><span id="auction-status">En attente de l'enchère</span><strong id="auction-countdown">00</strong></div>
+    <div class="modal-head"><h3>Ench&egrave;re en cours</h3><button class="modal-close" type="button" aria-label="Fermer" onclick="closeAuctionModal()">&#10005;</button></div>
+    <div id="auction-details" class="muted-text"></div>
+    <div class="field"><label for="auction-bid">Ton offre</label><input id="auction-bid" type="number" min="0" placeholder="Montant" class="input-inline"></div>
+    <div class="btn-row"><button class="btn btn-primary btn-block" onclick="placeBid()">Ench&eacute;rir</button></div>
+    <div class="modal-foot"><span id="auction-status">En attente de l'ench&egrave;re</span><strong id="auction-countdown">00</strong></div>
   </div>
 </div>
 
+<!-- ====================== MODALE ECHANGE ====================== -->
 <div class="modal" id="modal-trade">
   <div class="modal-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;"><h3>Proposer un échange</h3><div class="modal-close" onclick="closeTradeModal()">✕</div></div>
-    <div class="form-group"><label>À qui</label><select id="trade-recipient" class="select-small"></select></div>
-    <div class="form-group"><label>Tu offres (argent)</label><input id="trade-offer-cash" type="number" min="0" value="0"></div>
-    <div class="form-group"><label>Tu demandes (argent)</label><input id="trade-request-cash" type="number" min="0" value="0"></div>
-    <div class="form-group"><label>Ta propriété (facultatif)</label><select id="trade-offer-property" class="select-small"></select></div>
-    <div class="form-group"><label>Propriété demandée (facultatif)</label><select id="trade-request-property" class="select-small"></select></div>
+    <div class="modal-head"><h3>Proposer un &eacute;change</h3><button class="modal-close" type="button" aria-label="Fermer" onclick="closeTradeModal()">&#10005;</button></div>
+    <div class="field"><label for="trade-recipient">&Agrave; qui</label><select id="trade-recipient" class="select-small"></select></div>
+    <div class="field-row">
+      <div class="field"><label for="trade-offer-cash">Tu offres (&#128176;)</label><input id="trade-offer-cash" type="number" min="0" value="0"></div>
+      <div class="field"><label for="trade-request-cash">Tu demandes (&#128176;)</label><input id="trade-request-cash" type="number" min="0" value="0"></div>
+    </div>
+    <div class="field"><label for="trade-offer-property">Ta propri&eacute;t&eacute; (facultatif)</label><select id="trade-offer-property" class="select-small"></select></div>
+    <div class="field"><label for="trade-request-property">Propri&eacute;t&eacute; demand&eacute;e (facultatif)</label><select id="trade-request-property" class="select-small"></select></div>
     <div class="error-msg" id="trade-error"></div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:1rem;"><button class="btn btn-primary" onclick="proposeTrade()">Envoyer</button><button class="btn btn-secondary" onclick="closeTradeModal()">Annuler</button></div>
+    <div class="btn-row">
+      <button class="btn btn-primary btn-block" onclick="proposeTrade()">Envoyer la proposition</button>
+      <button class="btn btn-ghost btn-block" onclick="closeTradeModal()">Annuler</button>
+    </div>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue, remove, push, increment, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, get, update, onValue, remove, push, onDisconnect, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
@@ -333,75 +394,91 @@ const db = getDatabase(app);
 
 const PLAYER_COLORS = ['#38bdf8','#fbbf24','#f97316','#a78bfa','#34d399','#fb7185','#22d3ee','#f472b6'];
 const START_CASH = 1500;
-const DEFAULT_TURN_TIME = 30;
 const AUCTION_DURATION = 20;
 const TRADE_DURATION = 30;
+const START_INDEX = 21;      // index de la case Depart dans BOARD
+const START_BONUS = 200;
+const WIN_NET_WORTH = 3000;  // valeur nette a atteindre pour gagner
+const MAX_ROUNDS = 34;       // nombre de manches maximum
+const TURN_GRACE_MS = 1500;  // tolerance avant de passer un tour expire
 const BOARD = [
-  {id:'start',name:'Départ',type:'start',label:'+200'},
-  {id:'maple',name:'Rue Maple',type:'property',price:100,rent:10,group:'Sapin'},
-  {id:'market',name:'Fête foraine',type:'event'},
-  {id:'skyport',name:'Aéroport du Ciel',type:'airport',price:220,group:'Aéroports'},
-  {id:'orchard',name:'Chemin de l’Oranger',type:'property',price:120,rent:12,group:'Verger'},
-  {id:'tax1',name:'Impôt urbain',type:'tax',amount:140},
-  {id:'harbor',name:'Station du Port',type:'station',price:150,group:'Gares'},
-  {id:'amber',name:'Rue Ambre',type:'property',price:130,rent:13,group:'Ambre'},
-  {id:'chance1',name:'Chance',type:'chance'},
-  {id:'silver',name:'Croissant d’Argent',type:'property',price:160,rent:16,group:'Argent'},
-  {id:'bankA',name:'Banque du Vallon',type:'bank'},
-  {id:'east',name:'Gare de l’Est',type:'station',price:150,group:'Gares'},
-  {id:'sunlit',name:'Allée Ensoleillée',type:'property',price:180,rent:18,group:'Soleil'},
-  {id:'park',name:'Place du Parc',type:'property',price:180,rent:18,group:'Parc'},
-  {id:'tax2',name:'Taxe de réseau',type:'tax',amount:180},
-  {id:'cloud',name:'Aéroport du Nuage',type:'airport',price:240,group:'Aéroports'},
-  {id:'pearl',name:'Avenue Perle',type:'property',price:200,rent:20,group:'Perle'},
-  {id:'free',name:'Zone Libre',type:'free'},
-  {id:'topaz',name:'Boulevard Topaze',type:'property',price:220,rent:22,group:'Topaze'},
-  {id:'festival',name:'Carré des Fêtes',type:'event'},
-  {id:'jail',name:'Prison',type:'jail'},
-  {id:'olive',name:'Île d’Olive',type:'property',price:240,rent:24,group:'Olive'},
-  {id:'north',name:'Station Nord',type:'station',price:160,group:'Gares'},
-  {id:'saffron',name:'Route Safran',type:'property',price:260,rent:26,group:'Safran'},
-  {id:'chance2',name:'Chance',type:'chance'},
-  {id:'platinum',name:'Allée Platine',type:'property',price:280,rent:28,group:'Platine'},
-  {id:'bridge',name:'Aéroport du Pont',type:'airport',price:260,group:'Aéroports'},
-  {id:'moonlight',name:'Route Clair de Lune',type:'property',price:300,rent:30,group:'Lune'},
-  {id:'tax3',name:'Taxe d’Étape',type:'tax',amount:200},
-  {id:'ember',name:'Avenue Embrasée',type:'property',price:320,rent:32,group:'Embra'},
-  {id:'bankB',name:'Banque du Phare',type:'bank'},
-  {id:'cedar',name:'Rond-point Cèdre',type:'property',price:340,rent:34,group:'Cèdre'},
-  {id:'south',name:'Station Sud',type:'station',price:170,group:'Gares'},
-  {id:'harborview',name:'Vue du Port',type:'property',price:360,rent:36,group:'Port'},
-  {id:'skyline',name:'Aéroport Horizon',type:'airport',price:280,group:'Aéroports'},
-  {id:'ruby',name:'Allée Rubis',type:'property',price:360,rent:36,group:'Rubis'},
-  {id:'event',name:'Événement',type:'event'},
-  {id:'lumen',name:'Rue Lumen',type:'property',price:380,rent:38,group:'Lumen'},
-  {id:'crystal',name:'Arcade Crystal',type:'property',price:400,rent:40,group:'Crystal'},
-  {id:'chance3',name:'Chance',type:'chance'}
+  {id:'chance',name:'Chance',type:'chance'},
+  {id:'jakarta',name:'Jakarta',type:'property',price:170,rent:17,group:'Pink'},
+  {id:'berlin',name:'Berlin',type:'property',price:20,rent:2,group:'Pink'},
+  {id:'moscow',name:'Moscow',type:'property',price:560,rent:56,group:'Orange'},
+  {id:'railway',name:'Railway',type:'station',price:200,group:'Railways'},
+  {id:'toronto',name:'Toronto',type:'property',price:290,rent:29,group:'Orange'},
+  {id:'seoul',name:'Seoul',type:'property',price:560,rent:56,group:'Orange'},
+  {id:'jail',name:'Jail',type:'jail'},
+  {id:'zurich',name:'Zurich',type:'property',price:250,rent:25,group:'Green'},
+  {id:'riyadh',name:'Riyadh',type:'property',price:35,rent:4,group:'Yellow'},
+  {id:'sydney',name:'Sydney',type:'property',price:40,rent:4,group:'Blue'},
+  {id:'event-right',name:'Event',type:'event'},
+  {id:'beijing',name:'Beijing',type:'property',price:300,rent:30,group:'Brown'},
+  {id:'dubai',name:'Dubai',type:'property',price:40,rent:4,group:'Brown'},
+  {id:'auction',name:'Auction',type:'event'},
+  {id:'paris',name:'Paris',type:'property',price:350,rent:35,group:'Purple'},
+  {id:'hong-kong',name:'Hong Kong',type:'property',price:50,rent:5,group:'Purple'},
+  {id:'london',name:'London',type:'property',price:70,rent:7,group:'Red'},
+  {id:'airport',name:'Airport',type:'airport',price:200,group:'Airports'},
+  {id:'tokyo',name:'Tokyo',type:'property',price:420,rent:42,group:'Red'},
+  {id:'new-york',name:'New York',type:'property',price:110,rent:11,group:'Red'},
+  {id:'start',name:'Start',type:'start',label:'+200'},
+  {id:'rio',name:'Rio',type:'property',price:110,rent:11,group:'Green'},
+  {id:'delhi',name:'Delhi',type:'property',price:110,rent:11,group:'Green'},
+  {id:'event-left',name:'Event',type:'event'},
+  {id:'boat',name:'Boat',type:'station',price:150,group:'Railways'},
+  {id:'cairo',name:'Cairo',type:'property',price:50,rent:5,group:'Blue'},
+  {id:'madrid',name:'Madrid',type:'property',price:100,rent:10,group:'Blue'}
 ];
 
 const GROUP_COLORS = {
-  'Sapin':'#16a34a',
-  'Verger':'#f97316',
-  'Gares':'#6b7280',
-  'Ambre':'#f59e0b',
-  'Argent':'#60a5fa',
-  'Aéroports':'#fb7185',
-  'Soleil':'#fcd34d',
-  'Perle':'#38bdf8',
-  'Topaze':'#f97316',
-  'Safran':'#f97316',
-  'Platine':'#94a3b8',
-  'Lune':'#818cf8',
-  'Olive':'#34d399',
-  'Embra':'#fb7185',
-  'Cèdre':'#60a5fa',
-  'Port':'#ef4444',
-  'Rubis':'#ef4444',
-  'Lumen':'#f59e0b',
-  'Crystal':'#a78bfa'
+  Pink:'#ad3e6a',Orange:'#f29300',Railways:'#f2f4ef',Green:'#90bb47',Yellow:'#f2c31a',Brown:'#a95c22',Purple:'#6e3dbb',Red:'#ef553f',Airports:'#f2f4ef',Blue:'#58b5f8'
 };
 
-  function hexToRgba(hex,alpha){const r=parseInt(hex.slice(1,3),16);const g=parseInt(hex.slice(3,5),16);const b=parseInt(hex.slice(5,7),16);return `rgba(${r},${g},${b},${alpha})`;}
+// Couleur de reference case par case (capture fournie). Le bandeau porte la couleur,
+// le corps de la case reste clair : le nom et le prix restent lisibles partout.
+const SQUARE_COLORS = {
+  start:'#D5D7D8','new-york':'#F1564A',tokyo:'#F47A32',airport:'#F5C94A',london:'#F26A3D','hong-kong':'#8B5CC7',paris:'#7446C4',
+  auction:'#F6C62F',dubai:'#A86429',beijing:'#C9782B',sydney:'#36A9E1',riyadh:'#7ACB3A',zurich:'#48B08C',jail:'#C7CDD0',
+  seoul:'#EF728C',toronto:'#EE7185',railway:'#9AA4A8',moscow:'#F28C22',berlin:'#C63C75',jakarta:'#D8658B',chance:'#B8BDC1',
+  madrid:'#58B7F2',cairo:'#55C7F0',boat:'#9BA6AA','event-left':'#F5C63B','event-right':'#F5C63B',delhi:'#86BF45',rio:'#79BF45'
+};
+
+function getSquareColor(square){return SQUARE_COLORS[square.id] || getColorForGroup(square.group) || '#D5D7D8';}
+
+// Encre du prix : on retient celle qui offre le meilleur contraste WCAG reel sur le bandeau.
+const INK_DARK='#1D242C', INK_LIGHT='#FFFFFF';
+
+function relativeLuminance(color){
+  const channels=[1,3,5].map(i=>{
+    const u=parseInt(color.slice(i,i+2),16)/255;
+    return u<=0.03928 ? u/12.92 : Math.pow((u+0.055)/1.055,2.4);
+  });
+  return 0.2126*channels[0] + 0.7152*channels[1] + 0.0722*channels[2];
+}
+
+function contrastRatio(a,b){
+  const l1=relativeLuminance(a), l2=relativeLuminance(b);
+  return (Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05);
+}
+
+function readableInk(color){
+  if(!color || color.charAt(0)!=='#' || color.length!==7) return INK_DARK;
+  return contrastRatio(INK_DARK,color) >= contrastRatio(INK_LIGHT,color) ? INK_DARK : INK_LIGHT;
+}
+
+function squarePriceText(square){
+  if(square.type==='property'||square.type==='station'||square.type==='airport') return '$'+square.price;
+  if(square.type==='tax') return '-$'+(square.amount||0);
+  return '';
+}
+
+function squareLabelText(square){
+  return square.type==='start'?'DÉPART':square.type==='jail'?'PRISON':square.type==='free'?'LIBRE'
+    :square.type==='tax'?'IMPÔT':square.type==='event'?'ÉVÈNEMENT':square.type==='chance'?'CHANCE'
+    :square.type.toUpperCase();
+}
 
   function getColorForGroup(group){if(!group) return null; if(GROUP_COLORS[group]) return GROUP_COLORS[group]; const hash=Array.from(String(group)).reduce((a,c)=>a + c.charCodeAt(0),0); const h = hash % 360; return `hsl(${h} 72% 50%)`; }
 
@@ -415,61 +492,52 @@ let gameListener = null;
 let boardNodes = [];
 let countdownTimer = null;
 let auctionTimer = null;
-let tradeTimer = null;
+let watchdogTimer = null;
+let rolling = false;
+// Verrous locaux : une resolution ecrit dans l'historique, ce qui relance
+// renderState avant que l'etat ne soit propage. Sans eux, la resolution boucle.
+let resolvedAuctionKey = null;
+let resolvedTradeKey = null;
+let finishedKey = null;
+let enforcedDeadline = null;
 
 function show(id){document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function toast(message){const toastEl=document.createElement('div');toastEl.textContent=message;toastEl.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(20,28,42,0.95);color:#f8d68d;padding:12px 18px;border-radius:999px;z-index:60;opacity:0;transition:opacity 0.18s';document.body.appendChild(toastEl);requestAnimationFrame(()=>toastEl.style.opacity='1');setTimeout(()=>{toastEl.style.opacity='0';setTimeout(()=>toastEl.remove(),250);},2400);}
 
-function genCode(){const words=['ROLL','BANK','VALE','LIFT','NOVA','PLAZA','CASH','LOOP','ARCO','VALE'];return words[Math.floor(Math.random()*words.length)]+'-'+Math.floor(10+Math.random()*90);}
-function clamp(num,min,max){return Math.min(Math.max(num,min),max);}
+function genCode(){const words=['ROLL','BANK','VALE','LIFT','NOVA','PLAZA','CASH','LOOP','ARCO','MINT'];return words[Math.floor(Math.random()*words.length)]+'-'+Math.floor(10+Math.random()*90);}
 function makeId(){return Math.random().toString(36).slice(2,10);}
+function esc(value){return String(value===undefined||value===null?'':value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function initial(name){const s=String(name||'?').trim();return esc((s[0]||'?').toUpperCase());}
+function netWorth(game,player){if(!player) return 0;let total=player.cash||0;Object.entries((game&&game.ownership)||{}).forEach(([pos,owner])=>{if(owner===player.id) total+=(BOARD[pos]&&BOARD[pos].price)||0;});return total;}
+function bestPlayer(game){return [...((game&&game.players)||[])].sort((a,b)=>netWorth(game,b)-netWorth(game,a))[0]||null;}
+function crossesStart(from,total){const steps=(START_INDEX-from+BOARD.length)%BOARD.length;return steps>0&&steps<=total;}
 function parseStored(){myCode=localStorage.getItem('banqueroll-code');myPlayerId=localStorage.getItem('banqueroll-playerId');myName=localStorage.getItem('banqueroll-name');myColor=localStorage.getItem('banqueroll-color');}
 function saveLocal(){localStorage.setItem('banqueroll-code',myCode);localStorage.setItem('banqueroll-playerId',myPlayerId);localStorage.setItem('banqueroll-name',myName);localStorage.setItem('banqueroll-color',myColor);}
 function clearLocal(){localStorage.removeItem('banqueroll-code');localStorage.removeItem('banqueroll-playerId');localStorage.removeItem('banqueroll-name');localStorage.removeItem('banqueroll-color');}
 
-function boardLayout(){const layout=[];for(let c=1;c<=11;c++)layout.push({r:11,c});for(let r=10;r>=2;r--)layout.push({r,c:11});for(let c=11;c>=1;c--)layout.push({r:1,c});for(let r=2;r<=10;r++)layout.push({r,c:1});return layout;}
+function boardLayout(){const layout=[];for(let c=1;c<=8;c++)layout.push({r:1,c});for(let r=2;r<=7;r++)layout.push({r,c:8});for(let c=8;c>=1;c--)layout.push({r:8,c});for(let r=7;r>=2;r--)layout.push({r,c:1});return layout;}
 const BOARD_LAYOUT = boardLayout();
 
 function initBoard(){
   const grid=document.getElementById('board-grid');
-  grid.innerHTML='';
+  // Le centre du plateau est statique dans le HTML (messages, dés, panneau d'action) :
+  // on ne vide que les cases pour ne pas le détruire.
+  grid.querySelectorAll('.square').forEach(node=>node.remove());
   boardNodes=[];
   BOARD.forEach((square,index)=>{
     const coords=BOARD_LAYOUT[index]||{r:1,c:1};
     const node=document.createElement('div');
-    const groupClass = square.group ? ' group-' + String(square.group).replace(/[^a-zA-Z0-9]/g,'-') : '';
-    node.className = 'square ' + square.type + groupClass;
-    node.dataset.index = index;
-    node.style.gridRowStart = coords.r;
-    node.style.gridColumnStart = coords.c;
-    node.innerHTML = `<div class="square-top"><span class="square-name">${square.name}</span><span class="square-label">${square.type==='start'?'DÉPART':square.type==='jail'?'PRISON':square.type==='free'?'LIBRE':square.type.toUpperCase()}</span></div><div class="square-price">${square.type==='property'||square.type==='station'||square.type==='airport'?square.price+' 💰':square.type==='tax'?('-'+square.amount+' 💸'):''}</div><div class="square-band"></div><div class="pawn-container"></div>`;
+    node.className='square '+square.type;
+    node.dataset.index=index;
+    node.style.gridRowStart=coords.r;
+    node.style.gridColumnStart=coords.c;
+    const color=getSquareColor(square);
+    node.style.setProperty('--sq',color);
+    node.style.setProperty('--sq-ink',readableInk(color));
+    node.innerHTML=`<div class="square-band"></div><div class="square-price">${squarePriceText(square)}</div><div class="square-top"><span class="square-name">${esc(square.name)}</span><span class="square-label">${squareLabelText(square)}</span></div><div class="pawn-container"></div>`;
     grid.appendChild(node);
-    // apply group color to price pill when available (use fallback generator)
-    const priceEl = node.querySelector('.square-price');
-    if(priceEl && square.group){
-      const gColor = getColorForGroup(square.group);
-      if(gColor){
-        priceEl.style.background = gColor;
-        priceEl.style.color = '#ffffff';
-        priceEl.style.display = 'inline-block';
-        priceEl.style.padding = '6px 10px';
-        priceEl.style.borderRadius = '8px';
-        priceEl.style.fontWeight = '800';
-      }
-    }
-    // tint the square background and color the band using group color
-    const band = node.querySelector('.square-band');
-    if(square.group){
-      const gColor = getColorForGroup(square.group);
-      if(band) band.style.background = gColor;
-      try{ if(gColor && gColor.startsWith('#')) node.style.background = hexToRgba(gColor,0.06); else if(gColor) node.style.background = gColor.replace('hsl','hsla').replace(')',',0.06)'); }catch(e){}
-    }
     boardNodes.push(node);
   });
-  const center=document.createElement('div');
-  center.className='board-center';
-  center.innerHTML=`<div class="trade-reference"><strong>$10<br><small>RIO</small></strong><div>Choose your property to trade</div><div class="trade-slots"><div class="trade-slot"></div><div class="trade-pass">×<small>PASS</small></div><div class="trade-slot blue"></div></div><div class="auction-copy">Auction closing in <b>49 sec</b></div></div>`;
-  grid.appendChild(center);
 }
 
 
@@ -477,58 +545,184 @@ function initBoard(){
 function getGameRef(code){return ref(db,`banqueroll/${code}`);} 
 function getPresenceRef(code,playerId){return ref(db,`banqueroll/${code}/presence/${playerId}`);} 
 
-async function createGame(){const name=document.getElementById('create-name').value.trim();const players=parseInt(document.getElementById('create-players').value,10);const timer=parseInt(document.getElementById('create-timer').value,10);const err=document.getElementById('create-error');err.textContent='';if(!name){err.textContent='Entre ton prénom.';return;}if(players<2||players>8){err.textContent='Choisis entre 2 et 8 joueurs.';return;}myCode=genCode();myPlayerId=makeId();myName=name;myColor=PLAYER_COLORS[0];isHost=true;saveLocal();const player={id:myPlayerId,name,position:0,cash:START_CASH,jailTurns:0,inJail:false,color:myColor,ready:true};const game={code:myCode,hostId:myPlayerId,maxPlayers:players,turnTimer:timer,players:[player],phase:'lobby',turnIndex:0,currentAction:null,ownership:{},auction:null,trade:null,turnDeadline:null,createdAt:Date.now(),updatedAt:Date.now()};await set(getGameRef(myCode),game);attachPresence();startGameListener(myCode);renderLobby(game);show('s-lobby');}
+async function freeCode(){for(let attempt=0;attempt<12;attempt++){const candidate=genCode();const snap=await get(getGameRef(candidate));if(!snap.exists()) return candidate;}return genCode()+'-'+makeId().slice(0,3);}
 
-async function joinGame(){const code=document.getElementById('join-code').value.trim().toUpperCase();const name=document.getElementById('join-name').value.trim();const err=document.getElementById('join-error');err.textContent='';if(!code){err.textContent='Entre le code de la partie.';return;}if(!name){err.textContent='Entre ton prénom.';return;}show('s-joining');const snap=await get(getGameRef(code));if(!snap.exists()){err.textContent='Code introuvable.';show('s-join');return;}const game=snap.val();if(game.phase!=='lobby'){err.textContent='La partie est déjà lancée.';show('s-join');return;}const existing=game.players.find(p=>p.name.toLowerCase()===name.toLowerCase());if(existing){myCode=code;myPlayerId=existing.id;myName=existing.name;myColor=existing.color;saveLocal();isHost=game.hostId===myPlayerId;attachPresence();startGameListener(code);return;}if(game.players.length>=game.maxPlayers){err.textContent='La partie est complète.';show('s-join');return;}myPlayerId=makeId();myName=name;myColor=PLAYER_COLORS[game.players.length % PLAYER_COLORS.length];isHost=false;const player={id:myPlayerId,name,position:0,cash:START_CASH,jailTurns:0,inJail:false,color:myColor,ready:true};const updatedPlayers=[...game.players,player];await update(getGameRef(code),{players:updatedPlayers,updatedAt:Date.now()});saveLocal();attachPresence();startGameListener(code);} 
+async function createGame(){const name=document.getElementById('create-name').value.trim();const players=parseInt(document.getElementById('create-players').value,10);const timer=parseInt(document.getElementById('create-timer').value,10);const err=document.getElementById('create-error');err.textContent='';if(!name){err.textContent='Entre ton prénom.';return;}if(players<2||players>8){err.textContent='Choisis entre 2 et 8 joueurs.';return;}myCode=await freeCode();myPlayerId=makeId();myName=name;myColor=PLAYER_COLORS[0];isHost=true;saveLocal();const player={id:myPlayerId,name,position:START_INDEX,cash:START_CASH,jailTurns:0,inJail:false,color:myColor,ready:true};const game={code:myCode,hostId:myPlayerId,maxPlayers:players,turnTimer:timer,players:[player],phase:'lobby',turnIndex:0,round:1,currentAction:null,ownership:{},auction:null,trade:null,winnerId:null,turnDeadline:null,createdAt:Date.now(),updatedAt:Date.now()};await set(getGameRef(myCode),game);attachPresence();startGameListener(myCode);renderLobby(game);show('s-lobby');}
+
+// Deux joueurs qui rejoignaient en meme temps s'ecrasaient mutuellement :
+// l'ajout dans le tableau players passe desormais par une transaction.
+async function joinGame(){
+  const code=document.getElementById('join-code').value.trim().toUpperCase();
+  const name=document.getElementById('join-name').value.trim();
+  const err=document.getElementById('join-error');err.textContent='';
+  if(!code){err.textContent='Entre le code de la partie.';return;}
+  if(!name){err.textContent='Entre ton prénom.';return;}
+  show('s-joining');
+  const gameRef=getGameRef(code);
+  // Un listener actif amorce le cache local : sans lui, runTransaction demarre
+  // avec current===null et la transaction s'annule immediatement.
+  let detach=null;
+  const snap=await new Promise(resolve=>{detach=onValue(gameRef,s=>resolve(s),()=>resolve(null));});
+  if(!snap||!snap.exists()){if(detach) detach();err.textContent='Code introuvable.';show('s-home');return;}
+  const newId=makeId();
+  let outcome=null;
+  try{
+  await runTransaction(gameRef,current=>{
+    outcome=null;
+    if(!current){outcome={error:'Code introuvable.'};return;}
+    if(current.phase!=='lobby'){outcome={error:'La partie est déjà lancée.'};return;}
+    const players=current.players||[];
+    const existing=players.find(p=>p.name&&p.name.toLowerCase()===name.toLowerCase());
+    if(existing){outcome={player:existing,hostId:current.hostId};return;}
+    if(players.length>=current.maxPlayers){outcome={error:'La partie est complète.'};return;}
+    const player={id:newId,name,position:START_INDEX,cash:START_CASH,jailTurns:0,inJail:false,color:PLAYER_COLORS[players.length%PLAYER_COLORS.length],ready:true};
+    outcome={player,hostId:current.hostId};
+    current.players=[...players,player];
+    current.updatedAt=Date.now();
+    return current;
+  });
+  } finally { if(detach) detach(); }
+  if(!outcome||outcome.error){err.textContent=(outcome&&outcome.error)||'Impossible de rejoindre la partie.';show('s-home');return;}
+  myCode=code;myPlayerId=outcome.player.id;myName=outcome.player.name;myColor=outcome.player.color;
+  isHost=outcome.hostId===myPlayerId;
+  saveLocal();attachPresence();startGameListener(code);
+}
 
 function attachPresence(){if(!myCode||!myPlayerId) return;const presRef=getPresenceRef(myCode,myPlayerId);set(presRef,{name:myName,ts:Date.now()});onDisconnect(presRef).remove();}
 
-function startGameListener(code){if(gameListener) gameListener();gameListener = onValue(getGameRef(code), snap => {if(!snap.exists()){toast('La partie a été supprimée.');clearLocal();show('s-home');return;}const game=snap.val();currentGame=game;renderState(game);});}
+function startGameListener(code){stopGameListener();gameListener = onValue(getGameRef(code), snap => {if(!snap.exists()){toast('La partie a été supprimée.');stopGameListener();clearLocal();currentGame=null;show('s-home');return;}const game=snap.val();currentGame=game;renderState(game);});startWatchdog();}
 
-function renderState(game){document.getElementById('stat-players').textContent=`${game.players.length} / ${game.maxPlayers}`;document.getElementById('stat-pot').textContent=`${Object.values(game.ownership||{}).length} actifs`;renderChat(game);renderHistory(game);renderPlayers(game);renderBoard(game);if(game.phase==='lobby'){renderLobby(game);renderAction(game);if(!document.getElementById('s-lobby').classList.contains('active')) show('s-lobby');}else{renderAction(game);show('s-game');}if(game.auction && game.auction.status==='open'){openAuctionModal(game.auction);}else{closeAuctionModal();}if(game.trade && game.trade.status==='pending'){renderTradePrompt(game.trade);}else{closeTradePrompt();}maybeResolveAuction(game);maybeResolveTradeTimeout(game);}
+function stopGameListener(){if(gameListener){gameListener();gameListener=null;}if(watchdogTimer){clearInterval(watchdogTimer);watchdogTimer=null;}}
 
-function renderLobby(game){document.getElementById('lobby-code').textContent=game.code;const container=document.getElementById('lobby-players');container.innerHTML='';game.players.forEach((player,index)=>{const card=document.createElement('div');card.className='player-card'+(player.id===myPlayerId?' current':'');card.innerHTML=`<div class="player-meta"><span class="player-name">${player.name}</span><span class="player-sub">${player.id===game.hostId?'Hôte':''}</span></div><div class="player-chip" style="background:${player.color};">${player.name[0].toUpperCase()}</div>`;container.appendChild(card);});const canStart = isHost && game.players.length >= 2;document.getElementById('start-game-btn').disabled = !canStart;}
+// Quitter proprement : sans detacher le listener, le prochain onValue reaffichait s-game.
+function resetGuards(){resolvedAuctionKey=null;resolvedTradeKey=null;finishedKey=null;enforcedDeadline=null;rolling=false;}
 
-function openAuctionModal(auction){const modal=document.getElementById('modal-auction');modal.classList.add('active');const details=document.getElementById('auction-details');const item=BOARD[auction.position];const owner=auction.highestBidder?findPlayerById(auction.highestBidder).name:'aucun';details.textContent=`${item.name} est en vente. Mise minimale : ${auction.nextBid} 💰. Meilleure offre actuelle : ${auction.highestBid || 0} par ${owner}.`;document.getElementById('auction-bid').value=auction.nextBid;updateAuctionCountdown(auction);} 
+function toggleDrawer(force){const drawer=document.getElementById('drawer');if(!drawer) return;if(force===undefined) drawer.classList.toggle('mobile-open');else drawer.classList.toggle('mobile-open',!!force);}
+
+function leaveGame(){stopGameListener();resetGuards();toggleDrawer(false);if(myCode&&myPlayerId) remove(getPresenceRef(myCode,myPlayerId));if(countdownTimer) clearInterval(countdownTimer);if(auctionTimer) clearInterval(auctionTimer);closeAuctionModal();closeTradeModal();currentGame=null;clearLocal();myCode=null;myPlayerId=null;myName=null;myColor=null;isHost=false;rolling=false;show('s-home');}
+
+function renderState(game){document.getElementById('stat-players').textContent=`${game.players.length} / ${game.maxPlayers}`;document.getElementById('stat-pot').textContent=`${game.players.reduce((sum,p)=>sum+(p.cash||0),0)} 💰`;renderObjective(game);renderChat(game);renderHistory(game);renderPlayers(game);renderBoard(game);if(game.phase==='lobby'){renderLobby(game);renderAction(game);if(!document.getElementById('s-lobby').classList.contains('active')) show('s-lobby');}else{renderAction(game);show('s-game');}if(game.auction && game.auction.status==='open'){openAuctionModal(game.auction);}else{closeAuctionModal();}maybeResolveAuction(game);maybeResolveTradeTimeout(game);maybeFinishGame(game);}
+
+function renderObjective(game){const el=document.getElementById('ref-objective');if(!el) return;if(game.phase==='lobby'){el.innerHTML=`Salon &middot; <strong>${game.players.length}/${game.maxPlayers}</strong> joueurs`;return;}if(game.phase==='finished'){const win=findPlayerById(game.winnerId);el.innerHTML=`Partie terminée &middot; <strong>${esc(win?win.name:'—')}</strong>`;return;}const roundsLeft=Math.max(0,MAX_ROUNDS-((game.round||1)-1));el.innerHTML=`<strong>$${WIN_NET_WORTH}</strong> de valeur nette pour gagner. Manches restantes : <strong>${roundsLeft}</strong>`;}
+
+function renderLobby(game){document.getElementById('lobby-code').textContent=game.code;const container=document.getElementById('lobby-players');container.innerHTML='';game.players.forEach((player,index)=>{const card=document.createElement('div');card.className='player-card'+(player.id===myPlayerId?' current':'');card.innerHTML=`<div class="player-meta"><span class="player-name">${esc(player.name)}</span><span class="player-sub">${player.id===game.hostId?'Hôte':''}</span></div><div class="player-chip" style="background:${esc(player.color)};">${initial(player.name)}</div>`;container.appendChild(card);});const canStart = isHost && game.players.length >= 2;document.getElementById('start-game-btn').disabled = !canStart;}
+
+function openAuctionModal(auction){auction=auction||(currentGame&&currentGame.auction);if(!auction||auction.status!=='open') return;const modal=document.getElementById('modal-auction');modal.classList.add('active');const details=document.getElementById('auction-details');const item=BOARD[auction.position];const bidder=findPlayerById(auction.highestBidder);const owner=bidder?bidder.name:'aucun';details.textContent=`${item.name} est en vente. Mise minimale : ${auction.nextBid} 💰. Meilleure offre actuelle : ${auction.highestBid || 0} par ${owner}.`;const bidInput=document.getElementById('auction-bid');if(document.activeElement!==bidInput) bidInput.value=auction.nextBid;updateAuctionCountdown(auction);} 
 function closeAuctionModal(){document.getElementById('modal-auction').classList.remove('active');}
 
 function openTradeModal(){populateTradeOptions();document.getElementById('trade-error').textContent='';document.getElementById('modal-trade').classList.add('active');}
 function closeTradeModal(){document.getElementById('modal-trade').classList.remove('active');}
-function closeTradePrompt(){const panel=document.getElementById('trade-action-box');if(panel) panel.remove();}
 
 function populateTradeOptions(){const recipient=document.getElementById('trade-recipient');const offerProp=document.getElementById('trade-offer-property');const requestProp=document.getElementById('trade-request-property');recipient.innerHTML='';offerProp.innerHTML='<option value="">Aucune</option>';requestProp.innerHTML='<option value="">Aucune</option>';const others=currentGame.players.filter(p=>p.id!==myPlayerId);others.forEach(player=>recipient.insertAdjacentHTML('beforeend',`<option value="${player.id}">${player.name}</option>`));const myProps=getOwnedProperties(myPlayerId);myProps.forEach(pos=>offerProp.insertAdjacentHTML('beforeend',`<option value="${pos}">${BOARD[pos].name}</option>`));const allProps=currentGame.players.filter(p=>p.id!==myPlayerId).flatMap(p=>getOwnedProperties(p.id).map(pos=>({pos,player:p})));allProps.forEach(item=>requestProp.insertAdjacentHTML('beforeend',`<option value="${item.pos}">${item.player.name} • ${BOARD[item.pos].name}</option>`));}
 
-function findPlayerById(id){return currentGame.players.find(p=>p.id===id);} 
+function findPlayerById(id){if(!id||!currentGame||!currentGame.players) return null;return currentGame.players.find(p=>p.id===id)||null;} 
 function getOwnedProperties(playerId){return Object.entries(currentGame.ownership||{}).filter(([,owner])=>owner===playerId).map(([pos])=>Number(pos));}
 
-function renderPlayers(game){const panel=document.getElementById('players-panel');if(!panel) return;panel.innerHTML='';const playersList=document.createElement('div');playersList.className='player-list';game.players.forEach((player,index)=>{const card=document.createElement('div');card.className='player-card'+(game.turnIndex===index?' current':'');card.innerHTML=`<div class="player-meta"><span class="player-name">${player.name}${player.id===game.hostId?' • Hôte':''}</span><span class="player-sub">${player.cash} 💰${player.inJail?' • En prison':''}${player.jailTurns?' • '+player.jailTurns+' tours':''}</span></div><div class="player-chip" style="background:${player.color};">${player.name[0].toUpperCase()}</div>`;playersList.appendChild(card);});panel.innerHTML='<h3>Tableau des joueurs</h3>';panel.appendChild(playersList);}
+function renderPlayers(game){const panel=document.getElementById('players-panel');if(!panel) return;panel.innerHTML='';const playersList=document.createElement('div');playersList.className='player-list';game.players.forEach((player,index)=>{const card=document.createElement('div');card.className='player-card'+(game.turnIndex===index?' current':'');card.innerHTML=`<div class="player-meta"><span class="player-name">${esc(player.name)}${player.id===game.hostId?' • Hôte':''}</span><span class="player-sub">${player.cash} 💰 • net ${netWorth(game,player)}${player.inJail?' • En prison':''}${player.jailTurns?' • '+player.jailTurns+' tour'+(player.jailTurns>1?'s':''):''}</span></div><div class="player-chip" style="background:${esc(player.color)};">${initial(player.name)}</div>`;playersList.appendChild(card);});panel.innerHTML='<h3>Tableau des joueurs</h3>';panel.appendChild(playersList);renderReferencePlayers(game);}
 
-function renderChat(game){const chatList=document.getElementById('chat-list');if(!chatList) return;chatList.innerHTML='';const messages=game.chat?Object.values(game.chat).sort((a,b)=>a.ts-b.ts):[];messages.slice(-20).forEach(msg=>{const line=document.createElement('div');line.className='chat-item';line.innerHTML=`<strong>${msg.author}</strong><span>${msg.text}</span>`;chatList.appendChild(line);});chatList.scrollTop=chatList.scrollHeight;}
+function renderReferencePlayers(game){
+  const build=(players)=>players.map(player=>{
+    const index=game.players.indexOf(player);
+    const active=game.phase==='playing' && game.turnIndex===index;
+    const status=player.inJail?'En prison':(player.id===game.hostId?'Hôte':'');
+    return `<div class="reference-player${active?' current':''}">`
+      + `<span class="player-avatar" style="background:${esc(player.color)}">${initial(player.name)}</span>`
+      + `<span class="player-copy"><strong>${esc(player.name)}</strong>`
+      + `<small>$${player.cash} <em>($${netWorth(game,player)})</em></small>`
+      + (status?`<small>${status}</small>`:'')
+      + `</span></div>`;
+  }).join('');
+  const split=Math.ceil(game.players.length/2);
+  const top=document.getElementById('players-top');
+  const bottom=document.getElementById('players-bottom');
+  if(top) top.innerHTML=build(game.players.slice(0,split));
+  if(bottom) bottom.innerHTML=build(game.players.slice(split));
+}
 
-function renderHistory(game){const historyList=document.getElementById('history-list');if(!historyList) return;historyList.innerHTML='';const events=game.history?Object.values(game.history).sort((a,b)=>a.ts-b.ts):[];events.slice(-18).reverse().forEach(item=>{const el=document.createElement('div');el.className='history-item';el.textContent=item.text;historyList.appendChild(el);});}
+function renderChat(game){const chatList=document.getElementById('chat-list');if(!chatList) return;chatList.innerHTML='';const messages=game.chat?Object.values(game.chat).sort((a,b)=>a.ts-b.ts):[];messages.slice(-20).forEach(msg=>{const line=document.createElement('div');line.className='chat-item';line.innerHTML=`<strong>${esc(msg.author)}</strong><span>${esc(msg.text)}</span>`;chatList.appendChild(line);});chatList.scrollTop=chatList.scrollHeight;const last=messages[messages.length-1];const lastEl=document.getElementById('ref-chat-last');const countEl=document.getElementById('ref-chat-count');if(lastEl) lastEl.textContent=last?`${last.author} : ${last.text}`:'Aucun message';if(countEl) countEl.textContent=`${messages.length} message${messages.length>1?'s':''}`;}
 
-function renderBoard(game){if(!boardNodes.length) initBoard();boardNodes.forEach((node,index)=>{const square=BOARD[index];node.className='square '+square.type;const ownerId=game.ownership?.[index]||null;const owner=findPlayerById(ownerId);const title=node.querySelector('.square-name');const label=node.querySelector('.square-label');const price=node.querySelector('.square-price');const pawnContainer=node.querySelector('.pawn-container');title.textContent=square.name;label.textContent=square.type==='start'?'DÉPART':square.type==='free'?'LIBRE':square.type==='jail'?'PRISON':square.type==='tax'?'IMPÔT':square.type==='event'?'ÉVÈNEMENT':square.type==='chance'?'CHANCE':square.type.toUpperCase();price.textContent=square.type==='property'||square.type==='station'||square.type==='airport'?square.price+' 💰':square.type==='tax'?-square.amount+' 💸':'';pawnContainer.innerHTML='';const occupants=game.players.filter(p=>p.position===index);occupants.forEach(p=>{const pawn=document.createElement('div');pawn.className='pawn';pawn.style.background=p.color;pawn.textContent=p.name[0].toUpperCase();pawnContainer.appendChild(pawn);});const ownerPill=node.querySelector('.owner-pill');if(ownerId){if(ownerPill){ownerPill.textContent=`${owner.name}`;} else {const pill=document.createElement('div');pill.className='owner-pill';pill.textContent=owner.name;node.appendChild(pill);} } else if(ownerPill){ownerPill.remove();}if(game.turnIndex!==undefined && game.players[game.turnIndex]?.position===index){node.classList.add('current');} else node.classList.remove('current');});}
+function renderHistory(game){const historyList=document.getElementById('history-list');if(!historyList) return;historyList.innerHTML='';const events=game.history?Object.values(game.history).sort((a,b)=>a.ts-b.ts):[];events.slice(-18).reverse().forEach(item=>{const el=document.createElement('div');el.className='history-item';el.textContent=item.text;historyList.appendChild(el);});const message=document.getElementById('event-message');if(message){const latest=events[events.length-1];message.textContent=latest?latest.text:(game.phase==='lobby'?'En attente du lancement…':'La partie va commencer…');}}
 
-function renderAction(game){clearInterval(countdownTimer);const actionText=document.getElementById('action-text');const turnName=document.getElementById('turn-player');const turnStatus=document.getElementById('turn-status');const result=document.getElementById('roll-result');const deadline=game.turnDeadline?Math.max(0,Math.round((game.turnDeadline-Date.now())/1000)):0;turnName.textContent=`${game.players[game.turnIndex]?.name || '...'} (${game.players.length} joueurs)`;turnStatus.textContent=game.phase==='playing'?'En cours':'Salon';result.textContent=game.currentAction?`Action en attente: ${game.currentAction.type}`:'Prêt à jouer';renderTimer(deadline);const panel=document.getElementById('action-panel');panel.innerHTML='';if(game.phase==='lobby'){const box=document.createElement('div');box.className='action-box';box.innerHTML=`<div class="action-title">Salon</div><div class="action-text">Attends que l'hôte démarre la partie. Le code de la partie est <strong>${game.code}</strong>.</div>`;panel.appendChild(box);return;}const currentPlayer=game.players[game.turnIndex];const isMyTurn=currentPlayer?.id===myPlayerId;const title=game.currentAction?`Action requise`:'À ton tour';const textEl=document.createElement('div');textEl.className='action-box';let html='';if(game.trade && game.trade.status==='pending' && [game.trade.fromId,game.trade.toId].includes(myPlayerId)){const offerPlayer=findPlayerById(game.trade.fromId);const targetPlayer=findPlayerById(game.trade.toId);const offerItem=game.trade.offerProperty?BOARD[game.trade.offerProperty].name:'Aucun';const requestItem=game.trade.requestProperty?BOARD[game.trade.requestProperty].name:'Aucun';html=`<div class="action-title">Échange proposé</div><div class="action-text"><strong>${offerPlayer.name}</strong> propose ${game.trade.offerCash} 💰 et ${offerItem} contre ${game.trade.requestCash} 💰 et ${requestItem} de <strong>${targetPlayer.name}</strong>.</div>`;if(isMyTurn){html+=`<div class="action-buttons"><button class="btn btn-primary" onclick="acceptTrade()">Accepter</button><button class="btn btn-secondary" onclick="declineTrade()">Refuser</button></div>`;}else{html+=`<div class="action-text">Attends la décision de ${targetPlayer.name}.</div>`;}textEl.innerHTML=html;panel.appendChild(textEl);return;}if(game.auction && game.auction.status==='open'){const item=BOARD[game.auction.position];const min=game.auction.nextBid;const leader=game.auction.highestBidder?findPlayerById(game.auction.highestBidder).name:'aucun';html=`<div class="action-title">Enchère active</div><div class="action-text">${item.name} est proposé à l'enchère. Mise actuelle ${game.auction.highestBid || 0} 💰 par ${leader}. Mise minimale ${min} 💰.</div>`;if(isMyTurn){html+=`<div class="action-buttons"><button class="btn btn-primary" onclick="openAuctionModal(currentGame.auction)">Faire une offre</button></div>`;}textEl.innerHTML=html;panel.appendChild(textEl);return;}if(game.currentAction && game.currentAction.type==='buy' && game.currentAction.playerId===myPlayerId){const square=BOARD[game.currentAction.position];html=`<div class="action-title">Acheter une propriété</div><div class="action-text">Tu as atterri sur <strong>${square.name}</strong>. Prix ${square.price} 💰. Veux-tu l'acheter ou lancer une enchère ?</div><div class="action-buttons"><button class="btn btn-primary" onclick="buyProperty()">Acheter</button><button class="btn btn-secondary" onclick="startAuction()">Mettre aux enchères</button></div>`;textEl.innerHTML=html;panel.appendChild(textEl);return;}if(game.currentAction && game.currentAction.type==='jail' && game.currentAction.playerId===myPlayerId){const text=`<div class="action-title">En prison</div><div class="action-text">Tu es en prison. Paye 120 💰 pour sortir immédiatement ou reste un tour de plus.</div><div class="action-buttons"><button class="btn btn-primary" onclick="payBail()">Payer 120 💰</button><button class="btn btn-secondary" onclick="serveJailTurn()">Rester</button></div>`;textEl.innerHTML=text;panel.appendChild(textEl);return;}if(isMyTurn){html=`<div class="action-title">C'est ton tour</div><div class="action-text">Lance les dés pour te déplacer et prendre le contrôle du plateau.</div><div class="action-buttons"><button class="btn btn-primary" onclick="rollDice()">Lancer les dés</button><button class="btn btn-secondary" onclick="openTradeModal()">Proposer un échange</button></div>`;textEl.innerHTML=html;panel.appendChild(textEl);return;}html=`<div class="action-title">Tour de ${currentPlayer?.name}</div><div class="action-text">Ta partie est synchronisée. Attends que ${currentPlayer?.name} joue.</div>`;textEl.innerHTML=html;panel.appendChild(textEl);} 
+function renderBoard(game){if(!boardNodes.length) initBoard();boardNodes.forEach((node,index)=>{const square=BOARD[index];node.className='square '+square.type;const ownerId=game.ownership?.[index]||null;const owner=findPlayerById(ownerId);node.querySelector('.square-name').textContent=square.name;node.querySelector('.square-label').textContent=squareLabelText(square);node.querySelector('.square-price').textContent=squarePriceText(square);const pawnContainer=node.querySelector('.pawn-container');pawnContainer.innerHTML='';const occupants=game.players.filter(p=>p.position===index);occupants.forEach(p=>{const pawn=document.createElement('div');pawn.className='pawn';pawn.style.background=p.color;pawn.title=p.name;pawn.textContent=String(p.name||'?').charAt(0).toUpperCase();pawnContainer.appendChild(pawn);});let ownerPill=node.querySelector('.owner-pill');if(ownerId&&owner){if(!ownerPill){ownerPill=document.createElement('div');ownerPill.className='owner-pill';node.appendChild(ownerPill);}ownerPill.textContent=owner.name;ownerPill.title='Propriété de '+owner.name;ownerPill.style.background=owner.color;}else if(ownerPill){ownerPill.remove();}if(game.turnIndex!==undefined && game.players[game.turnIndex]?.position===index){node.classList.add('current');} else node.classList.remove('current');});}
+
+function renderAction(game){clearInterval(countdownTimer);const turnName=document.getElementById('turn-player');const turnStatus=document.getElementById('turn-status');const result=document.getElementById('roll-result');const deadline=game.turnDeadline?Math.max(0,Math.round((game.turnDeadline-Date.now())/1000)):0;turnName.textContent=`${game.players[game.turnIndex]?.name || '...'} (${game.players.length} joueurs)`;turnStatus.textContent=game.phase==='playing'?'En cours':game.phase==='finished'?'Terminée':'Salon';result.textContent=game.currentAction?`Action en attente: ${game.currentAction.type}`:'Prêt à jouer';renderTimer(deadline);const panel=document.getElementById('action-panel');panel.innerHTML='';if(game.phase==='lobby'){const box=document.createElement('div');box.className='action-box';box.innerHTML=`<div class="action-title">Salon</div><div class="action-text">Attends que l'hôte démarre la partie. Le code de la partie est <strong>${game.code}</strong>.</div>`;panel.appendChild(box);return;}if(game.phase==='finished'){const win=findPlayerById(game.winnerId);const box=document.createElement('div');box.className='action-box';box.innerHTML=`<div class="action-title">Partie terminée</div><div class="action-text"><strong>${esc(win?win.name:'Personne')}</strong> remporte la partie avec <strong>${win?netWorth(game,win):0} 💰</strong> de valeur nette.</div><div class="action-buttons">${isHost?'<button class="btn btn-primary" onclick="restartGame()">Nouvelle partie</button>':''}<button class="btn btn-secondary" onclick="leaveGame()">Quitter</button></div>`;panel.appendChild(box);return;}const currentPlayer=game.players[game.turnIndex];const isMyTurn=currentPlayer?.id===myPlayerId;const title=game.currentAction?`Action requise`:'À ton tour';const textEl=document.createElement('div');textEl.className='action-box';let html='';if(game.trade && game.trade.status==='pending' && [game.trade.fromId,game.trade.toId].includes(myPlayerId)){const offerPlayer=findPlayerById(game.trade.fromId)||{name:'?'};const targetPlayer=findPlayerById(game.trade.toId)||{name:'?'};const offerItem=game.trade.offerProperty?BOARD[game.trade.offerProperty].name:'Aucun';const requestItem=game.trade.requestProperty?BOARD[game.trade.requestProperty].name:'Aucun';html=`<div class="action-title">Échange proposé</div><div class="action-text"><strong>${esc(offerPlayer.name)}</strong> propose ${game.trade.offerCash} 💰 et ${offerItem} contre ${game.trade.requestCash} 💰 et ${requestItem} de <strong>${esc(targetPlayer.name)}</strong>.</div>`;if(myPlayerId===game.trade.toId){html+=`<div class="action-buttons"><button class="btn btn-primary" onclick="acceptTrade()">Accepter</button><button class="btn btn-secondary" onclick="declineTrade()">Refuser</button></div>`;}else{html+=`<div class="action-text">Attends la décision de ${esc(targetPlayer.name)}.</div>`;}textEl.innerHTML=html;panel.appendChild(textEl);return;}if(game.auction && game.auction.status==='open'){const item=BOARD[game.auction.position];const min=game.auction.nextBid;const bidder=findPlayerById(game.auction.highestBidder);html=`<div class="action-title">Enchère active</div><div class="action-text">${item.name} est proposé à l'enchère. Mise actuelle ${game.auction.highestBid || 0} 💰 par ${esc(bidder?bidder.name:'aucun')}. Mise minimale ${min} 💰.</div><div class="action-buttons"><button class="btn btn-primary" onclick="openAuctionModal()">Faire une offre</button></div>`;textEl.innerHTML=html;panel.appendChild(textEl);return;}if(game.currentAction && game.currentAction.type==='buy' && game.currentAction.playerId===myPlayerId){const square=BOARD[game.currentAction.position];html=`<div class="action-title">Acheter une propriété</div><div class="action-text">Tu as atterri sur <strong>${square.name}</strong>. Prix ${square.price} 💰. Veux-tu l'acheter ou lancer une enchère ?</div><div class="action-buttons"><button class="btn btn-primary" onclick="buyProperty()">Acheter</button><button class="btn btn-secondary" onclick="startAuction()">Mettre aux enchères</button></div>`;textEl.innerHTML=html;panel.appendChild(textEl);return;}if(isMyTurn && currentPlayer && currentPlayer.inJail){const text=`<div class="action-title">En prison</div><div class="action-text">Tu es en prison (${currentPlayer.jailTurns||0} tour${(currentPlayer.jailTurns||0)>1?'s':''} restant${(currentPlayer.jailTurns||0)>1?'s':''}). Paye 120 💰 pour sortir immédiatement et jouer ce tour, ou passe ton tour.</div><div class="action-buttons"><button class="btn btn-primary" onclick="payBail()">Payer 120 💰</button><button class="btn btn-secondary" onclick="serveJailTurn()">Passer mon tour</button></div>`;textEl.innerHTML=text;panel.appendChild(textEl);return;}if(isMyTurn){html=`<div class="action-title">C'est ton tour</div><div class="action-text">Lance les dés pour te déplacer et prendre le contrôle du plateau.</div><div class="action-buttons"><button class="btn btn-primary" onclick="rollDice()">Lancer les dés</button><button class="btn btn-secondary" onclick="openTradeModal()">Proposer un échange</button></div>`;textEl.innerHTML=html;panel.appendChild(textEl);return;}html=`<div class="action-title">Tour de ${esc(currentPlayer?.name)}</div><div class="action-text">Ta partie est synchronisée. Attends que ${esc(currentPlayer?.name)} joue.</div>`;textEl.innerHTML=html;panel.appendChild(textEl);} 
 
 function renderTimer(seconds){const timer=document.getElementById('turn-timer');if(countdownTimer) clearInterval(countdownTimer);function refresh(){const m=Math.floor(seconds/60).toString().padStart(2,'0');const s=(seconds%60).toString().padStart(2,'0');timer.textContent=`${m}:${s}`;if(seconds<=0){clearInterval(countdownTimer);timer.textContent='00:00';}seconds=Math.max(0,seconds-1);}refresh();countdownTimer=setInterval(()=>{refresh();},1000);} 
 
-function setDieValue(dieEl,value){if(!dieEl) return;dieEl.dataset.value=value;const label=dieEl.querySelector('.die-value');if(label){label.textContent=['⚀','⚁','⚂','⚃','⚄','⚅'][value-1];}}
+// Faces de dés dessinées (grille 3x3) : aucun emoji, et les valeurs viennent
+// exclusivement de rollDice via animateDiceRoll — pas de second système de dés.
+const DIE_PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
 
-function animateDiceRoll(die1Value,die2Value){const die1=document.getElementById('die-1');const die2=document.getElementById('die-2');if(!die1||!die2) return Promise.resolve();die1.classList.add('rolling');die2.classList.add('rolling');return new Promise(resolve=>{let step=0;const interval=setInterval(()=>{step+=1;setDieValue(die1,Math.ceil(Math.random()*6));setDieValue(die2,Math.ceil(Math.random()*6));if(step>=10){clearInterval(interval);die1.classList.remove('rolling');die2.classList.remove('rolling');setDieValue(die1,die1Value);setDieValue(die2,die2Value);resolve();}},70);});}
+function setDieValue(dieEl,value){
+  if(!dieEl) return;
+  const v=Number(value);
+  const valid=Number.isFinite(v)&&v>=1&&v<=6;
+  dieEl.dataset.value=valid?String(v):'';
+  const face=dieEl.querySelector('.die-value');
+  if(face){
+    face.innerHTML=valid
+      ? DIE_PIPS[v].map(pos=>`<span class="die-pip" style="grid-area:${Math.floor(pos/3)+1}/${(pos%3)+1}"></span>`).join('')
+      : '<span class="die-idle">?</span>';
+  }
+  dieEl.setAttribute('aria-label',valid?`Dé : ${v}`:'Dé non lancé');
+  updateDiceTotal();
+}
 
-function maybeResolveAuction(game){if(!game.auction||game.auction.status!=='open') return;if(Date.now() > game.auction.endAt){const nextIndex=(game.turnIndex+1)%game.players.length;const updates={};const auction=game.auction;const winner=findPlayerById(auction.highestBidder);if(winner){updates[`ownership/${auction.position}`]=winner.id;updates[`players/${game.players.findIndex(p=>p.id===winner.id)}/cash`]=winner.cash-auction.highestBid;const note=`${winner.name} remporte ${BOARD[auction.position].name} pour ${auction.highestBid} 💰.`;pushHistory(game.code,note);} else {pushHistory(game.code,`Aucune offre pour ${BOARD[auction.position].name}.`);}updates['auction/status']='closed';updates['turnIndex']=nextIndex;updates['turnDeadline']=Date.now()+currentGame.turnTimer*1000;updates['updatedAt']=Date.now();update(getGameRef(game.code),updates);}}
+function updateDiceTotal(){
+  const out=document.getElementById('dice-total');
+  if(!out) return;
+  const d1=document.getElementById('die-1');
+  const d2=document.getElementById('die-2');
+  if(d1&&d1.classList.contains('rolling')){out.textContent='…';return;}
+  const a=Number(d1&&d1.dataset.value), b=Number(d2&&d2.dataset.value);
+  out.textContent=(a&&b)?`${a} + ${b} = ${a+b}`:'—';
+}
 
-function maybeResolveTradeTimeout(game){if(!game.trade||game.trade.status!=='pending') return;if(Date.now() > game.trade.expiresAt){update(getGameRef(game.code),{'trade/status':'cancelled','trade/updatedAt':Date.now()});pushHistory(game.code,'La proposition d’échange a expiré.');}}
+function animateDiceRoll(die1Value,die2Value){const die1=document.getElementById('die-1');const die2=document.getElementById('die-2');if(!die1||!die2) return Promise.resolve();if(document.hidden){setDieValue(die1,die1Value);setDieValue(die2,die2Value);return Promise.resolve();}die1.classList.add('rolling');die2.classList.add('rolling');return new Promise(resolve=>{let step=0;const interval=setInterval(()=>{step+=1;setDieValue(die1,Math.ceil(Math.random()*6));setDieValue(die2,Math.ceil(Math.random()*6));if(step>=10){clearInterval(interval);die1.classList.remove('rolling');die2.classList.remove('rolling');setDieValue(die1,die1Value);setDieValue(die2,die2Value);resolve();}},70);});}
 
-function nextTurnUpdates(game,extra={}){return {...extra,currentAction:null,turnIndex:(game.turnIndex+1)%game.players.length,turnDeadline:Date.now()+game.turnTimer*1000,updatedAt:Date.now()};}
+// Auparavant chaque client resolvait l'enchere : historique duplique et ecritures concurrentes.
+function maybeResolveAuction(game){if(!isHost) return;if(!game.auction||game.auction.status!=='open') return;if(Date.now() <= game.auction.endAt) return;const auctionKey=`${game.auction.position}@${game.auction.endAt}`;if(resolvedAuctionKey===auctionKey) return;resolvedAuctionKey=auctionKey;const auction=game.auction;const winner=auction.highestBidder?findPlayerById(auction.highestBidder):null;const extra={'auction/status':'closed'};if(winner){const winnerIndex=game.players.findIndex(p=>p.id===winner.id);extra[`ownership/${auction.position}`]=winner.id;extra[`players/${winnerIndex}/cash`]=winner.cash-auction.highestBid;}update(getGameRef(game.code),nextTurnUpdates(game,extra));pushHistory(game.code,winner?`${winner.name} remporte ${BOARD[auction.position].name} pour ${auction.highestBid} 💰.`:`Aucune offre pour ${BOARD[auction.position].name}.`);}
+
+function maybeResolveTradeTimeout(game){if(!isHost) return;if(!game.trade||game.trade.status!=='pending') return;if(Date.now() > game.trade.expiresAt){const tradeKey=`${game.trade.fromId}@${game.trade.createdAt}`;if(resolvedTradeKey===tradeKey) return;resolvedTradeKey=tradeKey;update(getGameRef(game.code),{'trade/status':'cancelled','trade/updatedAt':Date.now()});pushHistory(game.code,'La proposition d’échange a expiré.');}}
+
+function nextTurnUpdates(game,extra={}){const nextIndex=(game.turnIndex+1)%game.players.length;const base={...extra,currentAction:null,turnIndex:nextIndex,turnDeadline:Date.now()+game.turnTimer*1000,updatedAt:Date.now()};if(nextIndex===0) base.round=(game.round||1)+1;return base;}
 
 function pushHistory(code,text){push(ref(db,`banqueroll/${code}/history`),{text,ts:Date.now()});}
 function pushChat(code,author,text){push(ref(db,`banqueroll/${code}/chat`),{author,text,ts:Date.now()});}
 
-async function rollDice(){if(!currentGame||currentGame.phase!=='playing') return;const player=currentGame.players[currentGame.turnIndex];if(player.id!==myPlayerId) return; if(player.inJail){toast('Tu dois d’abord gérer ta situation en prison.');return;}const die1=Math.ceil(Math.random()*6);const die2=Math.ceil(Math.random()*6);const total=die1+die2;const nextPos=(player.position+total)%BOARD.length;const passedStart=(player.position+total)>=BOARD.length;const result=document.getElementById('roll-result');result.textContent='Lancement des dés...';await animateDiceRoll(die1,die2);const updates={};updates[`players/${currentGame.turnIndex}/position`]=nextPos; if(passedStart){updates[`players/${currentGame.turnIndex}/cash`]=player.cash+200;pushHistory(currentGame.code,`${player.name} passe par la case Départ et encaisse 200 💰.`);}updates['updatedAt']=Date.now();await update(getGameRef(currentGame.code),updates);pushHistory(currentGame.code,`${player.name} lance ${die1} + ${die2} et avance de ${total} cases vers ${BOARD[nextPos].name}.`);result.textContent=`${player.name} a lancé ${die1} et ${die2}.`;setTimeout(()=>handleLanding(nextPos),300);}
+// Attend que l'etat Firebase reflète la nouvelle position avant de resoudre la case,
+// sinon handleLanding travaillait sur un currentGame perime (ancien setTimeout de 300 ms).
+function waitForPosition(playerId,position,timeout=4000){const deadline=Date.now()+timeout;return new Promise(resolve=>{(function check(){const p=currentGame&&currentGame.players&&currentGame.players.find(x=>x.id===playerId);if((p&&p.position===position)||Date.now()>deadline) resolve();else setTimeout(check,60);})();});}
 
-async function handleLanding(position){const game=currentGame;const player=game.players[game.turnIndex];const square=BOARD[position];if(square.type==='start'){await update(getGameRef(game.code),nextTurnUpdates(game));pushHistory(game.code,`${player.name} a touché Départ.`);return;}if(square.type==='property'||square.type==='station'||square.type==='airport'){const owner=game.ownership?.[position]||null;if(!owner){await update(getGameRef(game.code),{currentAction:{type:'buy',position,playerId:player.id},turnDeadline:Date.now()+game.turnTimer*1000,updatedAt:Date.now()});return;}if(owner!==player.id){await payRent(position);return;}await update(getGameRef(game.code),nextTurnUpdates(game));return;}if(square.type==='tax'){await payAmount(player.id,square.amount,`${square.name}`);return;}if(square.type==='bank'){await handleBank(position);return;}if(square.type==='event'){await handleEvent(position);return;}if(square.type==='chance'){await handleChance(position);return;}if(square.type==='jail'){await update(getGameRef(game.code),nextTurnUpdates(game));pushHistory(game.code,`${player.name} se repose en prison.`);return;}if(square.type==='free'){await update(getGameRef(game.code),nextTurnUpdates(game));pushHistory(game.code,`${player.name} profite de la zone libre.`);return;}await update(getGameRef(game.code),nextTurnUpdates(game));}
+async function rollDice(){
+  if(rolling) return;
+  if(!currentGame||currentGame.phase!=='playing') return;
+  const player=currentGame.players[currentGame.turnIndex];
+  if(!player||player.id!==myPlayerId) return;
+  if(player.inJail){toast('Tu dois d’abord gérer ta situation en prison.');return;}
+  rolling=true;
+  try{
+    const die1=Math.ceil(Math.random()*6);const die2=Math.ceil(Math.random()*6);const total=die1+die2;
+    const nextPos=(player.position+total)%BOARD.length;
+    // Le Depart est l'index 21, pas l'index 0 : l'ancien test donnait la prime au mauvais endroit.
+    const passedStart=crossesStart(player.position,total);
+    const result=document.getElementById('roll-result');result.textContent='Lancement des dés...';
+    await animateDiceRoll(die1,die2);
+    const updates={};
+    updates[`players/${currentGame.turnIndex}/position`]=nextPos;
+    if(passedStart) updates[`players/${currentGame.turnIndex}/cash`]=player.cash+START_BONUS;
+    updates['turnDeadline']=Date.now()+currentGame.turnTimer*1000;
+    updates['updatedAt']=Date.now();
+    await update(getGameRef(currentGame.code),updates);
+    pushHistory(currentGame.code,`${player.name} lance ${die1} + ${die2} et avance de ${total} cases vers ${BOARD[nextPos].name}.`);
+    if(passedStart) pushHistory(currentGame.code,`${player.name} passe par la case Départ et encaisse ${START_BONUS} 💰.`);
+    result.textContent=`${player.name} a lancé ${die1} et ${die2}.`;
+    await waitForPosition(player.id,nextPos);
+    await handleLanding(nextPos);
+  } finally { rolling=false; }
+}
+
+async function handleLanding(position){const game=currentGame;const player=game.players[game.turnIndex];const square=BOARD[position];if(square.type==='start'){await update(getGameRef(game.code),nextTurnUpdates(game));pushHistory(game.code,`${player.name} a touché Départ.`);return;}if(square.type==='property'||square.type==='station'||square.type==='airport'){const owner=game.ownership?.[position]||null;if(!owner){await update(getGameRef(game.code),{currentAction:{type:'buy',position,playerId:player.id},turnDeadline:Date.now()+game.turnTimer*1000,updatedAt:Date.now()});return;}if(owner!==player.id){await payRent(position);return;}await update(getGameRef(game.code),nextTurnUpdates(game));return;}if(square.type==='tax'){await payAmount(player.id,square.amount||0,`${square.name}`);return;}if(square.type==='bank'){await handleBank(position);return;}if(square.type==='event'){await handleEvent(position);return;}if(square.type==='chance'){await handleChance(position);return;}if(square.type==='jail'){await update(getGameRef(game.code),nextTurnUpdates(game));pushHistory(game.code,`${player.name} se repose en prison.`);return;}if(square.type==='free'){await update(getGameRef(game.code),nextTurnUpdates(game));pushHistory(game.code,`${player.name} profite de la zone libre.`);return;}await update(getGameRef(game.code),nextTurnUpdates(game));}
 
 async function payRent(position){const game=currentGame;const player=game.players[game.turnIndex];const ownerId=game.ownership[position];const owner=findPlayerById(ownerId);const amount=calculateRent(position,ownerId);if(player.cash < amount){await settleDebt(player.id,ownerId,amount);return;}const ownerIndex=game.players.findIndex(p=>p.id===ownerId);const updates=nextTurnUpdates(game,{[`players/${game.turnIndex}/cash`]:player.cash-amount,[`players/${ownerIndex}/cash`]:owner.cash+amount});await update(getGameRef(game.code),updates);pushHistory(game.code,`${player.name} paie ${amount} 💰 à ${owner.name} pour ${BOARD[position].name}.`);}
 
@@ -537,36 +731,85 @@ function getOwnedCount(playerId,type){return Object.entries(currentGame.ownershi
 
 async function settleDebt(playerId,ownerId,amount){const game=currentGame;const playerIndex=game.players.findIndex(p=>p.id===playerId);const ownerIndex=game.players.findIndex(p=>p.id===ownerId);const player=game.players[playerIndex];const owner=game.players[ownerIndex];const updatedCash=Math.max(0,player.cash-amount);const updates=nextTurnUpdates(game,{[`players/${playerIndex}/cash`]:updatedCash,[`players/${ownerIndex}/cash`]:owner.cash+Math.max(0,player.cash)});await update(getGameRef(game.code),updates);pushHistory(game.code,`${player.name} n'a pas pu payer ${amount} 💰, il perd tout ce qu'il avait à ${owner.name}.`);} 
 
-async function payAmount(playerId,amount,label){const game=currentGame;const playerIndex=game.players.findIndex(p=>p.id===playerId);const player=game.players[playerIndex];const updatedCash=Math.max(0,player.cash-amount);const updates=nextTurnUpdates(game,{[`players/${playerIndex}/cash`]:updatedCash});await update(getGameRef(game.code),updates);pushHistory(game.code,`${player.name} paie ${amount} 💰 pour ${label}.`);} 
+async function payAmount(playerId,amount,label){const game=currentGame;const playerIndex=game.players.findIndex(p=>p.id===playerId);const player=game.players[playerIndex];if(!player) return;const value=Number(amount)||0;const updatedCash=Math.max(0,player.cash-value);const updates=nextTurnUpdates(game,{[`players/${playerIndex}/cash`]:updatedCash});await update(getGameRef(game.code),updates);pushHistory(game.code,value>=0?`${player.name} paie ${value} 💰 pour ${label}.`:`${player.name} reçoit ${Math.abs(value)} 💰 (${label}).`);} 
 
-async function handleBank(position){const game=currentGame;const player=game.players[game.turnIndex];const bonus = (position===10?120:140);const updates=nextTurnUpdates(game,{[`players/${game.turnIndex}/cash`]:player.cash+bonus});await update(getGameRef(game.code),updates);pushHistory(game.code,`${player.name} reçoit ${bonus} 💰 à ${BOARD[position].name}.`);} 
+async function handleBank(position){const game=currentGame;const player=game.players[game.turnIndex];const bonus = 140;const updates=nextTurnUpdates(game,{[`players/${game.turnIndex}/cash`]:player.cash+bonus});await update(getGameRef(game.code),updates);pushHistory(game.code,`${player.name} reçoit ${bonus} 💰 à ${BOARD[position].name}.`);} 
 
 async function handleEvent(position){const game=currentGame;const player=game.players[game.turnIndex];const effects=[{text:'Vous recevez un dividende.',amount:120},{text:'Rénovation imprévue.',amount:-100},{text:'Commerce florissant.',amount:140},{text:'Amende municipale.',amount:-130},{text:'Loyer exceptionnel.',amount:160}];const pick=effects[Math.floor(Math.random()*effects.length)];await payAmount(player.id,-pick.amount,BOARD[position].name);pushHistory(game.code,`${player.name} ${pick.text}`);} 
 
-async function handleChance(position){const game=currentGame;const actions=[{type:'bank',amount:100,text:'La banque te remercie, reçois 100 💰.'},{type:'jail',text:'Va en prison.','toJail':true},{type:'move',amount:3,text:'Avance de 3 cases.'},{type:'move',amount:-2,text:'Retourne de 2 cases.'},{type:'pay',amount:90,text:'Frais de service, paye 90 💰.'}];const pick=actions[Math.floor(Math.random()*actions.length)];const player=game.players[game.turnIndex];if(pick.type==='bank'){await payAmount(player.id,-pick.amount,BOARD[position].name);pushHistory(game.code,`${player.name} ${pick.text}`);}else if(pick.type==='jail'){await sendPlayerToJail(player.id);pushHistory(game.code,`${player.name} ${pick.text}`);}else if(pick.type==='move'){const next=(player.position+pick.amount+BOARD.length)%BOARD.length;await update(getGameRef(game.code),{[`players/${game.turnIndex}/position`]:next,turnDeadline:Date.now()+game.turnTimer*1000,updatedAt:Date.now()});pushHistory(game.code,`${player.name} ${pick.text}`);setTimeout(()=>handleLanding(next),300);}else if(pick.type==='pay'){await payAmount(player.id,pick.amount,BOARD[position].name);pushHistory(game.code,`${player.name} ${pick.text}`);} }
+async function handleChance(position){const game=currentGame;const actions=[{type:'bank',amount:100,text:'La banque te remercie, reçois 100 💰.'},{type:'jail',text:'Va en prison.','toJail':true},{type:'move',amount:3,text:'Avance de 3 cases.'},{type:'move',amount:-2,text:'Retourne de 2 cases.'},{type:'pay',amount:90,text:'Frais de service, paye 90 💰.'}];const pick=actions[Math.floor(Math.random()*actions.length)];const player=game.players[game.turnIndex];if(pick.type==='bank'){await payAmount(player.id,-pick.amount,BOARD[position].name);pushHistory(game.code,`${player.name} ${pick.text}`);}else if(pick.type==='jail'){await sendPlayerToJail(player.id);pushHistory(game.code,`${player.name} ${pick.text}`);}else if(pick.type==='move'){const next=(player.position+pick.amount+BOARD.length)%BOARD.length;await update(getGameRef(game.code),{[`players/${game.turnIndex}/position`]:next,turnDeadline:Date.now()+game.turnTimer*1000,updatedAt:Date.now()});pushHistory(game.code,`${player.name} ${pick.text}`);await waitForPosition(player.id,next);await handleLanding(next);}else if(pick.type==='pay'){await payAmount(player.id,pick.amount,BOARD[position].name);pushHistory(game.code,`${player.name} ${pick.text}`);} }
 
-async function sendPlayerToJail(playerId){const game=currentGame;const playerIndex=game.players.findIndex(p=>p.id===playerId);const updates={[`players/${playerIndex}/position`]:20,[`players/${playerIndex}/inJail`]:true,[`players/${playerIndex}/jailTurns`]:2,currentAction:{type:'jail',playerId},turnDeadline:Date.now()+game.turnTimer*1000,updatedAt:Date.now()};await update(getGameRef(game.code),updates);} 
+async function sendPlayerToJail(playerId){const game=currentGame;const playerIndex=game.players.findIndex(p=>p.id===playerId);const updates={[`players/${playerIndex}/position`]:7,[`players/${playerIndex}/inJail`]:true,[`players/${playerIndex}/jailTurns`]:2,currentAction:{type:'jail',playerId},turnDeadline:Date.now()+game.turnTimer*1000,updatedAt:Date.now()};await update(getGameRef(game.code),updates);} 
 
 async function buyProperty(){const game=currentGame;if(!game.currentAction||game.currentAction.playerId!==myPlayerId) return;const square=BOARD[game.currentAction.position];const playerIndex=game.players.findIndex(p=>p.id===myPlayerId);const player=game.players[playerIndex];if(player.cash < square.price){toast('Pas assez d’argent.');return;}const updates=nextTurnUpdates(game,{[`ownership/${game.currentAction.position}`]:myPlayerId,[`players/${playerIndex}/cash`]:player.cash-square.price});await update(getGameRef(game.code),updates);pushHistory(game.code,`${player.name} achète ${square.name} pour ${square.price} 💰.`);}
 
-async function startAuction(){const game=currentGame;if(!game.currentAction||game.currentAction.playerId!==myPlayerId) return;const square=BOARD[game.currentAction.position];const nextBid=Math.max(20,Math.ceil(square.price*0.3));const auction={status:'open',position:game.currentAction.position,nextBid,highestBid:0,highestBidder:null,endAt:Date.now()+AUCTION_DURATION*1000};await update(getGameRef(game.code),{auction,currentAction:null,updatedAt:Date.now()});pushHistory(game.code,`${findPlayerById(myPlayerId).name} lance l’enchère de ${square.name}.`);}
+async function startAuction(){const game=currentGame;if(!game.currentAction||game.currentAction.playerId!==myPlayerId) return;const square=BOARD[game.currentAction.position];const nextBid=Math.max(20,Math.ceil(square.price*0.3));const auction={status:'open',position:game.currentAction.position,nextBid,highestBid:0,highestBidder:null,endAt:Date.now()+AUCTION_DURATION*1000};await update(getGameRef(game.code),{auction,currentAction:null,updatedAt:Date.now()});pushHistory(game.code,`${(findPlayerById(myPlayerId)||{name:'?'}).name} lance l’enchère de ${square.name}.`);}
 
-async function placeBid(){const bid=parseInt(document.getElementById('auction-bid').value,10);const game=currentGame;if(!game.auction||game.auction.status!=='open'){toast('Aucune enchère active.');return;}const player=findPlayerById(myPlayerId);if(player.cash < bid){toast('Pas assez de liquidités.');return;}if(bid < game.auction.nextBid){toast('Offre trop faible.');return;}const auction={...game.auction,highestBid:bid,highestBidder:myPlayerId,nextBid:bid+10};await update(getGameRef(game.code),{auction,updatedAt:Date.now()});pushHistory(game.code,`${player.name} enchérit ${bid} 💰.`);}
+async function placeBid(){const bid=parseInt(document.getElementById('auction-bid').value,10);const game=currentGame;if(!game.auction||game.auction.status!=='open'){toast('Aucune enchère active.');return;}const player=findPlayerById(myPlayerId);if(!player) return;if(!Number.isFinite(bid)){toast('Montant invalide.');return;}if(player.cash < bid){toast('Pas assez de liquidités.');return;}if(bid < game.auction.nextBid){toast('Offre trop faible.');return;}const auction={...game.auction,highestBid:bid,highestBidder:myPlayerId,nextBid:bid+10};await update(getGameRef(game.code),{auction,updatedAt:Date.now()});pushHistory(game.code,`${player.name} enchérit ${bid} 💰.`);}
 
-async function acceptTrade(){const game=currentGame;const trade=game.trade;if(!trade||trade.status!=='pending') return;const me=findPlayerById(myPlayerId);const from=findPlayerById(trade.fromId);const to=findPlayerById(trade.toId);if(to.id!==myPlayerId){toast('Ce n’est pas à toi de répondre.');return;}const fromIndex=game.players.findIndex(p=>p.id===from.id);const toIndex=game.players.findIndex(p=>p.id===to.id);const updates={};updates[`players/${fromIndex}/cash`]=from.cash-trade.offerCash+trade.requestCash;updates[`players/${toIndex}/cash`]=to.cash-trade.requestCash+trade.offerCash;if(trade.offerProperty){updates[`ownership/${trade.offerProperty}`]=to.id;}if(trade.requestProperty){updates[`ownership/${trade.requestProperty}`]=from.id;}updates['trade/status']='accepted';updates['updatedAt']=Date.now();await update(getGameRef(game.code),updates);pushHistory(game.code,`${to.name} accepte l’échange proposé par ${from.name}.`);}
+async function acceptTrade(){const game=currentGame;const trade=game.trade;if(!trade||trade.status!=='pending') return;const from=findPlayerById(trade.fromId);const to=findPlayerById(trade.toId);if(!from||!to){toast('Joueur introuvable.');return;}if(to.id!==myPlayerId){toast('Ce n’est pas à toi de répondre.');return;}const fromIndex=game.players.findIndex(p=>p.id===from.id);const toIndex=game.players.findIndex(p=>p.id===to.id);const updates={};updates[`players/${fromIndex}/cash`]=from.cash-trade.offerCash+trade.requestCash;updates[`players/${toIndex}/cash`]=to.cash-trade.requestCash+trade.offerCash;if(trade.offerProperty){updates[`ownership/${trade.offerProperty}`]=to.id;}if(trade.requestProperty){updates[`ownership/${trade.requestProperty}`]=from.id;}updates['trade/status']='accepted';updates['updatedAt']=Date.now();await update(getGameRef(game.code),updates);pushHistory(game.code,`${to.name} accepte l’échange proposé par ${from.name}.`);}
 
-async function declineTrade(){const game=currentGame;if(!game.trade||game.trade.status!=='pending') return;await update(getGameRef(game.code),{'trade/status':'declined','trade/updatedAt':Date.now()});pushHistory(game.code,`${findPlayerById(myPlayerId).name} refuse l’échange.`);}
+async function declineTrade(){const game=currentGame;if(!game.trade||game.trade.status!=='pending') return;await update(getGameRef(game.code),{'trade/status':'declined','trade/updatedAt':Date.now()});pushHistory(game.code,`${(findPlayerById(myPlayerId)||{name:'?'}).name} refuse l’échange.`);}
 
-async function proposeTrade(){const game=currentGame;const recipient=document.getElementById('trade-recipient').value;const offerCash=parseInt(document.getElementById('trade-offer-cash').value,10)||0;const requestCash=parseInt(document.getElementById('trade-request-cash').value,10)||0;const offerProperty=document.getElementById('trade-offer-property').value||null;const requestProperty=document.getElementById('trade-request-property').value||null;const err=document.getElementById('trade-error');err.textContent='';if(!recipient){err.textContent='Choisis un destinataire.';return;}if(recipient===myPlayerId){err.textContent='Choisis un autre joueur.';return;}const player=findPlayerById(myPlayerId);if(offerCash>player.cash){err.textContent='Pas assez d’argent pour proposer cela.';return;}if(requestCash<0||offerCash<0){err.textContent='Montants invalides.';return;}const trade={fromId:myPlayerId,toId:recipient,offerCash,requestCash,offerProperty:offerProperty?Number(offerProperty):null,requestProperty:requestProperty?Number(requestProperty):null,status:'pending',expiresAt:Date.now()+TRADE_DURATION*1000,createdAt:Date.now()};await update(getGameRef(game.code),{trade,updatedAt:Date.now()});pushHistory(game.code,`${player.name} propose un échange à ${findPlayerById(recipient).name}.`);closeTradeModal();}
+async function proposeTrade(){const game=currentGame;const recipient=document.getElementById('trade-recipient').value;const offerCash=parseInt(document.getElementById('trade-offer-cash').value,10)||0;const requestCash=parseInt(document.getElementById('trade-request-cash').value,10)||0;const offerProperty=document.getElementById('trade-offer-property').value||null;const requestProperty=document.getElementById('trade-request-property').value||null;const err=document.getElementById('trade-error');err.textContent='';if(!recipient){err.textContent='Choisis un destinataire.';return;}if(recipient===myPlayerId){err.textContent='Choisis un autre joueur.';return;}const player=findPlayerById(myPlayerId);if(offerCash>player.cash){err.textContent='Pas assez d’argent pour proposer cela.';return;}if(requestCash<0||offerCash<0){err.textContent='Montants invalides.';return;}const trade={fromId:myPlayerId,toId:recipient,offerCash,requestCash,offerProperty:offerProperty?Number(offerProperty):null,requestProperty:requestProperty?Number(requestProperty):null,status:'pending',expiresAt:Date.now()+TRADE_DURATION*1000,createdAt:Date.now()};await update(getGameRef(game.code),{trade,updatedAt:Date.now()});pushHistory(game.code,`${player.name} propose un échange à ${(findPlayerById(recipient)||{name:'?'}).name}.`);closeTradeModal();}
 
-function renderTradePrompt(trade){const panel=document.getElementById('action-panel');panel.innerHTML='';const box=document.createElement('div');box.className='action-box';const from=findPlayerById(trade.fromId);const to=findPlayerById(trade.toId);const offerItem=trade.offerProperty?BOARD[trade.offerProperty].name:'Aucun';const requestItem=trade.requestProperty?BOARD[trade.requestProperty].name:'Aucun';box.innerHTML=`<div class="action-title">Échange en attente</div><div class="action-text"><strong>${from.name}</strong> propose ${trade.offerCash} 💰 et ${offerItem} contre ${trade.requestCash} 💰 et ${requestItem} de <strong>${to.name}</strong>.</div>`;if(myPlayerId===trade.toId){box.innerHTML+=`<div class="action-buttons"><button class="btn btn-primary" onclick="acceptTrade()">Accepter</button><button class="btn btn-secondary" onclick="declineTrade()">Refuser</button></div>`;}panel.appendChild(box);} 
+// La caution ne fait plus perdre le tour : le joueur sort et peut lancer les des,
+// conformement au texte « sortir immediatement ».
+async function payBail(){const game=currentGame;const playerIndex=game.players.findIndex(p=>p.id===myPlayerId);const player=game.players[playerIndex];if(!player) return;if(game.turnIndex!==playerIndex){toast('Ce n’est pas ton tour.');return;}if(player.cash < 120){toast('Pas assez pour payer la caution.');return;}const updates={[`players/${playerIndex}/cash`]:player.cash-120,[`players/${playerIndex}/inJail`]:false,[`players/${playerIndex}/jailTurns`]:0,currentAction:null,turnDeadline:Date.now()+game.turnTimer*1000,updatedAt:Date.now()};await update(getGameRef(game.code),updates);pushHistory(game.code,`${player.name} paie 120 💰 et sort de prison : le tour continue.`);} 
 
-async function payBail(){const game=currentGame;const playerIndex=game.players.findIndex(p=>p.id===myPlayerId);const player=currentGame.players[playerIndex];if(player.cash < 120){toast('Pas assez pour payer la caution.');return;}const updates=nextTurnUpdates(game,{[`players/${playerIndex}/cash`]:player.cash-120,[`players/${playerIndex}/inJail`]:false,[`players/${playerIndex}/jailTurns`]:0});await update(getGameRef(game.code),updates);pushHistory(game.code,`${player.name} paie 120 💰 pour sortir de prison.`);} 
+async function serveJailTurn(){const game=currentGame;const playerIndex=game.players.findIndex(p=>p.id===myPlayerId);const player=game.players[playerIndex];if(!player) return;if(game.turnIndex!==playerIndex) return;const remaining=Math.max(0,(player.jailTurns||0)-1);const extra={[`players/${playerIndex}/jailTurns`]:remaining};if(remaining===0) extra[`players/${playerIndex}/inJail`]=false;await update(getGameRef(game.code),nextTurnUpdates(game,extra));pushHistory(game.code,remaining===0?`${player.name} a purgé sa peine et sortira de prison à son prochain tour.`:`${player.name} reste en prison (${remaining} tour${remaining>1?'s':''} restant${remaining>1?'s':''}).`);} 
 
-async function serveJailTurn(){const game=currentGame;const playerIndex=game.players.findIndex(p=>p.id===myPlayerId);const player=currentGame.players[playerIndex];const remaining=Math.max(0,player.jailTurns-1);const updates={[`players/${playerIndex}/jailTurns`]:remaining,currentAction:null,turnIndex:(game.turnIndex+1)%game.players.length,turnDeadline:Date.now()+game.turnTimer*1000,updatedAt:Date.now()};if(remaining===0){updates[`players/${playerIndex}/inJail`]=false;}await update(getGameRef(game.code),updates);pushHistory(game.code,`${player.name} reste en prison pour un tour de plus.`);} 
+async function startGame(){if(!currentGame||!isHost) return;resetGuards();if(currentGame.players.length < 2){toast('Il faut au moins 2 joueurs pour démarrer.');return;}const players=currentGame.players.map(p=>({...p,position:START_INDEX,cash:START_CASH,jailTurns:0,inJail:false}));await update(getGameRef(currentGame.code),{players,phase:'playing',turnIndex:0,round:1,currentAction:null,ownership:null,auction:null,trade:null,winnerId:null,turnDeadline:Date.now()+currentGame.turnTimer*1000,updatedAt:Date.now()});pushHistory(currentGame.code,`La partie commence : ${WIN_NET_WORTH} 💰 de valeur nette ou ${MAX_ROUNDS} manches.`);}
 
-async function startGame(){if(!currentGame||!isHost) return;if(currentGame.players.length < 2){toast('Il faut au moins 2 joueurs pour démarrer.');return;}await update(getGameRef(currentGame.code),{phase:'playing',turnIndex:0,currentAction:null,turnDeadline:Date.now()+currentGame.turnTimer*1000,updatedAt:Date.now()});}
-async function deleteGame(){if(!currentGame) {show('s-home');return;}if(!confirm('Supprimer la partie ?')) return;await remove(getGameRef(currentGame.code));clearLocal();show('s-home');}
+// Relance une partie terminee en repartant du salon, sans perdre les joueurs.
+async function restartGame(){if(!currentGame||!isHost) return;resetGuards();const players=currentGame.players.map(p=>({...p,position:START_INDEX,cash:START_CASH,jailTurns:0,inJail:false}));await update(getGameRef(currentGame.code),{players,phase:'lobby',turnIndex:0,round:1,currentAction:null,ownership:null,auction:null,trade:null,winnerId:null,history:null,turnDeadline:null,updatedAt:Date.now()});toast('Nouvelle partie prête.');}
+async function deleteGame(){if(!currentGame){leaveGame();return;}if(!confirm('Supprimer la partie ?')) return;const code=currentGame.code;stopGameListener();currentGame=null;await remove(getGameRef(code));clearLocal();myCode=null;myPlayerId=null;isHost=false;show('s-home');}
+
+// Condition de victoire : premier joueur a atteindre WIN_NET_WORTH, ou meilleure
+// valeur nette apres MAX_ROUNDS manches. Seul l'hote ecrit le resultat.
+function maybeFinishGame(game){
+  if(!isHost||game.phase!=='playing') return;
+  const best=bestPlayer(game);
+  if(!best) return;
+  const reachedTarget=netWorth(game,best)>=WIN_NET_WORTH;
+  const outOfRounds=(game.round||1)>MAX_ROUNDS;
+  if(!reachedTarget&&!outOfRounds) return;
+  if(finishedKey===game.code) return;
+  finishedKey=game.code;
+  update(getGameRef(game.code),{phase:'finished',winnerId:best.id,currentAction:null,turnDeadline:null,updatedAt:Date.now()});
+  pushHistory(game.code,reachedTarget
+    ?`${best.name} atteint ${WIN_NET_WORTH} 💰 de valeur nette et remporte la partie.`
+    :`Fin des ${MAX_ROUNDS} manches : ${best.name} gagne avec ${netWorth(game,best)} 💰 de valeur nette.`);
+}
+
+// Un joueur absent bloquait la partie indefiniment : l'hote passe les tours expires.
+function startWatchdog(){if(watchdogTimer) return;watchdogTimer=setInterval(hostTick,2000);}
+
+// Sans ce tick, une enchere ou un echange arrive a echeance restait ouvert
+// tant qu'aucune autre ecriture Firebase ne declenchait renderState.
+function hostTick(){
+  const game=currentGame;
+  if(!isHost||!game) return;
+  maybeResolveAuction(game);
+  maybeResolveTradeTimeout(game);
+  enforceTurnDeadline();
+}
+
+function enforceTurnDeadline(){
+  const game=currentGame;
+  if(!isHost||!game||game.phase!=='playing') return;
+  if(game.auction&&game.auction.status==='open') return;
+  if(game.trade&&game.trade.status==='pending') return;
+  if(!game.turnDeadline||Date.now()<=game.turnDeadline+TURN_GRACE_MS) return;
+  if(enforcedDeadline===game.turnDeadline) return;
+  enforcedDeadline=game.turnDeadline;
+  const player=game.players[game.turnIndex];
+  if(!player) return;
+  const extra={};
+  if(player.inJail){const remaining=Math.max(0,(player.jailTurns||0)-1);extra[`players/${game.turnIndex}/jailTurns`]=remaining;if(remaining===0) extra[`players/${game.turnIndex}/inJail`]=false;}
+  update(getGameRef(game.code),nextTurnUpdates(game,extra));
+  pushHistory(game.code,`${player.name} n’a pas joué à temps : son tour est passé.`);
+}
 
 function copyCode(){if(!myCode) return;navigator.clipboard.writeText(myCode).then(()=>toast('Code copié !'));}
 
@@ -575,7 +818,7 @@ function sendChat(){const input=document.getElementById('chat-input');const text
 function autoReconnect(){parseStored();if(myCode && myPlayerId){get(getGameRef(myCode)).then(snap=>{if(!snap.exists()){clearLocal();return;}const game=snap.val();const existing=game.players.find(p=>p.id===myPlayerId);if(existing){myName=existing.name;myColor=existing.color;isHost=game.hostId===myPlayerId;saveLocal();attachPresence();startGameListener(myCode);if(game.phase==='lobby') show('s-lobby'); else show('s-game');} else {clearLocal();}});}}
 
 Object.assign(window,{
-  show,createGame,joinGame,copyCode,startGame,deleteGame,sendChat,
+  show,createGame,joinGame,copyCode,startGame,restartGame,deleteGame,leaveGame,sendChat,toggleDrawer,
   closeAuctionModal,openAuctionModal,placeBid,closeTradeModal,proposeTrade,acceptTrade,
   declineTrade,payBail,serveJailTurn,openTradeModal,rollDice,buyProperty,startAuction
 });
