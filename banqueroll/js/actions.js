@@ -22,7 +22,7 @@ import {
 } from './net.js';
 import { animateDiceRoll, toast, WHEEL_MS } from './fx.js';
 
-export const PLAYER_COLORS = ['#38bdf8','#fbbf24','#f97316','#a78bfa','#34d399','#fb7185','#22d3ee','#f472b6'];
+export const PLAYER_COLORS = ['#2F7FC1','#D99A1E','#D2582A','#7752C2','#2E8F62','#C93F55','#1C949E','#B8509A'];
 const TURN_GRACE_MS = 1500;
 const WHEEL_FALLBACK_MS = 9000;  // l'hote termine une roue abandonnee apres ce delai
 

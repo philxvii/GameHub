@@ -381,7 +381,8 @@ export async function requestAI(payload) {
     const res = await fetch(url, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload), signal: ctrl.signal });
     if (!res.ok) { aiFailed(); return null; }
     const data = await res.json();
-    const text = String((data && data.text) || '').replace(/\s+/g, ' ').trim().slice(0, 280);
+    // Le modele imite parfois les pseudos du chat (« @Alice Je... ») : on retire ce prefixe.
+    const text = String((data && data.text) || '').replace(/\s+/g, ' ').trim().replace(/^(@\S+[\s,:]*)+/, '').slice(0, 280);
     // Defense en profondeur : une etiquette de classifieur ne remplace jamais une vraie replique.
     if (!text || text.length < 25 || /^(user|assistant)?\s*(safety|safe|unsafe)/i.test(text)) { aiFailed(); return null; }
     failStreak = 0;

@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Banqueroll</title>
 <meta name="description" content="Banqueroll — jeu de plateau financier multijoueur, 2 à 8 joueurs, avec un présentateur sans pitié.">
-<meta name="theme-color" content="#17181C">
+<meta name="theme-color" content="#14302A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Gloock&family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="banqueroll/css/base.css">
 <link rel="stylesheet" href="banqueroll/css/game.css">
 <link rel="stylesheet" href="banqueroll/css/board.css">
@@ -24,8 +24,8 @@
   <section class="screen active" id="s-home">
     <div class="lobby">
       <header class="lobby-brand">
-        <div class="brand-mark" aria-hidden="true"><span>B</span></div>
-        <h1 class="brand-title">BANQUEROLL</h1>
+        <div class="brand-mark" aria-hidden="true" data-guilloche="3"><span>B</span></div>
+        <h1 class="brand-title">Banqueroll</h1>
         <p>Plateau financier en ligne · 2 à 8 joueurs · un présentateur sans pitié</p>
         <div class="lobby-strip" id="lobby-strip" aria-hidden="true"></div>
       </header>
@@ -79,7 +79,7 @@
   <section class="screen" id="s-lobby">
     <div class="lobby">
       <header class="lobby-brand lobby-brand--sm">
-        <div class="brand-mark" aria-hidden="true"><span>B</span></div>
+        <div class="brand-mark" aria-hidden="true" data-guilloche="2"><span>B</span></div>
         <h1 class="brand-title">Salon</h1>
         <p>Partage ce code pour que tes amis rejoignent.</p>
       </header>
@@ -101,7 +101,7 @@
   <section class="screen" id="s-game">
     <header class="hud">
       <button class="icon-btn" type="button" aria-label="Quitter la partie" data-act="leave"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      <div class="hud-brand"><span>BANQUEROLL</span><em id="hud-code"></em></div>
+      <div class="hud-brand"><span>Banqueroll</span><em id="hud-code"></em></div>
       <div class="hud-objective" id="ref-objective">—</div>
       <div class="hud-turn"><span class="hud-who" id="turn-player">Chargement…</span><strong class="timer" id="turn-timer">00:00</strong></div>
       <button class="icon-btn hud-chat" type="button" aria-label="Chat et journal" data-act="drawer"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg><span class="dot" id="chat-dot" hidden></span></button>
@@ -119,7 +119,7 @@
         <div class="board" id="board">
           <div class="board-grid" id="board-grid">
             <div class="board-center" id="board-center">
-              <div class="center-mark" aria-hidden="true">BANQUEROLL</div>
+              <div class="center-mark" aria-hidden="true" data-guilloche="3"><span>Banqueroll</span></div>
               <div class="dice-zone">
                 <div class="die-wrap">
                   <div class="die3d" id="die" role="img" aria-label="Dé non lancé"><div class="die-cube"></div></div>
@@ -200,7 +200,7 @@
 <div class="victory" id="victory">
   <div class="victory-coins"></div>
   <div class="victory-card">
-    <div class="victory-rays" aria-hidden="true"></div>
+    <div class="victory-rays" aria-hidden="true" data-guilloche="3"></div>
     <div class="victory-chip" id="victory-chip">?</div>
     <p class="victory-kicker">Partie terminée</p>
     <h2 id="victory-name">—</h2>

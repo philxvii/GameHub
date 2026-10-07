@@ -105,19 +105,69 @@ function shade(hex, amount) {
   return '#' + [16, 8, 0].map(s => ch(s).toString(16).padStart(2, '0')).join('');
 }
 
-// Jeton cylindrique : flanc sombre, liseré blanc, disque de couleur, initiale.
+// Jeton de casino : flanc a creneaux blancs, liseré d'encre, disque central, initiale.
 function pawnSVG(color, letter, uid) {
-  const dark = shade(color, -0.22), light = shade(color, 0.18);
+  const dark = shade(color, -0.3), light = shade(color, 0.16);
   return `<svg viewBox="0 0 40 34" aria-hidden="true">
-    <defs><radialGradient id="pg${uid}" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="${light}"/><stop offset="1" stop-color="${color}"/></radialGradient></defs>
+    <defs><radialGradient id="pg${uid}" cx="40%" cy="32%" r="75%"><stop offset="0" stop-color="${light}"/><stop offset="1" stop-color="${color}"/></radialGradient></defs>
     <ellipse cx="20" cy="22" rx="18" ry="9" fill="${dark}"/>
     <rect x="2" y="13" width="36" height="9" fill="${dark}"/>
-    <path d="M2 13v4c4 3 10 4.6 18 4.6S34 20 38 17v-4" fill="rgba(0,0,0,.18)"/>
-    <ellipse cx="20" cy="13" rx="18" ry="9" fill="#fff"/>
-    <ellipse cx="20" cy="13" rx="14" ry="6.8" fill="url(#pg${uid})"/>
-    <ellipse cx="15" cy="10" rx="6" ry="2.2" fill="rgba(255,255,255,.35)"/>
-    <text x="20" y="16.2" text-anchor="middle" font-size="8.5" font-weight="900" fill="#fff" font-family="Lato,sans-serif" style="paint-order:stroke" stroke="rgba(0,0,0,.35)" stroke-width="1.4">${letter}</text>
+    <path d="M6 17.6v4.6M12 20.2v4.6M28 20.2v4.6M34 17.6v4.6" stroke="#F7F0DE" stroke-width="2.6"/>
+    <ellipse cx="20" cy="22" rx="18" ry="9" fill="none" stroke="#1B2420" stroke-width="1"/>
+    <ellipse cx="20" cy="13" rx="18" ry="9" fill="${color}" stroke="#1B2420" stroke-width="1"/>
+    <ellipse cx="20" cy="13" rx="15.6" ry="7.6" fill="none" stroke="#F7F0DE" stroke-width="2.4" stroke-dasharray="4.2 3.6"/>
+    <ellipse cx="20" cy="13" rx="11.4" ry="5.5" fill="url(#pg${uid})" stroke="#F7F0DE" stroke-width=".8"/>
+    <text x="20" y="16" text-anchor="middle" font-size="8" font-weight="800" fill="#FBF7EE" font-family="'Schibsted Grotesk',sans-serif" style="paint-order:stroke" stroke="rgba(27,36,32,.45)" stroke-width="1.3">${letter}</text>
   </svg>`;
+}
+
+// Rosace guillochee, comme sur un billet : courbes polaires dephasees, calculees une fois.
+// Aucun fichier image : le motif est genere au chargement (quelques Ko de SVG).
+export function guillocheSVG({ rings = 3, petals = 18, curves = 14, className = 'guilloche' } = {}) {
+  const paths = [];
+  for (let ring = 0; ring < rings; ring++) {
+    const base = 96 - ring * 27, amp = 9 - ring * 2, n = petals - ring * 4;
+    for (let k = 0; k < curves; k++) {
+      const phase = (k / curves) * (Math.PI * 2 / n);
+      let d = '';
+      for (let i = 0; i <= 240; i++) {
+        const t = (i / 240) * Math.PI * 2;
+        const r = base + amp * Math.sin(n * t + phase * n) + amp * 0.35 * Math.sin(3 * n * t - phase);
+        d += (i ? 'L' : 'M') + (r * Math.cos(t)).toFixed(1) + ' ' + (r * Math.sin(t)).toFixed(1);
+      }
+      paths.push(`<path d="${d}Z"/>`);
+    }
+  }
+  return `<svg class="${className}" viewBox="-110 -110 220 220" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width=".45">${paths.join('')}</g></svg>`;
+}
+
+// Le montant defile jusqu'a sa nouvelle valeur (compteur de caisse).
+export function rollNumber(el, from, to, format) {
+  if (!el || from === to || reduced() || document.hidden) return;
+  const start = performance.now(), dur = Math.min(900, 380 + Math.abs(to - from) * 0.9);
+  const tick = now => {
+    if (!el.isConnected) return;
+    const k = Math.min(1, (now - start) / dur), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = format(Math.round(from + (to - from) * e));
+    if (k < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+// Cartes et options : elles penchent vers le pointeur, comme un objet qu'on tient.
+export function enableTilt(root, selector) {
+  if (!root || reduced() || !matchMedia('(hover:hover)').matches) return;
+  root.addEventListener('pointermove', e => {
+    const card = e.target.closest(selector);
+    if (!card || card.disabled) return;
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--tx', (((e.clientY - r.top) / r.height - 0.5) * -7).toFixed(2) + 'deg');
+    card.style.setProperty('--ty', (((e.clientX - r.left) / r.width - 0.5) * 9).toFixed(2) + 'deg');
+  });
+  root.addEventListener('pointerout', e => {
+    const card = e.target.closest(selector);
+    if (card && !card.contains(e.relatedTarget)) { card.style.removeProperty('--tx'); card.style.removeProperty('--ty'); }
+  });
 }
 
 function geometry() {

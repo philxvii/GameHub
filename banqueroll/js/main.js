@@ -4,7 +4,7 @@ import { S, loadLocal } from './net.js';
 import * as A from './actions.js';
 import * as R from './render.js';
 import { observe, presenterDebug } from './presenter.js';
-import { toast, syncPawns, finishMoves } from './fx.js';
+import { toast, syncPawns, finishMoves, guillocheSVG, enableTilt } from './fx.js';
 import { getSquareColor, BOARD } from './board.js';
 
 A.hooks.onGame = game => { R.renderState(game); observe(game); };
@@ -146,6 +146,9 @@ Object.assign(window, {
 
 R.initBoard();
 paintLobbyStrip();
+// Rosaces guillochees : sceau de l'accueil, centre du plateau, certificat de victoire.
+document.querySelectorAll('[data-guilloche]').forEach(el => { el.insertAdjacentHTML('afterbegin', guillocheSVG({ rings: Number(el.dataset.guilloche) || 3 })); });
+enableTilt($id('stage-overlay'), '.chance-card, .event-card, .dopt');
 $id('host-av').innerHTML = R.HOST_AVATAR;
 $id('join-code').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
 loadLocal();
