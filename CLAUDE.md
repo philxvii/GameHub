@@ -163,6 +163,12 @@ de la capture de référence :
   Sur localhost, `?ai=off` coupe l'IA et `?ai=<url>` la redirige : la suite de tests
   tourne en `?ai=off` pour rester reproductible et ne pas consommer le quota.
 - Le bandeau coloré des cases reste en **aplat** (contraste ≥ 4.5:1 audité).
+- **Direction artistique** (2026-10-07) : un jeu de société sur une table de banque.
+  Feutre vert, fiches en carton crème avec grain, encre `#1B2420`, laiton pour ce qui
+  compte. Polices Gloock (titres, montants) et Schibsted Grotesk. Boutons à contour
+  d'encre et arête pleine, jetons de casino, rosace guillochée générée (`guillocheSVG`).
+  À éviter : halos lumineux, dégradés décoratifs, badges en pilule, bordures colorées
+  sur un seul côté, majuscules très espacées.
 
 ### Limites connues
 

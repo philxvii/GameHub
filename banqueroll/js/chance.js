@@ -178,17 +178,17 @@ export const DILEMMAS = [
 
 // ------------------------------------------------------------ roue
 export const WHEEL = [
-  { id:'jackpot',  label:'JACKPOT',     sub:'+1 000 $',      weight:1,   color:'#F6C62F' },
-  { id:'minus500', label:'−500 $',      sub:'Aïe',           weight:2,   color:'#E2574C' },
-  { id:'reroll',   label:'RELANCE',     sub:'Rejoue',        weight:2,   color:'#58B7F2' },
-  { id:'raid',     label:'RAFLE',       sub:'Rachète-leur',  weight:1,   color:'#C63C75' },
-  { id:'plus300',  label:'+300 $',      sub:'Correct',       weight:2,   color:'#8AD21F' },
-  { id:'jail',     label:'PRISON',      sub:'3 tours',       weight:1,   color:'#3A3D45' },
-  { id:'triple',   label:'LOYER ×3',    sub:'Prochain loyer', weight:1.5, color:'#F28C22' },
-  { id:'fire',     label:'LIQUIDATION', sub:'Vente à 50 %',  weight:1,   color:'#A86429' },
-  { id:'teleport', label:'TÉLÉPORT',    sub:'Case surprise', weight:1.5, color:'#7446C4' },
-  { id:'swap',     label:'ÉCHANGE',     sub:'Forcé',         weight:1,   color:'#2F9B78' },
-  { id:'nothing',  label:'RIEN',        sub:'Littéralement', weight:1,   color:'#9AA4A8' },
+  { id:'jackpot',  label:'JACKPOT',     sub:'+1 000 $',      weight:1,   color:'#D7A23A' },
+  { id:'minus500', label:'−500 $',      sub:'Aïe',           weight:2,   color:'#B23A2E' },
+  { id:'reroll',   label:'RELANCE',     sub:'Rejoue',        weight:2,   color:'#3F87B8' },
+  { id:'raid',     label:'RAFLE',       sub:'Rachète-leur',  weight:1,   color:'#C4426F' },
+  { id:'plus300',  label:'+300 $',      sub:'Correct',       weight:2,   color:'#8AAA3C' },
+  { id:'jail',     label:'PRISON',      sub:'3 tours',       weight:1,   color:'#1B2420' },
+  { id:'triple',   label:'LOYER ×3',    sub:'Prochain loyer', weight:1.5, color:'#E8862A' },
+  { id:'fire',     label:'LIQUIDATION', sub:'Vente à 50 %',  weight:1,   color:'#9A5A2B' },
+  { id:'teleport', label:'TÉLÉPORT',    sub:'Case surprise', weight:1.5, color:'#6A48B0' },
+  { id:'swap',     label:'ÉCHANGE',     sub:'Forcé',         weight:1,   color:'#2C7A5C' },
+  { id:'nothing',  label:'RIEN',        sub:'Littéralement', weight:1,   color:'#A39D8C' },
 ];
 export const WHEEL_TOTAL = WHEEL.reduce((s, w) => s + w.weight, 0);
 

@@ -13,7 +13,7 @@ import {
 import { DILEMMAS, WHEEL, CARDS, wheelGeometry, dilemmaOptions, raidTargets } from './chance.js';
 import { S } from './net.js';
 import {
-  dieFacesHTML, setDieValue, animateDiceRoll, syncPawns, resetPawns, floatDelta, coinBurst, pulse, buildPop,
+  dieFacesHTML, setDieValue, animateDiceRoll, syncPawns, resetPawns, floatDelta, coinBurst, pulse, buildPop, rollNumber,
   wheelSVG, spinWheel, rainCoins, DIE_MS, WHEEL_MS,
 } from './fx.js';
 import { HOST_NAME } from './presenter.js';
@@ -37,10 +37,12 @@ const seen = { cash:new Map(), owned:null, built:null, hostKey:null, histKey:nul
 let countdown = null;
 let bubbleTimer = null;
 let overlayTimer = null;
+let chatStick = true;   // le chat suit les nouveaux messages tant qu'on ne remonte pas dans l'historique
 
 export function resetVisualState() {
   resetPawns();
   Object.assign(seen, { cash:new Map(), owned:null, built:null, hostKey:null, histKey:null, chatCount:0, overlay:null, auctionDismissed:null, first:true });
+  chatStick = true;
   closeOverlay();
   const v = $id('victory'); if (v) v.classList.remove('active');
   S.lastRollSeen = null;
@@ -59,7 +61,7 @@ const ICONS = {
 };
 const iconFor = sq => ICONS[sq.type === 'airport' ? 'airport' : sq.id === 'boat' ? 'boat' : sq.type] || '';
 
-export const HOST_AVATAR = '<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="31" fill="#2B2D34"/><circle cx="32" cy="32" r="27" fill="#F6C62F"/><rect x="24" y="12" width="16" height="25" rx="8" fill="#1D242C"/><path d="M27 18h10M27 23h10M27 28h10" stroke="#5B6470" stroke-width="2"/><path d="M19 30a13 13 0 0 0 26 0" fill="none" stroke="#1D242C" stroke-width="3.5" stroke-linecap="round"/><path d="M32 43v8M24 52h16" stroke="#1D242C" stroke-width="3.5" stroke-linecap="round"/></svg>';
+export const HOST_AVATAR = '<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="31" fill="#1B2420"/><circle cx="32" cy="32" r="27.5" fill="#D7A23A"/><circle cx="32" cy="32" r="24.5" fill="none" stroke="#1B2420" stroke-width="1" stroke-dasharray="2 2.4" opacity=".55"/><rect x="24" y="12" width="16" height="25" rx="8" fill="#1B2420"/><path d="M27 18h10M27 23h10M27 28h10" stroke="#B8893A" stroke-width="2"/><path d="M19 30a13 13 0 0 0 26 0" fill="none" stroke="#1B2420" stroke-width="3.5" stroke-linecap="round"/><path d="M32 43v8M24 52h16" stroke="#1B2420" stroke-width="3.5" stroke-linecap="round"/></svg>';
 
 // ================================================================ plateau
 export function initBoard() {
@@ -414,13 +416,14 @@ function renderChat(game) {
   const list = $id('chat-list');
   const messages = Object.entries(game.chat || {}).map(([k, v]) => ({ k, ...v })).sort((a, b) => a.ts - b.ts);
   if (list) {
-    const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
+    watchChat(list);
     list.innerHTML = messages.slice(-50).map(m => {
-      if (m.kind === 'host') return `<div class="chat-item host lvl-${Number(m.lvl) || 0}" data-key="${esc(m.k)}"><span class="chat-av">${HOST_AVATAR}</span><div><strong>${HOST_NAME}${sourceBadge(m)}</strong><span>${esc(m.text)}</span></div></div>`;
+      if (m.kind === 'host') return `<div class="chat-item host lvl-${Number(m.lvl) || 0}" data-key="${esc(m.k)}"><strong><span class="chat-av">${HOST_AVATAR}</span>${HOST_NAME}${sourceBadge(m)}</strong><span>${esc(hostText(m))}</span></div>`;
       const p = playerById(game, m.pid) || game.players.find(x => x.name === m.author);
-      return `<div class="chat-item${m.pid === S.playerId ? ' me' : ''}" style="--pc:${esc(p ? p.color : '#888')}"><strong>${esc(m.author)}</strong><span>${esc(m.text)}</span></div>`;
+      const me = m.pid === S.playerId;
+      return `<div class="chat-item${me ? ' me' : ''}" style="--pc:${esc(p ? p.color : '#888')}">${me ? '' : `<strong>${esc(m.author)}</strong>`}<span>${esc(m.text)}</span></div>`;
     }).join('') || '<p class="muted small">Aucun message. Provoque quelqu’un, le présentateur prend des notes.</p>';
-    if (nearBottom || seen.first) list.scrollTop = list.scrollHeight;
+    if (chatStick || seen.first) list.scrollTop = list.scrollHeight;
   }
   const last = messages[messages.length - 1];
   const lastEl = $id('ref-chat-last'), countEl = $id('ref-chat-count');
@@ -434,7 +437,7 @@ function renderChat(game) {
   const host = [...messages].reverse().find(m => m.kind === 'host');
   const line = $id('host-line'), status = $id('host-status');
   if (host) {
-    if (line) line.textContent = host.text;
+    if (line) line.textContent = 'Commente les gros coups. Interpelle-le avec @host.';
     if (status) { status.textContent = sourceLabel(host); status.classList.toggle('ai', sourceOf(host) !== 'local'); status.dataset.provider = sourceOf(host); }
     const sig = host.k + '|' + host.text;
     if (sig !== seen.hostKey) {
@@ -444,6 +447,9 @@ function renderChat(game) {
     }
   } else if (line) line.textContent = 'Le présentateur s’échauffe. Il commente les gros coups et répond quand on l’interpelle (@host).';
 }
+
+// Le modele imite parfois les pseudos du chat : pas de « @Alice » en tete de replique.
+const hostText = m => String(m.text || '').replace(/^(@\S+[\s,:]*)+/, '');
 
 // Qui a parle : LOCAL, GEMINI ou OPENROUTER. Rien d'autre ne peut s'afficher.
 const PROVIDERS = { gemini:'GEMINI', openrouter:'OPENROUTER' };
@@ -456,10 +462,21 @@ function sourceBadge(m) {
   return ` <span class="src-badge src-${p}" title="${m.src === 'ai' && m.model ? esc(m.model) : 'Réplique locale, sans IA'}">${sourceLabel(m)}</span>`;
 }
 
+// Le chat reste colle en bas : a l'ouverture du tiroir (liste masquee puis affichee),
+// au redimensionnement, et a chaque message, sauf si le joueur relit l'historique.
+function watchChat(list) {
+  if (list.dataset.watched) return;
+  list.dataset.watched = '1';
+  list.addEventListener('scroll', () => {
+    if (list.clientHeight) chatStick = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
+  }, { passive: true });
+  if (window.ResizeObserver) new ResizeObserver(() => { if (chatStick) list.scrollTop = list.scrollHeight; }).observe(list);
+}
+
 function showBubble(host) {
   const bubble = $id('host-bubble');
   if (!bubble) return;
-  bubble.innerHTML = `<span class="hb-av">${HOST_AVATAR}</span><span class="hb-text">${esc(host.text)}${sourceBadge(host)}</span>`;
+  bubble.innerHTML = `<span class="hb-av">${HOST_AVATAR}</span><span class="hb-text">${esc(hostText(host))}${sourceBadge(host)}</span>`;
   bubble.hidden = false;
   bubble.classList.toggle('loud', (Number(host.lvl) || 0) >= 3);
   pulse(bubble, 'pop', 600);
@@ -538,7 +555,7 @@ function showWheelResult(seg) {
   if (!res) return;
   const svg = res.parentElement.querySelector('.wheel-svg');
   if (svg) svg.dataset.spun = '1';
-  res.innerHTML = `<b style="--seg:${seg.color}">${esc(seg.label)}</b> <span>${esc(seg.sub)}</span>`;
+  res.innerHTML = `<b style="--seg:${seg.color};color:${readableInk(seg.color)}">${esc(seg.label)}</b> <span>${esc(seg.sub)}</span>`;
   pulse(res, 'pop', 600);
   const hit = res.parentElement.querySelector(`.wseg[data-id="${seg.id}"]`);
   if (hit) hit.classList.add('hit');
@@ -690,6 +707,7 @@ function feedback(game) {
     const d = p.cash - before;
     const card = visibleCard(p.id);
     floatDelta(card, d);
+    if (card) rollNumber(card.querySelector('.pcash, .pcopy small'), before, p.cash, fmt);
     if (card) pulse(card, d > 0 ? 'gain' : 'loss', 700);
     (d < 0 ? losers : gainers).push({ p, d, card });
   });
@@ -700,7 +718,7 @@ function feedback(game) {
     Object.keys(owned).forEach(k => {
       if (seen.owned[k] === owned[k]) return;
       const node = document.querySelector(`.square[data-index="${k}"]`);
-      pulse(node, 'just-bought', 900);
+      pulse(node, 'just-bought', 1500);
       const card = visibleCard(owned[k]);
       if (card && !losers.length) coinBurst(card, node, 4);
     });
@@ -746,5 +764,9 @@ export function toggleDrawer(force) {
   const open = force === undefined ? !drawer.classList.contains('open') : !!force;
   drawer.classList.toggle('open', open);
   document.body.classList.toggle('drawer-open', open);
-  if (open) { const dot = $id('chat-dot'); if (dot) dot.hidden = true; }
+  if (open) {
+    const dot = $id('chat-dot'); if (dot) dot.hidden = true;
+    const list = $id('chat-list');
+    if (list) { chatStick = true; requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; }); }
+  }
 }

@@ -43,8 +43,8 @@ export const START_INDEX = 21;
 // est un Event) : le bleu clair se joue donc a deux, Madrid + Cairo.
 // Une couleur par groupe : c'est elle qui dit au joueur ce qui se collectionne.
 export const GROUP_COLORS = {
-  Pink:'#C63C75', Orange:'#F28C22', DarkGreen:'#2F9B78', Brown:'#A86429', Red:'#F1564A',
-  Purple:'#7446C4', LightBlue:'#58B7F2', Olive:'#86BF45', Public:'#9AA4A8'
+  Pink:'#C4426F', Orange:'#E8862A', DarkGreen:'#2C7A5C', Brown:'#9A5A2B', Red:'#C63A2F',
+  Purple:'#6A48B0', LightBlue:'#5BA8D4', Olive:'#8AAA3C', Public:'#A39D8C'
 };
 export const GROUP_LABELS = {
   Pink:'Rose', Orange:'Orange', DarkGreen:'Vert foncé', Brown:'Brun', Red:'Rouge',
@@ -53,8 +53,8 @@ export const GROUP_LABELS = {
 
 // Cases speciales seulement : les villes prennent la couleur de leur groupe.
 export const SQUARE_COLORS = {
-  start:'#D5D7D8', airport:'#F5C94A', auction:'#F6C62F', jail:'#C7CDD0', railway:'#9AA4A8',
-  chance:'#B8BDC1', boat:'#9BA6AA', 'event-left':'#F5C63B', 'event-right':'#F5C63B'
+  start:'#D9CCAE', airport:'#E2B13C', auction:'#D7A23A', jail:'#CFC3A6', railway:'#A39D8C',
+  chance:'#C9BC9C', boat:'#A39D8C', 'event-left':'#E2B13C', 'event-right':'#E2B13C'
 };
 
 export const isOwnable = sq => !!sq && (sq.type === 'property' || sq.type === 'station' || sq.type === 'airport');
@@ -72,7 +72,7 @@ export function getSquareColor(square) {
 }
 
 // Encre du prix : celle qui offre le meilleur contraste WCAG reel sur le bandeau.
-export const INK_DARK = '#1D242C', INK_LIGHT = '#FFFFFF';
+export const INK_DARK = '#1B2420', INK_LIGHT = '#FFFFFF';
 
 export function relativeLuminance(color) {
   const channels = [1, 3, 5].map(i => {
@@ -94,7 +94,7 @@ export function readableInk(color) {
 
 export function squareLabelText(square) {
   return ({ start:'DÉPART', jail:'PRISON', event:'ÉVÈNEMENT', chance:'CHANCE', auction:'ÉCHANGE',
-            station:'TRANSPORT', airport:'TRANSPORT' })[square.type] || square.type.toUpperCase();
+            station:'TRANSPORT', airport:'TRANSPORT', property:'TITRE DE PROPRIÉTÉ' })[square.type] || square.type.toUpperCase();
 }
 
 // Grille 8x8 : haut gauche->droite, droite haut->bas, bas droite->gauche, gauche bas->haut.
