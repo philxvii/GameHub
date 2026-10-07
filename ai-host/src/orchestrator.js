@@ -1,4 +1,4 @@
-// Chef d'orchestre : Gemini d'abord, puis OpenRouter. 100 % gratuit.
+// Chef d'orchestre : Gemini d'abord, puis OpenRouter, puis Workers AI. 100 % gratuit.
 // Un fournisseur sans cle est saute. Echec, delai depasse, quota ou reponse qui
 // n'est pas une vraie replique -> fournisseur suivant. Tous en echec -> erreur :
 // le jeu garde alors sa replique locale (dernier maillon de la chaine).
@@ -6,11 +6,13 @@
 import { PROVIDERS, ProviderError } from './providers.js';
 import { cleanReply, looksLikeLine } from './prompt.js';
 
-export const ORDER = ['gemini', 'openrouter'];
+export const ORDER = ['gemini', 'openrouter', 'workersai'];
 // Les modeles gratuits d'OpenRouter montent a 10-18 s aux heures chargees. La replique
 // locale est deja affichee : une reponse tardive la remplace simplement sur place.
 export const TOTAL_BUDGET_MS = 20000;     // le jeu abandonne a 22 s
-export const PROVIDER_TIMEOUT_MS = 9000;  // un fournisseur lent ne mange pas tout le budget
+// 7 s par fournisseur (sauf le dernier) : meme si Gemini et OpenRouter calent tous les
+// deux, Workers AI garde ~6 s, assez pour une replique courte.
+export const PROVIDER_TIMEOUT_MS = 7000;
 
 export function orderFrom() {
   return ORDER;

@@ -390,9 +390,9 @@ export async function requestAI(payload) {
     // Defense en profondeur : une etiquette de classifieur ne remplace jamais une vraie replique.
     if (!text || text.length < 25 || /^(user|assistant)?\s*(safety|safe|unsafe)/i.test(text)) { aiFailed(); return null; }
     failStreak = 0;
-    // Seuls Gemini et OpenRouter existent : toute autre valeur est refusee (replique locale).
+    // Seuls Gemini, OpenRouter et Workers AI existent : toute autre valeur est refusee (replique locale).
     const provider = String((data && data.provider) || '').toLowerCase();
-    if (provider !== 'gemini' && provider !== 'openrouter') { aiFailed(); return null; }
+    if (!['gemini', 'openrouter', 'workersai'].includes(provider)) { aiFailed(); return null; }
     return { text, provider, model: String((data && data.model) || '').slice(0, 80) };
   } catch (e) {
     aiFailed();
