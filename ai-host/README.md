@@ -36,7 +36,9 @@ banqueroll.html ──(contexte de jeu)──▶ /host ──▶ Gemini (offre g
 3. Si les deux échouent, le Worker répond 502 et le jeu garde sa **réplique locale**,
    déjà affichée de toute façon (rien n'attend l'IA).
 
-Modèles (dans `wrangler.toml`) : `GEMINI_MODEL` (`gemini-3.5-flash-lite`, 1 à 2 s, réflexion au niveau « low ») et
+Modèles (dans `wrangler.toml`) : `GEMINI_MODEL` liste un ou plusieurs modèles essayés à la
+suite (`gemini-3.5-flash-lite`, ~1 s, puis `gemini-3.1-flash-lite` s'il cale plus de 5 s ;
+réflexion au niveau « low ») et
 `OPENROUTER_MODEL` (Gemma 31B, dots, Nemotron Lightning : 3 modèles `:free`, bascule automatique).
 Le routeur `openrouter/free` est volontairement écarté : il tirait aussi des
 classifieurs de sécurité et des modèles de code.
@@ -67,10 +69,10 @@ curl https://banqueroll-host.banqueroll-host.workers.dev/health
 
 Le jeu économise de lui-même :
 
-- l'IA n'est appelée que pour les gros évènements (intensité ≥ 3) et quand on interpelle `@host` ;
-- au plus un appel toutes les 12 s pour les évènements, toutes les 6 s pour le chat ;
-- 40 appels au maximum par partie ;
-- après trois échecs de suite, une pause de 2 minutes.
+- l'IA est appelée pour les évènements d'intensité ≥ 2 et quand on interpelle `@host` ;
+- au plus un appel toutes les 8 s pour les évènements, toutes les 6 s pour le chat ;
+- 150 appels au maximum par partie ;
+- après trois échecs de suite, une pause de 45 s.
 
 ## Confidentialité
 

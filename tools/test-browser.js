@@ -138,7 +138,7 @@ async function suiteGameplay(A, B) {
   // La case d'arrivee (24) est un EVENT : sa carte doit s'afficher chez l'autre joueur.
   const other = pageOf(cur) === A ? B : A;
   const evCard = await until(other, `document.querySelector('#stage-overlay .event-card .ev-amount')?.textContent || null`, 4500);
-  await sleep(1500);
+  await sleep(3000);   // la carte peut s'afficher avant la fin du trajet chez l'autre joueur
   const histRoll = (await lastHist(A)).find(t => / lance \d/.test(t)) || '';
   const m = / lance (\d) et avance de (\d)/.exec(histRoll);
   const dieA = await A.eval(`return document.getElementById('die').dataset.value;`);
@@ -342,9 +342,9 @@ async function suitePresenter(A, B, ctx) {
   await sleep(1500);
   await setTurn(ib, { position: 4 }, { turnDeadline: Date.now() + 14500 });
   const p12 = await until(A, `(()=>{const h=Object.values(__bq.S.game.chat||{}).filter(m=>m.kind==='host'&&m.ev==='pressure12'); return h.length ? h[h.length-1].text : null;})()`, 8000);
-  const p5 = await until(A, `(()=>{const h=Object.values(__bq.S.game.chat||{}).filter(m=>m.kind==='host'&&m.ev==='pressure5'); return h.length ? h[h.length-1].text : null;})()`, 10000);
-  const afk = await until(A, `(()=>{const h=Object.values(__bq.S.game.chat||{}).filter(m=>m.kind==='host'&&m.ev==='afk'); return h.length ? h[h.length-1].text : null;})()`, 12000);
-  check('Chrono : pression à 12 s puis à 5 s', !!p12 && !!p5, `${p12} / ${p5}`);
+  const afk = await until(A, `(()=>{const h=Object.values(__bq.S.game.chat||{}).filter(m=>m.kind==='host'&&m.ev==='afk'); return h.length ? h[h.length-1].text : null;})()`, 22000);   // expiration : delai + 1,5 s de grace + tick de l'hote
+  const nPressure = await A.eval(`return Object.values(__bq.S.game.chat||{}).filter(m=>m.kind==='host'&&/^pressure/.test(m.ev)).length;`);
+  check('Chrono : une seule pression par tour (12 s), sans spam', !!p12 && nPressure === 1, `${p12} | ${nPressure} message(s)`);
   check('Joueur AFK : tour passé, le présentateur enfonce le clou', !!afk, afk);
   await A.eval(`window.__rig=[]; return 1;`);
 }
