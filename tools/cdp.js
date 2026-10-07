@@ -99,7 +99,9 @@ class Browser {
   }
 
   async newPage(url, label) {
-    const { targetId } = await this.send('Target.createTarget', { url: 'about:blank' });
+    // Une FENETRE par joueur : sans fenetre, Chrome ne produit d'images que pour l'onglet
+    // au premier plan, et les animations de l'autre joueur ne progressaient pas.
+    const { targetId } = await this.send('Target.createTarget', { url: 'about:blank', newWindow: true });
     const { sessionId } = await this.send('Target.attachToTarget', { targetId, flatten: true });
     const page = new Page(this, sessionId, targetId, label);
     this.pages.set(sessionId, page);

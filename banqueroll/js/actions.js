@@ -473,7 +473,7 @@ export async function placeBid(amount) {
   if (player.cash < bid) { toast('Pas assez de liquidités.'); return; }
   if (bid < game.auction.nextBid) { toast('Offre trop faible.'); return; }
   await commit(game.code, { auction: { ...game.auction, highestBid: bid, highestBidder: S.playerId, nextBid: bid + 10 }, updatedAt: now() });
-  pushHistory(game.code, `${player.name} enchérit ${bid} $.`, { t:'bid', p: S.playerId, amt: bid });
+  pushHistory(game.code, `${player.name} enchérit ${bid} $.`, { t:'bid', p: S.playerId, amt: bid, pos: game.auction.position });
 }
 
 // ================================================================ echange libre

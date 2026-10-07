@@ -19,23 +19,27 @@ modules livrés** (`banqueroll/js/*.js`, `ai-host/src/prompt.js`) et vérifie :
 - loyers, construction (2/3 refusé, 3/3 autorisé, niveau 4 refusé) ;
 - relance sur 6, prison, faillite, victoire ;
 - 1 000 tirages de Chance ;
-- répliques du présentateur ;
-- bornage du Worker IA et absence de secret dans le frontend.
+- répliques du présentateur (28 types d'évènements) ;
+- bornage du Worker IA, orchestrateur (ordre, bascule, clés manquantes, tous en échec)
+  et absence de secret ou d'appel direct à Gemini / OpenRouter dans le frontend.
 
 ```bash
 python -m http.server 4173     # depuis la racine du dépôt
 node tools/test-browser.js
 ```
 
-41 contrôles de bout en bout : Chrome réel, Firebase réel, deux joueurs.
+48 contrôles de bout en bout : Chrome réel, Firebase réel, deux joueurs dans deux fenêtres.
 
-- Création, join, démarrage (ordre tiré, bonus de retard).
-- Lancer : le dé affiché égale le moteur **sur les deux clients** ; le pion est posé sur la bonne case.
+- Création, join, démarrage (1 000 $, ordre tiré, bonus de retard).
+- Lancer : le dé affiché égale le moteur **sur les deux clients** ; le pion parcourt
+  **chaque case** (21 > 22 > 23 > 24) chez les deux joueurs ; carte de la case EVENT.
 - 6 → relance ; achat ; groupe 2/3 puis 3/3 ; bâtiments 1, 2, 3 ; niveau 4 refusé ; loyer amélioré.
 - Échange, enchère, prison et caution, case Auction.
 - Carte, dilemme, roue : même segment chez tous.
-- Présentateur : réponse à `@host`, réaction à un évènement, retour d'une pique du chat.
-- IA : réponse, contexte reçu, synchronisation, panne → réplique locale et jeu qui continue.
+- Présentateur : réponse à `@host`, réaction à un évènement, retour d'une pique du chat,
+  enchère absurde, pression du chrono (12 s, 5 s), joueur AFK.
+- IA : Gemini, puis bascule vers OpenRouter (panne, quota, délai dépassé), les deux en
+  panne → LOCAL ; badge de source vu par l'autre joueur ; contexte reçu ; le jeu continue.
 - Faillite, victoire, nouvelle partie.
 - Responsive sur 6 tailles.
 - Console propre.
@@ -55,9 +59,10 @@ Variables d'environnement : `BQ_URL` (défaut `http://localhost:4173/banqueroll.
 node tools/ai-mock.js
 ```
 
-Exécute le **vrai** Worker (`ai-host/src/worker.js`) dans Node avec un OpenRouter
-simulé. `POST /__mode {"mode":"ok"|"fail"|"slow"}` change le comportement de
-l'amont, `GET /__last` renvoie le dernier contexte reçu par le « modèle ». La suite
+Exécute le **vrai** Worker (`ai-host/src/worker.js`) dans Node avec Gemini et
+OpenRouter simulés. `POST /__mode {"mode":"ok"}` ou `{"gemini":"slow","openrouter":"ok"}`
+(modes : ok, fail, slow, quota, junk), `GET /__last` renvoie le dernier contexte reçu
+et les appels. La suite
 navigateur le lance et l'arrête toute seule.
 
 ## Ce que ces tests garantissent
@@ -73,7 +78,8 @@ peut différer de `départ + dé`, parce qu'une carte Chance le redéplace aprè
 l'atterrissage. Compare au nombre de cases **annoncé par le moteur** dans
 l'historique, jamais à une différence de positions.
 
-Les deux joueurs partagent un profil Chrome, donc `localStorage` : ne recharge
+Chaque joueur a sa fenêtre (`newWindow`) : sans fenêtre, Chrome ne dessine que
+l'onglet au premier plan. Les deux partagent un profil, donc `localStorage` : ne recharge
 jamais une page en cours de suite (l'autre joueur serait repris). Change l'URL avec
 `history.replaceState` si besoin.
 

@@ -7,7 +7,7 @@
 //   est remplacee sur place. Sinon la locale reste. Rien n'attend l'IA.
 // - Il n'ecrit QUE dans chat/ et hostMem/ : il ne touche jamais au gameplay.
 
-import { BOARD, GROUP_LABELS, GROUPS } from './board.js';
+import { BOARD, GROUP_LABELS, GROUPS, de } from './board.js';
 import { netWorth, ranking, ownedBy, ownsFullGroup, rentFor, playerById, currentPlayer } from './rules.js';
 import { pickLine } from './lines.js';
 import { S, pushChat, patchChat, commit } from './net.js';
@@ -18,15 +18,20 @@ export const HOST_NAME = 'Bankroll Host';
 // Ce n'est PAS un secret : la cle OpenRouter reste dans le Worker.
 export const AI_ENDPOINT = 'https://banqueroll-host.banqueroll-host.workers.dev/host';
 
-const AI_TIMEOUT_MS = 16000;           // le Worker abandonne l'amont a 14 s
+const AI_TIMEOUT_MS = 22000;           // le Worker abandonne l'amont a 20 s
 const AI_MAX_CALLS = 40;              // par partie : l'offre gratuite plafonne a 50/jour
 const AI_GAP_EVENT_MS = 12000;
 const AI_GAP_CHAT_MS = 6000;
 const BATCH_MS = 1400;
-const COOLDOWN_MS = 7000;
-const SPEAK_CHANCE = [0, 0.25, 0.7, 1, 1];
+// Tres present, mais le jeu respire : 4,5 s minimum entre deux prises de parole
+// (sauf gros evenement), et les petits evenements sont parfois laisses en silence.
+const COOLDOWN_MS = 4500;
+const SPEAK_CHANCE = [0.15, 0.55, 0.9, 1, 1, 1];   // par intensite 0..5
 const MENTION = /(^|[^\p{L}])(host|pr[ée]sentateur|animateur|bankroll|banqueroll)([^\p{L}]|$)|@host|@bot|🎤/iu;
-const TAUNT = /(nul|naze|nulle|vengeance|revanche|attends?|tu vas voir|jamais|facile|gagn|perd|pleur|ruin|trop fort|ez\b|gg\b|😂|🤣|lol|mdr|ptdr|cheh|loser|rattrap)/i;
+const TAUNT = /(nul|naze|nulle|vengeance|revanche|attends?|tu vas voir|jamais|facile|gagn|perd|pleur|ruin|trop fort|ez\b|gg\b|😂|🤣|lol|mdr|ptdr|cheh|loser|rattrap|remontada)/i;
+// Vantardise : ce qu'un joueur annonce pour lui-meme (ressorti quand il s'ecroule).
+const BOAST = /(je vais gagner|je gagne|facile|easy|ez\b|trop fort|remontada|revanche|vengeance|tu vas voir|attends|vous allez pleurer|personne me|je suis le meilleur|j'?ai gagn)/i;
+const SHUT_UP = /(ferme[- ]?la|tais[- ]?toi|chut|ta gueule|la ferme|stop)/i;
 
 let code = null;
 let seenHist = null;
@@ -54,6 +59,7 @@ export function aiEndpoint() {
 function reset(newCode) {
   code = newCode; seenHist = null; seenChat = null; queue = []; mem = null; prevLeader = null;
   clearTimeout(batchTimer); clearTimeout(memTimer);
+  lastTurnKey = null; pressure = { deadline: null, s12: false, s5: false };
 }
 
 function normalizeMem(m) {
@@ -98,6 +104,7 @@ export function observe(game) {
     seenChat.add(c.key);
     if (c.kind !== 'host') ingestChat(game, c);
   });
+  watchTurn(game);
   if (game.phase === 'playing' && (game.round || 1) >= 2) {
     const leader = (ranking(game)[0] || {}).id || null;
     if (leader && prevLeader && leader !== prevLeader) enqueue({ type:'leader', intensity:2, ctx: baseCtx(game, { p: leader }), text:`${nameOf(game, leader)} prend la tête.` });
@@ -105,10 +112,52 @@ export function observe(game) {
   }
 }
 
+// ================================================================ tour et chrono
+// Nouveau tour : une pique de temps en temps. Chrono : pression a 12 s puis a 5 s
+// quand le joueur n'a encore rien fait. Repliques locales seulement (le timing compte).
+let lastTurnKey = null;
+let pressure = { deadline: null, s12: false, s5: false };
+let pressureTimer = null;
+
+function watchTurn(game) {
+  if (game.phase !== 'playing') return;
+  const cur = currentPlayer(game);
+  if (!cur) return;
+  const key = `${game.round || 1}:${game.turnIndex}`;
+  if (lastTurnKey === null) { lastTurnKey = key; return; }
+  if (key !== lastTurnKey) {
+    lastTurnKey = key;
+    // Pas de pique de debut de tour quand le tour precedent vient deja de faire parler.
+    if (Date.now() - lastSpeak > 2500 && Math.random() < 0.45) {
+      const ctx = baseCtx(game, { p: cur.id });
+      ctx.intensity = 1;
+      enqueue({ type:'turn', intensity:1, ctx, text:`Tour ${de(cur.name)}.` });
+    }
+  }
+  if (!pressureTimer) pressureTimer = setInterval(checkPressure, 1000);
+}
+
+function checkPressure() {
+  const game = S.game;
+  if (!S.isHost || !game || game.code !== code || game.phase !== 'playing') return;
+  if (!game.turnDeadline || (game.turnTimer || 0) < 20) return;
+  if ((game.auction && game.auction.status === 'open') || (game.swap && game.swap.status === 'open') || (game.event && game.event.status === 'spin')) return;
+  const cur = currentPlayer(game);
+  if (!cur || cur.bankrupt) return;
+  if (pressure.deadline !== game.turnDeadline) pressure = { deadline: game.turnDeadline, s12: false, s5: false };
+  const idle = game.turnRolled !== cur.id || (game.currentAction && game.currentAction.playerId === cur.id);
+  if (!idle) return;
+  const left = Math.ceil((game.turnDeadline - Date.now()) / 1000);
+  const ctx = { ...baseCtx(game, { p: cur.id }), left, intensity: 2 };
+  if (left <= 12 && left > 6 && !pressure.s12) { pressure.s12 = true; speak({ type:'pressure12', intensity:2, ctx, local:true }); }
+  else if (left <= 5 && left >= 2 && !pressure.s5) { pressure.s5 = true; speak({ type:'pressure5', intensity:2, ctx, local:true }); }
+}
+
 // ================================================================ evenements
 const TYPE_OF = {
   rent:'rent', buy:'buy', build:'build', sell:'sell', jail:'jail', bail:'bail', steal:'steal', seize:'seize',
   swap:'swap', auction:'auction', trade:'trade', bankrupt:'bankrupt', win:'win', afk:'afk', begin:'begin', event:'event',
+  bid:'bid', six:'six',
 };
 
 function lineType(meta) {
@@ -116,6 +165,7 @@ function lineType(meta) {
     if (meta.kind === 'card') return meta.key === 'jail' ? 'jail' : 'card';
     return meta.kind;            // dilemma | wheel
   }
+  if (meta.t === 'roll') return meta.v === 1 ? 'roll1' : null;
   return TYPE_OF[meta.t] || null;
 }
 
@@ -126,6 +176,12 @@ function quoteFor(game, pid, minRoundsAgo = 0) {
   if (!pickQ) return null;
   const ago = round - (pickQ.r || round);
   return { text: pickQ.text, who: pickQ.who, ago: ago >= 2 ? ` il y a ${ago} manches` : ago === 1 ? ' à la manche précédente' : '' };
+}
+
+// Derniere vantardise d'un joueur : la chute n'en sera que plus belle.
+function boastOf(pid) {
+  const found = [...mem.quotes].reverse().find(x => x.pid === pid && x.boast);
+  return found ? { who: found.who, text: found.text } : null;
 }
 
 // Citation d'un AUTRE joueur qui parlait de `pid` (pour les retournements).
@@ -151,6 +207,8 @@ function baseCtx(game, meta) {
     quote: meta.p ? quoteFor(game, meta.p, 1) || quoteFor(game, meta.p) : null,
     karma: meta.p && meta.o ? (() => { const q = quoteFor(game, meta.p); return q && q.text.toLowerCase().includes(nameOf(game, meta.o).toLowerCase()) ? q : null; })() : null,
     mock: meta.p ? mockOf(game, meta.p) : null,
+    boast: meta.p ? boastOf(meta.p) : null,
+    price: sq && sq.price ? sq.price : 0,
     paidTo: meta.p && meta.o ? ((mem.pairs[`${meta.p}_${meta.o}`] || {}).n || 0) : 0,
     jailCount: meta.p ? stat(meta.p).jail : 0, wheelLosses: meta.p ? stat(meta.p).wheelLoss : 0,
     afkCount: meta.p ? stat(meta.p).afk : 0, props: meta.p ? ownedBy(game, meta.p).length : 0,
@@ -165,16 +223,20 @@ function scoreEvent(type, meta, c) {
       let s = c.amt >= 400 || c.amt / Math.max(c.before, 1) >= 0.6 ? 3 : c.amt >= 200 || c.amt / Math.max(c.before, 1) >= 0.35 ? 2 : 1;
       if (c.cash < 0 || c.boost) s++;
       if (c.paidTo >= 3) s = Math.max(s, 2);
-      return Math.min(4, s);
+      if (c.boast && s >= 2) s++;                       // la vantardise se paie
+      return Math.min(5, s);
     }
     case 'buy': return c.completes ? 3 : c.cash < 100 ? 2 : c.amt >= 400 || c.props >= 6 ? 1 : 0;
+    case 'jail': return c.jailCount >= 2 ? 3 : c.boast ? 3 : 2;
     case 'build': return c.lvl === 3 ? 2 : 1;
     case 'sell': return c.before < 0 ? 2 : 1;
-    case 'jail': return c.jailCount >= 2 ? 3 : 2;
     case 'bail': return 1;
     case 'card': return c.amt >= 150 ? 2 : 1;
     case 'dilemma': return meta.key === 'double' && meta.choice === 'A' ? 3 : meta.key === 'loan' && meta.choice === 'A' ? 3 : meta.choice === 'A' ? 2 : 1;
-    case 'wheel': return ({ jackpot:4, minus500:3, jail:3, fire:3, swap:3, nothing:2, triple:2, raid:2 })[meta.key] || 1;
+    case 'wheel': return meta.key === 'jackpot' && c.mock ? 5 : ({ jackpot:4, minus500:3, jail:3, fire:3, swap:3, nothing:2, triple:2, raid:2 })[meta.key] || 1;
+    case 'bid': return c.price && c.amt >= c.price * 1.4 ? 3 : 0;
+    case 'roll1': return 1;
+    case 'six': return 1;
     case 'steal': case 'seize': return 3;
     case 'swap': case 'trade': return 2;
     case 'auction': {
@@ -182,8 +244,10 @@ function scoreEvent(type, meta, c) {
       c.over = meta.p && c.amt >= price * 1.15; c.cheap = meta.p && c.amt <= price * 0.6;
       return !meta.p ? 0 : c.over ? 3 : c.cheap ? 2 : 1;
     }
-    case 'bankrupt': case 'win': return 4;
-    case 'afk': return c.afkCount >= 2 ? 2 : 1;
+    case 'bankrupt': return c.boast ? 5 : 4;            // faillite apres s'etre vante : legendaire
+    case 'win': return c.mock ? 5 : 4;                   // victoire de celui dont on se moquait
+    // Apres la pression du chrono, la chute est obligatoire : on conclut toujours.
+    case 'afk': return pressure.s12 || pressure.s5 ? 3 : c.afkCount >= 2 ? 2 : 1;
     case 'begin': return 3;
     case 'event': return c.amt >= 140 ? 1 : 0;
     default: return 0;
@@ -229,19 +293,24 @@ function ingestChat(game, msg) {
   stat(pid).chat++;
   const mentionsPlayer = game.players.some(p => p.id !== pid && text.toLowerCase().includes(String(p.name).toLowerCase()));
   if (TAUNT.test(text) || mentionsPlayer) {
-    mem.quotes.push({ pid, who: msg.author, text: text.slice(0, 140), r: game.round || 1, ts: msg.ts || Date.now() });
+    mem.quotes.push({ pid, who: msg.author, text: text.slice(0, 140), r: game.round || 1, ts: msg.ts || Date.now(), ...(BOAST.test(text) ? { boast: true } : {}) });   // Firebase refuse undefined
     mem.quotes = mem.quotes.slice(-14);
   }
   saveMemSoon();
   if (game.phase === 'lobby') return;
   const ctx = baseCtx(game, { p: pid });
   ctx.question = /\?\s*$/.test(text);
+  ctx.shutUp = SHUT_UP.test(text);
+  ctx.boastNow = BOAST.test(text);
+  ctx.whyMock = /pourquoi.*(moque|clash|roast|acharn)/i.test(text);
+  const named = game.players.find(p => p.id !== pid && text.toLowerCase().includes(String(p.name).toLowerCase()));
+  ctx.target = named ? named.name : '';
   ctx.paid = stat(pid).rentPaid;
   if (MENTION.test(text)) {
     ctx.intensity = 2;
     return enqueue({ type:'chat', intensity:2, ctx, text, mode:'chat', addressedBy: msg.author, message: text, urgent:true });
   }
-  if (TAUNT.test(text)) enqueue({ type:'taunt', intensity:1, ctx: { ...ctx, intensity:1 }, text, mode:'chat', addressedBy: msg.author, message: text });
+  if (TAUNT.test(text) || ctx.boastNow) enqueue({ type:'taunt', intensity: ctx.boastNow ? 2 : 1, ctx: { ...ctx, intensity:1 }, text, mode:'chat', addressedBy: msg.author, message: text });
 }
 
 // ================================================================ prise de parole
@@ -276,9 +345,9 @@ async function speak(item) {
   mem.used.push(line.id); mem.used = mem.used.slice(-30);
   saveMemSoon();
   const ref = await pushChat(code, { author: HOST_NAME, kind:'host', text: line.text, src:'local', lvl: item.intensity, ev: item.type });
-  if (!aiAllowed(item)) return;
-  const text = await requestAI(aiPayload(item, line.text));
-  if (text && S.game && S.game.code === code) patchChat(code, ref.key, { text, src:'ai' });
+  if (item.local || !aiAllowed(item)) return;
+  const reply = await requestAI(aiPayload(item, line.text));
+  if (reply && S.game && S.game.code === code) patchChat(code, ref.key, { text: reply.text, src:'ai', provider: reply.provider, model: reply.model });
 }
 
 function aiAllowed(item) {
@@ -308,7 +377,10 @@ export async function requestAI(payload) {
     // Defense en profondeur : une etiquette de classifieur ne remplace jamais une vraie replique.
     if (!text || text.length < 25 || /^(user|assistant)?\s*(safety|safe|unsafe)/i.test(text)) { aiFailed(); return null; }
     failStreak = 0;
-    return text;
+    // Seuls Gemini et OpenRouter existent : toute autre valeur est refusee (replique locale).
+    const provider = String((data && data.provider) || '').toLowerCase();
+    if (provider !== 'gemini' && provider !== 'openrouter') { aiFailed(); return null; }
+    return { text, provider, model: String((data && data.model) || '').slice(0, 80) };
   } catch (e) {
     aiFailed();
     return null;
@@ -370,7 +442,7 @@ export function aiPayload(item, localLine) {
     recentEvents: entries(game.history).slice(-8).map(h => h.text),
     chat,
     memory: {
-      quotes: mem.quotes.slice(-6).map(x => ({ who: x.who, text: x.text, roundsAgo: round - (x.r || round) })),
+      quotes: mem.quotes.slice(-6).map(x => ({ who: x.who, text: x.text, roundsAgo: round - (x.r || round), ...(x.boast ? { boast: true } : {}) })),
       gags: gags(game), facts: mem.facts.slice(-8),
     },
     localLine,

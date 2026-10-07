@@ -1,67 +1,90 @@
 # ai-host — proxy du présentateur IA de Banqueroll
 
-Un Cloudflare Worker de 150 lignes entre le jeu et OpenRouter. Il garde la clé,
-fixe le prompt du présentateur et renvoie une réplique. **100 % gratuit** :
-offre gratuite de Cloudflare Workers et modèle gratuit d'OpenRouter.
+Un Cloudflare Worker entre le jeu et les fournisseurs d'IA. Il garde les clés, fixe
+le prompt du présentateur, essaie **Gemini puis OpenRouter** et renvoie une réplique
+normalisée `{ text, provider, model }`. **100 % gratuit.**
 
 ```
-banqueroll.html ──(contexte de jeu)──▶ Worker ──(clé secrète)──▶ OpenRouter (modèle :free)
-       ▲                                  │
-       └────────────── { text } ──────────┘   puis l'hôte l'écrit dans Firebase (chat)
+banqueroll.html ──(contexte de jeu)──▶ /host ──▶ Gemini (offre gratuite AI Studio)
+       ▲                                              │ échec
+       │                                              ▼
+       │                                         OpenRouter (modèles :free)
+       │                                              │ échec
+       └──── { text, provider } ◀─────────────────────┘ → le jeu garde sa réplique LOCALE
 ```
 
-- **Aucun secret dans le frontend.** La clé est un secret du Worker.
+- **Aucun secret dans le frontend.** Les clés sont des secrets du Worker.
 - Le jeu n'envoie que des données (état, chat récent, mémoire). Le prompt vit ici.
 - Le Worker renvoie du texte, rien d'autre : l'IA ne peut pas toucher au jeu.
-- En cas d'erreur, de lenteur (plus de 9 s) ou d'absence de configuration, le jeu
-  garde sa réplique locale. Rien ne bloque.
+- Chaque réplique affiche sa source dans le jeu : `LOCAL`, `GEMINI` ou `OPENROUTER`.
 
-## Déployer (une fois, environ 5 minutes)
+## Fichiers
 
-1. Crée une clé sur <https://openrouter.ai/keys>. Aucun moyen de paiement n'est nécessaire.
-2. Depuis ce dossier :
+| Fichier | Rôle |
+|---|---|
+| `src/worker.js` | routes `/host` et `/health`, CORS, limiteur, journal minimal |
+| `src/orchestrator.js` | ordre fixe Gemini → OpenRouter, budget de 20 s : 9 s pour Gemini, le reste pour OpenRouter |
+| `src/providers.js` | un adaptateur par fournisseur (format de requête et de réponse) |
+| `src/prompt.js` | prompt du présentateur, bornage du contexte, nettoyage et validation des répliques |
 
-   ```bash
-   npx wrangler login
-   npx wrangler secret put OPENROUTER_API_KEY     # colle la clé quand c'est demandé
-   npx wrangler deploy
-   ```
+## Bascule
 
-   Wrangler affiche l'URL, du type `https://banqueroll-host.<compte>.workers.dev`.
-3. Vérifie : `curl https://banqueroll-host.<compte>.workers.dev/health`
-   doit répondre `{"ok":true,"configured":true,...}`.
-4. Dans `banqueroll/js/presenter.js`, renseigne
-   `export const AI_ENDPOINT = 'https://banqueroll-host.<compte>.workers.dev/host';`,
-   puis pousse sur `main`. Cette URL n'est pas un secret.
+1. Gemini d'abord. S'il n'a pas de clé, échoue, dépasse 9 s, renvoie 429 (quota) ou
+   une réponse qui n'est pas une vraie réplique (moins de 25 caractères, étiquette de
+   classifieur…), on passe à OpenRouter.
+2. OpenRouter, avec les mêmes critères.
+3. Si les deux échouent, le Worker répond 502 et le jeu garde sa **réplique locale**,
+   déjà affichée de toute façon (rien n'attend l'IA).
 
-## Quotas (offre gratuite OpenRouter, octobre 2026)
+Modèles (dans `wrangler.toml`) : `GEMINI_MODEL` (`gemini-3.5-flash-lite`, 1 à 2 s, réflexion au niveau « low ») et
+`OPENROUTER_MODEL` (Gemma 31B, dots, Nemotron Lightning : 3 modèles `:free`, bascule automatique).
+Le routeur `openrouter/free` est volontairement écarté : il tirait aussi des
+classifieurs de sécurité et des modèles de code.
 
-- 20 requêtes par minute ;
-- 50 requêtes par jour sans crédit acheté, 1 000 par jour après un achat unique de 10 $ (facultatif).
+## Clés
 
-Le jeu économise ce budget de lui-même :
+Depuis ce dossier, colle chaque clé **quand wrangler la demande**, jamais dans la
+commande elle-même :
 
-- l'IA n'est appelée que pour les gros évènements (intensité ≥ 3) et quand on interpelle le présentateur (`@host`) ;
+```bash
+npx wrangler secret put GEMINI_API_KEY        # gratuit : https://aistudio.google.com/apikey
+npx wrangler secret put OPENROUTER_API_KEY    # gratuit : https://openrouter.ai/keys
+npx wrangler deploy
+```
+
+Vérifie ensuite :
+
+```bash
+curl https://banqueroll-host.banqueroll-host.workers.dev/health
+```
+
+`providers[].configured` indique quels fournisseurs ont une clé.
+
+## Quotas gratuits
+
+- **Gemini AI Studio** : quotas journaliers et par minute selon le modèle (console Google).
+- **OpenRouter** : 20 requêtes par minute, 50 par jour sans crédit acheté.
+
+Le jeu économise de lui-même :
+
+- l'IA n'est appelée que pour les gros évènements (intensité ≥ 3) et quand on interpelle `@host` ;
 - au plus un appel toutes les 12 s pour les évènements, toutes les 6 s pour le chat ;
 - 40 appels au maximum par partie ;
 - après trois échecs de suite, une pause de 2 minutes.
 
-Tout le reste passe par les répliques locales.
+## Confidentialité
 
-`openrouter/free` choisit un modèle gratuit disponible au moment de la requête. Les
-modèles gratuits changent souvent : ce routeur évite de dépendre de l'un d'eux. Pour
-fixer un modèle, change `OPENROUTER_MODEL` dans `wrangler.toml`.
-
-**Confidentialité :** le contexte envoyé contient les prénoms et les messages du chat
-de la partie. Les fournisseurs des modèles gratuits peuvent conserver les requêtes.
-Préviens les joueurs, ou laisse `AI_ENDPOINT` vide.
+Le contexte envoyé contient les prénoms et les messages du chat de la partie. Les
+offres gratuites peuvent conserver les requêtes, voire s'en servir pour améliorer
+leurs modèles. Les journaux du Worker ne contiennent que le fournisseur et la raison
+d'un échec, jamais de clé ni de contenu.
 
 ## Tester sans clé
 
 ```bash
-node tools/ai-mock.js        # exécute ce Worker dans Node, avec un OpenRouter simulé
+node tools/ai-mock.js        # exécute ce Worker dans Node, Gemini et OpenRouter simulés
 ```
 
 Puis ouvre `http://localhost:4173/banqueroll.html?ai=http://localhost:8787/host`.
-La surcharge `?ai=` n'est acceptée que lorsque la page tourne sur localhost.
-`tools/test-browser.js` s'en sert pour tester la réponse, le contexte reçu et la panne.
+`?ai=off` coupe l'IA. Ces surcharges ne sont acceptées que sur localhost.
+`tools/test-browser.js` s'en sert pour tester chaque bascule et le repli local.

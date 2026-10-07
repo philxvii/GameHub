@@ -162,6 +162,22 @@ input::placeholder{color:#6E747E;}
   background:radial-gradient(circle at 34% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 55%), var(--pc,#888);
   box-shadow:0 0 0 2.5px #fff, 0 3px 0 2.5px color-mix(in srgb, var(--pc,#888) 60%, #000), 0 6px 10px rgba(0,0,0,.4);}
 
+/* ============================ Defilement ============================
+   Fines, arrondies, discretes au repos et plus franches au survol. Chrome ignore
+   ::-webkit-scrollbar des que scrollbar-color est pose : Firefox seulement l'a. */
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{border-radius:999px;border:2.5px solid transparent;background-clip:padding-box;
+  background-color:rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);}
+::-webkit-scrollbar-thumb:hover{background-color:rgba(138,210,31,.55);}
+::-webkit-scrollbar-thumb:active{background-color:var(--green);}
+::-webkit-scrollbar-corner{background:transparent;}
+.players-strip::-webkit-scrollbar,.board-center::-webkit-scrollbar{display:none;}
+@supports (-moz-appearance:none){
+  *{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent;}
+  .players-strip,.board-center{scrollbar-width:none;}
+}
+
 /* ============================== Toasts ============================== */
 .toasts{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:120;display:grid;gap:8px;justify-items:center;pointer-events:none;}
 .toast{background:rgba(22,24,30,.96);color:#F8D68D;padding:11px 18px;border-radius:999px;font-size:.86rem;font-weight:700;

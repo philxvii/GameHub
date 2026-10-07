@@ -21,6 +21,17 @@
 .chance-card p{font-size:clamp(11px,1.7cqi,17px);line-height:1.45;color:#3E505A;}
 .chance-card small{display:block;margin-top:1.6cqi;font-size:clamp(8px,1.1cqi,11px);color:#9AA4A8;}
 
+/* Case EVENT : petite carte, verte ou rouge selon le sens de l'argent. */
+.event-card{width:min(100%,40cqi);padding:2.4cqi 2.6cqi 2cqi;border-radius:2cqi;text-align:center;cursor:pointer;color:var(--ink);
+  background:linear-gradient(180deg,#FFFFFF,#EEF2F0);box-shadow:0 2cqi 4cqi rgba(0,0,0,.45), inset 0 0 0 .45cqi var(--ev,#8AD21F);
+  animation:card-flip .5s cubic-bezier(.2,1.2,.4,1) both;}
+.event-card.gain{--ev:var(--green);}
+.event-card.loss{--ev:var(--danger);}
+.event-card .cc-kicker{color:#7A8890;}
+.ev-amount{font-family:var(--display);font-size:clamp(22px,4.6cqi,46px);line-height:1.1;margin:1cqi 0;color:var(--ev);text-shadow:0 .3cqi 0 rgba(0,0,0,.12);}
+.event-card p{font-size:clamp(10px,1.5cqi,15px);color:#3E505A;line-height:1.4;}
+.event-card small{display:block;margin-top:1.2cqi;font-size:clamp(8px,1.05cqi,11px);color:#9AA4A8;}
+
 /* Dilemme : deux portes, une seule issue. */
 .dilemma{width:min(100%,58cqi);text-align:center;animation:dilemma-in .45s cubic-bezier(.2,1.3,.4,1) both;}
 @keyframes dilemma-in{from{opacity:0;transform:scale(.9) translateY(2cqi);}to{opacity:1;transform:none;}}
@@ -54,7 +65,15 @@
 .wseg.hit path{stroke:#fff;stroke-width:2.5;}
 .wheel-hub{fill:#2B2D34;stroke:#FFE27A;stroke-width:3;}
 .wheel-hub-cap{fill:#FFE27A;}
-.wheel-pointer{fill:var(--gold);stroke:#7A5B05;stroke-width:2;stroke-linejoin:round;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5));}
+.wheel-pointer{fill:var(--gold);stroke:#7A5B05;stroke-width:2;stroke-linejoin:round;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5));
+  transform-box:fill-box;transform-origin:50% 0;}
+/* Le pointeur claque sur les tetons pendant la rotation, puis rebondit a l'arret. */
+.wheel-svg.spinning .wheel-pointer{animation:pointer-tick .11s ease-in-out infinite alternate;}
+.wheel-svg.landed .wheel-pointer{animation:pointer-land .5s cubic-bezier(.2,1.6,.4,1);}
+@keyframes pointer-tick{from{transform:rotate(-9deg);}to{transform:rotate(4deg);}}
+@keyframes pointer-land{0%{transform:rotate(-14deg);}100%{transform:none;}}
+.wheel-svg.landed{animation:wheel-thud .45s ease-out;}
+@keyframes wheel-thud{30%{transform:scale(1.035);}}
 .wheel-result{min-height:2.4em;display:flex;align-items:center;gap:1cqi;font-size:clamp(11px,1.6cqi,16px);color:#D7DBE2;}
 .wheel-result b{font-family:var(--display);font-weight:400;font-size:clamp(16px,3cqi,30px);color:#fff;padding:.4cqi 1.4cqi;border-radius:1cqi;
   background:var(--seg);box-shadow:0 .5cqi 0 rgba(0,0,0,.35);}

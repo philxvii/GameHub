@@ -9,7 +9,7 @@ import { pawnPath, readableInk as wheelSafe } from './board.js';
 
 export const DIE_MS = 850;
 export const WHEEL_MS = 4300;
-const PAWN_STEP_S = 0.17;
+const PAWN_STEP_S = 0.24;     // duree d'un saut de case (+ ~30 % de pause)
 
 export const hasGsap = () => typeof gsap !== 'undefined';
 const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -161,47 +161,113 @@ function place(game, player, index) {
   const t = target(game, player, index, false);
   if (!el || !t) return;
   if (hasGsap()) { gsap.killTweensOf(el); gsap.set(el, { x:t.x, y:t.y }); }
-  else el.style.transform = `translate(${t.x}px,${t.y}px)`;
+  else { el.getAnimations().forEach(a => a.cancel()); el.style.transform = `translate(${t.x}px,${t.y}px)`; }
 }
 
-function landFlash(index) {
-  const node = document.querySelector(`.square[data-index="${index}"]`);
+function squareNode(index) { return document.querySelector(`.square[data-index="${index}"]`); }
+
+function flash(index, cls, ms) {
+  const node = squareNode(index);
   if (!node) return;
-  node.classList.remove('landed'); void node.offsetWidth; node.classList.add('landed');
-  setTimeout(() => node.classList.remove('landed'), 900);
+  node.classList.remove(cls); void node.offsetWidth; node.classList.add(cls);
+  setTimeout(() => node.classList.remove(cls), ms);
+}
+
+// Pions en route : un rendu intermediaire (ligne d'historique ecrite juste apres le
+// deplacement) ne doit JAMAIS les reposer de force. C'etait le bug du « teleport ».
+const moving = new Map();     // playerId -> { to, tl }
+let latestGame = null;
+
+// Rythme : un saut par case + une courte pause, pour qu'on compte les cases.
+function stepTiming(n) {
+  const hop = Math.max(0.12, Math.min(PAWN_STEP_S, 2.6 / n));
+  return { hop, pause: hop * 0.32 };
+}
+
+function counter(el, value) {
+  const badge = el.querySelector('.pawn-count');
+  if (!badge) return;
+  badge.textContent = value ? String(value) : '';
+  badge.classList.toggle('on', !!value);
+}
+
+function settle(player, to) {
+  moving.delete(player.id);
+  const el = pawnEls.get(player.id);
+  if (el) counter(el, 0);
+  flash(to, 'landed', 900);
+  // Position finale avec le decalage propre si d'autres pions partagent la case.
+  if (latestGame) place(latestGame, player, to);
 }
 
 function move(game, player, from, to, delay) {
   const el = pawnEls.get(player.id);
   const path = pawnPath(from, to);
-  if (!el || !path.length || !hasGsap() || document.hidden || reduced()) { place(game, player, to); return; }
-  const body = el.querySelector('.pawn-body');
-  const shadowEl = el.querySelector('.pawn-shadow');
-  gsap.killTweensOf([el, body, shadowEl]);
-  const step = Math.max(0.09, Math.min(PAWN_STEP_S, 1.3 / path.length));
-  const hop = Math.max(8, el.offsetHeight * 0.9);
-  const tl = gsap.timeline({ delay: delay || 0 });
+  if (!el || !path.length || document.hidden) { place(game, player, to); return; }
+  const calm = reduced();
+  const { hop, pause } = stepTiming(path.length);
+  const lift = calm ? 0 : Math.max(10, el.offsetHeight * 1.1);
+  const current = moving.get(player.id);
+
+  if (hasGsap()) {
+    const body = el.querySelector('.pawn-body');
+    const shadowEl = el.querySelector('.pawn-shadow');
+    // Deplacement deja en cours (carte Chance apres l'atterrissage) : on enchaine.
+    const tl = current && current.tl ? current.tl : gsap.timeline({ delay: delay || 0 });
+    if (!current) gsap.killTweensOf([el, body, shadowEl]);
+    path.forEach((index, i) => {
+      const t = target(game, player, index, i < path.length - 1);
+      if (!t) return;
+      tl.add(() => counter(el, i + 1))
+        .to(el, { x:t.x, y:t.y, duration:hop, ease:'power2.inOut' })
+        .to(body, { y:-lift, duration:hop * 0.5, ease:'power2.out' }, '<')
+        .to(body, { y:0, duration:hop * 0.5, ease:'power2.in' }, '>')
+        .to(shadowEl, { scale:.55, opacity:.22, duration:hop * 0.5, ease:'power2.out' }, '<-' + (hop * 0.5))
+        .to(shadowEl, { scale:1, opacity:.6, duration:hop * 0.5, ease:'power2.in' }, '>')
+        .add(() => flash(index, 'stepped', 420))
+        .to({}, { duration: i < path.length - 1 ? pause : 0 });
+    });
+    if (!calm) {
+      tl.to(body, { scaleY:.74, scaleX:1.16, duration:.09, ease:'power2.out', transformOrigin:'50% 100%' })
+        .to(body, { scaleY:1, scaleX:1, duration:.55, ease:'elastic.out(1,.38)' });
+    }
+    tl.eventCallback('onComplete', () => settle(player, to));
+    moving.set(player.id, { to, tl });
+    // Garde-fou : sans rendu (onglet masque), la timeline ne progresse plus. On la termine.
+    setTimeout(() => { const run = moving.get(player.id); if (run && run.tl === tl) tl.progress(1); }, (tl.duration() + 2) * 1000);
+    return;
+  }
+
+  // Repli sans GSAP : meme trajet case par case avec la Web Animations API.
+  const start = target(game, player, from, true) || target(game, player, to, false);
+  const unit = hop + pause;
+  const total = unit * path.length;
+  const frames = [{ transform:`translate(${start.x}px,${start.y}px)`, offset:0 }];
   path.forEach((index, i) => {
-    const last = i === path.length - 1;
-    const t = target(game, player, index, !last);
-    if (!t) return;
-    tl.to(el, { x:t.x, y:t.y, duration:step, ease:'none' })
-      .to(body, { y:-hop, duration:step / 2, ease:'power2.out' }, '<')
-      .to(body, { y:0, duration:step / 2, ease:'power2.in' }, '>')
-      .to(shadowEl, { scale:.6, opacity:.25, duration:step / 2, ease:'power2.out' }, '<-' + (step / 2))
-      .to(shadowEl, { scale:1, opacity:.6, duration:step / 2, ease:'power2.in' }, '>');
+    const t = target(game, player, index, i < path.length - 1);
+    const prev = i === 0 ? start : target(game, player, path[i - 1], true);
+    const t0 = (i * unit) / total;
+    frames.push({ transform:`translate(${(prev.x + t.x) / 2}px,${(prev.y + t.y) / 2 - lift}px)`, offset: t0 + (hop * 0.5) / total });
+    frames.push({ transform:`translate(${t.x}px,${t.y}px)`, offset: Math.min(1, t0 + hop / total) });
+    if (i < path.length - 1) frames.push({ transform:`translate(${t.x}px,${t.y}px)`, offset: Math.min(1, (i + 1) * unit / total) });
   });
-  tl.to(body, { scaleY:.78, scaleX:1.14, duration:.08, ease:'power2.out', transformOrigin:'50% 100%' })
-    .to(body, { scaleY:1, scaleX:1, duration:.5, ease:'elastic.out(1,.4)' })
-    .call(() => landFlash(to), null, '<');
+  frames[frames.length - 1].offset = 1;
+  el.getAnimations().forEach(a => a.cancel());
+  const end = target(game, player, to, false);
+  el.style.transform = `translate(${end.x}px,${end.y}px)`;
+  const anim = el.animate(frames, { duration: total * 1000, delay: (delay || 0) * 1000, easing:'linear', fill:'backwards' });
+  path.forEach((index, i) => setTimeout(() => { counter(el, i + 1); flash(index, 'stepped', 420); }, ((delay || 0) + i * unit + hop) * 1000));
+  moving.set(player.id, { to, tl:null, anim });
+  anim.finished.catch(() => {}).then(() => settle(player, to));
 }
 
 export function syncPawns(game, { animate = false, delay = 0 } = {}) {
   const geo = geometry();
   if (!geo || !game || !game.players) return;
+  latestGame = game;
   geo.layer.style.setProperty('--pawn-w', Math.round(geo.cell * 0.4) + 'px');
   const alive = new Set(game.players.filter(p => !p.bankrupt).map(p => p.id));
-  pawnEls.forEach((el, id) => { if (!alive.has(id)) { if (hasGsap()) gsap.killTweensOf(el); el.remove(); pawnEls.delete(id); pawnAt.delete(id); } });
+  pawnEls.forEach((el, id) => { if (!alive.has(id)) { if (hasGsap()) gsap.killTweensOf(el); el.remove(); pawnEls.delete(id); pawnAt.delete(id); moving.delete(id); } });
   game.players.forEach((player, idx) => {
     if (player.bankrupt) return;
     let el = pawnEls.get(player.id);
@@ -211,7 +277,7 @@ export function syncPawns(game, { animate = false, delay = 0 } = {}) {
       el.dataset.player = player.id;
       el.title = player.name;
       const letter = String(player.name || '?').trim().charAt(0).toUpperCase().replace(/[<&>"]/g, '');
-      el.innerHTML = `<span class="pawn-ring"></span><span class="pawn-shadow"></span><span class="pawn-body">${pawnSVG(player.color || '#888888', letter, player.id)}</span>`;
+      el.innerHTML = `<span class="pawn-ring"></span><span class="pawn-shadow"></span><span class="pawn-body">${pawnSVG(player.color || '#888888', letter, player.id)}</span><span class="pawn-count"></span>`;
       geo.layer.appendChild(el);
       pawnEls.set(player.id, el);
     }
@@ -220,14 +286,23 @@ export function syncPawns(game, { animate = false, delay = 0 } = {}) {
     el.classList.toggle('pawn-jailed', !!player.inJail);
     const from = pawnAt.get(player.id);
     pawnAt.set(player.id, player.position);
-    if (from === undefined || from === player.position || !animate) place(game, player, player.position);
-    else move(game, player, from, player.position, delay);
+    const run = moving.get(player.id);
+    if (run && run.to === player.position) return;            // en route : on laisse finir
+    if (from === undefined || !animate || from === player.position) { if (!run) place(game, player, player.position); return; }
+    move(game, player, run ? run.to : from, player.position, run ? 0 : delay);
   });
+}
+
+export function isPawnMoving(playerId) { return moving.has(playerId); }
+
+// Redimensionnement : les trajets en cours visent d'anciennes coordonnees. On les termine.
+export function finishMoves() {
+  moving.forEach(run => { if (run.tl) run.tl.progress(1); else if (run.anim) run.anim.finish(); });
 }
 
 export function resetPawns() {
   pawnEls.forEach(el => { if (hasGsap()) gsap.killTweensOf(el); el.remove(); });
-  pawnEls.clear(); pawnAt.clear();
+  pawnEls.clear(); pawnAt.clear(); moving.clear();
 }
 
 export function pawnCount() { return pawnEls.size; }
@@ -342,9 +417,19 @@ export function spinWheel(svg, seg, seed, { instant = false } = {}) {
   const angle = wheelAngle(seg, seed);
   const final = `rotate(${angle}deg)`;
   if (instant || !canAnimate(rot)) { rot.style.transform = final; return Promise.resolve(); }
-  const anim = rot.animate([{ transform:'rotate(0deg)' }, { transform: final }],
-    { duration: WHEEL_MS, easing:'cubic-bezier(.1,.65,.12,1)', fill:'forwards' });
-  return anim.finished.catch(() => {}).then(() => { rot.style.transform = final; });
+  // Prise d'elan (petit recul), acceleration, longue deceleration, arret net.
+  const anim = rot.animate([
+    { transform:'rotate(0deg)', easing:'cubic-bezier(.4,0,.6,1)' },
+    { transform:'rotate(-16deg)', offset:.07, easing:'cubic-bezier(.55,0,.85,.4)' },
+    { transform:`rotate(${(angle * 0.3).toFixed(1)}deg)`, offset:.3, easing:'cubic-bezier(.12,.48,.18,1)' },
+    { transform: final },
+  ], { duration: WHEEL_MS, fill:'forwards' });
+  svg.classList.add('spinning');
+  return anim.finished.catch(() => {}).then(() => {
+    rot.style.transform = final;
+    svg.classList.remove('spinning');
+    svg.classList.add('landed');
+  });
 }
 
 // ================================================================ victoire

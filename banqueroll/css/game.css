@@ -35,10 +35,28 @@
 /* ============================== Grille ============================== */
 .game-grid{display:grid;min-height:0;gap:16px;padding:14px;
   grid-template-columns:minmax(250px,300px) minmax(0,1fr) minmax(300px,370px);grid-template-areas:"left board right";}
-.col-left{grid-area:left;display:flex;flex-direction:column;gap:12px;min-height:0;overflow:auto;scrollbar-width:thin;}
+.col-left{grid-area:left;display:flex;flex-direction:column;gap:12px;min-height:0;overflow:auto;padding-right:2px;}
 .col-board{grid-area:board;min-width:0;min-height:0;display:grid;place-items:center;container-type:size;}
 .col-right{grid-area:right;display:flex;flex-direction:column;gap:12px;min-height:0;}
 .players-strip{display:none;}
+
+/* Desktop : la colonne centrale fait EXACTEMENT la taille du plateau (inchangee :
+   toute la hauteur disponible). Les colonnes laterales absorbent la largeur restante
+   au lieu de laisser des gouttieres vides de part et d'autre du plateau. */
+@media (min-width:1180px){
+  .game-grid{
+    --board:min(calc(100dvh - var(--hud-h) - 28px), calc(100vw - 28px - 32px - 580px));
+    grid-template-columns:minmax(270px,1fr) var(--board) minmax(310px,1.25fr);
+    width:100%;max-width:2700px;margin:0 auto;}
+  .col-board{container-type:normal;display:block;}
+  .game-grid .board{width:var(--board);}
+  .col-right{min-width:0;}
+}
+@media (min-width:1700px){
+  .host-line{font-size:1rem;}
+  .chat-item{font-size:.9rem;}
+  .pcash{font-size:1.2rem;}
+}
 
 .panel{background:linear-gradient(180deg,var(--panel),#22242A);border:1px solid var(--line);border-radius:var(--r);padding:14px;
   box-shadow:var(--shadow-md), inset 0 1px 0 rgba(255,255,255,.04);}
@@ -71,11 +89,36 @@
 .pcard.debt .pcash{color:#FF8E84;}
 .pmoney span{font-size:.72rem;color:var(--muted);}
 .pmoney b{color:var(--green);}
-.pprogress{height:5px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;}
-.pprogress i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--pc),var(--green));transition:width .6s cubic-bezier(.2,.8,.3,1);}
-.pgroups{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;}
-.gbar{height:6px;border-radius:2px;background:linear-gradient(90deg,var(--g) var(--fill),rgba(255,255,255,.08) var(--fill));}
-.gbar.full{box-shadow:0 0 0 1px #fff, 0 0 8px var(--g);}
+/* Barre de fortune : rail creuse, remplissage en relief, curseur, reperes a 25/50/75 %. */
+.pprogress{position:relative;height:9px;margin:3px 0 2px;border-radius:999px;
+  background:
+    linear-gradient(90deg,transparent calc(25% - 1px),rgba(255,255,255,.14) 25%,transparent calc(25% + 1px),
+      transparent calc(50% - 1px),rgba(255,255,255,.14) 50%,transparent calc(50% + 1px),
+      transparent calc(75% - 1px),rgba(255,255,255,.14) 75%,transparent calc(75% + 1px)),
+    #15161A;
+  box-shadow:inset 0 2px 3px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.06);}
+.pprogress i{position:absolute;left:0;top:1px;bottom:1px;min-width:7px;border-radius:inherit;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,0) 55%),
+    repeating-linear-gradient(115deg,rgba(255,255,255,.09) 0 4px,transparent 4px 9px),
+    linear-gradient(90deg,var(--pc),color-mix(in srgb,var(--pc) 40%,var(--green)));
+  box-shadow:0 0 0 1px rgba(0,0,0,.25), 0 0 8px color-mix(in srgb,var(--pc) 45%,transparent);
+  transition:width .9s cubic-bezier(.2,.8,.25,1);}
+.pprogress b{position:absolute;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff,#DDE3E8 60%,#B9C3CB);
+  box-shadow:0 0 0 2px var(--pc), 0 2px 4px rgba(0,0,0,.55);transition:left .9s cubic-bezier(.2,.8,.25,1), transform .3s;}
+.pcard.current .pprogress b{transform:scale(1.15);}
+.pprogress.up b{animation:knob-up .9s ease;}
+.pprogress.down b{animation:knob-down .9s ease;}
+@keyframes knob-up{40%{box-shadow:0 0 0 2px var(--pc), 0 0 0 6px rgba(138,210,31,.35), 0 2px 4px rgba(0,0,0,.55);}}
+@keyframes knob-down{40%{box-shadow:0 0 0 2px var(--pc), 0 0 0 6px rgba(226,87,76,.4), 0 2px 4px rgba(0,0,0,.55);}}
+/* Groupes : une alveole par ville. Remplie a la couleur du groupe si possedee. */
+.pgroups{display:flex;flex-wrap:wrap;gap:4px 5px;}
+.gset{display:inline-flex;gap:2px;padding:2px;border-radius:5px;background:#16171B;box-shadow:inset 0 1px 2px rgba(0,0,0,.6);}
+.gset i{width:7px;height:9px;border-radius:2px;background:rgba(255,255,255,.07);}
+.gset i.on{background:linear-gradient(180deg,color-mix(in srgb,var(--g) 70%,#fff),var(--g));box-shadow:0 1px 0 rgba(0,0,0,.4);}
+.gset.full{background:color-mix(in srgb,var(--g) 30%,#16171B);box-shadow:0 0 0 1px color-mix(in srgb,var(--g) 70%,#fff), 0 0 8px color-mix(in srgb,var(--g) 50%,transparent);}
+
 /* Feedback d'argent : flotte au-dessus de la carte. */
 .money-delta{position:absolute;right:10px;top:4px;font-weight:900;font-size:.95rem;pointer-events:none;z-index:6;
   text-shadow:0 2px 6px rgba(0,0,0,.8);font-variant-numeric:tabular-nums;}
@@ -115,11 +158,13 @@
 .host-name strong{font-family:var(--display);font-weight:400;font-size:.9rem;color:var(--gold);letter-spacing:.02em;}
 .host-status{font-size:.58rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--muted);}
 .host-status.ai{background:rgba(88,183,242,.18);color:var(--sky);}
+.host-status[data-provider="gemini"]{background:rgba(66,133,244,.18);color:#9CC2FF;}
+.host-status[data-provider="openrouter"]{background:rgba(124,92,255,.18);color:#C7B2FF;}
 .host-line{font-size:.9rem;line-height:1.45;color:#F1EDE2;}
 
 /* ============================== Chat ============================== */
 .chat-panel{flex:1;min-height:180px;display:flex;flex-direction:column;padding:10px;}
-.chat-list{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:7px;padding:2px 2px 6px;scrollbar-width:thin;}
+.chat-list{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:7px;padding:2px 4px 6px 2px;}
 .chat-item{align-self:flex-start;max-width:92%;background:rgba(255,255,255,.06);border-radius:4px 12px 12px 12px;padding:7px 10px;font-size:.84rem;line-height:1.4;
   box-shadow:inset 3px 0 0 var(--pc,#888);animation:msg-in .25s ease both;}
 .chat-item.me{align-self:flex-end;border-radius:12px 4px 12px 12px;background:color-mix(in srgb, var(--pc) 16%, #2B2E35);box-shadow:none;}
@@ -128,7 +173,14 @@
 .chat-item.host{display:flex;gap:8px;max-width:100%;align-self:stretch;background:linear-gradient(135deg,rgba(246,198,47,.14),rgba(246,198,47,.05));
   box-shadow:inset 0 0 0 1px rgba(246,198,47,.28);border-radius:12px;}
 .chat-item.host strong{color:var(--gold);}
-.chat-item.host strong em{font-style:normal;font-size:.56rem;letter-spacing:.1em;color:var(--sky);margin-left:4px;}
+/* Badge de source : discret, une couleur par fournisseur. */
+.src-badge{display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:1px 6px 1px 5px;border-radius:999px;vertical-align:1px;
+  font:900 .54rem/1.5 var(--font);letter-spacing:.12em;white-space:nowrap;color:#A3AAB5;background:rgba(255,255,255,.07);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);}
+.src-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+.src-gemini{color:#9CC2FF;background:rgba(66,133,244,.16);box-shadow:inset 0 0 0 1px rgba(66,133,244,.35);}
+.src-openrouter{color:#C7B2FF;background:rgba(124,92,255,.16);box-shadow:inset 0 0 0 1px rgba(124,92,255,.35);}
+.host-bubble .src-badge{margin-left:8px;}
 .chat-item.host span{color:#FBF6E6;}
 .chat-item.host.lvl-3,.chat-item.host.lvl-4{box-shadow:inset 0 0 0 1.5px rgba(246,198,47,.6);}
 .chat-av{flex:none;width:26px;height:26px;}
@@ -137,7 +189,7 @@
 .chat-form{display:flex;gap:8px;margin-top:8px;}
 .chat-form input{flex:1;padding:10px 12px;}
 .history-panel{max-height:30%;min-height:110px;display:flex;flex-direction:column;}
-.history-list{overflow:auto;display:grid;gap:5px;align-content:start;scrollbar-width:thin;}
+.history-list{overflow:auto;display:grid;gap:5px;align-content:start;padding-right:4px;}
 .history-item{font-size:.76rem;line-height:1.4;color:#C9CED6;padding:5px 8px;border-radius:7px;background:rgba(255,255,255,.035);}
 .history-item:first-child{color:#fff;background:rgba(255,255,255,.07);}
 .history-item.t-rent{box-shadow:inset 2px 0 0 var(--danger);}
@@ -153,7 +205,7 @@
     grid-template-areas:"board right" "board left";padding:10px;gap:12px;}
   .col-left{max-height:36vh;}
   .panel-players{display:none;}
-  .players-strip{display:flex;gap:8px;padding:8px 12px;overflow-x:auto;background:#1A1C21;border-bottom:1px solid var(--line);scrollbar-width:none;}
+  .players-strip{display:flex;gap:8px;padding:8px 12px;overflow-x:auto;background:#1A1C21;border-bottom:1px solid var(--line);}
   .pcard--compact{flex:none;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:999px;}
   .pcard--compact.current{transform:translateY(-1px);}
   .pcard--compact.current::before{display:none;}

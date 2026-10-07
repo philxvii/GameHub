@@ -127,9 +127,30 @@ function renderBoard(game) {
 function groupBars(game, pid) {
   return Object.keys(GROUPS).map(g => {
     const { owned, total } = groupProgress(game, pid, g);
-    const full = owned === total;
-    return `<i class="gbar${full ? ' full' : ''}" style="--g:${GROUP_COLORS[g]};--fill:${owned / total * 100}%" title="${esc(GROUP_LABELS[g])} ${owned}/${total}"></i>`;
+    const pips = GROUPS[g].map(pos => `<i class="${ownerOf(game, pos) === pid ? 'on' : ''}"></i>`).join('');
+    return `<span class="gset${owned === total ? ' full' : ''}" style="--g:${GROUP_COLORS[g]}" title="${esc(GROUP_LABELS[g])} ${owned}/${total}${owned === total ? ' · complet' : ''}">${pips}</span>`;
   }).join('');
+}
+
+// Barre de fortune : rendue a l'ancienne valeur puis animee vers la nouvelle
+// (le panneau est regenere a chaque mise a jour, une transition seule ne jouerait pas).
+const fortuneSeen = new Map();
+function fortuneBar(game, player) {
+  const pct = Math.max(1, Math.min(100, netWorth(game, player) / targetOf(game) * 100));
+  const prev = fortuneSeen.has(player.id) ? fortuneSeen.get(player.id) : pct;
+  fortuneSeen.set(player.id, pct);
+  const dir = pct > prev + 0.1 ? ' up' : pct < prev - 0.1 ? ' down' : '';
+  return `<div class="pprogress${dir}" data-to="${pct.toFixed(2)}" title="${Math.round(pct)} % de l’objectif (${fmt(targetOf(game))})"><i style="width:${prev.toFixed(2)}%"></i><b style="left:${prev.toFixed(2)}%"></b></div>`;
+}
+
+function animateBars(root) {
+  const bars = root.querySelectorAll('.pprogress[data-to]');
+  if (!bars.length) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => bars.forEach(bar => {
+    const to = bar.dataset.to + '%';
+    bar.querySelector('i').style.width = to;
+    bar.querySelector('b').style.left = to;
+  })));
 }
 
 function playerCard(game, player, index, compact) {
@@ -152,7 +173,7 @@ function playerCard(game, player, index, compact) {
     <div class="pmain">
       <div class="pname"><strong>${esc(player.name)}</strong>${tags ? `<em>${tags}</em>` : ''}${status}</div>
       <div class="pmoney"><strong class="pcash">${fmt(player.cash)}</strong><span>fortune <b>${fmt(net)}</b></span></div>
-      <div class="pprogress" title="${Math.round(net / target * 100)} % de l’objectif"><i style="width:${Math.max(2, Math.min(100, net / target * 100))}%"></i></div>
+      ${fortuneBar(game, player)}
       <div class="pgroups">${groupBars(game, player.id)}</div>
     </div>
   </div>`;
@@ -161,7 +182,7 @@ function playerCard(game, player, index, compact) {
 function renderPlayers(game) {
   const panel = $id('players-panel');
   const strip = $id('players-strip');
-  if (panel) panel.innerHTML = game.players.map((p, i) => playerCard(game, p, i, false)).join('');
+  if (panel) { panel.innerHTML = game.players.map((p, i) => playerCard(game, p, i, false)).join(''); animateBars(panel); }
   if (strip) strip.innerHTML = game.players.map((p, i) => playerCard(game, p, i, true)).join('');
 }
 
@@ -381,7 +402,10 @@ function renderHistory(game) {
   const events = Object.entries(game.history || {}).map(([k, v]) => ({ k, ...v })).sort((a, b) => a.ts - b.ts);
   const last = events[events.length - 1];
   if (last && last.k === seen.histKey) return;
+  const fresh = !seen.first && last && last.k !== seen.histKey;
   seen.histKey = last ? last.k : null;
+  // Case EVENT : son effet est inchange (gain ou perte d'argent), il devient visible.
+  if (fresh && last.meta && last.meta.t === 'event') showEventCard(game, last);
   list.innerHTML = events.slice(-40).reverse().map(e => `<div class="history-item${e.meta && e.meta.t ? ' t-' + esc(e.meta.t) : ''}">${esc(e.text)}</div>`).join('');
 }
 
@@ -392,7 +416,7 @@ function renderChat(game) {
   if (list) {
     const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
     list.innerHTML = messages.slice(-50).map(m => {
-      if (m.kind === 'host') return `<div class="chat-item host lvl-${Number(m.lvl) || 0}" data-key="${esc(m.k)}"><span class="chat-av">${HOST_AVATAR}</span><div><strong>${HOST_NAME}${m.src === 'ai' ? ' <em>IA</em>' : ''}</strong><span>${esc(m.text)}</span></div></div>`;
+      if (m.kind === 'host') return `<div class="chat-item host lvl-${Number(m.lvl) || 0}" data-key="${esc(m.k)}"><span class="chat-av">${HOST_AVATAR}</span><div><strong>${HOST_NAME}${sourceBadge(m)}</strong><span>${esc(m.text)}</span></div></div>`;
       const p = playerById(game, m.pid) || game.players.find(x => x.name === m.author);
       return `<div class="chat-item${m.pid === S.playerId ? ' me' : ''}" style="--pc:${esc(p ? p.color : '#888')}"><strong>${esc(m.author)}</strong><span>${esc(m.text)}</span></div>`;
     }).join('') || '<p class="muted small">Aucun message. Provoque quelqu’un, le présentateur prend des notes.</p>';
@@ -411,7 +435,7 @@ function renderChat(game) {
   const line = $id('host-line'), status = $id('host-status');
   if (host) {
     if (line) line.textContent = host.text;
-    if (status) { status.textContent = host.src === 'ai' ? 'IA' : 'local'; status.classList.toggle('ai', host.src === 'ai'); }
+    if (status) { status.textContent = sourceLabel(host); status.classList.toggle('ai', sourceOf(host) !== 'local'); status.dataset.provider = sourceOf(host); }
     const sig = host.k + '|' + host.text;
     if (sig !== seen.hostKey) {
       const isNew = seen.hostKey !== null && !seen.first;
@@ -421,10 +445,21 @@ function renderChat(game) {
   } else if (line) line.textContent = 'Le présentateur s’échauffe. Il commente les gros coups et répond quand on l’interpelle (@host).';
 }
 
+// Qui a parle : LOCAL, GEMINI ou OPENROUTER. Rien d'autre ne peut s'afficher.
+const PROVIDERS = { gemini:'GEMINI', openrouter:'OPENROUTER' };
+const sourceOf = m => (m.src === 'ai' && PROVIDERS[m.provider] ? m.provider : 'local');
+function sourceLabel(m) {
+  return sourceOf(m) === 'local' ? 'LOCAL' : PROVIDERS[sourceOf(m)];
+}
+function sourceBadge(m) {
+  const p = sourceOf(m);
+  return ` <span class="src-badge src-${p}" title="${m.src === 'ai' && m.model ? esc(m.model) : 'Réplique locale, sans IA'}">${sourceLabel(m)}</span>`;
+}
+
 function showBubble(host) {
   const bubble = $id('host-bubble');
   if (!bubble) return;
-  bubble.innerHTML = `<span class="hb-av">${HOST_AVATAR}</span><span class="hb-text">${esc(host.text)}</span>`;
+  bubble.innerHTML = `<span class="hb-av">${HOST_AVATAR}</span><span class="hb-text">${esc(host.text)}${sourceBadge(host)}</span>`;
   bubble.hidden = false;
   bubble.classList.toggle('loud', (Number(host.lvl) || 0) >= 3);
   pulse(bubble, 'pop', 600);
@@ -444,7 +479,7 @@ function renderOverlay(game) {
   const ov = $id('stage-overlay');
   const ev = game.event;
   if (!ov) return;
-  if (!ev || game.phase !== 'playing') { if (ov.dataset.mode && !['done-card', 'done-dilemma', 'done-wheel'].includes(ov.dataset.mode)) closeOverlay(); return; }
+  if (!ev || game.phase !== 'playing') { if (ov.dataset.mode && !['done-card', 'done-dilemma', 'done-wheel', 'event'].includes(ov.dataset.mode)) closeOverlay(); return; }
   const player = playerById(game, ev.playerId) || { name:'?' };
   const mine = ev.playerId === S.playerId;
   const sig = `${ev.id}:${ev.status}`;
@@ -512,6 +547,19 @@ function showWheelResult(seg) {
 function refreshDilemmaButtons(game, ev) {
   const mine = ev.playerId === S.playerId;
   document.querySelectorAll('#stage-overlay .dopt').forEach(b => { b.disabled = !mine; });
+}
+
+function showEventCard(game, entry) {
+  const ov = $id('stage-overlay');
+  if (!ov || (ov.dataset.mode && !ov.hidden)) return;       // une Chance en cours garde la scene
+  const who = playerById(game, entry.meta.p) || { name:'?' };
+  const amt = entry.meta.amt || 0;
+  clearTimeout(overlayTimer);
+  ov.hidden = false;
+  ov.dataset.mode = 'event';
+  ov.innerHTML = `<div class="event-card ${amt >= 0 ? 'gain' : 'loss'}" data-act="overlay-close"><div class="cc-kicker">ÉVÈNEMENT · ${esc(who.name)}</div>
+    <div class="ev-amount">${signed(amt)}</div><p>${esc(entry.text)}</p><small>Toucher pour fermer</small></div>`;
+  overlayTimer = setTimeout(closeOverlay, 3200);
 }
 
 export function overlayClose() { closeOverlay(); }

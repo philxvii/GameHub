@@ -5,9 +5,11 @@
 import { BOARD, GROUPS, isOwnable, isPublic, JAIL_INDEX, START_INDEX } from './board.js';
 
 // ------------------------------------------------------------ constantes
-export const START_CASH = 1500;
+export const START_CASH = 1000;      // base de depart de chaque joueur
 export const START_BONUS = 200;
-export const LATE_BONUS = 25;        // regle maison : +25 $ par rang de passage au premier tour
+// Regle 2 : ceux qui jouent plus tard au premier tour recoivent une compensation.
+// Montant non chiffre par les regles -> regle maison : +25 $ par rang (1000, 1025, 1050...).
+export const LATE_BONUS = 25;
 export const BAIL = 150;
 export const JAIL_TURNS = 3;
 export const SELL_RATIO = 0.8;

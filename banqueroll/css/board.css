@@ -88,11 +88,16 @@
 @keyframes bought{0%{transform:scale(1.12);filter:brightness(1.3);box-shadow:0 0 0 0 rgba(138,210,31,.8);}
   100%{transform:none;filter:none;box-shadow:0 0 0 1.4cqi rgba(138,210,31,0);}}
 .square.just-built{animation:built 1.1s ease-out;}
-@keyframes built{0%{box-shadow:0 0 0 0 rgba(255,226,122,.95);}40%{transform:translateY(-.4cqi);}100%{box-shadow:0 0 0 1.6cqi rgba(255,226,122,0);transform:none;}}
+@keyframes built{0%{box-shadow:0 0 0 0 rgba(255,226,122,.95);transform:scale(1);}25%{transform:scale(1.1) translateY(-.4cqi);}55%{transform:scale(.98);}100%{box-shadow:0 0 0 1.8cqi rgba(255,226,122,0);transform:none;}}
+.square.just-built .bld{filter:drop-shadow(0 0 .6cqi rgba(255,226,122,.9));}
+.square.just-bought .sq-owner{animation:owner-in .7s cubic-bezier(.2,1.4,.4,1);}
+@keyframes owner-in{from{transform:translateY(100%);}to{transform:none;}}
+.square.just-bought .sq-price{animation:price-pop .6s cubic-bezier(.2,1.6,.4,1);}
+@keyframes price-pop{0%{transform:scale(.4);}100%{transform:none;}}
 
 /* ============================ Centre ============================ */
 .board-center{grid-row:2/8;grid-column:2/8;position:relative;min-height:0;display:flex;flex-direction:column;align-items:center;gap:1.4cqi;
-  padding:2.2cqi 2.6cqi;border-radius:1.4cqi;overflow:auto;color:var(--ink);scrollbar-width:none;
+  padding:2.2cqi 2.6cqi;border-radius:1.4cqi;overflow:auto;color:var(--ink);
   background:
     radial-gradient(120% 90% at 50% 0%, #DCE9EE 0%, var(--center) 70%),
     var(--center);
@@ -200,3 +205,14 @@
   .action-panel,.event-message{max-width:none;}
   .host-bubble{max-width:none;}
 }
+
+/* ===================== Trajet du pion : compteur et cases traversees ===================== */
+.pawn-count{position:absolute;left:50%;bottom:118%;min-width:1.7em;height:1.7em;padding:0 .35em;border-radius:999px;
+  display:grid;place-items:center;transform:translateX(-50%) scale(.4);opacity:0;pointer-events:none;
+  font:900 clamp(10px,1.3cqi,14px)/1 var(--font);color:#15230A;background:var(--green);
+  box-shadow:0 2px 0 var(--green-edge), 0 4px 10px rgba(0,0,0,.35);transition:transform .14s ease, opacity .14s ease;}
+.pawn-count.on{opacity:1;transform:translateX(-50%) scale(1);}
+.square.stepped::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:4;
+  background:radial-gradient(closest-side,rgba(138,210,31,.35),transparent);box-shadow:inset 0 0 0 .35cqi rgba(138,210,31,.85);
+  animation:stepped .42s ease-out forwards;}
+@keyframes stepped{from{opacity:1;}to{opacity:0;}}

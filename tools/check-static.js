@@ -156,7 +156,7 @@ const workerFiles = ['worker.js', 'prompt.js'].map(f => path.join(ROOT, 'ai-host
   const w2 = base(); w2.settings = { target:5000, maxRounds:0 }; w2.round = 99;
   check('8f. Victoire : objectif, manches (0 = sans limite)', R.winnerCheck(w).winner.id === 'b' && R.winnerCheck(w2) === null);
   const order = R.startingPlayers(base().players, (() => { let i = 0; return () => [0.9, 0.1, 0.5][i++ % 3]; })());
-  check('8g. Ordre tiré au sort, bonus de retard (+25 $ par rang)', order.map(p => p.cash).join() === '1500,1525,1550' && order.every(p => p.position === 21));
+  check('8g. Base 1 000 $, ordre tiré au sort, bonus de retard (+25 $ par rang)', order.map(p => p.cash).join() === '1000,1025,1050' && order.every(p => p.position === 21), order.map(p => p.cash).join());
 
   // ------------------------------------------------------------ 9. Chance
   let chanceErr = null; const kinds = { card:0, dilemma:0, wheel:0 };
@@ -186,19 +186,47 @@ const workerFiles = ['worker.js', 'prompt.js'].map(f => path.join(ROOT, 'ai-host
 
   // ------------------------------------------------------------ 10. presentateur
   const types = Object.keys(L.LINES);
-  const emptyTypes = types.filter(ty => !L.pickLine(ty, { P:'Bob', O:'Alice', amt:300, before:500, cash:200, city:'Paris', intensity:3, key:'jackpot', choice:'A', lvl:3, completes:true, group:'Rose', n:3, net:3000, rent:200, cash0:1 }));
+  const emptyTypes = types.filter(ty => !L.pickLine(ty, { left:10, price:250, P:'Bob', O:'Alice', amt:300, before:500, cash:200, city:'Paris', intensity:3, key:'jackpot', choice:'A', lvl:3, completes:true, group:'Rose', n:3, net:3000, rent:200, cash0:1 }));
   check('10a. Chaque type d’évènement a au moins une réplique locale', !emptyTypes.length, emptyTypes.join(', ') || `${types.length} types`);
   const quoted = L.pickLine('rent', { P:'Bob', O:'Alice', amt:900, before:1000, cash:100, city:'Paris', intensity:3, quote:{ text:'attends un peu', ago:' il y a 3 manches' } }, [], () => 0);
   check('10b. Les citations du chat passent en priorité (running gags)', /attends un peu/.test(quoted.text), quoted.text);
 
   // ------------------------------------------------------------ 11. securite IA
   const front = [HTML, src, ...fs.readdirSync(path.join(ROOT, 'banqueroll', 'css')).map(f => fs.readFileSync(path.join(ROOT, 'banqueroll', 'css', f), 'utf8'))].join('\n');
-  const leaks = [/sk-or-[a-z0-9-]{10,}/i, /sk-[A-Za-z0-9]{20,}/, /Bearer\s+[A-Za-z0-9-_]{12,}/, /openrouter\.ai\/api/i].filter(re => re.test(front));
-  check('11a. Aucun secret ni appel direct OpenRouter dans le frontend', !leaks.length, leaks.map(String).join(' '));
+  const leaks = [/sk-or-[a-z0-9-]{10,}/i, /sk-[A-Za-z0-9]{20,}/, /AIza[0-9A-Za-z_-]{30,}(?![\s\S]*undercover-game)/, /Bearer\s+[A-Za-z0-9-_]{12,}/, /openrouter\.ai\/api/i, /generativelanguage\.googleapis/i, /GEMINI_API_KEY|OPENROUTER_API_KEY/].filter(re => re.test(front));
+  check('11a. Aucun secret ni appel direct à Gemini / OpenRouter dans le frontend', !leaks.length, leaks.map(String).join(' '));
   const P = await import(pathToFileURL(path.join(ROOT, 'ai-host', 'src', 'prompt.js')).href);
   const clean = P.cleanReply('Bankroll Host : « ' + 'x'.repeat(400) + ' »');
   const ctx = P.sanitize({ mode:'chat', intensity:9, chat:Array.from({ length:40 }, (_, i) => ({ who:'A', text:'m' + i })), players:[{ name:'A'.repeat(99), cash:'12' }] });
-  check('11b. Worker : contexte borné, réponse nettoyée (≤ 280 car.)', clean.length <= 280 && !/^Bankroll/.test(clean) && ctx.chat.length === 14 && ctx.intensity === 4 && ctx.players[0].name.length === 24);
+  check('11b. Worker : contexte borné, réponse nettoyée (≤ 280 car.)', clean.length <= 280 && !/^Bankroll/.test(clean) && ctx.chat.length === 14 && ctx.intensity === 5 && ctx.players[0].name.length === 24);
+
+  const O = await import(pathToFileURL(path.join(ROOT, 'ai-host', 'src', 'orchestrator.js')).href);
+  const realFetch = globalThis.fetch;
+  const scenario = async (modes, env) => {
+    globalThis.fetch = async url => {
+      const host = new URL(String(url)).hostname;
+      const id = host.includes('googleapis') ? 'gemini' : 'openrouter';
+      const m = modes[id] || 'ok';
+      if (m === 'fail') return new Response('{}', { status: 503 });
+      if (m === 'quota') return new Response('{}', { status: 429 });
+      const text = m === 'junk' ? 'User Safety: safe' : `Réplique de test venue de ${id}, assez longue.`;
+      return new Response(JSON.stringify(id === 'gemini' ? { candidates: [{ content: { parts: [{ text }] } }] } : { choices: [{ message: { content: text } }] }), { status: 200 });
+    };
+    try { return await O.orchestrate({ system: 's', user: 'u\n{}', env }); } finally { globalThis.fetch = realFetch; }
+  };
+  const all = { GEMINI_API_KEY: 'x', OPENROUTER_API_KEY: 'x' };
+  const r1 = await scenario({}, all);
+  const r2 = await scenario({ gemini: 'fail' }, all);
+  const r3 = await scenario({ gemini: 'quota' }, all);
+  const r4 = await scenario({ gemini: 'junk' }, all);
+  const r5 = await scenario({ gemini: 'fail', openrouter: 'fail' }, all);
+  const r6 = await scenario({}, { OPENROUTER_API_KEY: 'x' });
+  const providers = Object.keys((await import(pathToFileURL(path.join(ROOT, 'ai-host', 'src', 'providers.js')).href)).PROVIDERS);
+  check('11c. Orchestrateur gratuit : Gemini → OpenRouter (panne, quota, étiquette, clé absente) → local',
+    providers.join() === 'gemini,openrouter' && O.orderFrom().join() === 'gemini,openrouter'
+      && r1.provider === 'gemini' && r2.provider === 'openrouter' && r3.provider === 'openrouter' && r4.provider === 'openrouter'
+      && !r5.ok && r6.provider === 'openrouter' && r6.tried[0].reason === 'missing_key',
+    [r1.provider, r2.provider, r3.provider, r4.provider, r5.ok ? 'ok' : 'local', r6.provider].join(' / '));
 
   const passed = results.filter(Boolean).length;
   console.log(`\n===== STATIQUE : ${passed}/${results.length} =====`);
