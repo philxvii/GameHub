@@ -1,7 +1,7 @@
 # ai-host — proxy du présentateur IA de Banqueroll
 
 Un Cloudflare Worker entre le jeu et les fournisseurs d'IA. Il garde les clés, fixe
-le prompt du présentateur, essaie **Gemini puis OpenRouter** et renvoie une réplique
+le prompt du présentateur, essaie **Gemini, puis OpenRouter, puis Workers AI** (binding Cloudflare, sans clé) et renvoie une réplique
 normalisée `{ text, provider, model }`. **100 % gratuit.**
 
 ```
@@ -23,7 +23,7 @@ banqueroll.html ──(contexte de jeu)──▶ /host ──▶ Gemini (offre g
 | Fichier | Rôle |
 |---|---|
 | `src/worker.js` | routes `/host` et `/health`, CORS, limiteur, journal minimal |
-| `src/orchestrator.js` | ordre fixe Gemini → OpenRouter, budget de 20 s : 9 s pour Gemini, le reste pour OpenRouter |
+| `src/orchestrator.js` | ordre fixe Gemini → OpenRouter → Workers AI, budget de 20 s : 7 s par fournisseur, le dernier prend le reste |
 | `src/providers.js` | un adaptateur par fournisseur (format de requête et de réponse) |
 | `src/prompt.js` | prompt du présentateur, bornage du contexte, nettoyage et validation des répliques |
 

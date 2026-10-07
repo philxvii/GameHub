@@ -1,5 +1,5 @@
-// Adaptateurs des fournisseurs d'IA, tous GRATUITS : Gemini (AI Studio) puis
-// OpenRouter (modeles :free). Chacun recoit le meme prompt et renvoie
+// Adaptateurs des fournisseurs d'IA, tous GRATUITS : Gemini (AI Studio), OpenRouter
+// (modeles :free), puis Workers AI (binding Cloudflare, sans cle). Chacun recoit le meme prompt et renvoie
 // { text, model }, ou leve une ProviderError (le chef d'orchestre passe au suivant).
 // Les cles ne sortent jamais d'ici : elles ne sont ni journalisees ni renvoyees.
 
@@ -130,4 +130,54 @@ export const openrouter = {
   },
 };
 
-export const PROVIDERS = { gemini, openrouter };
+// ------------------------------------------------------------ Workers AI (Cloudflare, sans cle)
+// Branche directement sur le Worker par le binding `AI` (wrangler.toml) : aucune cle,
+// offre gratuite de 10 000 « neurons » par jour, independante de Google et d'OpenRouter.
+// WORKERS_AI_MODEL peut lister plusieurs modeles : le suivant est essaye si l'un echoue.
+const WORKERS_AI_DEFAULT = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+export const workersAiModels = env => String((env && env.WORKERS_AI_MODEL) || WORKERS_AI_DEFAULT).split(',').map(m => m.trim()).filter(Boolean).slice(0, 3);
+
+// env.AI.run ne prend pas de signal : on fait la course avec l'abandon du chef d'orchestre.
+function withAbort(promise, signal) {
+  if (!signal) return promise;
+  return new Promise((resolve, reject) => {
+    const stop = () => reject(new ProviderError('workersai', 'timeout'));
+    if (signal.aborted) return stop();
+    signal.addEventListener('abort', stop, { once: true });
+    promise.then(resolve, reject).finally(() => signal.removeEventListener('abort', stop));
+  });
+}
+
+export const workersai = {
+  id: 'workersai',
+  configured: env => !!(env && env.AI && typeof env.AI.run === 'function'),
+  model: env => workersAiModels(env).join(','),
+  async call({ system, user, env, signal }) {
+    const errors = [];
+    for (const model of workersAiModels(env)) {
+      if (signal && signal.aborted) break;
+      let data;
+      try {
+        data = await withAbort(env.AI.run(model, {
+          messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+          max_tokens: 320,
+          temperature: 0.95,
+        }), signal);
+      } catch (e) {
+        if (e instanceof ProviderError) throw e;                       // delai depasse
+        const msg = String((e && e.message) || e || '').slice(0, 140);
+        // Allocation gratuite du jour epuisee (code 4006) : inutile d'essayer un autre modele.
+        if (/4006|neuron|daily free allocation|quota|rate limit/i.test(msg)) throw new ProviderError('workersai', 'quota', 429, msg);
+        errors.push(`${model}: ${msg}`);
+        continue;
+      }
+      // Selon le modele : { response } ou format OpenAI { choices: [{ message }] }.
+      const text = String((data && (data.response || (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content))) || '').trim();
+      if (text) return { text, model };
+      errors.push(`${model}: vide`);
+    }
+    throw new ProviderError('workersai', 'http', 0, errors.join(' | '));
+  },
+};
+
+export const PROVIDERS = { gemini, openrouter, workersai };

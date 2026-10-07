@@ -2,7 +2,8 @@
 # Les cles ne sont PAS ici. Secrets du Worker (un fournisseur sans cle est saute) :
 #   npx wrangler secret put GEMINI_API_KEY      (offre gratuite Google AI Studio)
 #   npx wrangler secret put OPENROUTER_API_KEY  (modeles gratuits)
-# Ordre fixe : Gemini -> OpenRouter -> replique locale du jeu.
+# Workers AI n'a pas de cle : il passe par le binding [ai] ci-dessous.
+# Ordre fixe : Gemini -> OpenRouter -> Workers AI -> replique locale du jeu.
 name = "banqueroll-host"
 main = "src/worker.js"
 compatibility_date = "2026-09-01"
@@ -16,3 +17,8 @@ GEMINI_MODEL = "gemini-3.5-flash-lite,gemini-3.1-flash-lite"
 # Pas de `openrouter/free` : ce routeur tire aussi des classifieurs et des modeles de code.
 # Gemma d'abord (rapide quand il est libre, refus 429 instantane sinon), puis dots et Nemotron.
 OPENROUTER_MODEL = "google/gemma-4-31b-it:free,dots-studio/dots-3-note-preview:free,nvidia/nemotron-3.5-lightning:free"
+# Workers AI : offre gratuite de 10 000 neurons par jour, sans cle, independante des deux autres.
+WORKERS_AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+
+[ai]
+binding = "AI"

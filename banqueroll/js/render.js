@@ -463,8 +463,8 @@ function renderChat(game) {
 // Le modele imite parfois les pseudos du chat : pas de « @Alice » en tete de replique.
 const hostText = m => String(m.text || '').replace(/^(@\S+[\s,:]*)+/, '');
 
-// Qui a parle : LOCAL, GEMINI ou OPENROUTER. Rien d'autre ne peut s'afficher.
-const PROVIDERS = { gemini:'GEMINI', openrouter:'OPENROUTER' };
+// Qui a parle : LOCAL, GEMINI, OPENROUTER ou WORKERS AI. Rien d'autre ne peut s'afficher.
+const PROVIDERS = { gemini:'GEMINI', openrouter:'OPENROUTER', workersai:'WORKERS AI' };
 const sourceOf = m => (m.src === 'ai' && PROVIDERS[m.provider] ? m.provider : 'local');
 function sourceLabel(m) {
   return sourceOf(m) === 'local' ? 'LOCAL' : PROVIDERS[sourceOf(m)];

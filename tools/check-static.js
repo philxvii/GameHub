@@ -223,12 +223,16 @@ const workerFiles = ['worker.js', 'prompt.js'].map(f => path.join(ROOT, 'ai-host
   const r5 = await scenario({ gemini: 'fail', openrouter: 'fail' }, all);
   const r6 = await scenario({}, { OPENROUTER_API_KEY: 'x' });
   const r7 = await scenario({ 'gemini-3.5-flash-lite': 'fail' }, all);   // 1er modele Gemini en panne -> 2e modele Gemini
+  // Workers AI : binding simule. Gemini et OpenRouter en panne -> Workers AI ; allocation epuisee -> local.
+  const fakeAI = mode => ({ run: async () => { if (mode === 'quota') throw new Error('4006: you have used up your daily free allocation of 10,000 neurons'); return { response: 'Bob paie encore. Skill issue, mais en version premium.' }; } });
+  const r8 = await scenario({ gemini: 'fail', openrouter: 'quota' }, { ...all, AI: fakeAI('ok') });
+  const r9 = await scenario({ gemini: 'fail', openrouter: 'quota' }, { ...all, AI: fakeAI('quota') });
   const providers = Object.keys((await import(pathToFileURL(path.join(ROOT, 'ai-host', 'src', 'providers.js')).href)).PROVIDERS);
-  check('11c. Orchestrateur gratuit : Gemini → OpenRouter (panne, quota, étiquette, clé absente) → local',
-    providers.join() === 'gemini,openrouter' && O.orderFrom().join() === 'gemini,openrouter'
+  check('11c. Orchestrateur gratuit : Gemini → OpenRouter → Workers AI (panne, quota, étiquette, clé absente) → local',
+    providers.join() === 'gemini,openrouter,workersai' && O.orderFrom().join() === 'gemini,openrouter,workersai'
       && r1.provider === 'gemini' && r2.provider === 'openrouter' && r3.provider === 'openrouter' && r4.provider === 'openrouter'
-      && !r5.ok && r6.provider === 'openrouter' && r6.tried[0].reason === 'missing_key' && r7.provider === 'gemini',
-    [r1.provider, r2.provider, r3.provider, r4.provider, r5.ok ? 'ok' : 'local', r6.provider, r7.provider + ' (2e modèle)'].join(' / '));
+      && !r5.ok && r6.provider === 'openrouter' && r6.tried[0].reason === 'missing_key' && r7.provider === 'gemini' && r8.provider === 'workersai' && !r9.ok && r9.tried[2].reason === 'quota',
+    [r1.provider, r2.provider, r3.provider, r4.provider, r5.ok ? 'ok' : 'local', r6.provider, r7.provider + ' (2e modèle)', r8.provider, r9.ok ? 'ok' : 'local'].join(' / '));
 
   const passed = results.filter(Boolean).length;
   console.log(`\n===== STATIQUE : ${passed}/${results.length} =====`);

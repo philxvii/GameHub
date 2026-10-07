@@ -53,7 +53,7 @@ contient que le HTML. Pas de build : modules ES natifs servis tels quels.
 | `js/presenter.js` | présentateur : évènements, intensité 0–5, chrono, mémoire du chat, IA, badge de source | — |
 | `js/main.js` | câblage, délégation des clics `data-act` | — |
 | `css/*.css` | base (boutons, lobby), game (mise en page), board, overlays | — |
-| `../ai-host/` | Worker Cloudflare gratuit : Gemini → OpenRouter → réplique locale | — |
+| `../ai-host/` | Worker Cloudflare gratuit : Gemini → OpenRouter → Workers AI → réplique locale | — |
 
 Les modules purs renvoient des **mises à jour Firebase** (`{ 'players/0/cash': … }`)
 sans rien écrire : `actions.js` les commite. Ajoute de la logique de règle dans
@@ -145,9 +145,12 @@ de la capture de référence :
 - Chance : 42 % cartes, 32 % dilemmes, 26 % roue. Les segments de la roue sont
   proportionnels à leur probabilité.
 - IA : Worker Cloudflare `https://banqueroll-host.banqueroll-host.workers.dev`
-  (`AI_ENDPOINT` dans `presenter.js`). **100 % gratuit** (2026-10-07) : Gemini puis
-  OpenRouter, ordre fixe ; un fournisseur sans clé est sauté, échec / délai / quota →
-  suivant → réplique locale. OpenAI a été retiré : pas de fournisseur payant.
+  (`AI_ENDPOINT` dans `presenter.js`). **100 % gratuit** (2026-10-07) : Gemini, puis
+  OpenRouter, puis Workers AI (binding `AI`, sans clé, 10 000 neurons/jour, Llama 3.3 70B),
+  ordre fixe ; un fournisseur sans clé est sauté, échec / délai / quota → suivant →
+  réplique locale. 7 s par fournisseur, le dernier prend le reste des 20 s. Workers AI
+  a été ajouté le jour où Gemini (503) et OpenRouter (quota) étaient tombés ensemble.
+  OpenAI a été retiré : pas de fournisseur payant. Le Worker retire les émojis.
   Modèles Gemini : `gemini-3.5-flash-lite` (≈ 1 s), puis `gemini-3.1-flash-lite` (≈ 2 s)
   s'il cale plus de 5 s (2026-10-07 : lenteurs passagères de l'offre gratuite). `gemini-2.5-flash` n'est plus ouvert
   aux nouveaux comptes, `gemini-3.8-flash` est saturé sur l'offre gratuite ; Gemini 3
