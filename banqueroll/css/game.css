@@ -175,7 +175,9 @@
 .chat-panel{flex:1;min-height:180px;display:flex;flex-direction:column;padding:10px;}
 .chat-list{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:4px 4px 8px 2px;}
 .chat-item{align-self:flex-start;max-width:88%;background:var(--paper-hi);border-radius:12px 12px 12px 3px;padding:7px 11px 8px;font-size:.87rem;line-height:1.42;
-  box-shadow:inset 0 0 0 1px var(--rule-2), 0 1.5px 0 var(--rule-2);animation:msg-in .3s cubic-bezier(.2,.8,.3,1.1) both;}
+  box-shadow:inset 0 0 0 1px var(--rule-2), 0 1.5px 0 var(--rule-2);}
+/* Seules les bulles arrivees depuis le dernier rendu s'animent. */
+.chat-item.new{animation:msg-in .3s cubic-bezier(.2,.8,.3,1.1) both;}
 .chat-item.me{align-self:flex-end;border-radius:12px 12px 3px 12px;background:color-mix(in srgb, var(--pc) 20%, var(--paper-hi));
   box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--pc) 45%, var(--rule-2)), 0 1.5px 0 color-mix(in srgb, var(--pc) 45%, var(--rule-2));}
 .chat-item strong{display:block;font-size:.76rem;font-weight:800;color:color-mix(in srgb, var(--pc) 72%, var(--ink));margin-bottom:1px;}

@@ -60,12 +60,17 @@
 .square[data-level="3"] .bld{display:block;}
 .square[data-level="3"] .bld{background:var(--brass);}
 
-/* Proprietaire : loyer en pastille a sa couleur + bande en bas. */
-.sq-owner{position:absolute;left:0;right:0;bottom:0;height:0;background:var(--owner,transparent);color:#fff;font-size:0;font-weight:800;
-  line-height:1;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;
+/* Proprietaire : la case prend sa teinte, un cadre epais a sa couleur et un bandeau
+   en bas avec son nom (« À toi » pour ses propres cases). Loyer en pastille. */
+.sq-owner{position:absolute;left:0;right:0;bottom:0;height:0;padding:0 .3cqi;background:var(--owner,transparent);color:var(--owner-ink,#fff);
+  font-size:clamp(6px,1.12cqi,11.5px);font-weight:800;letter-spacing:.02em;text-transform:uppercase;
+  line-height:1;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   box-shadow:inset 0 .15cqi 0 var(--ink);transition:height .3s ease;}
-.square.owned .sq-owner{height:7%;}
-.square.owned{box-shadow:inset 0 0 0 .32cqi var(--owner);}
+.square.owned .sq-owner{height:13%;}
+.square.owned{background:var(--grain),color-mix(in srgb, var(--owner) 16%, var(--paper-hi));box-shadow:inset 0 0 0 .45cqi var(--owner);}
+/* Ses propres cases : etoile de laiton dans le bandeau, cadre double. */
+.square.mine .sq-owner::before{content:'★';margin-right:.4cqi;color:var(--owner-ink,#fff);}
+.square.mine{box-shadow:inset 0 0 0 .45cqi var(--owner), inset 0 0 0 .6cqi var(--ink);}
 .square.owned .sq-price{background:var(--paper-hi);color:var(--ink);padding:.25cqi .7cqi;border-radius:.4cqi;box-shadow:0 0 0 .2cqi var(--ink), .2cqi .2cqi 0 .2cqi var(--owner);}
 /* Groupe complet : une etoile de laiton dans le coin du bandeau. */
 .square.full .sq-band::after{content:'';position:absolute;top:.4cqi;right:.4cqi;width:1.4cqi;height:1.4cqi;
