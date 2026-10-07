@@ -19,8 +19,8 @@ export const HOST_NAME = 'Bankroll Host';
 export const AI_ENDPOINT = 'https://banqueroll-host.banqueroll-host.workers.dev/host';
 
 const AI_TIMEOUT_MS = 22000;           // le Worker abandonne l'amont a 20 s
-const AI_MAX_CALLS = 40;              // par partie : l'offre gratuite plafonne a 50/jour
-const AI_GAP_EVENT_MS = 12000;
+const AI_MAX_CALLS = 150;             // par partie : Gemini gratuit assure l'essentiel
+const AI_GAP_EVENT_MS = 8000;
 const AI_GAP_CHAT_MS = 6000;
 const BATCH_MS = 1400;
 // Tres present, mais le jeu respire : 4,5 s minimum entre deux prises de parole
@@ -59,7 +59,7 @@ export function aiEndpoint() {
 function reset(newCode) {
   code = newCode; seenHist = null; seenChat = null; queue = []; mem = null; prevLeader = null;
   clearTimeout(batchTimer); clearTimeout(memTimer);
-  lastTurnKey = null; pressure = { deadline: null, s12: false, s5: false };
+  lastTurnKey = null; pressure = { deadline: null, s12: false, s5: false }; pressedRound.clear();
 }
 
 function normalizeMem(m) {
@@ -118,6 +118,8 @@ export function observe(game) {
 let lastTurnKey = null;
 let pressure = { deadline: null, s12: false, s5: false };
 let pressureTimer = null;
+const pressedRound = new Map();   // playerId -> manche de la derniere pression
+const PRESSURE_EVERY = 3;         // au plus une pression tous les 3 tours par joueur
 
 function watchTurn(game) {
   if (game.phase !== 'playing') return;
@@ -148,9 +150,13 @@ function checkPressure() {
   const idle = game.turnRolled !== cur.id || (game.currentAction && game.currentAction.playerId === cur.id);
   if (!idle) return;
   const left = Math.ceil((game.turnDeadline - Date.now()) / 1000);
+  if (pressure.s12 || pressure.s5) return;                      // un seul message par tour
+  const round = game.round || 1;
+  if (pressedRound.has(cur.id) && round - pressedRound.get(cur.id) < PRESSURE_EVERY) return;
   const ctx = { ...baseCtx(game, { p: cur.id }), left, intensity: 2 };
-  if (left <= 12 && left > 6 && !pressure.s12) { pressure.s12 = true; speak({ type:'pressure12', intensity:2, ctx, local:true }); }
-  else if (left <= 5 && left >= 2 && !pressure.s5) { pressure.s5 = true; speak({ type:'pressure5', intensity:2, ctx, local:true }); }
+  // quiet : la pression ne retarde pas les autres commentaires (pas de mise a jour de lastSpeak).
+  if (left <= 12 && left > 6) { pressure.s12 = true; pressedRound.set(cur.id, round); speak({ type:'pressure12', intensity:2, ctx, local:true, quiet:true }); }
+  else if (left <= 5 && left >= 2) { pressure.s5 = true; pressedRound.set(cur.id, round); speak({ type:'pressure5', intensity:2, ctx, local:true, quiet:true }); }
 }
 
 // ================================================================ evenements
@@ -341,7 +347,7 @@ function flush() {
 async function speak(item) {
   const line = pickLine(item.type, item.ctx, mem.used);
   if (!line) return;
-  lastSpeak = Date.now();
+  if (!item.quiet) lastSpeak = Date.now();
   mem.used.push(line.id); mem.used = mem.used.slice(-30);
   saveMemSoon();
   const ref = await pushChat(code, { author: HOST_NAME, kind:'host', text: line.text, src:'local', lvl: item.intensity, ev: item.type });
@@ -354,12 +360,14 @@ function aiAllowed(item) {
   if (!aiEndpoint() || Date.now() < aiPausedUntil || mem.aiCalls >= AI_MAX_CALLS) return false;
   const gap = item.mode === 'chat' ? AI_GAP_CHAT_MS : AI_GAP_EVENT_MS;
   if (Date.now() - lastAi < gap) return false;
-  return item.mode === 'chat' ? item.type === 'chat' : item.intensity >= 3;
+  // Evenements d'intensite 2 et plus (enchere, prison, leader...) : la plupart des
+  // commentaires d'une partie normale. Les piques du chat restent locales.
+  return item.mode === 'chat' ? item.type === 'chat' : item.intensity >= 2;
 }
 
 function aiFailed() {
   failStreak++;
-  if (failStreak >= 3) { aiPausedUntil = Date.now() + 120000; failStreak = 0; }
+  if (failStreak >= 3) { aiPausedUntil = Date.now() + 45000; failStreak = 0; }
 }
 
 export async function requestAI(payload) {

@@ -37,36 +37,68 @@ async function post(provider, url, headers, body, signal) {
 }
 
 // ------------------------------------------------------------ Gemini (offre gratuite Google AI Studio)
+// GEMINI_MODEL peut lister plusieurs modeles (« a,b ») : si le premier cale (lenteur
+// passagere de l'offre gratuite, quota, modele retire), le suivant est essaye dans le
+// temps alloue a Gemini, avant de passer a OpenRouter.
+const GEMINI_DEFAULT = 'gemini-3.5-flash-lite,gemini-3.1-flash-lite';
+const FIRST_MODEL_MS = 5000;     // le premier modele repond en ~1 s ; au-dela, il cale
+
+export const geminiModels = env => String((env && env.GEMINI_MODEL) || GEMINI_DEFAULT).split(',').map(m => m.trim()).filter(Boolean).slice(0, 3);
+
+async function geminiOnce(model, system, user, env, signal) {
+  const generationConfig = { temperature: 1, maxOutputTokens: 800 };
+  // Reflexion au plus bas : une replique de presentateur n'a pas besoin de raisonner,
+  // et la reflexion par defaut depassait le delai. Gemini 3 : thinkingLevel ;
+  // Gemini 2.5 Flash : thinkingBudget 0. Autre modele : reglage par defaut.
+  if (/^gemini-3/.test(model)) generationConfig.thinkingConfig = { thinkingLevel: 'low' };   // 'minimal' est refuse par gemini-3.8-flash
+  else if (/^gemini-2\.5-flash/.test(model)) generationConfig.thinkingConfig = { thinkingBudget: 0 };
+  const body = {
+    systemInstruction: { parts: [{ text: system }] },
+    contents: [{ role: 'user', parts: [{ text: user }] }],
+    generationConfig,
+    // Le roast reste dans le cadre du jeu : on ne bloque que les contenus vraiment graves.
+    safetySettings: ['HARM_CATEGORY_HARASSMENT', 'HARM_CATEGORY_HATE_SPEECH'].map(category => ({ category, threshold: 'BLOCK_ONLY_HIGH' })),
+  };
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const data = await post('gemini', url, { 'x-goog-api-key': key(env.GEMINI_API_KEY) }, body, signal);
+  const candidate = data && data.candidates && data.candidates[0];
+  const parts = candidate && candidate.content && candidate.content.parts;
+  // Les parties « thought » sont la reflexion interne du modele : jamais affichees.
+  const text = (parts || []).filter(p => !p.thought).map(p => p.text || '').join('').trim();
+  if (!text) {
+    const why = (data && data.promptFeedback && data.promptFeedback.blockReason) || (candidate && candidate.finishReason) || '?';
+    throw new ProviderError('gemini', 'empty', 200, `${why} ${model}`);
+  }
+  return { text, model: data.modelVersion || model };
+}
+
 export const gemini = {
   id: 'gemini',
   configured: env => !!key(env.GEMINI_API_KEY),
-  model: env => env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
+  model: env => geminiModels(env).join(','),
   async call({ system, user, env, signal }) {
-    const model = this.model(env);
-    const generationConfig = { temperature: 1, maxOutputTokens: 800 };
-    // Reflexion au plus bas : une replique de presentateur n'a pas besoin de raisonner,
-    // et la reflexion par defaut depassait le delai. Gemini 3 : thinkingLevel ;
-    // Gemini 2.5 Flash : thinkingBudget 0. Autre modele : reglage par defaut.
-    if (/^gemini-3/.test(model)) generationConfig.thinkingConfig = { thinkingLevel: 'low' };   // 'minimal' est refuse par gemini-3.8-flash
-    else if (/^gemini-2\.5-flash/.test(model)) generationConfig.thinkingConfig = { thinkingBudget: 0 };
-    const body = {
-      systemInstruction: { parts: [{ text: system }] },
-      contents: [{ role: 'user', parts: [{ text: user }] }],
-      generationConfig,
-      // Le roast reste dans le cadre du jeu : on ne bloque que les contenus vraiment graves.
-      safetySettings: ['HARM_CATEGORY_HARASSMENT', 'HARM_CATEGORY_HATE_SPEECH'].map(category => ({ category, threshold: 'BLOCK_ONLY_HIGH' })),
-    };
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
-    const data = await post('gemini', url, { 'x-goog-api-key': key(env.GEMINI_API_KEY) }, body, signal);
-    const candidate = data && data.candidates && data.candidates[0];
-    const parts = candidate && candidate.content && candidate.content.parts;
-    // Les parties « thought » sont la reflexion interne du modele : jamais affichees.
-    const text = (parts || []).filter(p => !p.thought).map(p => p.text || '').join('').trim();
-    if (!text) {
-      const why = (data && data.promptFeedback && data.promptFeedback.blockReason) || (candidate && candidate.finishReason) || '?';
-      throw new ProviderError('gemini', 'empty', 200, `${why} ${model}`);
+    const models = geminiModels(env);
+    const errors = [];
+    for (let i = 0; i < models.length; i++) {
+      if (signal && signal.aborted) break;
+      // Chaque modele a son propre delai ; le dernier prend le reste du temps de Gemini.
+      const ctrl = new AbortController();
+      const stop = () => ctrl.abort();
+      if (signal) signal.addEventListener('abort', stop, { once: true });
+      const timer = i < models.length - 1 ? setTimeout(stop, FIRST_MODEL_MS) : null;
+      try {
+        return await geminiOnce(models[i], system, user, env, ctrl.signal);
+      } catch (e) {
+        errors.push(`${models[i]}:${e && e.reason || 'error'}${e && e.status ? ' ' + e.status : ''}`);
+        if (i === models.length - 1 || (signal && signal.aborted)) {
+          throw new ProviderError('gemini', e && e.reason || 'error', e && e.status, [errors.join(' | '), e && e.detail].filter(Boolean).join(' — '));
+        }
+      } finally {
+        if (timer) clearTimeout(timer);
+        if (signal) signal.removeEventListener('abort', stop);
+      }
     }
-    return { text, model: data.modelVersion || model };
+    throw new ProviderError('gemini', 'timeout', 0, errors.join(' | '));
   },
 };
 

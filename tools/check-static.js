@@ -206,7 +206,8 @@ const workerFiles = ['worker.js', 'prompt.js'].map(f => path.join(ROOT, 'ai-host
     globalThis.fetch = async url => {
       const host = new URL(String(url)).hostname;
       const id = host.includes('googleapis') ? 'gemini' : 'openrouter';
-      const m = modes[id] || 'ok';
+      const model = (String(url).match(/models\/([^:]+):/) || [])[1];
+      const m = (model && modes[model]) || modes[id] || 'ok';
       if (m === 'fail') return new Response('{}', { status: 503 });
       if (m === 'quota') return new Response('{}', { status: 429 });
       const text = m === 'junk' ? 'User Safety: safe' : `Réplique de test venue de ${id}, assez longue.`;
@@ -221,12 +222,13 @@ const workerFiles = ['worker.js', 'prompt.js'].map(f => path.join(ROOT, 'ai-host
   const r4 = await scenario({ gemini: 'junk' }, all);
   const r5 = await scenario({ gemini: 'fail', openrouter: 'fail' }, all);
   const r6 = await scenario({}, { OPENROUTER_API_KEY: 'x' });
+  const r7 = await scenario({ 'gemini-3.5-flash-lite': 'fail' }, all);   // 1er modele Gemini en panne -> 2e modele Gemini
   const providers = Object.keys((await import(pathToFileURL(path.join(ROOT, 'ai-host', 'src', 'providers.js')).href)).PROVIDERS);
   check('11c. Orchestrateur gratuit : Gemini → OpenRouter (panne, quota, étiquette, clé absente) → local',
     providers.join() === 'gemini,openrouter' && O.orderFrom().join() === 'gemini,openrouter'
       && r1.provider === 'gemini' && r2.provider === 'openrouter' && r3.provider === 'openrouter' && r4.provider === 'openrouter'
-      && !r5.ok && r6.provider === 'openrouter' && r6.tried[0].reason === 'missing_key',
-    [r1.provider, r2.provider, r3.provider, r4.provider, r5.ok ? 'ok' : 'local', r6.provider].join(' / '));
+      && !r5.ok && r6.provider === 'openrouter' && r6.tried[0].reason === 'missing_key' && r7.provider === 'gemini',
+    [r1.provider, r2.provider, r3.provider, r4.provider, r5.ok ? 'ok' : 'local', r6.provider, r7.provider + ' (2e modèle)'].join(' / '));
 
   const passed = results.filter(Boolean).length;
   console.log(`\n===== STATIQUE : ${passed}/${results.length} =====`);

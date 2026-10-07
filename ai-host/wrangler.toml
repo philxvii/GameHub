@@ -10,7 +10,8 @@ compatibility_date = "2026-09-01"
 [vars]
 # Origines autorisees a appeler le Worker (le jeu en production + le serveur de test local).
 ALLOWED_ORIGINS = "https://roulia.me,https://www.roulia.me,http://localhost:4173,http://127.0.0.1:4173"
-GEMINI_MODEL = "gemini-3.5-flash-lite"
+# Gemini : 3.5 Flash Lite (~1 s), puis 3.1 Flash Lite (~2 s) s'il cale, dans les 9 s de Gemini.
+GEMINI_MODEL = "gemini-3.5-flash-lite,gemini-3.1-flash-lite"
 # OpenRouter : modeles gratuits de conversation (3 au plus), bascule automatique.
 # Pas de `openrouter/free` : ce routeur tire aussi des classifieurs et des modeles de code.
 # Gemma d'abord (rapide quand il est libre, refus 429 instantane sinon), puis dots et Nemotron.

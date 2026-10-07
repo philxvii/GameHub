@@ -148,13 +148,18 @@ de la capture de référence :
   (`AI_ENDPOINT` dans `presenter.js`). **100 % gratuit** (2026-10-07) : Gemini puis
   OpenRouter, ordre fixe ; un fournisseur sans clé est sauté, échec / délai / quota →
   suivant → réplique locale. OpenAI a été retiré : pas de fournisseur payant.
-  Modèle Gemini : `gemini-3.5-flash-lite` (≈ 1 s). `gemini-2.5-flash` n'est plus ouvert
+  Modèles Gemini : `gemini-3.5-flash-lite` (≈ 1 s), puis `gemini-3.1-flash-lite` (≈ 2 s)
+  s'il cale plus de 5 s (2026-10-07 : lenteurs passagères de l'offre gratuite). `gemini-2.5-flash` n'est plus ouvert
   aux nouveaux comptes, `gemini-3.8-flash` est saturé sur l'offre gratuite ; Gemini 3
   refuse `thinkingLevel: minimal`, on envoie `low`. Diagnostic : le Worker journalise le
   code et le message d'erreur du fournisseur (jamais la clé).
   Pas de `openrouter/free` : ce routeur tirait des classifieurs (« User Safety: safe »).
-- Présentateur : intensité 0–5, délai de 4,5 s entre deux prises de parole, pression
-  du chrono à 12 s / 5 s, badge LOCAL / GEMINI / OPENROUTER sur chaque réplique.
+- Présentateur : intensité 0–5, délai de 4,5 s entre deux prises de parole, badge LOCAL /
+  GEMINI / OPENROUTER sur chaque réplique. IA appelée dès l'intensité 2 et pour chaque
+  `@host` (8 s entre deux appels d'évènement, 150 par partie, pause de 45 s après 3 échecs).
+  Pression du chrono : un seul message par tour pressé, au plus tous les 3 tours par
+  joueur, sans retarder les autres commentaires (2026-10-07 : 18 répliques sur 40 étaient
+  des « 12 secondes… »).
   Sur localhost, `?ai=off` coupe l'IA et `?ai=<url>` la redirige : la suite de tests
   tourne en `?ai=off` pour rester reproductible et ne pas consommer le quota.
 - Le bandeau coloré des cases reste en **aplat** (contraste ≥ 4.5:1 audité).
