@@ -37,12 +37,14 @@ const seen = { cash:new Map(), owned:null, built:null, hostKey:null, histKey:nul
 let countdown = null;
 let bubbleTimer = null;
 let overlayTimer = null;
-let chatStick = true;   // le chat suit les nouveaux messages tant qu'on ne remonte pas dans l'historique
+let chatStick = true;
+let chatSig = '';            // contenu affiche : on ne reconstruit le chat que s'il change
+const chatShown = new Set(); // messages deja affiches : seuls les nouveaux s'animent   // le chat suit les nouveaux messages tant qu'on ne remonte pas dans l'historique
 
 export function resetVisualState() {
   resetPawns();
   Object.assign(seen, { cash:new Map(), owned:null, built:null, hostKey:null, histKey:null, chatCount:0, overlay:null, auctionDismissed:null, first:true });
-  chatStick = true;
+  chatStick = true; chatSig = ''; chatShown.clear();
   closeOverlay();
   const v = $id('victory'); if (v) v.classList.remove('active');
   S.lastRollSeen = null;
@@ -116,11 +118,12 @@ function renderBoard(game) {
     const swap = game.swap && game.swap.status === 'open' ? game.swap : null;
     node.classList.toggle('swap-target', !!swap && (swap.offered === index || Object.values(swap.offers || {}).includes(index)));
     node.dataset.level = level;
-    if (owner) node.style.setProperty('--owner', owner.color); else node.style.removeProperty('--owner');
+    if (owner) { node.style.setProperty('--owner', owner.color); node.style.setProperty('--owner-ink', readableInk(owner.color)); }
+    else { node.style.removeProperty('--owner'); node.style.removeProperty('--owner-ink'); }
     const price = node.querySelector('.sq-price');
     if (price && isOwnable(sq)) price.textContent = owner ? `${rentFor(game, index)} $` : `$${sq.price}`;
     const ownerEl = node.querySelector('.sq-owner');
-    if (ownerEl) ownerEl.textContent = owner ? owner.name : '';
+    if (ownerEl) ownerEl.textContent = owner ? (owner.id === S.playerId ? 'À toi' : owner.name) : '';
     node.title = owner ? `${sq.name} — ${owner.name}${level ? ` · ${plural(level, 'bâtiment')}` : ''} · loyer ${rentFor(game, index)} $` : sq.name;
   });
 }
@@ -417,13 +420,22 @@ function renderChat(game) {
   const messages = Object.entries(game.chat || {}).map(([k, v]) => ({ k, ...v })).sort((a, b) => a.ts - b.ts);
   if (list) {
     watchChat(list);
-    list.innerHTML = messages.slice(-50).map(m => {
-      if (m.kind === 'host') return `<div class="chat-item host lvl-${Number(m.lvl) || 0}" data-key="${esc(m.k)}"><strong><span class="chat-av">${HOST_AVATAR}</span>${HOST_NAME}${sourceBadge(m)}</strong><span>${esc(hostText(m))}</span></div>`;
-      const p = playerById(game, m.pid) || game.players.find(x => x.name === m.author);
-      const me = m.pid === S.playerId;
-      return `<div class="chat-item${me ? ' me' : ''}" style="--pc:${esc(p ? p.color : '#888')}">${me ? '' : `<strong>${esc(m.author)}</strong>`}<span>${esc(m.text)}</span></div>`;
-    }).join('') || '<p class="muted small">Aucun message. Provoque quelqu’un, le présentateur prend des notes.</p>';
-    if (chatStick || seen.first) list.scrollTop = list.scrollHeight;
+    // Le rendu tourne a chaque mise a jour Firebase : reconstruire la liste a chaque fois
+    // rejouait l'animation d'apparition de TOUS les messages (le chat clignotait).
+    const shown = messages.slice(-50);
+    const sig = shown.map(m => `${m.k}:${(m.text || '').length}:${m.src || ''}`).join('|');
+    if (sig !== chatSig) {
+      chatSig = sig;
+      list.innerHTML = shown.map(m => {
+        const fresh = !seen.first && !chatShown.has(m.k) ? ' new' : '';
+        chatShown.add(m.k);
+        if (m.kind === 'host') return `<div class="chat-item host${fresh} lvl-${Number(m.lvl) || 0}" data-key="${esc(m.k)}"><strong><span class="chat-av">${HOST_AVATAR}</span>${HOST_NAME}${sourceBadge(m)}</strong><span>${esc(hostText(m))}</span></div>`;
+        const p = playerById(game, m.pid) || game.players.find(x => x.name === m.author);
+        const me = m.pid === S.playerId;
+        return `<div class="chat-item${me ? ' me' : ''}${fresh}" data-key="${esc(m.k)}" style="--pc:${esc(p ? p.color : '#888')}">${me ? '' : `<strong>${esc(m.author)}</strong>`}<span>${esc(m.text)}</span></div>`;
+      }).join('') || '<p class="muted small">Aucun message. Provoque quelqu’un, le présentateur prend des notes.</p>';
+      if (chatStick || seen.first) list.scrollTop = list.scrollHeight;
+    }
   }
   const last = messages[messages.length - 1];
   const lastEl = $id('ref-chat-last'), countEl = $id('ref-chat-count');

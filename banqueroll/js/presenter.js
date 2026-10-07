@@ -59,7 +59,7 @@ export function aiEndpoint() {
 function reset(newCode) {
   code = newCode; seenHist = null; seenChat = null; queue = []; mem = null; prevLeader = null;
   clearTimeout(batchTimer); clearTimeout(memTimer);
-  lastTurnKey = null; pressure = { deadline: null, s12: false, s5: false }; pressedRound.clear();
+  lastTurnKey = null; pressure = { deadline: null, s12: false, s5: false }; turnCount = 0; lastTurnPique = -99; lastPressureTurn = -99;
 }
 
 function normalizeMem(m) {
@@ -118,8 +118,11 @@ export function observe(game) {
 let lastTurnKey = null;
 let pressure = { deadline: null, s12: false, s5: false };
 let pressureTimer = null;
-const pressedRound = new Map();   // playerId -> manche de la derniere pression
-const PRESSURE_EVERY = 3;         // au plus une pression tous les 3 tours par joueur
+// Relances (pique de debut de tour, pression du chrono) : au plus une fois tous les
+// 3 tours pour toute la table. Avant, la limite etait par joueur : a plusieurs, le
+// presentateur relancait presque a chaque tour.
+const NAG_EVERY = 3;
+let turnCount = 0, lastTurnPique = -99, lastPressureTurn = -99;
 
 function watchTurn(game) {
   if (game.phase !== 'playing') return;
@@ -129,8 +132,10 @@ function watchTurn(game) {
   if (lastTurnKey === null) { lastTurnKey = key; return; }
   if (key !== lastTurnKey) {
     lastTurnKey = key;
+    turnCount++;
     // Pas de pique de debut de tour quand le tour precedent vient deja de faire parler.
-    if (Date.now() - lastSpeak > 2500 && Math.random() < 0.45) {
+    if (turnCount - lastTurnPique >= NAG_EVERY && Date.now() - lastSpeak > 2500 && Math.random() < 0.6) {
+      lastTurnPique = turnCount;
       const ctx = baseCtx(game, { p: cur.id });
       ctx.intensity = 1;
       enqueue({ type:'turn', intensity:1, ctx, text:`Tour ${de(cur.name)}.` });
@@ -151,12 +156,11 @@ function checkPressure() {
   if (!idle) return;
   const left = Math.ceil((game.turnDeadline - Date.now()) / 1000);
   if (pressure.s12 || pressure.s5) return;                      // un seul message par tour
-  const round = game.round || 1;
-  if (pressedRound.has(cur.id) && round - pressedRound.get(cur.id) < PRESSURE_EVERY) return;
+  if (turnCount - lastPressureTurn < NAG_EVERY) return;
   const ctx = { ...baseCtx(game, { p: cur.id }), left, intensity: 2 };
   // quiet : la pression ne retarde pas les autres commentaires (pas de mise a jour de lastSpeak).
-  if (left <= 12 && left > 6) { pressure.s12 = true; pressedRound.set(cur.id, round); speak({ type:'pressure12', intensity:2, ctx, local:true, quiet:true }); }
-  else if (left <= 5 && left >= 2) { pressure.s5 = true; pressedRound.set(cur.id, round); speak({ type:'pressure5', intensity:2, ctx, local:true, quiet:true }); }
+  if (left <= 12 && left > 6) { pressure.s12 = true; lastPressureTurn = turnCount; speak({ type:'pressure12', intensity:2, ctx, local:true, quiet:true }); }
+  else if (left <= 5 && left >= 2) { pressure.s5 = true; lastPressureTurn = turnCount; speak({ type:'pressure5', intensity:2, ctx, local:true, quiet:true }); }
 }
 
 // ================================================================ evenements

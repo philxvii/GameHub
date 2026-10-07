@@ -157,9 +157,13 @@ de la capture de référence :
 - Présentateur : intensité 0–5, délai de 4,5 s entre deux prises de parole, badge LOCAL /
   GEMINI / OPENROUTER sur chaque réplique. IA appelée dès l'intensité 2 et pour chaque
   `@host` (8 s entre deux appels d'évènement, 150 par partie, pause de 45 s après 3 échecs).
-  Pression du chrono : un seul message par tour pressé, au plus tous les 3 tours par
-  joueur, sans retarder les autres commentaires (2026-10-07 : 18 répliques sur 40 étaient
-  des « 12 secondes… »).
+  Relances (pique de début de tour, pression du chrono) : au plus une fois tous les 3
+  tours pour TOUTE la table, sans retarder les autres commentaires. Le présentateur ne
+  dit jamais « joue » (2026-10-07 : limitée par joueur, la relance tombait presque à
+  chaque tour à plusieurs).
+  Ton (2026-10-07, demande de l'utilisateur) : clash entre potes, insultes pour faire
+  rager, argot et actu du moment. Jamais raciste, homophobe, sexiste, validiste ni
+  sexuel ; l'actu vise les puissants, jamais les victimes.
   Sur localhost, `?ai=off` coupe l'IA et `?ai=<url>` la redirige : la suite de tests
   tourne en `?ai=off` pour rester reproductible et ne pas consommer le quota.
 - Le bandeau coloré des cases reste en **aplat** (contraste ≥ 4.5:1 audité).
