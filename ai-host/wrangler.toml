@@ -1,5 +1,8 @@
-# Proxy du presentateur IA de Banqueroll — Cloudflare Workers (offre gratuite).
-# La cle OpenRouter n'est PAS ici : `npx wrangler secret put OPENROUTER_API_KEY`.
+# Proxy du presentateur IA de Banqueroll — Cloudflare Workers. 100 % gratuit.
+# Les cles ne sont PAS ici. Secrets du Worker (un fournisseur sans cle est saute) :
+#   npx wrangler secret put GEMINI_API_KEY      (offre gratuite Google AI Studio)
+#   npx wrangler secret put OPENROUTER_API_KEY  (modeles gratuits)
+# Ordre fixe : Gemini -> OpenRouter -> replique locale du jeu.
 name = "banqueroll-host"
 main = "src/worker.js"
 compatibility_date = "2026-09-01"
@@ -7,7 +10,8 @@ compatibility_date = "2026-09-01"
 [vars]
 # Origines autorisees a appeler le Worker (le jeu en production + le serveur de test local).
 ALLOWED_ORIGINS = "https://roulia.me,https://www.roulia.me,http://localhost:4173,http://127.0.0.1:4173"
-# Modeles gratuits de conversation, par ordre de preference (3 au plus) : OpenRouter
-# bascule sur le suivant si le premier est indisponible. Pas de `openrouter/free` :
-# ce routeur tire aussi des classifieurs et des modeles de code.
-OPENROUTER_MODELS = "google/gemma-4-31b-it:free,dots-studio/dots-3-note-preview:free,google/gemma-4-26b-a4b-it:free"
+GEMINI_MODEL = "gemini-3.5-flash-lite"
+# OpenRouter : modeles gratuits de conversation (3 au plus), bascule automatique.
+# Pas de `openrouter/free` : ce routeur tire aussi des classifieurs et des modeles de code.
+# Gemma d'abord (rapide quand il est libre, refus 429 instantane sinon), puis dots et Nemotron.
+OPENROUTER_MODEL = "google/gemma-4-31b-it:free,dots-studio/dots-3-note-preview:free,nvidia/nemotron-3.5-lightning:free"

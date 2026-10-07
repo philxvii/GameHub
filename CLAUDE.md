@@ -49,11 +49,11 @@ contient que le HTML. Pas de build : modules ES natifs servis tels quels.
 | `js/net.js` | Firebase + état de session `S` | — |
 | `js/actions.js` | actions des joueurs, arbitrage de l'hôte (`hostArbitrate`) | — |
 | `js/render.js` | état → DOM, overlays Chance, fiche de case, victoire | — |
-| `js/fx.js` | dé 3D (WAAPI), pions (GSAP), roue SVG, pièces, toasts | — |
-| `js/presenter.js` | présentateur : évènements, intensité, mémoire, IA | — |
+| `js/fx.js` | dé 3D (WAAPI), trajets des pions case par case (GSAP, repli WAAPI), roue SVG, pièces, toasts | — |
+| `js/presenter.js` | présentateur : évènements, intensité 0–5, chrono, mémoire du chat, IA, badge de source | — |
 | `js/main.js` | câblage, délégation des clics `data-act` | — |
 | `css/*.css` | base (boutons, lobby), game (mise en page), board, overlays | — |
-| `../ai-host/` | Worker Cloudflare → OpenRouter (modèle gratuit) | — |
+| `../ai-host/` | Worker Cloudflare gratuit : Gemini → OpenRouter → réplique locale | — |
 
 Les modules purs renvoient des **mises à jour Firebase** (`{ 'players/0/cash': … }`)
 sans rien écrire : `actions.js` les commite. Ajoute de la logique de règle dans
@@ -94,6 +94,17 @@ sans rien écrire : `actions.js` les commite. Ajoute de la logique de règle dan
   sur desktop ; sans elles, le plateau retombait dans une rangée `auto` et rétrécissait.
 - **Tiroir mobile fermé = `display:none`.** Translaté hors écran, il élargissait
   la page à 767 px sur un écran de 390.
+- **Un pion en route ne doit jamais être reposé.** La ligne d'historique écrite juste
+  après le déplacement relance le rendu : avant la map `moving` de `fx.js`, ce rendu
+  reposait le pion à destination et l'animation disparaissait (« téléport »).
+- **Firebase refuse `undefined`** dans une écriture : un champ facultatif s'ajoute
+  par décomposition conditionnelle (`...(x ? { boast: true } : {})`), sinon toute
+  l'écriture échoue (la mémoire du présentateur n'était jamais sauvegardée).
+- **`renderOverlay` ferme les overlays qu'il ne connaît pas** : un nouveau mode
+  (comme `event`) doit être ajouté à sa liste, sinon il se referme aussitôt.
+- **Tests : une fenêtre par joueur** (`newWindow` dans `tools/cdp.js`). En onglets,
+  Chrome sans fenêtre ne dessine que l'onglet au premier plan et les animations de
+  l'autre joueur ne progressent pas.
 - **Le pion se pose à 87 % de la hauteur de la case**, dans une zone basse réservée :
   le nom et les bâtiments restent visibles au-dessus.
 - **GSAP vient d'un CDN** et ne sert qu'aux trajets des pions. Sans lui, pions
@@ -125,13 +136,25 @@ de la capture de référence :
   reste disponible quand on refuse un achat.
 - Vente à 80 % pendant son tour. Faillite si argent < −500 $ ou fortune ≤ 0 : les
   propriétés retournent à la banque.
+- **Départ : 1 000 $** (2026-10-07), plus le bonus de retard de la règle 2 :
+  +25 $ par rang de passage (règle maison) → 1 000, 1 025, 1 050…
 - Objectif 3 000 / 5 000 / 7 000 $, 30 / 50 manches ou sans limite (34 pour les
-  anciennes parties sans `settings`). Ordre tiré au sort ; bonus de retard de
-  +25 $ par rang (règle maison).
+  anciennes parties sans `settings`). Ordre tiré au sort.
+- **Case EVENT** : mécanique héritée, conservée telle quelle (gain ou perte de
+  100 à 160 $, tirée par le joueur actif). Elle a désormais une carte visible.
 - Chance : 42 % cartes, 32 % dilemmes, 26 % roue. Les segments de la roue sont
   proportionnels à leur probabilité.
-- IA : **100 % gratuite**. Cloudflare Worker + OpenRouter `openrouter/free`, déployé sur
-  `https://banqueroll-host.banqueroll-host.workers.dev` (`AI_ENDPOINT` dans `presenter.js`).
+- IA : Worker Cloudflare `https://banqueroll-host.banqueroll-host.workers.dev`
+  (`AI_ENDPOINT` dans `presenter.js`). **100 % gratuit** (2026-10-07) : Gemini puis
+  OpenRouter, ordre fixe ; un fournisseur sans clé est sauté, échec / délai / quota →
+  suivant → réplique locale. OpenAI a été retiré : pas de fournisseur payant.
+  Modèle Gemini : `gemini-3.5-flash-lite` (≈ 1 s). `gemini-2.5-flash` n'est plus ouvert
+  aux nouveaux comptes, `gemini-3.8-flash` est saturé sur l'offre gratuite ; Gemini 3
+  refuse `thinkingLevel: minimal`, on envoie `low`. Diagnostic : le Worker journalise le
+  code et le message d'erreur du fournisseur (jamais la clé).
+  Pas de `openrouter/free` : ce routeur tirait des classifieurs (« User Safety: safe »).
+- Présentateur : intensité 0–5, délai de 4,5 s entre deux prises de parole, pression
+  du chrono à 12 s / 5 s, badge LOCAL / GEMINI / OPENROUTER sur chaque réplique.
   Sur localhost, `?ai=off` coupe l'IA et `?ai=<url>` la redirige : la suite de tests
   tourne en `?ai=off` pour rester reproductible et ne pas consommer le quota.
 - Le bandeau coloré des cases reste en **aplat** (contraste ≥ 4.5:1 audité).
@@ -141,7 +164,7 @@ de la capture de référence :
 L'arbitrage et le présentateur dépendent de l'onglet de l'hôte : fermé ou
 longuement masqué, les enchères expirées et les tours AFK ne sont plus résolus, et
 le présentateur se tait. Pas de liste publique des parties disponibles. Les quotas
-gratuits d'OpenRouter (50 requêtes par jour sans crédit) limitent l'IA : au-delà,
+gratuits (OpenRouter : 50 requêtes par jour sans crédit) limitent l'IA : au-delà,
 répliques locales.
 
 ---
@@ -151,11 +174,11 @@ répliques locales.
 ```bash
 node tools/check-static.js            # ~2 s, sans navigateur — à lancer toujours
 python -m http.server 4173            # puis, dans un autre terminal :
-node tools/test-browser.js            # 41 contrôles, Chrome réel, 2 joueurs, IA simulée
+node tools/test-browser.js            # 48 contrôles, Chrome réel, 2 joueurs, IA simulée
 node tools/test-browser.js --shots    # + captures dans tools/shots/
 node tools/test-browser.js --no-gsap  # repli quand le CDN est coupé
 node tools/test-browser.js --preview  # fenêtre visible avec une partie de démo
-node tools/ai-mock.js                 # Worker IA local, amont simulé (port 8787)
+node tools/ai-mock.js                 # Worker IA local, Gemini et OpenRouter simulés (port 8787)
 ```
 
 Les suites créent de vraies parties Firebase et **les suppriment** ensuite. Si un

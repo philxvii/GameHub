@@ -4,7 +4,7 @@ import { S, loadLocal } from './net.js';
 import * as A from './actions.js';
 import * as R from './render.js';
 import { observe, presenterDebug } from './presenter.js';
-import { toast, syncPawns } from './fx.js';
+import { toast, syncPawns, finishMoves } from './fx.js';
 import { getSquareColor, BOARD } from './board.js';
 
 A.hooks.onGame = game => { R.renderState(game); observe(game); };
@@ -118,7 +118,9 @@ document.addEventListener('keydown', e => {
 
 // Le plateau est fluide : on repositionne les pions quand sa geometrie change.
 let resizeRaf = null;
-const relayout = () => { cancelAnimationFrame(resizeRaf); resizeRaf = requestAnimationFrame(() => { if (S.game) syncPawns(S.game); }); };
+const relayout = () => { cancelAnimationFrame(resizeRaf); resizeRaf = requestAnimationFrame(() => { finishMoves(); if (S.game) syncPawns(S.game); }); };
+// rAF ne tourne pas dans un onglet masque : on recale aussi immediatement.
+window.addEventListener('resize', () => { finishMoves(); if (S.game) syncPawns(S.game); });
 window.addEventListener('resize', relayout);
 if (typeof ResizeObserver === 'function') new ResizeObserver(relayout).observe($id('board-grid'));
 

@@ -65,7 +65,16 @@ const rig = (page, values) => page.eval(`
 const click = (page, selector) => page.eval(`const el=document.querySelector(${JSON.stringify(selector)}); if(!el) return false; el.click(); return true;`);
 const clickText = (page, scope, text) => page.eval(`const el=[...document.querySelectorAll(${JSON.stringify(scope)})].find(x=>x.textContent.includes(${JSON.stringify(text)})); if(!el||el.disabled) return false; el.click(); return true;`);
 const lastHist = page => page.eval(`return Object.values(__bq.S.game.history||{}).sort((a,b)=>a.ts-b.ts).map(h=>h.text).slice(-6);`);
-const hostLines = page => page.eval(`return Object.values(__bq.S.game.chat||{}).sort((a,b)=>a.ts-b.ts).filter(m=>m.kind==='host');`);
+const hostLines = page => page.eval(`return Object.entries(__bq.S.game.chat||{}).map(([k,v])=>({k,...v})).sort((a,b)=>a.ts-b.ts).filter(m=>m.kind==='host');`);
+// Echantillonne la position affichee d'un pion : la case la plus proche, toutes les 60 ms.
+const trail = pid => `
+  window.__trail=[]; const el=document.querySelector('.pawn[data-player="${pid}"]');
+  const sq=[...document.querySelectorAll('.square')].map(s=>{const r=s.getBoundingClientRect();return {i:+s.dataset.index,x:r.left+r.width/2,y:r.top+r.height/2};});
+  clearInterval(window.__iv);
+  window.__iv=setInterval(()=>{const r=el.getBoundingClientRect(); const cx=r.left+r.width/2, cy=r.top+r.height/2;
+    let best=null,d=1e9; for(const s of sq){const dd=Math.hypot(s.x-cx,s.y-cy); if(dd<d){d=dd;best=s;}}
+    const last=window.__trail[window.__trail.length-1]; if(!last||last.i!==best.i) window.__trail.push({i:best.i});},60);
+  return 1;`;
 const say = (page, text) => page.eval(`document.getElementById('chat-input').value=${JSON.stringify(text)}; document.querySelector('#chat-form button').click(); return 1;`);
 
 async function openPair(b) {
@@ -109,7 +118,7 @@ async function suiteGameplay(A, B) {
   const ia = g.players.findIndex(p => p.name === 'Alice'), ib = 1 - ia;
   const idA = g.players[ia].id, idB = g.players[ib].id;
   const pageOf = i => (i === ia ? A : B);
-  check('Démarrage : ordre tiré, bonus de retard au 2e joueur', g.players[0].cash === 1500 && g.players[1].cash === 1525, g.players.map(p => p.name + ' ' + p.cash).join(', '));
+  check('Démarrage : ordre tiré, bonus de retard au 2e joueur', g.players[0].cash === 1000 && g.players[1].cash === 1025, g.players.map(p => p.name + ' ' + p.cash).join(', '));
 
   // Prepare un tour : joueur, position, argent, pas d'action en cours, delai long.
   const setTurn = async (i, patch = {}, extra = {}) => {
@@ -122,21 +131,29 @@ async function suiteGameplay(A, B) {
   const cur = g.turnIndex;
   await setTurn(cur, { position: 21 });
   await rig(pageOf(cur), [0.4]);                        // de = 3 -> case Event
+  await A.eval(trail(g.players[cur].id)); await B.eval(trail(g.players[cur].id));
   await pageOf(cur).eval(`window.rollDice(); return 1;`);
   await sleep(250);
   const pendant = await pageOf(cur).eval(`return document.getElementById('die').classList.contains('rolling');`);
-  await sleep(3200);
+  // La case d'arrivee (24) est un EVENT : sa carte doit s'afficher chez l'autre joueur.
+  const other = pageOf(cur) === A ? B : A;
+  const evCard = await until(other, `document.querySelector('#stage-overlay .event-card .ev-amount')?.textContent || null`, 4500);
+  await sleep(1500);
   const histRoll = (await lastHist(A)).find(t => / lance \d/.test(t)) || '';
   const m = / lance (\d) et avance de (\d)/.exec(histRoll);
   const dieA = await A.eval(`return document.getElementById('die').dataset.value;`);
   const dieB = await B.eval(`return document.getElementById('die').dataset.value;`);
   check('Lancer : un seul dé, animation pendant le lancer', pendant === true && !!m, histRoll);
+  check('Case EVENT : carte visible chez l’autre joueur (effet inchangé)', !!evCard, evCard);
   check('Dé affiché == valeur du moteur, sur les DEUX clients', m && dieA === m[1] && dieB === m[1] && m[1] === m[2], `moteur ${m && m[1]}, A ${dieA}, B ${dieB}`);
   const pawn = await A.eval(`
     const p=document.querySelector('.pawn[data-player="${g.players[cur].id}"]').getBoundingClientRect();
     const s=document.querySelector('.square[data-index="24"]').getBoundingClientRect();
     return {dx:Math.abs(p.left+p.width/2-(s.left+s.width/2)), dy:Math.abs(p.top+p.height/2-(s.top+s.height/2)), w:s.width};`);
   check('Pion posé sur la bonne case après le déplacement', pawn.dx < pawn.w / 2 && pawn.dy < pawn.w / 2, pawn);
+  const seenA = await A.eval(`clearInterval(window.__iv); return window.__trail.map(x=>x.i).join('>');`);
+  const seenB = await B.eval(`clearInterval(window.__iv); return window.__trail.map(x=>x.i).join('>');`);
+  check('Pion : trajet visible case par case (21>22>23>24), chez les DEUX joueurs', seenA === '21>22>23>24' && seenB === '21>22>23>24', `lanceur ${seenA} | autre ${seenB}`);
 
   // --- 6 : nouveau lancer
   await rest(code, '/ownership', 'PATCH', { 6: idA });
@@ -298,7 +315,7 @@ async function suitePresenter(A, B, ctx) {
   await rest(code, '/ownership', 'PATCH', { 3: ctx.idA, 5: ctx.idA, 6: ctx.idA });
   await rest(code, '/buildings', 'PATCH', { 5: 3 });
   await setTurn(ib, { position: 4, cash: 300 });
-  await rig(A, Array(12).fill(0.05));                   // l'hote parle, et prefere une replique a memoire
+  await rig(A, Array(400).fill(0.05));                  // l hote parle et prefere une replique a memoire (les pieces consomment aussi des tirages)
   const n = (await hostLines(A)).length;
   await B.eval(`await __bq.A.handleLanding(5); return 1;`);
   const react = await until(A, `(()=>{const h=Object.values(__bq.S.game.chat||{}).filter(m=>m.kind==='host').sort((a,b)=>a.ts-b.ts); return h.length > ${n} ? h[h.length-1].text : null;})()`, 6000);
@@ -308,36 +325,81 @@ async function suitePresenter(A, B, ctx) {
   const shownB = await until(B, `!document.getElementById('host-bubble').hidden && document.getElementById('host-bubble').textContent`, 3000);
   check('Réplique visible sur le plateau de l’autre joueur (bulle)', !!shownB);
   await shot(B, 'presentateur.png');
+
+  // Enchere absurde : 400 $ pour une case a 250 $.
+  await sleep(5000);
+  await rig(A, Array(400).fill(0.05));
+  await rest(code, `/players/${ib}`, 'PATCH', { cash: 1500 });
+  await rest(code, '', 'PATCH', { auction: { status:'open', position:9, nextBid:80, highestBid:0, highestBidder:null, endAt: Date.now() + 600000 } });
+  await sleep(1200);
+  const nb = (await hostLines(A)).length;
+  await B.eval(`await __bq.A.placeBid(400); return 1;`);
+  const bidLine = await until(A, `(()=>{const h=Object.values(__bq.S.game.chat||{}).filter(m=>m.kind==='host').sort((a,b)=>a.ts-b.ts); return h.length > ${nb} && h[h.length-1].ev==='bid' ? h[h.length-1].text : null;})()`, 6000);
+  check('Enchère absurde : le présentateur réagit avant même la fin', !!bidLine, bidLine);
+  await rest(code, '/auction', 'PATCH', { status:'closed' });
+
+  // Chrono : pression a 12 s, puis a 5 s, puis expiration (tour passe par l'hote).
+  await sleep(1500);
+  await setTurn(ib, { position: 4 }, { turnDeadline: Date.now() + 14500 });
+  const p12 = await until(A, `(()=>{const h=Object.values(__bq.S.game.chat||{}).filter(m=>m.kind==='host'&&m.ev==='pressure12'); return h.length ? h[h.length-1].text : null;})()`, 8000);
+  const p5 = await until(A, `(()=>{const h=Object.values(__bq.S.game.chat||{}).filter(m=>m.kind==='host'&&m.ev==='pressure5'); return h.length ? h[h.length-1].text : null;})()`, 10000);
+  const afk = await until(A, `(()=>{const h=Object.values(__bq.S.game.chat||{}).filter(m=>m.kind==='host'&&m.ev==='afk'); return h.length ? h[h.length-1].text : null;})()`, 12000);
+  check('Chrono : pression à 12 s puis à 5 s', !!p12 && !!p5, `${p12} / ${p5}`);
+  check('Joueur AFK : tour passé, le présentateur enfonce le clou', !!afk, afk);
+  await A.eval(`window.__rig=[]; return 1;`);
 }
 
 // ---------------------------------------------------------------- IA
 async function suiteAI(A, B, ctx) {
   const mock = spawn(process.execPath, [path.join(__dirname, 'ai-mock.js')], { stdio: 'ignore' });
+  const mode = m => fetch(AI + '/__mode', { method: 'POST', body: JSON.stringify(m) });
+  // Interpelle le presentateur et attend la replique : renvoie {src, provider, text} et le badge vu par Bob.
+  const ask = async (text, wait = 12000) => {
+    const n = (await hostLines(A)).length;
+    await say(B, text);
+    await until(A, `Object.values(__bq.S.game.chat||{}).filter(m=>m.kind==='host').length > ${n}`, 6000);
+    const end = Date.now() + wait;
+    let line;
+    while (Date.now() < end) {
+      line = (await hostLines(A)).filter(m => m.ev === 'chat').pop();
+      if (line && line.src === 'ai') break;
+      await sleep(400);
+    }
+    await sleep(900);
+    const badge = line ? await B.eval(`const b=document.querySelector('.chat-item.host[data-key="${line.k}"] .src-badge'); return b ? b.textContent : null;`) : null;
+    return { ...line, badge };
+  };
   try {
     await sleep(1200);
-    await fetch(AI + '/__mode', { method: 'POST', body: JSON.stringify({ mode: 'ok' }) });
+    await mode({ mode: 'ok' });
+    await ctx.setTurn(ctx.ia, {}, { turnDeadline: Date.now() + 600000 });   // pas de chrono pendant ces tests
     // Surcharge de l'endpoint, acceptee seulement sur localhost (pas de rechargement : localStorage partage).
     await A.eval(`history.replaceState(null,'',location.pathname+'?ai=${encodeURIComponent(AI + '/host')}'); return __bq.presenter().endpoint;`);
     await sleep(6500);
-    await say(B, '@host alors, ça va l’IA ?');
-    const ai = await until(A, `(()=>{const h=Object.values(__bq.S.game.chat||{}).filter(m=>m.kind==='host'&&m.src==='ai'); return h.length ? h[h.length-1].text : null;})()`, 12000);
-    check('IA : réplique locale remplacée par la réponse du Worker', /\[IA\] Réponse à Bob/.test(ai || ''), ai);
+
+    const r1 = await ask('@host alors, ça va l’IA ?');
+    check('IA : Gemini répond en premier, badge « GEMINI » chez l’autre joueur', r1.provider === 'gemini' && /\[IA gemini\] Réponse à Bob/.test(r1.text) && r1.badge === 'GEMINI', `${r1.text} | ${r1.badge}`);
     const last = await fetch(AI + '/__last').then(r => r.json());
     const c = (last && last.ctx) || {};
-    check('IA : le Worker reçoit le jeu, le chat récent et la mémoire', c.players && c.players.length === 2 && c.chat && c.chat.some(x => /nulle/.test(x.text)) && c.memory.quotes.length > 0 && last.model === 'google/gemma-4-31b-it:free',
+    check('IA : le Worker reçoit le jeu, le chat récent et la mémoire', c.players && c.players.length === 2 && c.chat && c.chat.some(x => /nulle/.test(x.text)) && c.memory.quotes.length > 0,
       { joueurs: c.players && c.players.length, chat: c.chat && c.chat.length, citations: c.memory && c.memory.quotes.length });
-    const shownB = await until(B, `[...document.querySelectorAll('.chat-item.host')].some(x=>x.textContent.includes('[IA]'))`, 4000);
-    check('IA : la réponse est synchronisée chez les autres joueurs', !!shownB);
 
-    // Panne : l'amont repond 503. La replique locale reste, le jeu continue.
-    await fetch(AI + '/__mode', { method: 'POST', body: JSON.stringify({ mode: 'fail' }) });
-    await sleep(6500);
-    const n = (await hostLines(A)).length;
-    await say(B, '@host et là, tu es en panne ?');
-    await until(A, `Object.values(__bq.S.game.chat||{}).filter(m=>m.kind==='host').length > ${n}`, 6000);
-    await sleep(3000);
-    const lastLine = (await hostLines(A)).pop();
-    check('IA indisponible : la réplique locale reste affichée', lastLine && lastLine.src === 'local' && !/\[IA\]/.test(lastLine.text), lastLine && lastLine.text);
+    await mode({ gemini: 'fail', openrouter: 'ok' }); await sleep(6500);
+    const r2 = await ask('@host et si Gemini tombe ?');
+    check('Gemini indisponible → OpenRouter, badge « OPENROUTER »', r2.provider === 'openrouter' && r2.badge === 'OPENROUTER', `${r2.provider} | ${r2.badge}`);
+
+    await mode({ gemini: 'quota', openrouter: 'ok' }); await sleep(6500);
+    const r3 = await ask('@host et si Gemini n’a plus de quota ?');
+    check('Quota Gemini épuisé (429) → OpenRouter', r3.provider === 'openrouter', `${r3.provider} | ${r3.badge}`);
+
+    await mode({ gemini: 'slow', openrouter: 'ok' }); await sleep(6500);
+    const r4 = await ask('@host et si Gemini rame ?', 16000);
+    check('Gemini trop lent (timeout) → OpenRouter', r4.provider === 'openrouter', `${r4.provider} | ${r4.badge}`);
+
+    await mode({ mode: 'fail' }); await sleep(6500);
+    const r5 = await ask('@host et là, tout est en panne ?', 5000);
+    check('Gemini et OpenRouter indisponibles → réplique LOCALE, badge « LOCAL »', r5.src === 'local' && r5.badge === 'LOCAL' && !/\[IA/.test(r5.text), `${r5.text} | ${r5.badge}`);
+
     await ctx.setTurn(ctx.ia, { position: 21 });
     await rig(A, [0.4]);
     await A.eval(`await window.rollDice(); return 1;`);
@@ -436,7 +498,7 @@ async function preview() {
 
 // ---------------------------------------------------------------- orchestration
 // Erreurs attendues : le 503 volontaire du test de panne IA.
-const expected = e => /503|Failed to load resource.*8787/.test(e);
+const expected = e => /Failed to load resource.*(8787|50[234])/.test(e);
 
 (async () => {
   if (want('--preview')) return preview();
