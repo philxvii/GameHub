@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Qui est-ce ?</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d1117; --surface:#161b22; --surface2:#21262d;
+    --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.16);
+    --text:#e6edf3; --muted:#7d8590;
+    --accent:#f0c040; --accent2:#d4a820;
+    --p1:#f97316; --p1bg:rgba(249,115,22,0.12); --p1bd:rgba(249,115,22,0.3);
+    --p2:#38bdf8; --p2bg:rgba(56,189,248,0.12); --p2bd:rgba(56,189,248,0.3);
+    --yes:#4ade80; --no:#f87171; --r:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;}
+  .app{width:100%;max-width:520px;min-height:100vh;padding:1rem 0.75rem 3rem;}
+  .screen{display:none;animation:fadeIn 0.2s ease;}
+  .screen.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+
+  .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:34px;line-height:1;letter-spacing:-1px;color:var(--accent);}
+  .logo small{font-size:13px;font-weight:400;color:var(--muted);font-family:'DM Sans',sans-serif;letter-spacing:0;display:block;margin-top:5px;}
+  h2{font-family:'Syne',sans-serif;font-weight:700;font-size:20px;color:var(--text);margin-bottom:0.6rem;}
+  p{font-size:14px;color:var(--muted);line-height:1.6;}
+  label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;margin-top:0.9rem;}
+  input,select{width:100%;padding:11px 13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;appearance:none;}
+  input:focus,select:focus{border-color:var(--border2);}
+  input::placeholder{color:var(--muted);}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237d8590' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;cursor:pointer;}
+  select option{background:#161b22;}
+  .btn{width:100%;padding:12px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all 0.15s;margin-top:9px;}
+  .btn:hover{background:var(--surface2);border-color:var(--border2);}
+  .btn:active{transform:scale(0.98);}
+  .btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
+  .btn-primary{background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:700;font-family:'Syne',sans-serif;}
+  .btn-primary:hover{background:var(--accent2);}
+  .btn-danger{border-color:rgba(248,113,113,0.3);color:var(--no);}
+  .btn-danger:hover{background:rgba(248,113,113,0.08);}
+  .btn-yes{background:rgba(74,222,128,0.12);color:var(--yes);border-color:rgba(74,222,128,0.3);font-weight:700;}
+  .btn-yes:hover{background:rgba(74,222,128,0.22);}
+  .btn-no{background:rgba(248,113,113,0.12);color:var(--no);border-color:rgba(248,113,113,0.3);font-weight:700;}
+  .btn-no:hover{background:rgba(248,113,128,0.22);}
+  .btn-sm{width:auto;padding:6px 13px;font-size:13px;margin-top:0;}
+  .btn-row{display:flex;gap:8px;margin-top:9px;}
+  .btn-row .btn{margin-top:0;}
+  .info-card{background:transparent;border:1px solid var(--border);border-radius:var(--r);padding:0.9rem 1.1rem;margin-top:0.9rem;font-size:13px;color:var(--muted);line-height:1.7;}
+  .info-card strong{color:var(--text);}
+  .code-box{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:6px;text-align:center;color:var(--accent);padding:1.2rem;background:var(--surface);border:1px solid rgba(240,192,64,0.3);border-radius:var(--r);margin:0.9rem 0;cursor:pointer;}
+  .copy-hint{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted);letter-spacing:0;font-weight:400;display:block;margin-top:5px;}
+  .loading{text-align:center;padding:2.5rem 0;color:var(--muted);font-size:15px;}
+  .spinner{width:26px;height:26px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 0.9rem;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .error-msg{font-size:13px;color:var(--no);margin-top:7px;display:none;}
+  .sep{border:none;border-top:1px solid var(--border);margin:1.1rem 0;}
+  .wdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}
+  .toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:13px;font-weight:500;opacity:0;transition:all 0.22s;pointer-events:none;white-space:nowrap;z-index:999;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .prow{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);}
+  .prow:last-child{border-bottom:none;}
+  .pdot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+  .back-home{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:1.1rem;}
+  .back-home:hover{color:var(--text);}
+
+  /* CHARACTER PANEL */
+  .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;}
+  .panel-title{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'Syne',sans-serif;}
+  .panel-count{font-size:11px;color:var(--muted);}
+  .char-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:0.6rem;}
+  .char-card{position:relative;border-radius:7px;overflow:hidden;cursor:pointer;border:1.5px solid var(--border);transition:border-color 0.12s,transform 0.12s;background:var(--surface);user-select:none;-webkit-tap-highlight-color:transparent;}
+  .char-card:hover{border-color:var(--border2);transform:scale(1.04);}
+  .char-card.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(240,192,64,0.25);}
+  .char-card.eliminated{opacity:0.18;filter:grayscale(1);}
+  .char-card.eliminated .char-face{transform:scaleY(-1);}
+  .char-card.my-secret{border-color:var(--accent);box-shadow:0 0 0 2px rgba(240,192,64,0.3);}
+  .char-face{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(16px,4.5vw,26px);transition:transform 0.25s;line-height:1;padding:3px;}
+  .char-name{font-size:clamp(6px,1.6vw,9px);font-weight:700;font-family:'Syne',sans-serif;text-align:center;padding:2px 2px 3px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .secret-badge{position:absolute;top:2px;left:2px;background:var(--accent);color:#0d1117;font-size:6px;font-weight:800;font-family:'Syne',sans-serif;padding:1px 3px;border-radius:3px;}
+
+  /* GAME UI */
+  .game-top{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:9px 12px;margin-bottom:0.6rem;display:flex;align-items:center;justify-content:space-between;}
+  .turn-info{display:flex;align-items:center;gap:7px;}
+  .turn-dot{width:9px;height:9px;border-radius:50%;}
+  .turn-label{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;}
+  .score-area{display:flex;gap:7px;}
+  .sc{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;font-family:'Syne',sans-serif;}
+  .sc1{background:var(--p1bg);color:var(--p1);border:1px solid var(--p1bd);}
+  .sc2{background:var(--p2bg);color:var(--p2);border:1px solid var(--p2bd);}
+  .q-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:0.9rem;margin-bottom:0.6rem;}
+  .q-section-title{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'Syne',sans-serif;margin-bottom:0.5rem;}
+  textarea{width:100%;padding:9px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;resize:none;line-height:1.5;transition:border-color 0.2s;}
+  textarea:focus{border-color:var(--border2);}
+  textarea::placeholder{color:var(--muted);}
+  .q-thread{max-height:150px;overflow-y:auto;scrollbar-width:none;}
+  .q-thread::-webkit-scrollbar{display:none;}
+  .q-item{padding:7px 0;border-bottom:1px solid var(--border);}
+  .q-item:last-child{border-bottom:none;}
+  .q-author{font-size:10px;color:var(--muted);margin-bottom:2px;}
+  .q-text{font-size:13px;color:var(--text);margin-bottom:4px;}
+  .q-ans{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;}
+  .q-ans.oui{background:rgba(74,222,128,0.12);color:var(--yes);border:1px solid rgba(74,222,128,0.25);}
+  .q-ans.non{background:rgba(248,113,113,0.12);color:var(--no);border:1px solid rgba(248,113,113,0.25);}
+  .q-ans.pending{background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid var(--border);}
+  .secret-card{background:var(--surface);border:1px solid rgba(240,192,64,0.25);border-radius:var(--r);padding:0.7rem 1rem;margin-bottom:0.6rem;display:flex;align-items:center;gap:10px;}
+  .secret-face{font-size:28px;}
+  .secret-name{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--accent);}
+  .secret-lbl{font-size:10px;color:var(--muted);}
+  .guess-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:0.9rem;margin-bottom:0.6rem;}
+  .win-wrap{text-align:center;padding:2rem 0;}
+  .win-emoji{font-size:50px;margin-bottom:0.6rem;}
+  .win-title{font-family:'Syne',sans-serif;font-weight:800;font-size:32px;line-height:1;letter-spacing:-1px;margin-bottom:0.4rem;}
+  .win-sub{font-size:14px;color:var(--muted);margin-bottom:1.25rem;}
+  .reveal-chars{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:1rem 0;}
+  .reveal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem;text-align:center;}
+  .reveal-face{font-size:34px;margin-bottom:5px;}
+  .reveal-name{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;}
+  .reveal-lbl{font-size:11px;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HOME -->
+  <div class="screen active" id="s-home">
+    <div style="padding-top:0.5rem;margin-bottom:1.5rem;">
+      <a href="../../index.html" class="back-home">← Accueil</a>
+      <div class="logo">QUI EST-CE ?<small>Le jeu du panel de personnages</small></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="show('s-create')">Créer une partie</button>
+      <button class="btn" onclick="show('s-join')">Rejoindre</button>
+    </div>
+    <div class="info-card">
+      <strong>Comment jouer</strong><br>
+      Chaque joueur voit le même panel de 24 personnages et choisit secrètement l'un d'eux. À tour de rôle, posez des questions fermées (oui/non) sur le personnage adverse. Selon la réponse, abattez les personnages qui ne correspondent pas en tappant dessus. Le premier à deviner correctement gagne — mais une mauvaise réponse est une défaite instantanée !
+    </div>
+  </div>
+
+  <!-- CREATE -->
+  <div class="screen" id="s-create">
+    <h2>Nouvelle partie</h2>
+    <label>Ton prénom</label>
+    <input type="text" id="create-name" placeholder="Ton prénom" maxlength="20"/>
+    <label>Manches à gagner</label>
+    <select id="create-rounds">
+      <option value="1">1 manche</option>
+      <option value="2" selected>Best of 3</option>
+      <option value="3">Best of 5</option>
+    </select>
+    <div class="error-msg" id="create-err"></div>
+    <button class="btn btn-primary" onclick="createGame()" style="margin-top:1.1rem;">Créer</button>
+    <button class="btn" onclick="show('s-home')">Retour</button>
+  </div>
+
+  <!-- LOBBY -->
+  <div class="screen" id="s-lobby">
+    <h2>En attente d'un joueur</h2>
+    <p>Partage ce code à ton adversaire.</p>
+    <div class="code-box" id="lobby-code" onclick="copyCode()">—<span class="copy-hint">Appuie pour copier</span></div>
+    <div id="lobby-players"></div>
+    <div id="lobby-start-wrap" style="margin-top:1.25rem;display:none;">
+      <button class="btn btn-primary" onclick="startGame()">Lancer !</button>
+    </div>
+    <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.5rem;">Annuler</button>
+  </div>
+
+  <!-- JOIN -->
+  <div class="screen" id="s-join">
+    <h2>Rejoindre</h2>
+    <label>Code de la partie</label>
+    <input type="text" id="join-code" placeholder="ex: FACE-42" maxlength="10" oninput="this.value=this.value.toUpperCase()" style="letter-spacing:3px;font-family:'Syne',sans-serif;font-weight:700;"/>
+    <label>Ton prénom</label>
+    <input type="text" id="join-name" placeholder="Ton prénom" maxlength="20"/>
+    <div class="error-msg" id="join-err"></div>
+    <button class="btn btn-primary" onclick="joinGame()" style="margin-top:1.1rem;">Rejoindre</button>
+    <button class="btn" onclick="show('s-home')">Retour</button>
+  </div>
+
+  <!-- JOINING -->
+  <div class="screen" id="s-joining">
+    <div class="loading"><div class="spinner"></div><div>Connexion…</div></div>
+  </div>
+
+  <!-- WAIT -->
+  <div class="screen" id="s-wait">
+    <div class="loading"><div class="spinner"></div><div id="wait-msg">En attente du lancement…</div></div>
+    <div id="wait-players" style="margin-top:1.5rem;"></div>
+  </div>
+
+  <!-- SECRET PICK -->
+  <div class="screen" id="s-pick">
+    <h2>Choisis ton personnage secret</h2>
+    <p style="margin-bottom:0.9rem;">Ton adversaire devra deviner lequel tu as choisi. Tape pour sélectionner.</p>
+    <div id="pick-grid" class="char-grid"></div>
+    <div id="pick-selected" style="display:none;" class="secret-card">
+      <div class="secret-face" id="pick-face"></div>
+      <div><div class="secret-lbl">Ton personnage secret</div><div class="secret-name" id="pick-name"></div></div>
+    </div>
+    <button class="btn btn-primary" id="confirm-pick-btn" onclick="confirmPick()" disabled>Confirmer</button>
+  </div>
+
+  <!-- WAIT FOR OTHER PICK -->
+  <div class="screen" id="s-wait-pick">
+    <div class="loading"><div class="spinner"></div><div>En attente de l'adversaire…</div><p style="margin-top:8px;font-size:13px;">Il choisit son personnage secret.</p></div>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="s-game">
+    <div class="game-top">
+      <div class="turn-info">
+        <div class="turn-dot" id="turn-dot"></div>
+        <div class="turn-label" id="turn-label"></div>
+      </div>
+      <div class="score-area">
+        <span class="sc sc1" id="sc1">0</span>
+        <span style="font-size:10px;color:var(--muted);align-self:center;">vs</span>
+        <span class="sc sc2" id="sc2">0</span>
+      </div>
+    </div>
+
+    <div class="secret-card" id="game-secret-card">
+      <div class="secret-face" id="game-secret-face"></div>
+      <div><div class="secret-lbl">Ton personnage secret</div><div class="secret-name" id="game-secret-name"></div></div>
+    </div>
+
+    <div class="panel-header">
+      <div class="panel-title">Ton panel</div>
+      <div class="panel-count" id="panel-count"></div>
+    </div>
+    <div id="my-panel" class="char-grid"></div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:0.6rem;">Tape pour abattre / relever un personnage</div>
+
+    <div class="q-section">
+      <div class="q-section-title">Questions posées</div>
+      <div class="q-thread" id="q-thread"><p style="font-size:13px;color:var(--muted);">Aucune question.</p></div>
+    </div>
+
+    <!-- My turn: ask or guess -->
+    <div id="my-turn-section" style="display:none;">
+      <div class="q-section">
+        <div class="q-section-title">Ton tour — pose une question</div>
+        <textarea id="question-input" rows="2" placeholder="Ex: Est-ce une femme ? A-t-il les cheveux blonds ?" maxlength="120"></textarea>
+        <button class="btn btn-primary" onclick="submitQuestion()" style="margin-top:0.5rem;">Envoyer</button>
+      </div>
+      <div class="guess-section">
+        <div class="q-section-title" style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:'Syne',sans-serif;margin-bottom:0.5rem;">Ou deviner le personnage adverse</div>
+        <div id="guess-grid" class="char-grid"></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px;">Tape sur le personnage pour tenter de deviner</div>
+      </div>
+    </div>
+
+    <!-- Opponent's turn: answer -->
+    <div id="answer-section" style="display:none;">
+      <div class="q-section">
+        <div class="q-section-title">Question de l'adversaire</div>
+        <div style="font-size:14px;color:var(--text);padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:8px;" id="pending-q-text"></div>
+        <div class="btn-row">
+          <button class="btn btn-yes" onclick="answerQuestion('oui')">✓ OUI</button>
+          <button class="btn btn-no" onclick="answerQuestion('non')">✗ NON</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Waiting -->
+    <div id="waiting-section" style="display:none;">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);padding:0.9rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);">
+        <span class="wdot"></span><span id="waiting-msg">En attente…</span>
+      </div>
+    </div>
+
+    <!-- Guess resolves automatically — no confirmation needed -->
+    <div id="guess-confirm-section" style="display:none;">
+      <div class="q-section" style="border-color:rgba(240,192,64,0.3);">
+        <div class="q-section-title" style="color:var(--accent);">⚡ Vérification en cours…</div>
+        <div style="font-size:13px;color:var(--muted);">La réponse est vérifiée automatiquement.</div>
+      </div>
+    </div>
+
+    <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.9rem;">Quitter</button>
+  </div>
+
+  <!-- ROUND OVER -->
+  <div class="screen" id="s-round-over">
+    <div class="win-wrap">
+      <div class="win-emoji" id="ro-emoji"></div>
+      <div class="win-title" id="ro-title"></div>
+      <div class="win-sub" id="ro-sub"></div>
+      <div class="reveal-chars" id="ro-reveal"></div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:1rem;" id="ro-score"></div>
+      <button class="btn btn-primary" id="ro-btn" onclick="nextRound()" style="display:none;">Manche suivante</button>
+      <button class="btn" onclick="show('s-home')" style="margin-top:0.5rem;">Accueil</button>
+      <button class="btn btn-danger" onclick="deleteGame()" style="margin-top:0.5rem;">Supprimer</button>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
+  authDomain:"undercover-game-b0d2a.firebaseapp.com",
+  databaseURL:"https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"undercover-game-b0d2a",
+  storageBucket:"undercover-game-b0d2a.firebasestorage.app",
+  messagingSenderId:"195280531653",
+  appId:"1:195280531653:web:94d72b25760b05af6bc0ac"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// 24 personnages
+const CHARS = [
+  {id:'alex',  name:'Alex',   face:'👨‍🦱'},
+  {id:'bea',   name:'Béa',    face:'👩‍🦰'},
+  {id:'carl',  name:'Carl',   face:'👨‍🦳'},
+  {id:'diana', name:'Diana',  face:'👩‍🦳'},
+  {id:'eric',  name:'Éric',   face:'🧔🏿'},
+  {id:'fiona', name:'Fiona',  face:'👩🏿'},
+  {id:'greg',  name:'Greg',   face:'👨‍🦲'},
+  {id:'hana',  name:'Hana',   face:'👩🏻'},
+  {id:'ivan',  name:'Ivan',   face:'👨🏻'},
+  {id:'jade',  name:'Jade',   face:'👩🏽'},
+  {id:'kurt',  name:'Kurt',   face:'🧔'},
+  {id:'lea',   name:'Léa',    face:'👩‍🦱'},
+  {id:'marc',  name:'Marc',   face:'👴'},
+  {id:'nina',  name:'Nina',   face:'👵'},
+  {id:'omar',  name:'Omar',   face:'👲'},
+  {id:'pia',   name:'Pia',    face:'👩🏾'},
+  {id:'rob',   name:'Rob',    face:'🧑‍🦱'},
+  {id:'sara',  name:'Sara',   face:'🧕'},
+  {id:'tom',   name:'Tom',    face:'🤠'},
+  {id:'uma',   name:'Uma',    face:'👩‍🦲'},
+  {id:'vic',   name:'Vic',    face:'🧑🏻'},
+  {id:'wendy', name:'Wendy',  face:'👱‍♀️'},
+  {id:'xavi',  name:'Xavi',   face:'🧓🏽'},
+  {id:'yuki',  name:'Yuki',   face:'🧑🏻'},
+];
+
+let myCode=null,myName=null,myPnum=null,isHost=false;
+let gameListener=null,currentGame=null;
+let mySecretId=null,myEliminated={};
+let pickedChar=null;
+let panelBuilt=false;
+
+window.show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');};
+function toast(msg,dur=2200){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+window.copyCode=()=>{if(!myCode)return;navigator.clipboard.writeText(myCode).then(()=>toast('Code copié !'));};
+function genCode(){const w=['FACE','QUIZ','PERS','MASK','HERO'];return w[Math.floor(Math.random()*w.length)]+'-'+Math.floor(10+Math.random()*90);}
+function charById(id){return CHARS.find(c=>c.id===id);}
+
+// ── Build grid ──
+function buildGrid(containerId, onTap) {
+  const el = document.getElementById(containerId); if (!el) return;
+  el.innerHTML = '';
+  CHARS.forEach(char => {
+    const card = document.createElement('div');
+    card.className = 'char-card';
+    card.id = `${containerId}-${char.id}`;
+    card.innerHTML = `<div class="char-face">${char.face}</div><div class="char-name">${char.name}</div>`;
+    if (onTap) card.onclick = () => onTap(char, card);
+    el.appendChild(card);
+  });
+}
+
+function updatePanel() {
+  const remaining = CHARS.filter(c => !myEliminated[c.id]).length;
+  const countEl = document.getElementById('panel-count');
+  if (countEl) countEl.textContent = `${remaining} restant${remaining>1?'s':''}`;
+  CHARS.forEach(char => {
+    const card = document.getElementById(`my-panel-${char.id}`); if (!card) return;
+    card.classList.toggle('eliminated', !!myEliminated[char.id]);
+    const old = card.querySelector('.secret-badge'); if (old) old.remove();
+    card.classList.toggle('my-secret', char.id === mySecretId);
+    if (char.id === mySecretId) {
+      const b = document.createElement('div'); b.className='secret-badge'; b.textContent='MOI'; card.prepend(b);
+    }
+  });
+}
+
+// ── Create ──
+function isBannedName(name){
+  const n=name.toLowerCase().replace(/[^a-z0-9]/g,'');
+  const banned=[/sp[ei][ei]?d/,/sp[iy]d/,/speedlov/,/speedit/,/speedi/,/speedy/,/67(?:speed|spid|spyd)?/,/(?:speed|spid|spyd).*67/,/^67$/];
+  return banned.some(r=>r.test(n));
+}
+
+const BANNED_MSG = "En vertu des très éclairées dispositions de l'article 16 de la loi SREN, il est solennellement institué un dispositif de bannissement numérique destiné à frapper d'indignité digitale les personnes soupçonnées d'avoir commis, ou reconnues coupables d'avoir commis, certaines infractions en ligne ; étant en outre précisé, avec toute la rigueur que commande l'ordre public numérique, que toute référence, explicite ou implicite, à « speedy » sera tenue pour prohibée et pourra, le cas échéant, justifier l'édiction d'une mesure de bannissement à caractère permanent.";
+
+window.createGame = async () => {
+  const name = document.getElementById('create-name').value.trim();
+  const rounds = parseInt(document.getElementById('create-rounds').value);
+  const errEl = document.getElementById('create-err');
+  if (!name) { errEl.style.display='block'; errEl.textContent='Entre ton prénom.'; return; }
+  if (isBannedName(name)) { errEl.style.display='block'; errEl.textContent=BANNED_MSG; return; }
+  errEl.style.display = 'none';
+  const code = genCode();
+  const game = { code, rounds, players:[{name,score:0,secretId:null,ready:false},null], phase:'lobby', turn:0, round:1, questions:[], pendingQuestion:null, pendingGuess:null, roundResult:null, createdAt:Date.now() };
+  await set(ref(db,`qec2/${code}`), game);
+  myCode=code; myName=name; myPnum=0; isHost=true;
+  startListener(code); renderLobby(game); show('s-lobby');
+};
+
+function renderLobby(game) {
+  const el=document.getElementById('lobby-code'); el.childNodes[0].textContent=game.code;
+  const c=document.getElementById('lobby-players'); if(!c) return; c.innerHTML='';
+  (game.players||[]).forEach((p,i)=>{
+    if(!p) return;
+    const div=document.createElement('div'); div.className='prow';
+    div.innerHTML=`<div class="pdot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div><span style="font-size:15px;">${p.name}</span>${i===0?'<span style="font-size:11px;color:var(--muted);margin-left:auto;padding:2px 8px;border:1px solid var(--border);border-radius:999px;">Hôte</span>':''}`;
+    c.appendChild(div);
+  });
+  if (!game.players[1]) { const d=document.createElement('div'); d.style.cssText='font-size:13px;color:var(--muted);padding:9px 0;display:flex;align-items:center;gap:8px;'; d.innerHTML='<span class="wdot"></span> En attente…'; c.appendChild(d); }
+  const w=document.getElementById('lobby-start-wrap'); if(w) w.style.display=game.players[1]?'block':'none';
+}
+
+window.startGame=async()=>{ await update(ref(db,`qec2/${myCode}`),{phase:'pick',questions:[],pendingQuestion:null,pendingGuess:null}); };
+window.deleteGame=async()=>{ if(myCode) await remove(ref(db,`qec2/${myCode}`)); myCode=null; currentGame=null; show('s-home'); };
+
+window.joinGame=async()=>{
+  const code=document.getElementById('join-code').value.trim().toUpperCase();
+  const name=document.getElementById('join-name').value.trim();
+  const errEl=document.getElementById('join-err');
+  if(!code){errEl.style.display='block';errEl.textContent='Entre le code.';return;}
+  if(!name){errEl.style.display='block';errEl.textContent='Entre ton prénom.';return;}
+  if(isBannedName(name)){errEl.style.display='block';errEl.textContent=BANNED_MSG;return;}
+  errEl.style.display='none'; show('s-joining');
+  const snap=await get(ref(db,`qec2/${code}`));
+  if(!snap.exists()){show('s-join');errEl.style.display='block';errEl.textContent='Code introuvable.';return;}
+  const game=snap.val(); const players=game.players||[];
+  const ex=players.findIndex(p=>p&&p.name.toLowerCase()===name.toLowerCase());
+  if(ex!==-1){myCode=code;myName=name;myPnum=ex;isHost=ex===0;startListener(code);return;}
+  if(players[1]){show('s-join');errEl.style.display='block';errEl.textContent='Partie complète.';return;}
+  if(game.phase!=='lobby'){show('s-join');errEl.style.display='block';errEl.textContent='Partie lancée.';return;}
+  const np=[players[0],{name,score:0,secretId:null,ready:false}];
+  await update(ref(db,`qec2/${code}`),{players:np});
+  myCode=code;myName=name;myPnum=1;isHost=false;
+  startListener(code); document.getElementById('wait-msg').textContent=`Bienvenue ${name} !`; show('s-wait');
+};
+
+function startListener(code) {
+  if(gameListener) gameListener();
+  gameListener=onValue(ref(db,`qec2/${code}`),snap=>{
+    if(!snap.exists()){show('s-home');return;}
+    currentGame=snap.val(); handlePhase(currentGame);
+  });
+}
+
+async function handlePhase(game) {
+  const phase=game.phase;
+  if(phase==='lobby'){
+    if(isHost){renderLobby(game);if(!document.getElementById('s-lobby').classList.contains('active'))show('s-lobby');}
+    else{renderWait(game);if(!document.getElementById('s-wait').classList.contains('active'))show('s-wait');}
+    return;
+  }
+  if(phase==='pick'){
+    const players=game.players||[];
+    const myP=players[myPnum];
+    const otherP=players[1-myPnum];
+    // Both picked but phase not updated yet — host triggers transition
+    if(myP?.secretId && otherP?.secretId && isHost){
+      await update(ref(db,`qec2/${myCode}`),{phase:'playing',turn:0,questions:[],pendingQuestion:null,pendingGuess:null});
+      return;
+    }
+    // I already picked — wait
+    if(myP?.secretId){
+      if(!document.getElementById('s-wait-pick').classList.contains('active')) show('s-wait-pick');
+      return;
+    }
+    // I haven't picked yet
+    if(!document.getElementById('s-pick').classList.contains('active')){buildPickGrid();show('s-pick');}
+    return;
+  }
+  if(phase==='playing'||phase==='guessing'){renderGameScreen(game);return;}
+  if(phase==='round-over'){renderRoundOver(game);return;}
+}
+
+function renderWait(game){
+  const c=document.getElementById('wait-players');if(!c)return;c.innerHTML='';
+  (game.players||[]).forEach((p,i)=>{if(!p)return;const d=document.createElement('div');d.className='prow';d.innerHTML=`<div class="pdot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div><span style="font-size:15px;">${p.name}</span>`;c.appendChild(d);});
+}
+
+// ── Pick ──
+function buildPickGrid(){
+  pickedChar=null;
+  document.getElementById('confirm-pick-btn').disabled=true;
+  document.getElementById('pick-selected').style.display='none';
+  buildGrid('pick-grid',(char,card)=>{
+    pickedChar=char;
+    document.querySelectorAll('#pick-grid .char-card').forEach(c=>c.classList.remove('active'));
+    card.classList.add('active');
+    document.getElementById('pick-face').textContent=char.face;
+    document.getElementById('pick-name').textContent=char.name;
+    document.getElementById('pick-selected').style.display='flex';
+    document.getElementById('confirm-pick-btn').disabled=false;
+  });
+}
+
+window.confirmPick=async()=>{
+  if(!pickedChar)return;
+  mySecretId=pickedChar.id;
+  const snap=await get(ref(db,`qec2/${myCode}`));if(!snap.exists())return;
+  const game=snap.val();
+  const players=[...game.players];
+  players[myPnum]={...players[myPnum],secretId:pickedChar.id,ready:true};
+  // Check if other player already picked
+  const otherId=players[1-myPnum]?.secretId;
+  const updates={players};
+  if(otherId){
+    // Both picked — start game
+    updates.phase='playing';
+    updates.turn=0;
+    updates.questions=[];
+    updates.pendingQuestion=null;
+    updates.pendingGuess=null;
+  }
+  await update(ref(db,`qec2/${myCode}`),updates);
+  // Don't navigate here — let the Firebase listener handle all navigation
+};
+
+// ── Game screen ──
+function renderGameScreen(game){
+  // Build grids only once
+  if(!panelBuilt){
+    panelBuilt=true;
+    buildGrid('my-panel',char=>{
+      myEliminated[char.id]=!myEliminated[char.id];
+      updatePanel();
+      toast(myEliminated[char.id]?`${char.name} abattu !`:`${char.name} relevé !`,1000);
+    });
+    buildGrid('guess-grid',char=>submitGuess(char));
+  }
+  // Always show game screen
+  if(!document.getElementById('s-game').classList.contains('active')) show('s-game');
+
+  // Secret
+  const secret=charById(mySecretId||game.players[myPnum]?.secretId);
+  if(secret){if(!mySecretId)mySecretId=secret.id;document.getElementById('game-secret-face').textContent=secret.face;document.getElementById('game-secret-name').textContent=secret.name;}
+  updatePanel();
+
+  // Scores / turn
+  const players=game.players||[];
+  const p1=players[0]||{name:'J1',score:0}; const p2=players[1]||{name:'J2',score:0};
+  document.getElementById('sc1').textContent=`${p1.name.split(' ')[0]} ${p1.score}`;
+  document.getElementById('sc2').textContent=`${p2.score} ${p2.name.split(' ')[0]}`;
+  const isMyTurn=game.turn===myPnum;
+  document.getElementById('turn-dot').style.background=game.turn===0?'var(--p1)':'var(--p2)';
+  document.getElementById('turn-label').textContent=isMyTurn?'Ton tour !':`Tour de ${players[game.turn]?.name||'?'}…`;
+  document.getElementById('turn-label').style.color=isMyTurn?(myPnum===0?'var(--p1)':'var(--p2)'):'var(--muted)';
+
+  renderThread(game.questions||[]);
+
+  // Hide all sections
+  ['my-turn-section','answer-section','waiting-section','guess-confirm-section'].forEach(id=>{document.getElementById(id).style.display='none';});
+
+  if(game.phase==='guessing'){
+    // Both players wait — result is computed automatically
+    document.getElementById('waiting-section').style.display='block';
+    document.getElementById('waiting-msg').textContent='Vérification automatique en cours…';
+    return;
+  }
+
+  if(isMyTurn){
+    if(game.pendingQuestion&&game.pendingQuestion.asker===myPnum){
+      document.getElementById('waiting-section').style.display='block';
+      document.getElementById('waiting-msg').textContent='En attente de la réponse…';
+    } else {
+      document.getElementById('my-turn-section').style.display='block';
+      document.getElementById('question-input').value='';
+    }
+  } else {
+    if(game.pendingQuestion&&game.pendingQuestion.asker!==myPnum){
+      document.getElementById('answer-section').style.display='block';
+      document.getElementById('pending-q-text').textContent=game.pendingQuestion.text;
+    } else {
+      document.getElementById('waiting-section').style.display='block';
+      document.getElementById('waiting-msg').textContent=`Tour de ${players[game.turn]?.name||'?'}…`;
+    }
+  }
+}
+
+function renderThread(qs){
+  const c=document.getElementById('q-thread');if(!c)return;
+  if(!qs||qs.length===0){c.innerHTML='<p style="font-size:13px;color:var(--muted);">Aucune question.</p>';return;}
+  c.innerHTML='';
+  [...qs].reverse().forEach(q=>{
+    const d=document.createElement('div');d.className='q-item';
+    const ac=q.answer==='oui'?'oui':q.answer==='non'?'non':'pending';
+    const al=q.answer==='oui'?'✓ OUI':q.answer==='non'?'✗ NON':'⏳ En attente…';
+    d.innerHTML=`<div class="q-author">${q.authorName}</div><div class="q-text">${q.text}</div><span class="q-ans ${ac}">${al}</span>`;
+    c.appendChild(d);
+  });
+  c.scrollTop=0;
+}
+
+window.submitQuestion=async()=>{
+  const text=document.getElementById('question-input').value.trim();
+  if(!text){toast('Écris une question !');return;}
+  const game=currentGame;if(!game||game.turn!==myPnum){toast("Ce n'est pas ton tour !");return;}
+  if(game.pendingQuestion){toast('Une question est déjà en attente de réponse.');return;}
+  const players=game.players||[];
+  document.getElementById('question-input').value='';
+  await update(ref(db,`qec2/${myCode}`),{pendingQuestion:{text,asker:myPnum,authorName:players[myPnum]?.name||'?'}});
+};
+
+window.answerQuestion=async answer=>{
+  const game=currentGame;if(!game)return;
+  if(!game.pendingQuestion)return;
+  const qs=[...(game.questions||[])];
+  qs.push({...game.pendingQuestion,answer});
+  // After answering, turn passes to the answerer (alternating turns like real game)
+  const nextTurn = 1 - game.pendingQuestion.asker;
+  await update(ref(db,`qec2/${myCode}`),{questions:qs,pendingQuestion:null,turn:nextTurn});
+};
+
+async function submitGuess(char){
+  const game=currentGame;if(!game)return;
+  if(game.turn!==myPnum){toast("Ce n'est pas ton tour !");return;}
+  if(!confirm(`Deviner que l'adversaire est ${char.face} ${char.name} ?`))return;
+  // Auto-resolve: compare with opponent's secret stored in Firebase
+  const snap=await get(ref(db,`qec2/${myCode}`));
+  if(!snap.exists())return;
+  const freshGame=snap.val();
+  const opponent=1-myPnum;
+  const opponentSecretId=freshGame.players[opponent]?.secretId;
+  const correct=char.id===opponentSecretId;
+  const players=JSON.parse(JSON.stringify(freshGame.players||[]));
+  const guesser=myPnum;
+  if(correct) players[guesser].score=(players[guesser].score||0)+1;
+  const roundWinner=correct?guesser:1-guesser;
+  const matchOver=players[roundWinner].score>=(freshGame.rounds||1);
+  await update(ref(db,`qec2/${myCode}`),{
+    players, phase:'round-over', pendingGuess:null,
+    roundResult:{
+      winner:roundWinner,correct,
+      guesserName:players[guesser]?.name||'?',
+      guessedId:char.id,
+      p0secretId:players[0]?.secretId,
+      p1secretId:players[1]?.secretId,
+      matchOver
+    }
+  });
+}
+
+// judgeGuess removed — auto-resolved in submitGuess
+
+function renderRoundOver(game){
+  const res=game.roundResult||{};
+  const players=game.players||[];
+  const isWinner=res.winner===myPnum;
+  document.getElementById('ro-emoji').textContent=isWinner?'🎉':'😤';
+  document.getElementById('ro-title').textContent=isWinner?'Tu gagnes !':`${players[res.winner]?.name||'?'} gagne !`;
+  document.getElementById('ro-title').style.color=isWinner?'var(--yes)':'var(--no)';
+  document.getElementById('ro-sub').textContent=res.correct?`${res.guesserName} a trouvé !`:`${res.guesserName} s'est trompé — défaite instantanée !`;
+  const p0=charById(res.p0secretId); const p1=charById(res.p1secretId);
+  document.getElementById('ro-reveal').innerHTML=`
+    <div class="reveal-card" style="border-color:var(--p1bd);"><div class="reveal-face">${p0?.face||'?'}</div><div class="reveal-name">${p0?.name||'?'}</div><div class="reveal-lbl" style="color:var(--p1);">${players[0]?.name||'J1'}</div></div>
+    <div class="reveal-card" style="border-color:var(--p2bd);"><div class="reveal-face">${p1?.face||'?'}</div><div class="reveal-name">${p1?.name||'?'}</div><div class="reveal-lbl" style="color:var(--p2);">${players[1]?.name||'J2'}</div></div>`;
+  const pp1=players[0]||{name:'J1',score:0}; const pp2=players[1]||{name:'J2',score:0};
+  document.getElementById('ro-score').textContent=`Score : ${pp1.name} ${pp1.score} — ${pp2.score} ${pp2.name}`;
+  const btn=document.getElementById('ro-btn');
+  btn.style.display=res.matchOver?'none':isHost?'block':'none';
+  if(!res.matchOver) btn.textContent=`Manche ${(game.round||1)+1} →`;
+  panelBuilt=false;
+  show('s-round-over');
+}
+
+window.nextRound=async()=>{
+  const game=currentGame;if(!game)return;
+  const players=JSON.parse(JSON.stringify(game.players||[]));
+  players.forEach(p=>{if(p){p.secretId=null;p.ready=false;}});
+  await update(ref(db,`qec2/${myCode}`),{phase:'pick',round:(game.round||1)+1,turn:(game.round||1)%2,players,questions:[],pendingQuestion:null,pendingGuess:null,roundResult:null});
+  mySecretId=null;myEliminated={};panelBuilt=false;
+};
+</script>
+</body>
+</html>

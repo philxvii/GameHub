@@ -111,7 +111,7 @@ export const openrouter = {
     const models = modelsFrom(env);
     const data = await post('openrouter', 'https://openrouter.ai/api/v1/chat/completions', {
       Authorization: `Bearer ${key(env.OPENROUTER_API_KEY)}`,
-      'HTTP-Referer': 'https://roulia.me/banqueroll.html',
+      'HTTP-Referer': 'https://roulia.me/games/banqueroll/',
       'X-Title': 'Banqueroll',
     }, {
       model: models[0],

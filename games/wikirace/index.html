@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WikiRace</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#07090f;
+  --surface:#0e1118;
+  --surface2:#141820;
+  --border:rgba(255,255,255,0.08);
+  --text:#eef0f6;
+  --muted:#6b7280;
+  --accent:#e8d5a3;
+  --green:#4ade80;
+  --r:16px;
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+}
+
+/* SCREEN */
+.screen{
+  display:none;
+  max-width:900px;
+  margin:auto;
+  padding:1rem;
+  animation:fade 0.4s ease;
+}
+.screen.active{display:block;}
+
+@keyframes fade{
+  from{opacity:0; transform:translateY(10px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+/* TITLE */
+.logo{
+  font-family:'Syne';
+  font-size:40px;
+  font-weight:800;
+  color:var(--accent);
+}
+
+/* CARD */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:1rem;
+  margin-top:1rem;
+}
+
+/* INPUT */
+input{
+  width:100%;
+  padding:12px;
+  border-radius:var(--r);
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text);
+  margin-top:8px;
+  transition:0.2s;
+}
+input:focus{
+  border-color:var(--accent);
+  outline:none;
+}
+
+/* BUTTON */
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:var(--r);
+  margin-top:10px;
+  cursor:pointer;
+  background:var(--accent);
+  color:#000;
+  font-weight:700;
+  transition:0.2s;
+}
+button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 20px rgba(0,0,0,0.4);
+}
+
+/* TOP */
+.top{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:10px;
+  font-size:14px;
+
+  position:sticky;
+  top:0;
+  background:var(--bg);
+  padding:10px;
+  border-bottom:1px solid var(--border);
+  z-index:10;
+}
+
+.target{
+  color:var(--green);
+  font-weight:700;
+}
+
+/* ARTICLE */
+#article{
+  height:80vh;
+  overflow:auto;
+  background:var(--surface);
+  padding:1.5rem;
+  border-radius:var(--r);
+  border:1px solid var(--border);
+  line-height:1.7;
+  font-size:15px;
+}
+
+/* LINKS */
+a{
+  color:var(--accent);
+  text-decoration:none;
+  transition:0.15s;
+}
+a:hover{
+  color:white;
+}
+
+/* SUGGESTIONS */
+.suggestions{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+}
+.suggestions div{
+  padding:8px;
+  cursor:pointer;
+}
+.suggestions div:hover{
+  background:var(--surface2);
+}
+
+/* TOAST */
+.toast{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%) scale(0.9);
+  background:var(--accent);
+  color:#000;
+  padding:10px 20px;
+  border-radius:999px;
+  opacity:0;
+  transition:0.3s;
+}
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) scale(1);
+}
+
+/* BAN */
+#ban{
+  position:fixed;
+  inset:0;
+  background:#7f1d1d;
+  color:white;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:30px;
+  font-weight:bold;
+}
+
+  /* ─── FIX WIKIPEDIA DARK MODE ─── */
+
+#article * {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+
+/* liens */
+#article a {
+  color: var(--accent) !important;
+  text-decoration: none;
+}
+#article a:hover {
+  text-decoration: underline;
+}
+
+/* titres */
+#article h1 {
+  font-size:26px;
+  margin-bottom:10px;
+}
+#article h2 {
+  font-size:20px;
+  margin-top:20px;
+}
+#article h3 {
+  font-size:16px;
+}
+
+/* paragraphes */
+#article p {
+  margin-bottom:12px;
+  color: var(--text);
+}
+
+/* tableaux */
+#article table {
+  background: var(--surface2) !important;
+  border:1px solid var(--border);
+  border-radius:8px;
+  overflow:hidden;
+}
+#article td, #article th {
+  border:1px solid var(--border);
+  padding:6px;
+}
+
+/* images */
+#article img {
+  max-width:100%;
+  border-radius:8px;
+  margin:10px 0;
+}
+
+/* supprime éléments inutiles */
+#article sup,
+#article .reference,
+#article .mw-editsection,
+#article .sidebar,
+#article .navbox,
+#article .metadata,
+#article .infobox {
+  display:none !important;
+}
+</style>
+</head>
+
+<body>
+
+<div id="ban"></div>
+<div class="toast" id="toast"></div>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div class="logo">WikiRace</div>
+
+  <div class="card">
+    <input id="name" placeholder="Pseudo">
+
+    <h3>Départ</h3>
+    <input id="startInput" oninput="searchWiki(this,'startSug')">
+    <div id="startSug" class="suggestions"></div>
+    <button onclick="randomStart()">🎲 Aléatoire</button>
+
+    <h3>Cible</h3>
+    <input id="targetInput" oninput="searchWiki(this,'targetSug')">
+    <div id="targetSug" class="suggestions"></div>
+    <button onclick="randomTarget()">🎲 Aléatoire</button>
+
+    <button onclick="start()">Lancer</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div class="top">
+    🎯 <span id="target" class="target"></span>
+    🖱 <span id="clicks">0</span>
+  </div>
+
+  
+  <div id="article"></div>
+</div>
+
+<script>
+
+const BANNED_MSG = `En vertu des très éclairées dispositions de l'article 16 de la loi SREN, il est solennellement institué un dispositif de bannissement numérique destiné à frapper d'indignité digitale les personnes soupçonnées d'avoir commis, ou reconnues coupables d'avoir commis, certaines infractions en ligne ; étant en outre précisé, avec toute la rigueur que commande l'ordre public numérique, que toute référence, explicite ou implicite, à « speedy » sera tenue pour prohibée et pourra, le cas échéant, justifier l'édiction d'une mesure de bannissement à caractère permanent.`;
+
+let clicks=0, target="", path=[], cache={};
+
+// ─────────────────────────────
+// NORMALISATION ULTRA
+// ─────────────────────────────
+function normalize(str){
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,'') // accents
+    .replace(/[^a-z0-9]/g,'')       // symboles
+    .replace(/[3€]/g,'e')
+    .replace(/[1!]/g,'i')
+    .replace(/[0]/g,'o')
+    .replace(/[5$]/g,'s')
+    .replace(/[7]/g,'t')
+    .replace(/ph/g,'f')
+    .replace(/y/g,'i')              // y → i (phonétique)
+    .replace(/(.)\1+/g,'$1');       // répétitions
+}
+
+// ─────────────────────────────
+// PHONÉTIQUE SIMPLE
+// ─────────────────────────────
+function phonetic(str){
+  return str
+    .replace(/[aeiou]/g,'a')  // toutes voyelles → a
+    .replace(/[^a-z]/g,'');
+}
+
+// ─────────────────────────────
+// DÉTECTION SPEEDY MAX
+// ─────────────────────────────
+function isBanned(name){
+
+  const n = normalize(name.replace(/[\s\-_\.]/g,""));
+  const p = phonetic(n);
+
+  // mots interdits directs
+  if(n.includes("speedy") || n.includes("spedi") || n.includes("spidi")) return true;
+
+  // phonétique (oral)
+  if(p.includes("spada") || p.includes("spada")) return true;
+
+  // regex large (très permissif)
+  if(/s+p+[e|i]+d+[e|i]+/.test(n)) return true;
+
+  return false;
+}
+
+// RANDOM
+const ARTICLES=["France","Chat","Internet","Lune","Paris","Google","Pizza"];
+
+function randomStart(){startInput.value=ARTICLES[Math.floor(Math.random()*ARTICLES.length)];}
+function randomTarget(){targetInput.value=ARTICLES[Math.floor(Math.random()*ARTICLES.length)];}
+
+// SEARCH
+async function searchWiki(input,id){
+  const val=input.value;
+  if(val.length<2) return;
+
+  const res=await fetch(`https://fr.wikipedia.org/w/api.php?action=opensearch&search=${val}&limit=5&namespace=0&format=json&origin=*`);
+  const data=await res.json();
+
+  const box=document.getElementById(id);
+  box.innerHTML="";
+  data[1].forEach(t=>{
+    const d=document.createElement("div");
+    d.innerText=t;
+    d.onclick=()=>{input.value=t;box.innerHTML="";}
+    box.appendChild(d);
+  });
+}
+
+// START
+function start(){
+  const name=nameInput.value.trim();
+  if(isBanned(name)){ban();return;}
+
+  let start=startInput.value;
+  target=targetInput.value;
+
+  if(!start||!target)return alert("Remplis");
+
+  clicks=0;
+  path=[start];
+
+  clicksEl.innerText=0;
+  targetEl.innerText=target;
+
+  show("game");
+  load(start);
+}
+
+// LOAD
+async function load(title){
+
+  article.innerHTML = "<div style='padding:20px'>Chargement...</div>";
+
+  if(cache[title]){
+    render(cache[title]);
+    return;
+  }
+
+  try{
+    const res = await fetch(`https://fr.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title)}`);
+    const html = await res.text();
+
+    cache[title] = html;
+    render(html);
+
+  }catch{
+    article.innerHTML = "Erreur de chargement";
+  }
+}
+
+// RENDER
+function render(html){
+  article.innerHTML = html;
+
+  // 🔥 supprime scripts
+  article.querySelectorAll("script").forEach(s=>s.remove());
+
+  // 🔥 enlève les trucs lourds
+  article.querySelectorAll("style").forEach(s=>s.remove());
+
+  // 🔥 nettoie attributs inline
+article.querySelectorAll("*").forEach(el=>{
+  el.removeAttribute("style");
+});
+
+  // 🔥 liens cliquables
+  article.querySelectorAll("a").forEach(a=>{
+    const href=a.getAttribute("href");
+    if(href && href.startsWith("./")){
+      const t=decodeURIComponent(href.replace("./",""));
+      a.onclick=e=>{
+        e.preventDefault();
+        click(t);
+      };
+    } else {
+      a.removeAttribute("href");
+    }
+  });
+}
+
+// CLICK
+function click(title){
+  clicks++;
+  path.push(title);
+  clicksEl.innerText=clicks;
+
+  if(title.toLowerCase()===target.toLowerCase()){
+    showToast("🏆 Victoire !");
+    setTimeout(()=>{
+      alert("Chemin :\n"+path.join(" → "));
+      location.reload();
+    },800);
+    return;
+  }
+
+  load(title);
+}
+
+// TOAST
+function showToast(msg){
+  const t=toast;
+  t.innerText=msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2000);
+}
+
+// UI
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+// SHORTCUTS
+const nameInput=document.getElementById("name");
+const startInput=document.getElementById("startInput");
+const targetInput=document.getElementById("targetInput");
+const article=document.getElementById("article");
+const clicksEl=document.getElementById("clicks");
+const targetEl=document.getElementById("target");
+const toast=document.getElementById("toast");
+
+function ban(){
+  const b = document.getElementById("ban");
+
+  b.style.display = "flex";
+
+  b.innerHTML = `
+    <div style="
+      max-width:700px;
+      background:rgba(0,0,0,0.4);
+      padding:30px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,0.2);
+    ">
+      <div style="font-size:40px;margin-bottom:10px;">🚫</div>
+      <div style="line-height:1.8;">
+        ${BANNED_MSG}
+      </div>
+      <button onclick="location.reload()" style="margin-top:20px;">
+        Revenir
+      </button>
+    </div>
+  `;
+}
+
+</script>
+
+</body>
+</html>

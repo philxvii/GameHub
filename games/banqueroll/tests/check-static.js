@@ -1,7 +1,7 @@
 // Portail statique : tout ce qui se verifie SANS navigateur ni reseau.
 // Rapide, deterministe : c'est le premier filet apres toute modification.
 //
-//   node tools/check-static.js
+//   node games/banqueroll/tests/check-static.js
 //
 // Couvre : syntaxe des modules, ordre du plateau, contrat DOM, de, contraste,
 // prix et groupes du fichier de regles, loyers et construction, tours (relance
@@ -13,9 +13,9 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 const { pathToFileURL } = require('url');
 
-const ROOT = path.join(__dirname, '..');
-const JS = path.join(ROOT, 'banqueroll', 'js');
-const HTML = fs.readFileSync(path.join(ROOT, 'banqueroll.html'), 'utf8');
+const ROOT = path.join(__dirname, '..');            // games/banqueroll
+const JS = path.join(ROOT, 'js');
+const HTML = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const results = [];
 const check = (name, ok, detail = '') => {
   results.push(!!ok);
@@ -192,7 +192,7 @@ const workerFiles = ['worker.js', 'prompt.js'].map(f => path.join(ROOT, 'ai-host
   check('10b. Les citations du chat passent en priorité (running gags)', /attends un peu/.test(quoted.text), quoted.text);
 
   // ------------------------------------------------------------ 11. securite IA
-  const front = [HTML, src, ...fs.readdirSync(path.join(ROOT, 'banqueroll', 'css')).map(f => fs.readFileSync(path.join(ROOT, 'banqueroll', 'css', f), 'utf8'))].join('\n');
+  const front = [HTML, src, ...fs.readdirSync(path.join(ROOT, 'css')).map(f => fs.readFileSync(path.join(ROOT, 'css', f), 'utf8'))].join('\n');
   const leaks = [/sk-or-[a-z0-9-]{10,}/i, /sk-[A-Za-z0-9]{20,}/, /AIza[0-9A-Za-z_-]{30,}(?![\s\S]*undercover-game)/, /Bearer\s+[A-Za-z0-9-_]{12,}/, /openrouter\.ai\/api/i, /generativelanguage\.googleapis/i, /GEMINI_API_KEY|OPENROUTER_API_KEY/].filter(re => re.test(front));
   check('11a. Aucun secret ni appel direct à Gemini / OpenRouter dans le frontend', !leaks.length, leaks.map(String).join(' '));
   const P = await import(pathToFileURL(path.join(ROOT, 'ai-host', 'src', 'prompt.js')).href);
