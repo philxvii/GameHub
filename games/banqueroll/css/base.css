@@ -176,6 +176,13 @@ select{appearance:none;cursor:pointer;padding-right:34px;
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1.5px solid var(--ink);}
 .card h2{font-family:var(--display);font-weight:400;font-size:1.6rem;line-height:1.05;}
 .card .btn-block{margin-top:12px;}
+/* Solo contre des bots : une bande sous les deux fiches, champs en ligne. */
+.card--bots{padding:18px 24px 14px;}
+.bot-row{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:10px;align-items:end;}
+.bot-row .field{margin-top:12px;}
+.bot-row .btn{min-width:130px;}
+@media (min-width:860px){.lobby .card--bots{transform:rotate(-.3deg);}}
+@media (max-width:640px){.bot-row{grid-template-columns:1fr 1fr;}.bot-row .field:first-child,.bot-row .btn{grid-column:1/-1;}}
 .lobby-foot{color:var(--cream-soft);font-size:.84rem;line-height:1.6;text-align:center;}
 .lobby-foot b{color:var(--brass-hi);}
 /* Regles : un registre, montant a droite, points de conduite. */

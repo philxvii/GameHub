@@ -162,7 +162,7 @@ function playerCard(game, player, index, compact) {
   const active = game.phase === 'playing' && game.turnIndex === index;
   const net = netWorth(game, player);
   const target = targetOf(game);
-  const tags = [player.id === game.hostId ? 'Hôte' : '', player.id === S.playerId ? 'Toi' : ''].filter(Boolean).join(' · ');
+  const tags = [player.id === game.hostId ? 'Hôte' : '', player.bot ? 'Bot' : '', player.id === S.playerId ? 'Toi' : ''].filter(Boolean).join(' · ');
   const status = player.bankrupt ? '<span class="pstat pstat-out">Faillite</span>'
     : player.inJail ? `<span class="pstat pstat-jail">Prison · ${player.jailTurns || 0}</span>`
     : player.skipNext ? '<span class="pstat">Passe son tour</span>'
@@ -699,13 +699,15 @@ function renderVictory(game) {
 // ================================================================ salon
 export function renderLobby(game) {
   $id('lobby-code').textContent = game.code;
-  $id('lobby-players').innerHTML = game.players.map(p => `<div class="lobby-player${p.id === S.playerId ? ' me' : ''}" style="--pc:${esc(p.color)}"><span class="ptoken">${initial(p.name)}</span><strong>${esc(p.name)}</strong><em>${p.id === game.hostId ? 'Hôte' : ''}</em></div>`).join('')
+  $id('lobby-players').innerHTML = game.players.map(p => `<div class="lobby-player${p.id === S.playerId ? ' me' : ''}" style="--pc:${esc(p.color)}"><span class="ptoken">${initial(p.name)}</span><strong>${esc(p.name)}</strong><em>${p.id === game.hostId ? 'Hôte' : p.bot ? 'Bot' : ''}</em></div>`).join('')
     + Array.from({ length: Math.max(0, game.maxPlayers - game.players.length) }, () => '<div class="lobby-player empty"><span class="ptoken">?</span><strong>Place libre</strong></div>').join('');
   const max = roundsOf(game);
   $id('lobby-settings').innerHTML = `<span>Objectif <b>${fmt(targetOf(game))}</b></span><span>${max ? `<b>${max}</b> manches` : '<b>Sans limite</b>'}</span><span>Tour <b>${game.turnTimer} s</b></span><span><b>${game.players.length}/${game.maxPlayers}</b> joueurs</span>`;
   const startBtn = $id('start-game-btn');
   startBtn.disabled = !(S.isHost && game.players.length >= 2);
   startBtn.classList.toggle('hidden', !S.isHost);
+  const botBtn = $id('add-bot-btn');
+  if (botBtn) { botBtn.classList.toggle('hidden', !S.isHost); botBtn.disabled = game.players.length >= game.maxPlayers; }
   $id('lobby-wait').classList.toggle('hidden', S.isHost);
 }
 

@@ -66,6 +66,7 @@ L'ancienne URL `banqueroll.html` et le raccourci `/banqueroll/` sont des relais.
 | `js/render.js` | état → DOM, overlays Chance, fiche de case, victoire | — |
 | `js/fx.js` | dé 3D (WAAPI), trajets des pions case par case (GSAP, repli WAAPI), roue SVG, pièces, toasts | — |
 | `js/presenter.js` | présentateur : évènements, intensité 0–5, chrono, mémoire du chat, IA, badge de source | — |
+| `js/bot.js` | bots joués par le client de l'hôte avec les actions des humains (`by`) | — |
 | `js/main.js` | câblage, délégation des clics `data-act` | — |
 | `css/*.css` | base (boutons, lobby), game (mise en page), board, overlays | — |
 | `ai-host/` | Worker Cloudflare gratuit : Gemini → OpenRouter → Workers AI → réplique locale | — |
@@ -184,6 +185,11 @@ de la capture de référence :
   sexuel ; l'actu vise les puissants, jamais les victimes.
   Sur localhost, `?ai=off` coupe l'IA et `?ai=<url>` la redirige : la suite de tests
   tourne en `?ai=off` pour rester reproductible et ne pas consommer le quota.
+- **Bots** (2026-10-08, demande de l'utilisateur) : option « Jouer contre des bots » à
+  côté de Créer / Rejoindre (partie lancée sans salon), et « + Ajouter un bot » dans le
+  salon. Un bot est un joueur `bot: true` ; le client de l'hôte le joue (`bot.js`) en
+  appelant les actions avec leur dernier paramètre `by` (par défaut `S.playerId`). Il ne
+  tire aucun hasard lui-même et ne joue que si l'onglet de l'hôte est ouvert.
 - Le bandeau coloré des cases reste en **aplat** (contraste ≥ 4.5:1 audité).
 - **Direction artistique** (2026-10-07) : un jeu de société sur une table de banque.
   Feutre vert, fiches en carton crème avec grain, encre `#1B2420`, laiton pour ce qui
@@ -208,7 +214,7 @@ répliques locales.
 node tools/check-links.js                              # structure : hub, relais, chemins de chaque jeu
 node games/banqueroll/tests/check-static.js            # ~2 s, sans navigateur — à lancer toujours
 python -m http.server 4173                             # puis, dans un autre terminal :
-node games/banqueroll/tests/test-browser.js            # 48 contrôles, Chrome réel, 2 joueurs, IA simulée
+node games/banqueroll/tests/test-browser.js            # 50 contrôles, Chrome réel, 2 joueurs + solo contre un bot, IA simulée
 node games/banqueroll/tests/test-browser.js --shots    # + captures dans games/banqueroll/tests/shots/
 node games/banqueroll/tests/test-browser.js --no-gsap  # repli quand le CDN est coupé
 node games/banqueroll/tests/test-browser.js --preview  # fenêtre visible avec une partie de démo
