@@ -73,7 +73,10 @@ check('Pages relais : ancienne URL -> games/<jeu>/ avec ?query et #hash',
   `${relays.length} relais${badRelays.length ? ' ; invalides : ' + badRelays.join(', ') : ''}${missingRelays.length ? ' ; manquants : ' + missingRelays.join(', ') : ''}`);
 
 // 3. Plus aucun code de jeu a la racine : seulement le hub, les relais et les dossiers prevus.
-const allowed = new Set(['index.html', 'CNAME', 'CLAUDE.md', 'games', 'tools', 'shared', 'banqueroll', ...relays]);
+// Icones du site : a la racine, c'est la que les navigateurs vont chercher /favicon.ico
+// (toutes les pages des jeux en heritent sans lien dans leur HTML).
+const siteIcons = ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png'];
+const allowed = new Set(['index.html', 'CNAME', 'CLAUDE.md', 'games', 'tools', 'shared', 'banqueroll', ...siteIcons, ...relays]);
 const stray = fs.readdirSync(ROOT).filter(f => !f.startsWith('.') && !allowed.has(f));
 const bqDir = path.join(ROOT, 'banqueroll');
 const bqDirOk = !fs.existsSync(bqDir) || (fs.readdirSync(bqDir).join() === 'index.html'

@@ -11,6 +11,7 @@ index.html          hub (cartes → games/<jeu>/)
 banqueroll/         relais du raccourci historique roulia.me/banqueroll/
 games/<jeu>/        tout le jeu : entrée, JS, CSS, assets, tests, annexes
 tools/              commun : check-links.js (structure), cdp.js (pilote Chrome)
+favicon.svg/.ico    icône du site (dé champagne) + apple-touch-icon.png ; les jeux héritent du .ico
 ```
 
 Les pages relais renvoient vers `games/<jeu>/` en gardant `?query` et `#hash`.
