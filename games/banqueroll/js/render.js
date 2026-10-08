@@ -245,15 +245,21 @@ function renderHud(game) {
   }
   clearInterval(countdown);
   const timer = $id('turn-timer');
+  // Pendant une enchere ou une case Auction, le chrono du tour est fige : le bandeau
+  // affiche le temps qui compte vraiment, celui de l'enchere.
+  const auctionOpen = game.auction && game.auction.status === 'open';
+  const swapOpen = game.swap && game.swap.status === 'open';
+  const until = auctionOpen ? game.auction.endAt : swapOpen ? game.swap.endAt : game.turnDeadline;
+  const secs = end => Math.max(0, Math.round((end - Date.now()) / 1000));
   const tick = () => {
     if (!timer) return;
-    const left = game.phase === 'playing' && game.turnDeadline ? Math.max(0, Math.round((game.turnDeadline - Date.now()) / 1000)) : 0;
+    const left = game.phase === 'playing' && until ? secs(until) : 0;
     timer.textContent = `${String(Math.floor(left / 60)).padStart(2, '0')}:${String(left % 60).padStart(2, '0')}`;
     timer.classList.toggle('urgent', left > 0 && left <= 6);
-    const sw = $id('swap-countdown');
-    if (sw && game.swap) sw.textContent = Math.max(0, Math.round((game.swap.endAt - Date.now()) / 1000)) + ' s';
-    const au = $id('auction-countdown');
-    if (au && game.auction) au.textContent = Math.max(0, Math.round((game.auction.endAt - Date.now()) / 1000)) + ' s';
+    // Plusieurs compteurs a la fois (panneau du plateau + fenetre d'enchere) : on les met
+    // TOUS a jour. Avant, deux elements partageaient un id et seul le premier bougeait.
+    if (swapOpen) document.querySelectorAll('.swap-countdown').forEach(el => { el.textContent = secs(game.swap.endAt) + ' s'; });
+    if (auctionOpen) document.querySelectorAll('.auction-countdown').forEach(el => { el.textContent = secs(game.auction.endAt) + ' s'; });
   };
   tick();
   countdown = setInterval(tick, 1000);
@@ -289,7 +295,7 @@ function actionHTML(game) {
   if (game.auction && game.auction.status === 'open') {
     const a = game.auction;
     const bidder = playerById(game, a.highestBidder);
-    return box(`Enchère · ${esc(BOARD[a.position].name)}`, `Meilleure offre : <strong>${fmt(a.highestBid || 0)}</strong>${bidder ? ` par ${esc(bidder.name)}` : ''}. Minimum : ${fmt(a.nextBid)}. <span class="countdown" id="auction-countdown"></span>`,
+    return box(`Enchère · ${esc(BOARD[a.position].name)}`, `Meilleure offre : <strong>${fmt(a.highestBid || 0)}</strong>${bidder ? ` par ${esc(bidder.name)}` : ''}. Minimum : ${fmt(a.nextBid)}. <span class="countdown auction-countdown"></span>`,
       btn('Faire une offre', 'bid-open'));
   }
   if (game.swap && game.swap.status === 'open') return swapHTML(game, me);
@@ -344,7 +350,7 @@ function swapHTML(game, me) {
   const swap = game.swap;
   const owner = playerById(game, swap.ownerId) || { name:'?' };
   const offers = swap.offers || {};
-  const head = `${chip(swap.offered, 'square', ' data-static')} <span class="countdown" id="swap-countdown"></span>`;
+  const head = `${chip(swap.offered, 'square', ' data-static')} <span class="countdown swap-countdown"></span>`;
   if (swap.ownerId === S.playerId) {
     const list = Object.entries(offers).filter(([, pos]) => pos >= 0);
     const rows = list.length ? list.map(([pid, pos]) => `<div class="offer-row">${chip(pos, 'square', ' data-static')}<span>${de(esc((playerById(game, pid) || {}).name))}</span>${btn('Accepter', 'swap-accept', 'btn-primary btn-small', pid)}</div>`).join('')

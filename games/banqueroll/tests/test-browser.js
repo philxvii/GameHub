@@ -229,6 +229,13 @@ async function suiteGameplay(A, B) {
   const modal = await until(A, `document.getElementById('modal-auction').classList.contains('active')`, 5000);
   await A.eval(`document.getElementById('auction-bid').value='100'; document.querySelector('[data-act="bid"]').click(); return 1;`);
   await sleep(1500);
+  // Le decompte de la fenetre d'enchere defile, et le chrono du bandeau affiche l'enchere (20 s), pas le tour.
+  const readClock = `return { modal: parseInt(document.querySelector('#modal-auction .auction-countdown').textContent, 10),
+    hud: (([m, s]) => +m * 60 + +s)(document.getElementById('turn-timer').textContent.split(':')) };`;
+  const c1 = await A.eval(readClock);
+  await sleep(2200);
+  const c2 = await A.eval(readClock);
+  check('Enchère : le décompte défile dans la fenêtre et dans le bandeau', c1.modal <= 20 && c2.modal < c1.modal && Math.abs(c2.hud - c2.modal) <= 1, { avant: c1, après: c2 });
   await rest(code, '/auction', 'PATCH', { endAt: Date.now() - 1000 });
   await sleep(3500);
   g = await state(code);
@@ -261,6 +268,16 @@ async function suiteGameplay(A, B) {
   await sleep(1800);
   g = await state(code);
   check('Case Auction : échange conclu, +100 $ chacun', g.ownership[9] === idB && g.ownership[1] === idA && g.players[ia].cash === cA + 100 && g.players[ib].cash === cB + 100);
+
+  // --- case Auction : tout le monde passe -> l'echange se ferme tout de suite (pas d'attente de 45 s)
+  await setTurn(ia, { position: 13 });
+  await A.eval(`await __bq.A.handleLanding(14); return 1;`);
+  await sleep(1300);
+  await click(A, '#action-panel [data-act="swap-pick"][data-arg="1"]');
+  await until(B, `document.querySelector('#action-panel [data-act="swap-offer"][data-arg="-1"]')`, 5000);
+  await click(B, '#action-panel [data-act="swap-offer"][data-arg="-1"]');
+  const passed = await until(A, `(() => { const s = __bq.S.game.swap; return s && s.status !== 'open' ? s.status : null; })()`, 6000);
+  check('Case Auction : « Passer » de tous les autres ferme l’échange aussitôt', passed === 'expired', passed);
 
   // --- Chance : carte
   await setTurn(ia, { position: 27 });

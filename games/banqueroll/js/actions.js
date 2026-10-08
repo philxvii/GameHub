@@ -742,11 +742,18 @@ function maybeResolveTradeTimeout(game) {
 
 function maybeResolveSwap(game) {
   const swap = game.swap;
-  if (!swap || swap.status !== 'open' || now() <= swap.endAt) return;
+  if (!swap || swap.status !== 'open') return;
+  // Tout le monde a passe : inutile d'attendre la fin des 45 s (« Passer » semblait sans effet).
+  const offers = swap.offers || {};
+  const others = game.players.filter(p => p.id !== swap.ownerId && !p.bankrupt);
+  const allPassed = others.length > 0 && others.every(p => Number(offers[p.id]) === -1);
+  if (!allPassed && now() <= swap.endAt) return;
   if (guards.swap === swap.id) return;
   guards.swap = swap.id;
   const owner = playerById(game, swap.ownerId);
-  endTurn(game, { 'swap/status':'expired' }, [{ text:`Temps écoulé : ${owner ? owner.name : '?'} garde ${BOARD[swap.offered].name}.`, meta:{ t:'swap-expired' } }]);
+  const who = owner ? owner.name : '?';
+  const text = allPassed ? `Tout le monde passe : ${who} garde ${BOARD[swap.offered].name}.` : `Temps écoulé : ${who} garde ${BOARD[swap.offered].name}.`;
+  endTurn(game, { 'swap/status':'expired' }, [{ text, meta:{ t:'swap-expired' } }]);
 }
 
 // Le client qui fait tourner la roue a pu fermer l'onglet : l'hote termine.
