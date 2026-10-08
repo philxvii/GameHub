@@ -73,13 +73,20 @@ function nextStep(game) {
     if (isBot(game, sw.ownerId)) {
       const offers = Object.entries(sw.offers || {}).filter(([, pos]) => Number(pos) >= 0);
       const best = offers.sort((x, y) => price(Number(y[1])) - price(Number(x[1])))[0];
-      const waited = now() > sw.endAt - 37000;     // laisse ~8 s aux autres pour proposer
+      // Laisse ~8 s aux autres pour proposer, ou decide des que tout le monde a repondu.
+      const answered = game.players.filter(p => p.id !== sw.ownerId && !p.bankrupt).every(p => (sw.offers || {})[p.id] !== undefined);
+      const waited = answered || now() > sw.endAt - 37000;
       if (best && waited && price(Number(best[1])) >= price(sw.offered) * 0.9) return { delay: jitter(1200), run: () => A.acceptSwap(best[0], sw.ownerId) };
       if (now() > sw.endAt - 20000) return { delay: jitter(800), run: () => A.cancelSwap(sw.ownerId) };
       return null;
     }
-    const offerer = bots.find(b => b.id !== sw.ownerId && (sw.offers || {})[b.id] === undefined && swapCandidate(game, b, sw) !== undefined);
-    if (offerer) return { delay: jitter(2500, 1500), run: () => A.offerSwap(swapCandidate(game, offerer, sw), offerer.id) };
+    // Chaque bot repond : sa ville la moins chere qui colle, sinon il passe (-1), pour que
+    // l'echange se termine des que tout le monde a repondu.
+    const responder = bots.find(b => b.id !== sw.ownerId && (sw.offers || {})[b.id] === undefined);
+    if (responder) {
+      const pos = swapCandidate(game, responder, sw);
+      return { delay: jitter(2500, 1500), run: () => A.offerSwap(pos === undefined ? -1 : pos, responder.id) };
+    }
     return null;
   }
 
