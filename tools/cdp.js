@@ -8,7 +8,7 @@
 // Usage :
 //   const { Browser, sleep } = require('./cdp');
 //   const b = await Browser.launch({ headless: true });
-//   const p = await b.newPage('http://localhost:4173/banqueroll.html', 'A');
+//   const p = await b.newPage('http://localhost:4173/games/banqueroll/', 'A');
 //   const v = await p.eval(`return document.title;`);
 //   await b.close();
 

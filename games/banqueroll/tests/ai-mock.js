@@ -2,7 +2,7 @@
 // dans Node, avec Gemini et OpenRouter SIMULES. Aucune cle reelle, aucun
 // appel externe.
 //
-//   node tools/ai-mock.js            # http://localhost:8787/host
+//   node games/banqueroll/tests/ai-mock.js            # http://localhost:8787/host
 //   POST /__mode  {"mode":"ok"}                                  meme comportement pour tous
 //   POST /__mode  {"gemini":"fail","openrouter":"ok"}           par fournisseur
 //        modes : ok | fail (503) | slow (15 s) | quota (429) | junk (« User Safety: safe »)

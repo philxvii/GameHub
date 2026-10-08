@@ -1,8 +1,23 @@
 # GameHub — notes de travail
 
 Site statique servi par GitHub Pages sur **roulia.me**. Pas de build, pas de
-`package.json`. Un jeu = un fichier HTML autonome (CSS + JS inline), sauf
-Banqueroll, découpé en modules ES natifs sous `banqueroll/`.
+`package.json`. Chaque jeu vit dans `games/<jeu>/`, entrée `index.html`. Un jeu =
+un fichier HTML autonome (CSS + JS inline), sauf Banqueroll, découpé en modules ES
+natifs.
+
+```
+index.html          hub (cartes → games/<jeu>/)
+<jeu>.html          pages relais des anciennes URL publiques (une par jeu)
+banqueroll/         relais du raccourci historique roulia.me/banqueroll/
+games/<jeu>/        tout le jeu : entrée, JS, CSS, assets, tests, annexes
+tools/              commun : check-links.js (structure), cdp.js (pilote Chrome)
+```
+
+Les pages relais renvoient vers `games/<jeu>/` en gardant `?query` et `#hash`.
+Ne les supprime pas, n'y mets aucun code de jeu. Un chemin d'un jeu ne sort pas de
+son dossier, sauf le retour au hub (`../../index.html`). `shared/` n'existe pas
+encore : il n'accueillera que du code réellement commun (candidats : la config
+Firebase copiée dans 9 fichiers, le filtre de prénoms `isBannedName` copié dans 5).
 
 **Pousser sur `main` déploie en production.**
 
@@ -11,25 +26,25 @@ Banqueroll, découpé en modules ES natifs sous `banqueroll/`.
 ## Économie de tokens — à lire en premier
 
 Banqueroll est découpé en modules (voir plus bas) : **ouvre le module concerné,
-pas tout le dossier**. `grep -n "^export function" banqueroll/js/*.js` donne la
+pas tout le dossier**. `grep -n "^export function" games/banqueroll/js/*.js` donne la
 carte en ~200 tokens. Une capture d'écran que tu regardes coûte **~1 900 tokens**.
 
 **Modifie par script ou par Edit ciblé**, avec une assertion `count(old) == 1`
 quand tu passes par Python : le correctif échoue bruyamment si le motif a bougé.
 
 **Vérifie par le DOM, regarde seulement pour juger l'esthétique.** `node
-tools/test-browser.js` interroge le DOM. Une capture ne sert qu'à trancher une
+games/banqueroll/tests/test-browser.js` interroge le DOM. Une capture ne sert qu'à trancher une
 question visuelle — mise en page, chevauchement, contraste perçu. Le texte ne les
 détecte pas : un nom de ville masqué par un pion ou un libellé de roue illisible
 n'ont été vus qu'en regardant.
 
-**Le portail statique est quasi gratuit.** `node tools/check-static.js` ne lance
+**Le portail statique est quasi gratuit.** `node games/banqueroll/tests/check-static.js` ne lance
 aucun navigateur et importe les modules purs : plateau, règles, Chance, répliques,
 Worker IA. Lance-le après chaque modification.
 
 ---
 
-## Banqueroll — [banqueroll.html](banqueroll.html) + [banqueroll/](banqueroll/)
+## Banqueroll — [games/banqueroll/](games/banqueroll/)
 
 Jeu de plateau financier multijoueur, 2 à 8 joueurs, synchronisé par Firebase
 Realtime Database sous le nœud `banqueroll/{CODE}`. Architecture
@@ -37,8 +52,8 @@ Realtime Database sous le nœud `banqueroll/{CODE}`. Architecture
 et écrit son tour ; **seul l'hôte** arbitre ce qui expire (enchères, échanges,
 tours AFK, roue abandonnée), les faillites et la fin de partie.
 
-`banqueroll.html` reste le point d'entrée (l'URL publique ne change pas) et ne
-contient que le HTML. Pas de build : modules ES natifs servis tels quels.
+`games/banqueroll/index.html` est le point d'entrée et ne contient que le HTML.
+L'ancienne URL `banqueroll.html` et le raccourci `/banqueroll/` sont des relais. Pas de build : modules ES natifs servis tels quels.
 
 | Module | Rôle | Pur ? |
 |---|---|---|
@@ -53,7 +68,7 @@ contient que le HTML. Pas de build : modules ES natifs servis tels quels.
 | `js/presenter.js` | présentateur : évènements, intensité 0–5, chrono, mémoire du chat, IA, badge de source | — |
 | `js/main.js` | câblage, délégation des clics `data-act` | — |
 | `css/*.css` | base (boutons, lobby), game (mise en page), board, overlays | — |
-| `../ai-host/` | Worker Cloudflare gratuit : Gemini → OpenRouter → Workers AI → réplique locale | — |
+| `ai-host/` | Worker Cloudflare gratuit : Gemini → OpenRouter → Workers AI → réplique locale | — |
 
 Les modules purs renvoient des **mises à jour Firebase** (`{ 'players/0/cash': … }`)
 sans rien écrire : `actions.js` les commite. Ajoute de la logique de règle dans
@@ -62,7 +77,7 @@ sans rien écrire : `actions.js` les commite. Ajoute de la logique de règle dan
 ### Intouchable sans accord explicite
 
 - **L'ordre des 28 cases.** Contrainte produit, figée, vérifiée par
-  `tools/check-static.js`. Ne la réarrange jamais pour des raisons de design.
+  `tests/check-static.js`. Ne la réarrange jamais pour des raisons de design.
 - Les règles, les prix, les loyers, le barème des bâtiments, le schéma Firebase,
   le protocole multijoueur.
 - La valeur du dé : celle que tire `rollDice` est celle qu'affiche le dé **et**
@@ -109,7 +124,7 @@ sans rien écrire : `actions.js` les commite. Ajoute de la logique de règle dan
   le nom et les bâtiments restent visibles au-dessus.
 - **GSAP vient d'un CDN** et ne sert qu'aux trajets des pions. Sans lui, pions
   posés directement ; dé, roue et effets passent par la Web Animations API.
-  Testé par `node tools/test-browser.js --no-gsap`.
+  Testé par `node games/banqueroll/tests/test-browser.js --no-gsap`.
 - Une position finale peut différer de `départ + dé` : une carte Chance redéplace
   après l'atterrissage. Compare toujours aux cases **annoncées par le moteur**.
 
@@ -190,13 +205,14 @@ répliques locales.
 ## Tester
 
 ```bash
-node tools/check-static.js            # ~2 s, sans navigateur — à lancer toujours
-python -m http.server 4173            # puis, dans un autre terminal :
-node tools/test-browser.js            # 48 contrôles, Chrome réel, 2 joueurs, IA simulée
-node tools/test-browser.js --shots    # + captures dans tools/shots/
-node tools/test-browser.js --no-gsap  # repli quand le CDN est coupé
-node tools/test-browser.js --preview  # fenêtre visible avec une partie de démo
-node tools/ai-mock.js                 # Worker IA local, Gemini et OpenRouter simulés (port 8787)
+node tools/check-links.js                              # structure : hub, relais, chemins de chaque jeu
+node games/banqueroll/tests/check-static.js            # ~2 s, sans navigateur — à lancer toujours
+python -m http.server 4173                             # puis, dans un autre terminal :
+node games/banqueroll/tests/test-browser.js            # 48 contrôles, Chrome réel, 2 joueurs, IA simulée
+node games/banqueroll/tests/test-browser.js --shots    # + captures dans games/banqueroll/tests/shots/
+node games/banqueroll/tests/test-browser.js --no-gsap  # repli quand le CDN est coupé
+node games/banqueroll/tests/test-browser.js --preview  # fenêtre visible avec une partie de démo
+node games/banqueroll/tests/ai-mock.js                 # Worker IA local, Gemini et OpenRouter simulés (port 8787)
 ```
 
 Les suites créent de vraies parties Firebase et **les suppriment** ensuite. Si un
@@ -206,7 +222,8 @@ run s'interrompt, vérifie les résidus :
 curl -s "https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app/banqueroll.json?shallow=true"
 ```
 
-Détails dans [tools/README.md](tools/README.md) et [ai-host/README.md](ai-host/README.md).
+Détails dans [games/banqueroll/tests/README.md](games/banqueroll/tests/README.md),
+[games/banqueroll/ai-host/README.md](games/banqueroll/ai-host/README.md) et [tools/README.md](tools/README.md).
 
 ---
 
@@ -227,12 +244,13 @@ Sur une machine neuve, remets les exclusions locales — elles ne voyagent pas
 avec git et évitent de salir le dépôt :
 
 ```bash
-printf '%s\n' banqueroll.html.backup .hermes/ assets/ test_structural.py .vscode/ tools/shots/ >> .git/info/exclude
+printf '%s\n' banqueroll.html.backup .hermes/ assets/ test_structural.py .vscode/ games/banqueroll/tests/shots/ >> .git/info/exclude
 ```
 
 ## Autres jeux
 
 `bataille-navale`, `mini-golf`, `puissance4`, `qui-est-ce`, `roulette`,
-`undercover`, `uno`, `wikirace`, listés par `index.html`. Ils partagent le même
+`undercover`, `uno`, `wikirace` : un dossier chacun sous `games/`, listés par
+`index.html`. Ils partagent le même
 projet Firebase mais des nœuds distincts. **N'y touche pas** en travaillant sur
 Banqueroll.

@@ -1,13 +1,13 @@
 // Tests navigateur de bout en bout : Chrome reel, Firebase reel, deux joueurs.
 //
-//   python -m http.server 4173            # depuis la racine du depot
-//   node tools/test-browser.js            # gameplay + Chance + presentateur + IA + responsive
-//   node tools/test-browser.js --shots    # + captures dans tools/shots/
-//   node tools/test-browser.js --no-gsap  # repli quand le CDN GSAP est coupe
-//   node tools/test-browser.js --preview  # fenetre visible avec une partie de demo
+//   python -m http.server 4173                             # depuis la racine du depot
+//   node games/banqueroll/tests/test-browser.js            # gameplay + Chance + presentateur + IA + responsive
+//   node games/banqueroll/tests/test-browser.js --shots    # + captures dans games/banqueroll/tests/shots/
+//   node games/banqueroll/tests/test-browser.js --no-gsap  # repli quand le CDN GSAP est coupe
+//   node games/banqueroll/tests/test-browser.js --preview  # fenetre visible avec une partie de demo
 //
 // Les parties de test sont creees puis SUPPRIMEES de Firebase a la fin.
-// L'IA est testee contre tools/ai-mock.js (le vrai Worker, amont simule) :
+// L'IA est testee contre tests/ai-mock.js (le vrai Worker, amont simule) :
 // aucune cle, aucun appel externe. Les assertions interrogent le DOM.
 //
 // Hasard : pour rendre un scenario deterministe, on remplace Math.random dans la
@@ -16,11 +16,11 @@
 
 const path = require('path');
 const { spawn } = require('child_process');
-const { Browser, sleep } = require('./cdp');
+const { Browser, sleep } = require('../../../tools/cdp');
 
 // ?ai=off : l'IA reelle est coupee pendant la suite (resultats reproductibles, quota
-// gratuit preserve). La suite IA pointe ensuite vers tools/ai-mock.js.
-const URL = process.env.BQ_URL || 'http://localhost:4173/banqueroll.html?ai=off';
+// gratuit preserve). La suite IA pointe ensuite vers tests/ai-mock.js.
+const URL = process.env.BQ_URL || 'http://localhost:4173/games/banqueroll/?ai=off';
 const DB = 'https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app/banqueroll/';
 const AI = 'http://localhost:8787';
 const SHOTS = path.join(__dirname, 'shots');

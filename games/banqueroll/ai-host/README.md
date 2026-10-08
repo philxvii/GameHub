@@ -5,7 +5,7 @@ le prompt du présentateur, essaie **Gemini, puis OpenRouter, puis Workers AI** 
 normalisée `{ text, provider, model }`. **100 % gratuit.**
 
 ```
-banqueroll.html ──(contexte de jeu)──▶ /host ──▶ Gemini (offre gratuite AI Studio)
+games/banqueroll/ ──(contexte de jeu)──▶ /host ──▶ Gemini (offre gratuite AI Studio)
        ▲                                              │ échec
        │                                              ▼
        │                                         OpenRouter (modèles :free)
@@ -84,9 +84,9 @@ d'un échec, jamais de clé ni de contenu.
 ## Tester sans clé
 
 ```bash
-node tools/ai-mock.js        # exécute ce Worker dans Node, Gemini et OpenRouter simulés
+node games/banqueroll/tests/ai-mock.js  # exécute ce Worker dans Node, Gemini et OpenRouter simulés
 ```
 
-Puis ouvre `http://localhost:4173/banqueroll.html?ai=http://localhost:8787/host`.
+Puis ouvre `http://localhost:4173/games/banqueroll/?ai=http://localhost:8787/host`.
 `?ai=off` coupe l'IA. Ces surcharges ne sont acceptées que sur localhost.
-`tools/test-browser.js` s'en sert pour tester chaque bascule et le repli local.
+`games/banqueroll/tests/test-browser.js` s'en sert pour tester chaque bascule et le repli local.

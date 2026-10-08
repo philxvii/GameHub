@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Banqueroll</title>
+<meta name="description" content="Banqueroll — jeu de plateau financier multijoueur, 2 à 8 joueurs, avec un présentateur sans pitié.">
+<meta name="theme-color" content="#14302A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gloock&family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/game.css">
+<link rel="stylesheet" href="css/board.css">
+<link rel="stylesheet" href="css/overlays.css">
+<!-- GSAP : trajets des pions. Sans lui le jeu reste jouable (pions poses sans animation). -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script type="module" src="js/main.js"></script>
+</head>
+<body data-screen="s-home">
+<div class="app" id="app">
+
+  <!-- ====================== ACCUEIL ====================== -->
+  <section class="screen active" id="s-home">
+    <div class="lobby">
+      <header class="lobby-brand">
+        <div class="brand-mark" aria-hidden="true" data-guilloche="3"><span>B</span></div>
+        <h1 class="brand-title">Banqueroll</h1>
+        <p>Plateau financier en ligne · 2 à 8 joueurs · un présentateur sans pitié</p>
+        <div class="lobby-strip" id="lobby-strip" aria-hidden="true"></div>
+      </header>
+
+      <div class="lobby-grid">
+        <section class="card card--primary">
+          <div class="card-head"><h2>Créer une partie</h2><span class="tag tag-green">Hôte</span></div>
+          <div class="field"><label for="create-name">Ton prénom</label><input type="text" id="create-name" maxlength="20" placeholder="Ton prénom" autocomplete="nickname"></div>
+          <div class="field-row">
+            <div class="field"><label for="create-players">Joueurs</label><select id="create-players"><option value="2">2 joueurs</option><option value="3">3 joueurs</option><option value="4" selected>4 joueurs</option><option value="5">5 joueurs</option><option value="6">6 joueurs</option><option value="7">7 joueurs</option><option value="8">8 joueurs</option></select></div>
+            <div class="field"><label for="create-timer">Durée du tour</label><select id="create-timer"><option value="20">20 s</option><option value="25">25 s</option><option value="30" selected>30 s</option><option value="40">40 s</option><option value="60">60 s</option></select></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="create-target">Objectif</label><select id="create-target"><option value="3000" selected>3 000 $</option><option value="5000">5 000 $</option><option value="7000">7 000 $</option></select></div>
+            <div class="field"><label for="create-rounds">Manches</label><select id="create-rounds"><option value="30" selected>30 manches</option><option value="50">50 manches</option><option value="0">Sans limite</option></select></div>
+          </div>
+          <div class="error-msg" id="create-error"></div>
+          <button class="btn btn-primary btn-block btn-lg" data-act="create">Créer la partie</button>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2>Rejoindre</h2></div>
+          <div class="field"><label for="join-code">Code de la partie</label><input id="join-code" type="text" maxlength="12" placeholder="ROLL-42" class="input-code" autocomplete="off"></div>
+          <div class="field"><label for="join-name">Ton prénom</label><input id="join-name" type="text" maxlength="20" placeholder="Ton prénom" autocomplete="nickname"></div>
+          <div class="error-msg" id="join-error"></div>
+          <button class="btn btn-secondary btn-block btn-lg" data-act="join">Rejoindre</button>
+          <ul class="rules-mini">
+            <li><b>1 dé</b> · un 6 fait rejouer · +200 $ au Départ</li>
+            <li><b>Groupe complet</b> · loyers ×2 et jusqu’à 3 bâtiments par ville</li>
+            <li><b>Chance</b> · cartes, dilemmes, roue de la fortune</li>
+            <li><b>Faillite</b> sous −500 $ ou à fortune nulle</li>
+          </ul>
+        </section>
+      </div>
+      <p class="lobby-foot">L’hôte partage le code. Le présentateur commente les gros coups et répond quand on l’interpelle avec <b>@host</b>.</p>
+    </div>
+  </section>
+
+  <!-- ====================== CONNEXION ====================== -->
+  <section class="screen" id="s-joining">
+    <div class="lobby">
+      <div class="card card--center">
+        <div class="spinner"></div>
+        <h2>Connexion…</h2>
+        <p class="muted">Récupération de la partie et synchronisation du plateau.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== SALON ====================== -->
+  <section class="screen" id="s-lobby">
+    <div class="lobby">
+      <header class="lobby-brand lobby-brand--sm">
+        <div class="brand-mark" aria-hidden="true" data-guilloche="2"><span>B</span></div>
+        <h1 class="brand-title">Salon</h1>
+        <p>Partage ce code pour que tes amis rejoignent.</p>
+      </header>
+      <section class="card card--wide">
+        <button class="code-chip" id="lobby-code" data-act="copy" title="Copier le code">—</button>
+        <div class="lobby-settings" id="lobby-settings"></div>
+        <div class="card-head"><h2>Joueurs</h2></div>
+        <div id="lobby-players" class="lobby-players"></div>
+        <p class="muted small hidden" id="lobby-wait">En attente de l’hôte…</p>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-block btn-lg" id="start-game-btn" data-act="start">Lancer la partie</button>
+          <button class="btn btn-danger btn-block" data-act="delete">Abandonner la partie</button>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ====================== PARTIE ====================== -->
+  <section class="screen" id="s-game">
+    <header class="hud">
+      <button class="icon-btn" type="button" aria-label="Quitter la partie" data-act="leave"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="hud-brand"><span>Banqueroll</span><em id="hud-code"></em></div>
+      <div class="hud-objective" id="ref-objective">—</div>
+      <div class="hud-turn"><span class="hud-who" id="turn-player">Chargement…</span><strong class="timer" id="turn-timer">00:00</strong></div>
+      <button class="icon-btn hud-chat" type="button" aria-label="Chat et journal" data-act="drawer"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg><span class="dot" id="chat-dot" hidden></span></button>
+    </header>
+
+    <div class="players-strip" id="players-strip"></div>
+
+    <div class="game-grid">
+      <aside class="col-left">
+        <section class="panel panel-players"><h3>Joueurs</h3><div id="players-panel" class="players"></div></section>
+        <section class="panel panel-assets"><h3>Mes propriétés</h3><div id="my-assets"></div></section>
+      </aside>
+
+      <main class="col-board">
+        <div class="board" id="board">
+          <div class="board-grid" id="board-grid">
+            <div class="board-center" id="board-center">
+              <div class="center-mark" aria-hidden="true" data-guilloche="3"><span>Banqueroll</span></div>
+              <div class="dice-zone">
+                <div class="die-wrap">
+                  <div class="die3d" id="die" role="img" aria-label="Dé non lancé"><div class="die-cube"></div></div>
+                  <div class="die-shadow"></div>
+                </div>
+                <div class="dice-meta"><strong id="dice-total">—</strong><span id="roll-result">Prêt à lancer.</span></div>
+              </div>
+              <div class="event-message" id="event-message">La partie va commencer…</div>
+              <div class="host-bubble" id="host-bubble" hidden></div>
+              <div class="action-panel" id="action-panel"></div>
+            </div>
+            <div class="stage-overlay" id="stage-overlay" hidden></div>
+            <div class="pawn-layer" id="pawn-layer" aria-hidden="true"></div>
+          </div>
+        </div>
+      </main>
+
+      <aside class="col-right drawer" id="drawer">
+        <div class="drawer-head"><strong>Chat &amp; journal</strong><button class="icon-btn" type="button" aria-label="Fermer" data-act="drawer">✕</button></div>
+        <section class="host-card" id="host-card">
+          <span class="host-av" id="host-av"></span>
+          <div class="host-copy"><div class="host-name"><strong>Bankroll Host</strong><span class="host-status" id="host-status">local</span></div>
+          <p class="host-line" id="host-line"></p></div>
+        </section>
+        <section class="panel chat-panel">
+          <div class="chat-list" id="chat-list"></div>
+          <form class="chat-form" id="chat-form" autocomplete="off">
+            <input id="chat-input" type="text" maxlength="160" placeholder="Écris… (@host pour le présentateur)">
+            <button class="btn btn-primary btn-small" type="submit">Envoyer</button>
+          </form>
+        </section>
+        <section class="panel history-panel"><h3>Journal</h3><div class="history-list" id="history-list"></div></section>
+      </aside>
+    </div>
+
+    <button class="chat-peek" type="button" data-act="drawer"><span id="ref-chat-last">Aucun message</span><span class="chat-count" id="ref-chat-count">0</span></button>
+  </section>
+</div>
+<div class="drawer-backdrop" data-act="drawer"></div>
+
+<!-- ====================== MODALES ====================== -->
+<div class="modal" id="modal-auction" role="dialog" aria-labelledby="auction-title">
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="auction-title">Enchère en cours</h3><button class="modal-close" type="button" aria-label="Fermer" data-act="bid-close">✕</button></div>
+    <div id="auction-details" class="muted"></div>
+    <div class="field"><label for="auction-bid">Ton offre</label><input id="auction-bid" type="number" min="0" placeholder="Montant"></div>
+    <div class="btn-row"><button class="btn btn-primary btn-block" data-act="bid">Enchérir</button></div>
+    <div class="modal-foot"><span id="auction-status">Temps restant</span><strong id="auction-countdown">—</strong></div>
+  </div>
+</div>
+
+<div class="modal" id="modal-trade" role="dialog" aria-labelledby="trade-title">
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="trade-title">Proposer un échange</h3><button class="modal-close" type="button" aria-label="Fermer" data-act="trade-close">✕</button></div>
+    <div class="field"><label for="trade-recipient">À qui</label><select id="trade-recipient"></select></div>
+    <div class="field-row">
+      <div class="field"><label for="trade-offer-cash">Tu offres ($)</label><input id="trade-offer-cash" type="number" min="0" value="0"></div>
+      <div class="field"><label for="trade-request-cash">Tu demandes ($)</label><input id="trade-request-cash" type="number" min="0" value="0"></div>
+    </div>
+    <div class="field"><label for="trade-offer-property">Ta propriété (facultatif)</label><select id="trade-offer-property"></select></div>
+    <div class="field"><label for="trade-request-property">Propriété demandée (facultatif)</label><select id="trade-request-property"></select></div>
+    <div class="error-msg" id="trade-error"></div>
+    <div class="btn-row btn-row--2">
+      <button class="btn btn-primary btn-block" data-act="trade-send">Envoyer la proposition</button>
+      <button class="btn btn-ghost btn-block" data-act="trade-close">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-square" role="dialog" aria-label="Fiche de la case">
+  <div class="modal-card modal-card--sheet">
+    <button class="modal-close sheet-close" type="button" aria-label="Fermer" data-act="sheet-close">✕</button>
+    <div id="square-sheet"></div>
+  </div>
+</div>
+
+<!-- ====================== VICTOIRE ====================== -->
+<div class="victory" id="victory">
+  <div class="victory-coins"></div>
+  <div class="victory-card">
+    <div class="victory-rays" aria-hidden="true" data-guilloche="3"></div>
+    <div class="victory-chip" id="victory-chip">?</div>
+    <p class="victory-kicker">Partie terminée</p>
+    <h2 id="victory-name">—</h2>
+    <p class="victory-worth"><span id="victory-worth">0 $</span> de fortune nette</p>
+    <ol class="victory-board" id="victory-board"></ol>
+    <div class="btn-row btn-row--2">
+      <button class="btn btn-primary btn-block" id="victory-restart" data-act="restart">Nouvelle partie</button>
+      <button class="btn btn-ghost btn-block" data-act="leave">Quitter</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+</body>
+</html>

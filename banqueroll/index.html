@@ -2,13 +2,14 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Banqueroll</title>
-<!-- Le dossier banqueroll/ contient le code du jeu. Si l'URL courte /banqueroll
-     tombe sur ce dossier, on renvoie vers la page du jeu. -->
-<meta http-equiv="refresh" content="0; url=../banqueroll.html">
-<link rel="canonical" href="../banqueroll.html">
+<link rel="canonical" href="../games/banqueroll/">
+<!-- Page relais : l'ancienne URL renvoie vers games/banqueroll/ en gardant ?query et #hash. -->
+<script>location.replace('../games/banqueroll/' + location.search + location.hash);</script>
+<meta http-equiv="refresh" content="0; url=../games/banqueroll/">
 </head>
-<body style="background:#141519;color:#fff;font-family:system-ui,sans-serif">
-<p><a href="../banqueroll.html" style="color:#8AD21F">Ouvrir Banqueroll</a></p>
+<body style="background:#111;color:#eee;font-family:system-ui,sans-serif">
+<p><a href="../games/banqueroll/" style="color:#eee">Ouvrir Banqueroll</a></p>
 </body>
 </html>
