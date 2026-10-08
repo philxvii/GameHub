@@ -29,7 +29,7 @@ python -m http.server 4173     # depuis la racine du dépôt
 node games/banqueroll/tests/test-browser.js
 ```
 
-48 contrôles de bout en bout : Chrome réel, Firebase réel, deux joueurs dans deux fenêtres.
+50 contrôles de bout en bout : Chrome réel, Firebase réel, deux joueurs dans deux fenêtres, puis une partie solo contre un bot.
 
 - Création, join, démarrage (1 000 $, ordre tiré, bonus de retard).
 - Lancer : le dé affiché égale le moteur **sur les deux clients** ; le pion parcourt

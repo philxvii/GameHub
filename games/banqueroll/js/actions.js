@@ -32,8 +32,8 @@ export const hooks = { onGame: null, onGone: null, onShow: null };
 const show = id => hooks.onShow && hooks.onShow(id);
 const now = () => Date.now();
 export const makeId = () => Math.random().toString(36).slice(2, 10);
-const me = (game = S.game) => playerById(game, S.playerId);
-const myIdx = (game = S.game) => indexOfPlayer(game, S.playerId);
+const me = (game = S.game, by = S.playerId) => playerById(game, by);
+const myIdx = (game = S.game, by = S.playerId) => indexOfPlayer(game, by);
 const deadline = game => now() + game.turnTimer * 1000;
 
 // Verrous locaux : une resolution ecrit dans l'historique, ce qui relance le
@@ -104,6 +104,14 @@ async function freeCode() {
 
 const val = id => document.getElementById(id).value;
 
+// Bots : de vrais joueurs dans l'etat (`bot: true`), joues par le client de l'hote (bot.js).
+const BOT_NAMES = ['Picsou', 'Le Rentier', 'Golden Boy', 'Tonton Cash', 'La Fiduciaire', 'M. Ponzi', 'Le Huissier', 'Krösus'];
+function botPlayer(taken, index) {
+  const name = BOT_NAMES.find(n => !taken.some(p => p.name === n)) || `Bot ${index + 1}`;
+  return { id:'bot-' + makeId(), name, bot:true, position:START_INDEX, cash:START_CASH, jailTurns:0, inJail:false,
+    color:PLAYER_COLORS[index % PLAYER_COLORS.length], ready:true };
+}
+
 export async function createGame() {
   const name = val('create-name').trim();
   const players = parseInt(val('create-players'), 10);
@@ -130,6 +138,48 @@ export async function createGame() {
   attachPresence();
   startGameListener(S.code);
   show('s-lobby');
+}
+
+// Partie contre des bots : creee, remplie et lancee d'un coup, sans passer par le salon.
+export async function createBotGame() {
+  const name = val('bot-name').trim();
+  const count = parseInt(val('bot-count'), 10);
+  const target = parseInt(val('bot-target'), 10);
+  const err = document.getElementById('bot-error');
+  err.textContent = '';
+  if (!name) { err.textContent = 'Entre ton prénom.'; return; }
+  if (!(count >= 1 && count <= 7)) { err.textContent = 'Choisis entre 1 et 7 bots.'; return; }
+  const settings = { target: TARGETS.includes(target) ? target : TARGETS[0], maxRounds: ROUND_LIMITS[0] };
+  S.code = await freeCode();
+  S.playerId = makeId(); S.name = name; S.color = PLAYER_COLORS[0]; S.isHost = true;
+  saveLocal();
+  const players = [{ id:S.playerId, name, position:START_INDEX, cash:START_CASH, jailTurns:0, inJail:false, color:S.color, ready:true }];
+  for (let i = 0; i < count; i++) players.push(botPlayer(players, i + 1));
+  const game = { code:S.code, hostId:S.playerId, maxPlayers:players.length, turnTimer:30, settings, players, phase:'lobby',
+    turnIndex:0, round:1, currentAction:null, ownership:{}, auction:null, trade:null, winnerId:null, turnDeadline:null,
+    createdAt:now(), updatedAt:now() };
+  await set(gameRef(S.code), game);
+  attachPresence();
+  S.game = game;
+  startGameListener(S.code);
+  await startGame();
+}
+
+// Salon : l'hote complete les places libres avec des bots.
+export async function addBot() {
+  const game = S.game;
+  if (!game || !S.isHost || game.phase !== 'lobby') return;
+  let added = null;
+  await runTransaction(gameRef(game.code), current => {
+    if (!current || current.phase !== 'lobby') return;
+    const players = current.players || [];
+    if (players.length >= current.maxPlayers) return;
+    added = botPlayer(players, players.length);
+    current.players = [...players, added];
+    current.updatedAt = now();
+    return current;
+  });
+  if (!added) toast('Plus de place libre.');
 }
 
 // Deux joueurs qui rejoignaient en meme temps s'ecrasaient : l'ajout passe par une transaction.
@@ -272,17 +322,17 @@ export function autoReconnect() {
 // ================================================================ de et deplacement
 // UN seul de a 6 faces (regle 2). La valeur tiree ici est celle qu'affiche le
 // de ET celle qui deplace le pion : l'animation ne fait que la mettre en scene.
-export async function rollDice() {
+export async function rollDice(by = S.playerId) {
   if (rolling) return;
   const game = S.game;
-  if (!isMyTurn(game, S.playerId)) return;
-  const player = me(game);
+  if (!isMyTurn(game, by)) return;
+  const player = me(game, by);
   if (player.inJail) { toast('Règle d’abord ta situation en prison.'); return; }
   if (game.currentAction || openBlocking(game)) { toast('Termine d’abord l’action en cours.'); return; }
   rolling = true;
   try {
     const die = Math.ceil(Math.random() * 6);
-    const idx = myIdx(game);
+    const idx = myIdx(game, by);
     const nextPos = (player.position + die) % BOARD.length;
     const passedStart = crossesStart(player.position, die);
     const rollId = makeId();
@@ -400,80 +450,80 @@ export async function finishWheel(eventId) {
   return applyOutcome(game, out, { 'event/status':'done' });
 }
 
-export async function chooseDilemma(choice) {
+export async function chooseDilemma(choice, by = S.playerId) {
   const game = S.game;
   const a = game && game.currentAction;
-  if (!a || a.type !== 'dilemma' || a.playerId !== S.playerId) return;
+  if (!a || a.type !== 'dilemma' || a.playerId !== by) return;
   const ev = game.event;
-  const out = resolveDilemma(game, S.playerId, ev.key, choice, ev.detail || {});
+  const out = resolveDilemma(game, by, ev.key, choice, ev.detail || {});
   return applyOutcome(game, out, { 'event/status':'done', 'event/choice': choice });
 }
 
-export async function chooseSteal(pos) {
+export async function chooseSteal(pos, by = S.playerId) {
   const game = S.game;
   const a = game && game.currentAction;
-  if (!a || a.type !== 'steal' || a.playerId !== S.playerId) return;
-  const out = resolveSteal(game, S.playerId, Number(pos));
+  if (!a || a.type !== 'steal' || a.playerId !== by) return;
+  const out = resolveSteal(game, by, Number(pos));
   if (!out) { toast('Cible invalide.'); return; }
   return applyOutcome(game, out);
 }
 
-export async function skipSteal() {
+export async function skipSteal(by = S.playerId) {
   const game = S.game;
   const a = game && game.currentAction;
-  if (!a || a.type !== 'steal' || a.playerId !== S.playerId) return;
-  return endTurn(game, {}, [{ text:`${me(game).name} renonce à la rafle. Noblesse, ou panne de trésorerie.`, meta:{ t:'steal-skip', p: S.playerId } }]);
+  if (!a || a.type !== 'steal' || a.playerId !== by) return;
+  return endTurn(game, {}, [{ text:`${me(game, by).name} renonce à la rafle. Noblesse, ou panne de trésorerie.`, meta:{ t:'steal-skip', p: by } }]);
 }
 
-export async function chooseSeize(pos) {
+export async function chooseSeize(pos, by = S.playerId) {
   const game = S.game;
   const a = game && game.currentAction;
-  if (!a || a.type !== 'seize' || a.chooserId !== S.playerId) return;
+  if (!a || a.type !== 'seize' || a.chooserId !== by) return;
   const out = resolveSeize(game, a.chooserId, a.victimId, Number(pos));
   if (!out) { toast('Choix invalide.'); return; }
   return applyOutcome(game, out);
 }
 
 // ================================================================ achat / enchere
-export async function buyProperty() {
+export async function buyProperty(by = S.playerId) {
   const game = S.game;
   const a = game.currentAction;
-  if (!a || a.type !== 'buy' || a.playerId !== S.playerId) return;
+  if (!a || a.type !== 'buy' || a.playerId !== by) return;
   const square = BOARD[a.position];
-  const idx = myIdx(game);
+  const idx = myIdx(game, by);
   const player = game.players[idx];
   if (player.cash < square.price) { toast('Pas assez d’argent.'); return; }
-  const extra = { [`ownership/${a.position}`]: S.playerId, [`players/${idx}/cash`]: player.cash - square.price };
-  const after = { ...game, ownership: { ...(game.ownership || {}), [a.position]: S.playerId } };
-  const completes = square.type === 'property' && ownsFullGroup(after, S.playerId, square.group);
+  const extra = { [`ownership/${a.position}`]: by, [`players/${idx}/cash`]: player.cash - square.price };
+  const after = { ...game, ownership: { ...(game.ownership || {}), [a.position]: by } };
+  const completes = square.type === 'property' && ownsFullGroup(after, by, square.group);
   return endTurn(game, extra, [{
     text: `${player.name} achète ${square.name} pour ${square.price} $.${completes ? ' Groupe complet : loyers doublés et construction débloquée !' : ''}`,
-    meta: { t:'buy', p: S.playerId, pos: a.position, amt: square.price, before: player.cash, completes },
+    meta: { t:'buy', p: by, pos: a.position, amt: square.price, before: player.cash, completes },
   }]);
 }
 
-export async function startAuction() {
+export async function startAuction(by = S.playerId) {
   const game = S.game;
   const a = game.currentAction;
-  if (!a || a.type !== 'buy' || a.playerId !== S.playerId) return;
+  if (!a || a.type !== 'buy' || a.playerId !== by) return;
   const square = BOARD[a.position];
   const nextBid = Math.max(20, Math.ceil(square.price * 0.3));
   const auction = { status:'open', position:a.position, nextBid, highestBid:0, highestBidder:null, endAt: now() + AUCTION_DURATION * 1000 };
   await commit(game.code, { auction, currentAction:null, updatedAt:now() });
-  pushHistory(game.code, `${me(game).name} met ${square.name} aux enchères.`, { t:'auction-open', p: S.playerId, pos: a.position });
+  pushHistory(game.code, `${me(game, by).name} met ${square.name} aux enchères.`, { t:'auction-open', p: by, pos: a.position });
 }
 
-export async function placeBid(amount) {
+export async function placeBid(amount, by = S.playerId) {
   const game = S.game;
   const bid = parseInt(amount, 10);
   if (!game.auction || game.auction.status !== 'open') { toast('Aucune enchère active.'); return; }
-  const player = me(game);
+  const player = me(game, by);
   if (!player) return;
   if (!Number.isFinite(bid)) { toast('Montant invalide.'); return; }
   if (player.cash < bid) { toast('Pas assez de liquidités.'); return; }
   if (bid < game.auction.nextBid) { toast('Offre trop faible.'); return; }
-  await commit(game.code, { auction: { ...game.auction, highestBid: bid, highestBidder: S.playerId, nextBid: bid + 10 }, updatedAt: now() });
-  pushHistory(game.code, `${player.name} enchérit ${bid} $.`, { t:'bid', p: S.playerId, amt: bid, pos: game.auction.position });
+  await commit(game.code, { auction: { ...game.auction, highestBid: bid, highestBidder: by, nextBid: bid + 10 }, updatedAt: now() });
+  pushHistory(game.code, `${player.name} enchérit ${bid} $.`, { t:'bid', p: by, amt: bid, pos: game.auction.position });
 }
 
 // ================================================================ echange libre
@@ -493,10 +543,10 @@ export async function proposeTrade(form) {
   return null;
 }
 
-export async function acceptTrade() {
+export async function acceptTrade(by = S.playerId) {
   const game = S.game;
   const trade = game.trade;
-  if (!trade || trade.status !== 'pending' || trade.toId !== S.playerId) return;
+  if (!trade || trade.status !== 'pending' || trade.toId !== by) return;
   const from = playerById(game, trade.fromId), to = playerById(game, trade.toId);
   if (!from || !to) { toast('Joueur introuvable.'); return; }
   // L'etat a pu changer depuis la proposition : on revalide avant d'echanger.
@@ -520,11 +570,11 @@ export async function acceptTrade() {
   pushHistory(game.code, `${to.name} accepte l’échange proposé par ${from.name}.`, { t:'trade', p: from.id, o: to.id });
 }
 
-export async function declineTrade() {
+export async function declineTrade(by = S.playerId) {
   const game = S.game;
   if (!game.trade || game.trade.status !== 'pending') return;
   await commit(game.code, { 'trade/status':'declined', 'trade/updatedAt': now() });
-  pushHistory(game.code, `${me(game).name} refuse l’échange.`, { t:'trade-no', p: S.playerId });
+  pushHistory(game.code, `${me(game, by).name} refuse l’échange.`, { t:'trade-no', p: by });
 }
 
 // ================================================================ case Auction (regle 10)
@@ -540,68 +590,68 @@ async function startSwapPick(game) {
   pushHistory(game.code, `${player.name} arrive à l’Auction et choisit une propriété à mettre en jeu.`, { t:'swap-pick', p: player.id });
 }
 
-export async function pickSwapOffer(pos) {
+export async function pickSwapOffer(pos, by = S.playerId) {
   const game = S.game;
   const a = game.currentAction;
   pos = Number(pos);
-  if (!a || a.type !== 'swapPick' || a.playerId !== S.playerId) return;
-  if (ownerOf(game, pos) !== S.playerId || !tradeable(game, pos)) { toast('Choisis une de tes propriétés non bâties.'); return; }
+  if (!a || a.type !== 'swapPick' || a.playerId !== by) return;
+  if (ownerOf(game, pos) !== by || !tradeable(game, pos)) { toast('Choisis une de tes propriétés non bâties.'); return; }
   const endAt = now() + SWAP_DURATION * 1000;
-  await commit(game.code, { swap:{ status:'open', id: makeId(), ownerId: S.playerId, offered: pos, offers: null, endAt },
+  await commit(game.code, { swap:{ status:'open', id: makeId(), ownerId: by, offered: pos, offers: null, endAt },
     currentAction: null, turnDeadline: endAt + 5000, updatedAt: now() });
-  pushHistory(game.code, `${me(game).name} met ${BOARD[pos].name} en jeu. Faites vos offres : 45 secondes.`, { t:'swap-open', p: S.playerId, pos });
+  pushHistory(game.code, `${me(game, by).name} met ${BOARD[pos].name} en jeu. Faites vos offres : 45 secondes.`, { t:'swap-open', p: by, pos });
 }
 
-export async function skipSwap() {
+export async function skipSwap(by = S.playerId) {
   const game = S.game;
   const a = game.currentAction;
-  if (!a || a.type !== 'swapPick' || a.playerId !== S.playerId) return;
-  return endTurn(game, {}, [{ text:`${me(game).name} ne met rien en jeu.`, meta:{ t:'swap-skip', p: S.playerId } }]);
+  if (!a || a.type !== 'swapPick' || a.playerId !== by) return;
+  return endTurn(game, {}, [{ text:`${me(game, by).name} ne met rien en jeu.`, meta:{ t:'swap-skip', p: by } }]);
 }
 
-export async function offerSwap(pos) {
+export async function offerSwap(pos, by = S.playerId) {
   const game = S.game;
   const swap = game.swap;
-  if (!swap || swap.status !== 'open' || swap.ownerId === S.playerId) return;
+  if (!swap || swap.status !== 'open' || swap.ownerId === by) return;
   pos = Number(pos);
-  if (pos !== -1 && (ownerOf(game, pos) !== S.playerId || !tradeable(game, pos))) { toast('Propose une de tes propriétés non bâties.'); return; }
-  await commit(game.code, { [`swap/offers/${S.playerId}`]: pos, updatedAt: now() });
-  if (pos !== -1) pushHistory(game.code, `${me(game).name} propose ${BOARD[pos].name}.`, { t:'swap-offer', p: S.playerId, pos });
+  if (pos !== -1 && (ownerOf(game, pos) !== by || !tradeable(game, pos))) { toast('Propose une de tes propriétés non bâties.'); return; }
+  await commit(game.code, { [`swap/offers/${by}`]: pos, updatedAt: now() });
+  if (pos !== -1) pushHistory(game.code, `${me(game, by).name} propose ${BOARD[pos].name}.`, { t:'swap-offer', p: by, pos });
 }
 
-export async function acceptSwap(fromId) {
+export async function acceptSwap(fromId, by = S.playerId) {
   const game = S.game;
   const swap = game.swap;
-  if (!swap || swap.status !== 'open' || swap.ownerId !== S.playerId) return;
+  if (!swap || swap.status !== 'open' || swap.ownerId !== by) return;
   const theirs = Number((swap.offers || {})[fromId]);
-  const valid = ownerOf(game, swap.offered) === S.playerId && tradeable(game, swap.offered)
+  const valid = ownerOf(game, swap.offered) === by && tradeable(game, swap.offered)
     && theirs >= 0 && ownerOf(game, theirs) === fromId && tradeable(game, theirs);
   if (!valid) { toast('Cette offre n’est plus valable.'); return; }
-  const mi = myIdx(game), fi = indexOfPlayer(game, fromId);
+  const mi = myIdx(game, by), fi = indexOfPlayer(game, fromId);
   const other = game.players[fi];
   const extra = {
-    [`ownership/${swap.offered}`]: fromId, [`ownership/${theirs}`]: S.playerId,
+    [`ownership/${swap.offered}`]: fromId, [`ownership/${theirs}`]: by,
     [`players/${mi}/cash`]: game.players[mi].cash + SWAP_BONUS, [`players/${fi}/cash`]: other.cash + SWAP_BONUS,
     'swap/status':'done', 'swap/winner': fromId,
   };
   return endTurn(game, extra, [{
-    text: `Échange conclu : ${BOARD[swap.offered].name} ↔ ${BOARD[theirs].name}. ${me(game).name} et ${other.name} touchent chacun ${SWAP_BONUS} $.`,
-    meta: { t:'swap', p: S.playerId, o: fromId, pos: swap.offered, pos2: theirs },
+    text: `Échange conclu : ${BOARD[swap.offered].name} ↔ ${BOARD[theirs].name}. ${me(game, by).name} et ${other.name} touchent chacun ${SWAP_BONUS} $.`,
+    meta: { t:'swap', p: by, o: fromId, pos: swap.offered, pos2: theirs },
   }]);
 }
 
-export async function cancelSwap() {
+export async function cancelSwap(by = S.playerId) {
   const game = S.game;
   const swap = game.swap;
-  if (!swap || swap.status !== 'open' || swap.ownerId !== S.playerId) return;
-  return endTurn(game, { 'swap/status':'cancelled' }, [{ text:`${me(game).name} n’accepte aucune offre.`, meta:{ t:'swap-cancel', p: S.playerId } }]);
+  if (!swap || swap.status !== 'open' || swap.ownerId !== by) return;
+  return endTurn(game, { 'swap/status':'cancelled' }, [{ text:`${me(game, by).name} n’accepte aucune offre.`, meta:{ t:'swap-cancel', p: by } }]);
 }
 
 // ================================================================ prison
 // La caution ne fait pas perdre le tour : le joueur sort et peut lancer le de.
-export async function payBail() {
+export async function payBail(by = S.playerId) {
   const game = S.game;
-  const idx = myIdx(game);
+  const idx = myIdx(game, by);
   const player = game.players[idx];
   if (!player || game.turnIndex !== idx || !player.inJail) return;
   if (player.cash < BAIL) { toast('Pas assez pour payer la caution.'); return; }
@@ -610,9 +660,9 @@ export async function payBail() {
   pushHistory(game.code, `${player.name} paie ${BAIL} $ de caution et sort de prison : le tour continue.`, { t:'bail', p: player.id, amt: BAIL });
 }
 
-export async function serveJailTurn() {
+export async function serveJailTurn(by = S.playerId) {
   const game = S.game;
-  const idx = myIdx(game);
+  const idx = myIdx(game, by);
   const player = game.players[idx];
   if (!player || game.turnIndex !== idx || !player.inJail) return;
   const remaining = Math.max(0, (player.jailTurns || 0) - 1);
@@ -625,27 +675,27 @@ export async function serveJailTurn() {
 }
 
 // ================================================================ batiments / vente
-export async function buildOn(pos) {
+export async function buildOn(pos, by = S.playerId) {
   const game = S.game;
   pos = Number(pos);
-  const check = canBuild(game, S.playerId, pos);
+  const check = canBuild(game, by, pos);
   if (!check.ok) { toast(check.reason); return false; }
-  const idx = myIdx(game);
+  const idx = myIdx(game, by);
   await commit(game.code, { [`buildings/${pos}`]: check.level, [`players/${idx}/cash`]: game.players[idx].cash - check.cost, updatedAt: now() });
-  pushHistory(game.code, `${me(game).name} construit à ${BOARD[pos].name} : ${check.level} bâtiment${check.level > 1 ? 's' : ''} (−${check.cost} $). Loyer : ${rentFor({ ...game, buildings:{ ...(game.buildings || {}), [pos]: check.level } }, pos)} $.`,
-    { t:'build', p: S.playerId, pos, lvl: check.level, amt: check.cost });
+  pushHistory(game.code, `${me(game, by).name} construit à ${BOARD[pos].name} : ${check.level} bâtiment${check.level > 1 ? 's' : ''} (−${check.cost} $). Loyer : ${rentFor({ ...game, buildings:{ ...(game.buildings || {}), [pos]: check.level } }, pos)} $.`,
+    { t:'build', p: by, pos, lvl: check.level, amt: check.cost });
   return true;
 }
 
-export async function sellProperty(pos) {
+export async function sellProperty(pos, by = S.playerId) {
   const game = S.game;
   pos = Number(pos);
-  const check = canSell(game, S.playerId, pos);
+  const check = canSell(game, by, pos);
   if (!check.ok) { toast(check.reason); return false; }
-  const idx = myIdx(game);
+  const idx = myIdx(game, by);
   await commit(game.code, { [`ownership/${pos}`]: null, [`buildings/${pos}`]: null,
     [`players/${idx}/cash`]: game.players[idx].cash + check.value, updatedAt: now() });
-  pushHistory(game.code, `${me(game).name} revend ${BOARD[pos].name} à la banque pour ${check.value} $ (80 %).`, { t:'sell', p: S.playerId, pos, amt: check.value });
+  pushHistory(game.code, `${me(game, by).name} revend ${BOARD[pos].name} à la banque pour ${check.value} $ (80 %).`, { t:'sell', p: by, pos, amt: check.value });
   return true;
 }
 

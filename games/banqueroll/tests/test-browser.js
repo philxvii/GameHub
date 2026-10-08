@@ -477,6 +477,36 @@ async function suiteNoGsap(b) {
   return [A];
 }
 
+// ---------------------------------------------------------------- solo contre des bots
+// L'hote joue les bots avec les memes actions qu'un humain : un bot doit lancer le de
+// et resoudre sa case tout seul, sans que son tour expire.
+async function suiteBots(b) {
+  const P = await b.newPage(null, 'Solo');
+  await P.setViewport(1440, 900);
+  await P.goto(URL);
+  await sleep(1500);
+  const start = await P.eval(`document.getElementById('bot-name').value='Solo';document.getElementById('bot-count').value='1';
+    document.querySelector('[data-act="bot-game"]').click(); await new Promise(r=>setTimeout(r,3500));
+    const g=__bq.S.game; return { code:__bq.S.code, phase:g&&g.phase, bots:(g&&g.players||[]).filter(p=>p.bot).length, screen:document.querySelector('.screen.active').id };`);
+  check('Solo : partie contre un bot créée et lancée sans salon', start.phase === 'playing' && start.bots === 1 && start.screen === 's-game', start);
+  // Le script joue l'humain (lancer, refuser les achats) jusqu'a ce que le bot ait joue un tour complet.
+  const botPlayed = await until(P, `(() => {
+    const { S, A } = __bq; const g = S.game; const cur = g.players[g.turnIndex]; const a = g.currentAction;
+    if (cur && cur.id === S.playerId) {
+      if (a && a.type === 'buy') A.startAuction(); else if (a && a.type === 'dilemma') A.chooseDilemma('B');
+      else if (a && a.type === 'swapPick') A.skipSwap(); else if (a && a.type === 'steal') A.skipSteal();
+      else if (cur.inJail) A.serveJailTurn(); else if (!a && g.turnRolled !== S.playerId) A.rollDice();
+    }
+    const bot = g.players.find(p => p.bot); const h = Object.values(g.history || {});
+    const rolled = h.some(x => x.meta && x.meta.t === 'roll' && x.meta.p === bot.id);
+    return rolled && g.turnIndex !== g.players.indexOf(bot) ? h.filter(x => x.meta && x.meta.p === bot.id).map(x => x.meta.t).join(',') : null;
+  })()`, 45000);
+  const afk = await P.eval(`return Object.values(__bq.S.game.history||{}).filter(x=>x.meta&&x.meta.t==='afk').length;`);
+  check('Solo : le bot lance le dé et termine son tour tout seul', !!botPlayed && afk === 0, `${botPlayed} | tours expirés : ${afk}`);
+  if (start.code) await rest(start.code, '', 'DELETE');
+  return [P];
+}
+
 // ---------------------------------------------------------------- apercu
 async function preview() {
   const b = await Browser.launch({ headless: false, windowSize: '1600,950' });
@@ -517,6 +547,7 @@ const expected = e => /Failed to load resource.*(8787|50[234])/.test(e);
       await suiteAI(A, B, ctx);
       await suiteEnd(A, B, ctx);
       await suiteResponsive(A, B, ctx);
+      pages.push(...await suiteBots(b));
     }
     const errs = pages.flatMap(p => p.errors()).filter(e => !expected(e));
     check('Console sans erreur ni avertissement', errs.length === 0, errs.join(' || ') || 'aucune');

@@ -4,6 +4,7 @@ import { S, loadLocal } from './net.js';
 import * as A from './actions.js';
 import * as R from './render.js';
 import { observe, presenterDebug } from './presenter.js';
+import { watchBots, botDebug } from './bot.js';
 import { toast, syncPawns, finishMoves, guillocheSVG, enableTilt } from './fx.js';
 import { getSquareColor, BOARD } from './board.js';
 
@@ -48,6 +49,8 @@ const ACTS = {
   create: () => A.createGame(),
   join: () => A.joinGame(),
   start: () => A.startGame(),
+  'add-bot': () => A.addBot(),
+  'bot-game': () => A.createBotGame(),
   restart: () => A.restartGame(),
   delete: () => A.deleteGame(),
   leave: () => { R.toggleDrawer(false); A.leaveGame(); },
@@ -141,11 +144,12 @@ Object.assign(window, {
   rollDice: A.rollDice, buyProperty: A.buyProperty, startAuction: A.startAuction, openTradeModal: R.openTradeModal,
   proposeTrade, acceptTrade: A.acceptTrade, declineTrade: A.declineTrade, payBail: A.payBail, serveJailTurn: A.serveJailTurn,
   leaveGame: A.leaveGame, restartGame: A.restartGame, toggleDrawer: R.toggleDrawer,
-  __bq: { S, A, R, presenter: presenterDebug },
+  __bq: { S, A, R, presenter: presenterDebug, bot: botDebug },
 });
 
 R.initBoard();
 paintLobbyStrip();
+watchBots();
 // Rosaces guillochees : sceau de l'accueil, centre du plateau, certificat de victoire.
 document.querySelectorAll('[data-guilloche]').forEach(el => { el.insertAdjacentHTML('afterbegin', guillocheSVG({ rings: Number(el.dataset.guilloche) || 3 })); });
 enableTilt($id('stage-overlay'), '.chance-card, .event-card, .dopt');

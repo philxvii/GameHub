@@ -60,6 +60,18 @@
           </ul>
         </section>
       </div>
+
+      <!-- Seul contre des bots : creee et lancee d'un coup, sans salon. -->
+      <section class="card card--bots">
+        <div class="card-head"><h2>Jouer contre des bots</h2><span class="tag">Solo</span></div>
+        <div class="bot-row">
+          <div class="field"><label for="bot-name">Ton prénom</label><input type="text" id="bot-name" maxlength="20" placeholder="Ton prénom" autocomplete="nickname"></div>
+          <div class="field"><label for="bot-count">Adversaires</label><select id="bot-count"><option value="1">1 bot</option><option value="2" selected>2 bots</option><option value="3">3 bots</option><option value="4">4 bots</option><option value="5">5 bots</option></select></div>
+          <div class="field"><label for="bot-target">Objectif</label><select id="bot-target"><option value="3000" selected>3 000 $</option><option value="5000">5 000 $</option><option value="7000">7 000 $</option></select></div>
+          <button class="btn btn-gold btn-lg" data-act="bot-game">Jouer</button>
+        </div>
+        <div class="error-msg" id="bot-error"></div>
+      </section>
       <p class="lobby-foot">L’hôte partage le code. Le présentateur commente les gros coups et répond quand on l’interpelle avec <b>@host</b>.</p>
     </div>
   </section>
@@ -90,6 +102,7 @@
         <div id="lobby-players" class="lobby-players"></div>
         <p class="muted small hidden" id="lobby-wait">En attente de l’hôte…</p>
         <div class="btn-row">
+          <button class="btn btn-secondary btn-block" id="add-bot-btn" data-act="add-bot">+ Ajouter un bot</button>
           <button class="btn btn-primary btn-block btn-lg" id="start-game-btn" data-act="start">Lancer la partie</button>
           <button class="btn btn-danger btn-block" data-act="delete">Abandonner la partie</button>
         </div>
