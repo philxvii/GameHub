@@ -351,3 +351,24 @@ body.money-time .board{box-shadow:inset 0 0 0 .35cqi var(--ink), inset 0 0 0 .55
 .brief-dot.on{background:var(--cream);box-shadow:0 0 0 2px var(--brass);}
 .brief-wait{min-height:1.3em;text-align:center;color:var(--cream);font-size:.86rem;opacity:.85;}
 @media (prefers-reduced-motion:reduce){.brief-card.flip{animation:none;}}
+
+/* Fenetre de paris : compte a rebours chez les parieurs, bouton du lanceur en attente */
+.bet-left{font-size:.8rem;font-weight:700;opacity:.75;white-space:nowrap;}
+.btn-roll.is-holding{opacity:.7;cursor:progress;}
+@media (max-width:759px){
+  .bet-bar{gap:6px 8px;padding:8px 10px;}
+  .bet-kinds{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;width:100%;margin-left:0;}
+  .bet-kind{min-height:34px;padding:0 4px;font-size:12px;white-space:nowrap;}
+  .bet-stake{min-height:32px;min-width:44px;}
+  .bet-skip{min-height:30px;padding:0 10px;font-size:12px;}
+}
+/* Mobile : les trois paris sur une ligne, « Pas de pari » et le decompte dessous ; la barre tient dans le plateau. */
+@media (max-width:759px){
+  .bet-bar{gap:6px 8px;padding:8px 10px;}
+  .bet-kinds{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;width:100%;margin-left:0;}
+  .bet-kind{min-height:34px;padding:0 4px;font-size:12px;white-space:nowrap;}
+  .bet-stake{min-height:32px;min-width:44px;}
+  .bet-skip{min-height:30px;padding:0 10px;font-size:12px;}
+}
+.bet-bar .bet-skip{background:transparent;color:var(--cream);box-shadow:inset 0 0 0 1.5px rgba(244,236,216,.55);}
+.bet-bar .bet-skip:hover{box-shadow:inset 0 0 0 1.5px var(--cream);}

@@ -3,6 +3,7 @@
 // Firebase. party-actions.js les commite ; rules.js les consulte pour les loyers.
 
 import { BOARD, GROUPS, START_INDEX, JAIL_INDEX } from './board.js';
+import { on } from './config.js';
 import { ownedBy, playerById, indexOfPlayer, roundsOf, targetOf, ranking, netWorth } from './rules.js';
 
 // ================================================================ testament
@@ -65,9 +66,36 @@ export const BET_KINDS = {
   six:  { label: 'fait un 6', short: 'Un 6', odds: 5 },
 };
 export const BET_STAKES = [20, 50];
+// Fenetre garantie : le lanceur attend que les autres aient pu parier (ou passer).
+// Avant, les paris se fermaient au lancer : un joueur rapide (ou un bot) ne laissait
+// parfois qu'une fraction de seconde. BET_OPEN_WAIT_MS : delai laisse a l'hote pour les
+// ouvrir, sans bloquer la partie si son onglet est ferme.
+export const BET_WINDOW_MS = 7000;
+export const BET_OPEN_WAIT_MS = 3000;
 
 // Une fenetre de paris par lancer : la manche, le joueur et le dernier lancer l'identifient.
 export const betKey = game => `${game.round || 1}-${game.turnIndex}-${(game.lastRoll && game.lastRoll.id) || '0'}`;
+
+// Qui peut parier sur le lancer de rollerId : les autres joueurs, et les fantomes (pour l'honneur).
+export const bettors = (game, rollerId) => (game.players || []).filter(p => p && p.id !== rollerId && (!p.bankrupt || p.ghost));
+
+// Combien de ms le joueur actif doit encore attendre avant de lancer (0 = il peut lancer).
+// Fin d'attente : tous les parieurs ont parie ou passe, ou la fenetre est ecoulee.
+export function betHold(game, now = Date.now()) {
+  if (!game || !on(game, 'betting') || game.phase !== 'playing' || game.briefing) return 0;
+  const cur = (game.players || [])[game.turnIndex];
+  if (!cur || cur.bankrupt || cur.inJail || game.turnRolled === cur.id) return 0;
+  const others = bettors(game, cur.id);
+  if (!others.length) return 0;
+  const b = game.bets;
+  if (!b || b.status !== 'open' || b.key !== betKey(game)) {
+    const start = (game.turnDeadline || 0) - (game.turnTimer || 0) * 1000;
+    return Math.max(0, start + BET_OPEN_WAIT_MS - now);
+  }
+  const decided = { ...(b.skip || {}), ...(b.entries || {}) };
+  if (others.every(p => decided[p.id])) return 0;
+  return Math.max(0, (b.at || 0) + BET_WINDOW_MS - now);
+}
 
 export function canBet(game, pid, kind, amt) {
   const b = game.bets;

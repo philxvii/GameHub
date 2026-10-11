@@ -11,7 +11,7 @@ import { S, db, ref, push, remove, commit, runTransaction, pushHistory, serverNo
 import { on } from './config.js';
 import { playerById, currentPlayer, ownedBy, netWorth, indexOfPlayer, openBlocking } from './rules.js';
 import { WILL_MS, willHeirs, willUpdates, canHaunt, hauntUpdates, hauntHit, BET_KINDS, betKey, canBet, betSettlement, moneyTimeDue,
-  drawMarket, marketExpired, DEAL_MS, DEALS, drawDeal, dealSettlement } from './party.js';
+  drawMarket, marketExpired, DEAL_MS, DEALS, drawDeal, dealSettlement, BET_WINDOW_MS, betHold } from './party.js';
 import { GROUP_LABELS } from './board.js';
 import { JAIL_INDEX, BOARD, de } from './board.js';
 import { toast } from './fx.js';
@@ -364,8 +364,20 @@ function arbitrateBets(game) {
   if (b && b.key === key) return;
   if (partyGuards.betsOpen === key) return;
   partyGuards.betsOpen = key;
-  commit(game.code, { bets: { key, roller: cur.id, status: 'open', entries: null, at: serverNow() } });
+  // Le chrono du lanceur est rallonge de la fenetre de paris : l'attente ne lui coute rien.
+  commit(game.code, { bets: { key, roller: cur.id, status: 'open', entries: null, at: serverNow() },
+    turnDeadline: Math.max(game.turnDeadline || 0, now() + BET_WINDOW_MS + (game.turnTimer || 0) * 1000) });
 }
+
+// « Pas de pari » : ce joueur laisse passer ce lancer ; quand tous ont parie ou passe, le lanceur peut y aller.
+export async function skipBet(by = S.playerId) {
+  const game = S.game;
+  const b = game && game.bets;
+  if (!b || b.status !== 'open' || b.key !== betKey(game) || b.roller === by || (b.entries || {})[by] || (b.skip || {})[by]) return false;
+  await commit(game.code, { [`bets/skip/${by}`]: true });
+  return true;
+}
+export { betHold };
 
 async function resolveBetsOnce(game, b) {
   const id = `${b.key}`;

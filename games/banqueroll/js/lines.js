@@ -2,8 +2,9 @@
 // Fonctions pures. Chaque replique recoit un contexte et renvoie un texte,
 // ou null quand elle ne s'applique pas (ex. pas de citation a ressortir).
 //
-// Ton : le roasteur sans pitie. Sec, mechant, insultant pour faire rager (clown,
-// pigeon, mytho, cheh...), une punchline plutot que des mots d'ado. Il vise les
+// Ton : le clasheur virulent qui attaque a chaque replique (guignol, clown, mytho,
+// cheh...), une punchline plutot que des mots d'ado. L'actu sert d'arme : memes faits
+// et meme date que NEWS dans ai-host/src/prompt.js, a rafraichir ensemble. Il vise les
 // CHOIX, le hasard et ce que les joueurs ont ecrit. Jamais d'insulte raciste,
 // homophobe, sexiste ou validiste, rien de sexuel. Formulations neutres : le jeu
 // ignore le genre. Il ne dit pas aux joueurs de jouer : le chrono s'en charge.
@@ -16,31 +17,35 @@ const cash = n => `${n < 0 ? '−' : ''}${$(n)}`;   // solde : garde le signe mo
 
 export const LINES = {
   rent: [
+    c => c.paidTo >= 2 && `${c.P} paie encore ${c.O}. Le mème « c’est Nicolas qui paie » a trouvé son Nicolas.`,
+    c => c.intensity >= 2 && `${c.P} lâche ${$(c.amt)} à ${c.O}. Le 17 octobre, mets ton gilet jaune : la vie chère, c’est toi.`,
+    c => c.cash < 0 && `${c.P} à ${cash(c.cash)}. Comme dirait Louise Montangon à Attal : ton bilan est désastreux.`,
     c => c.intensity >= 2 && `${c.P} avait ${$(c.before)}. ${c.city} vient d’en prendre ${$(c.amt)}. T’es pas un joueur, t’es une perfusion pour ${c.O}.`,
     c => `${c.P} paie ${$(c.amt)} à ${c.O}. Tu bosses pour ${c.O} maintenant, sans le salaire.`,
     c => `${c.P} découvre le marché locatif de ${c.city}. Proprio : ${c.O}. Trêve hivernale : pas pour les clowns.`,
     c => c.paidTo >= 2 && `${c.paidTo}e loyer ${de(c.P)} pour ${c.O}. C’est plus un loyer, c’est un abonnement premium sans résiliation.`,
     c => c.paidTo >= 3 && `${c.paidTo}e loyer de suite pour ${c.O}. ${c.P}, à ce stade c’est pas de la malchance, c’est un fan-club.`,
     c => c.cash < 0 && `${c.P} est à découvert de ${$(c.cash)}. Ta banque a déjà rangé ton dossier dans « pertes et profits ».`,
-    c => c.full && !c.lvl && `Groupe complet, loyer doublé. ${c.O} a compris le capitalisme. ${c.P} le finance, comme un bon pigeon.`,
+    c => c.full && !c.lvl && `Groupe complet, loyer doublé. ${c.O} a compris le capitalisme. ${c.P} le finance : c’est Nicolas qui paie.`,
     c => c.lvl >= 2 && `${c.lvl} bâtiments à ${c.city}. ${c.P} vient de payer l’étage du dessus. Merci pour le marbre, boloss.`,
     c => c.boost && `Loyer TRIPLÉ. ${c.O} avait un tuyau. ${c.P} avait un pion et zéro neurone.`,
     c => c.quote && `${c.P} disait ${q(c.quote.text)}${c.quote.ago}. ${$(c.amt)} plus tard : mytho démasqué.`,
-    c => c.quote && /remontada|revanche|vengeance|attend/i.test(c.quote.text) && `${c.P} annonçait ${q(c.quote.text)}. La remontada, mais en descente. Comme le PSG avant 2025.`,
+    c => c.quote && /remontada|revanche|vengeance|attend/i.test(c.quote.text) && `${c.P} annonçait ${q(c.quote.text)}. Ta riposte arrive avec le retard de Sinik sur Carton Rouge : dix-neuf ans.`,
     c => c.karma && `${c.P} disait ${q(c.karma.text)} à propos ${de(c.O)}. Et là ${c.O} encaisse ${$(c.amt)} sur ton dos. Cheh.`,
-    c => c.ratio >= 0.5 && `${c.P} lâche la moitié de son cash à ${c.city}. Même Ponzi aurait eu un peu de peine pour toi.`,
+    c => c.ratio >= 0.5 && `${c.P} lâche la moitié de son cash à ${c.city}. Ton plan d’économies a fondu plus vite que celui de Lecornu en commission.`,
     c => c.intensity >= 2 && `${$(c.amt)} disparus. Ton banquier vient de te bloquer sur tous les réseaux, ${c.P}.`,
-    c => c.intensity >= 3 && `${$(c.amt)} pour une nuit à ${c.city}. Même un Airbnb à Paris pendant les JO c’était moins l’arnaque. T’es guez, ${c.P}.`,
+    c => c.intensity >= 3 && `${$(c.amt)} pour une nuit à ${c.city}. Léna a privatisé l’Aquaboulevard pour moins cher que ça. T’es guez, ${c.P}.`,
     c => c.amt < 40 && `${$(c.amt)}. C’est pas un loyer, c’est un pourboire. ${c.O} se sent insulté, et à raison.`,
     c => c.chatty && `${c.P} est le plus bavard du chat et le plus généreux en loyers. Moins de blabla, plus de cerveau.`,
     c => `${c.P} paie ${$(c.amt)}. Skill issue. Énorme skill issue.`,
   ],
   buy: [
+    c => c.amt >= 300 && `${c.P} claque ${$(c.amt)} pour ${c.city}. Le train de vie de Léna Situations, le compte en banque d’un stagiaire.`,
     c => c.completes && `Groupe ${c.group} complet pour ${c.P}. Les autres, sortez le RIB et pleurez en silence.`,
     c => c.completes && `${c.P} rafle tout le groupe ${c.group}. Les loyers doublent, les amitiés meurent. Masterclass d’enflure.`,
     c => c.completes && c.mock && `${c.mock.who} disait ${q(c.mock.text)}. ${c.P} vient de compléter un groupe. ${c.mock.who}, tu peux ranger ta grande bouche.`,
-    c => c.cash < 100 && `${c.P} achète ${c.city} et garde ${cash(c.cash)}. Le flair d’un pigeon, la gestion d’un ministre du Budget.`,
-    c => c.cash < 100 && `${c.city} achetée, compte vidé. ${c.P} part all-in comme un crypto-bro en 2021. On connaît la fin.`,
+    c => c.cash < 100 && `${c.P} achète ${c.city} et garde ${cash(c.cash)}. La gestion d’un budget 2027 : tout le monde sait comment ça finit.`,
+    c => c.cash < 100 && `${c.city} achetée, compte vidé. ${c.P} dira que l’argent c’est « entièrement secondaire », comme Bardella. Sauf que toi t’as pas de princesse.`,
     c => c.amt >= 400 && `${c.city} pour ${$(c.amt)}. ${c.P} s’achète un trophée qui ne rapportera que des regrets.`,
     c => c.props >= 6 && `${c.P} possède ${c.props} propriétés. C’est plus un joueur, c’est un fonds d’investissement avec un pion.`,
     c => `${c.P} achète ${c.city}. Décision ferme, comme une négociation menée à 2 h du mat’ après trois Red Bull.`,
@@ -48,7 +53,7 @@ export const LINES = {
     c => `${c.P} achète ${c.city}. Au prime ou au fond du trou : réponse dans trois tours.`,
   ],
   build: [
-    c => c.lvl === 3 && `Trois bâtiments à ${c.city}. C’est plus un chantier, c’est un piège à pigeons. Évitez la zone, ou priez.`,
+    c => c.lvl === 3 && `Trois bâtiments à ${c.city}. C’est plus un chantier, c’est un péage. Évitez la zone, ou priez.`,
     c => `${c.P} pose un bâtiment à ${c.city}. Loyer à ${$(c.rent)}. Les voisins font semblant de ne rien voir, comme la moitié du carnet d’adresses d’Epstein.`,
     c => `Chantier ouvert à ${c.city}. ${c.P} investit, les autres comptent leurs centimes comme des rats.`,
   ],
@@ -58,6 +63,7 @@ export const LINES = {
     c => `${c.P} brade ${c.city}. Même Vinted refuserait l’annonce.`,
   ],
   jail: [
+    c => `${c.P} en prison. Tu vas dire que c’est un montage grossier, comme Bardella avec Mediapart ? Le dé, lui, ne ment pas.`,
     c => `${c.P} en cellule. Enfin une case à ta hauteur.`,
     c => `${c.P} voulait conquérir le plateau. Conquête du jour : 9 m² et un codétenu qui ronfle.`,
     c => c.intensity >= 2 && `${c.P} en prison pour trois tours. Sarkozy en est sorti plus vite, et lui avait de vrais avocats.`,
@@ -85,7 +91,7 @@ export const LINES = {
     c => c.key === 'double' && c.choice === 'A' && c.coin === 'win' && `Pile ! ${c.P} double la mise et se prend pour un trader. La suite : un docu Netflix sur ta chute.`,
     c => c.key === 'double' && c.choice === 'A' && c.coin !== 'win' && `Face. 400 $ cramés sur une pièce. ${c.P}, c’est pas du courage, c’est de la bêtise en 4K.`,
     c => c.key === 'double' && c.choice === 'B' && `${c.P} prend 100 $ et s’enfuit. Le courage d’un comptable un vendredi à 16 h 59.`,
-    c => c.key === 'loan' && c.choice === 'A' && `${c.P} encaisse 700 $ et laisse un adversaire se servir. Prêt toxique signé les yeux fermés, ça give pyramide de Ponzi.`,
+    c => c.key === 'loan' && c.choice === 'A' && `${c.P} encaisse 700 $ et laisse un adversaire se servir. Prêt toxique signé les yeux fermés. Même Hanouna fausse ses classements avec plus de finesse.`,
     c => c.key === 'robin' && c.choice === 'A' && `${c.P} pique 150 $ au plus riche. Robin des Bois, version huissier sous Red Bull.`,
     c => c.key === 'robin' && c.choice === 'B' && `${c.P} donne 100 $ et rejoue. La générosité, tant qu’elle est rentable.`,
     c => c.key === 'insider' && c.choice === 'A' && `${c.P} paie pour un tuyau boursier. L’AMF prend des notes. Moi aussi, et je balance tout.`,
@@ -113,13 +119,13 @@ export const LINES = {
     c => `${c.P} rafle ${c.city} à ${c.O}. Payé cher, mais payé. ${c.O} n’a rien vu venir, comme d’hab.`,
   ],
   seize: [
-    c => `${c.O} se sert chez ${c.P} et repart avec ${c.city}. Prêt toxique, créancier ravi, pigeon plumé.`,
+    c => `${c.O} se sert chez ${c.P} et repart avec ${c.city}. Prêt toxique, créancier ravi, guignol plumé.`,
   ],
   swap: [
     c => `Échange conclu, 100 $ chacun. ${c.P} et ${c.O} se congratulent. Dans trois tours, l’un des deux pleure. Indice : le plus naze.`,
   ],
   auction: [
-    c => c.over && `${$(c.amt)} pour ${c.city} ? ${c.P} ne fait pas une enchère, ${c.P} fait un don. Quel pigeon.`,
+    c => c.over && `${$(c.amt)} pour ${c.city} ? ${c.P} ne fait pas une enchère, ${c.P} fait un don. Quel touriste.`,
     c => c.over && `${$(c.amt)} pour une case qui en vaut ${$(c.price)}. Même la banque a envoyé un « t’es sûr ? ».`,
     c => c.cheap && `${c.P} rafle ${c.city} pour ${$(c.amt)}. Propre. Je commençais à douter que tu aies un cerveau.`,
     c => c.cheap && `${c.city} pour ${$(c.amt)}. Les autres dormaient. ${c.P}, non.`,
@@ -127,6 +133,7 @@ export const LINES = {
   ],
   // Enchere absurde en cours, avant meme la fin.
   bid: [
+    c => `${c.P} mise ${$(c.amt)} sur ${c.city}. Le Pen promet 140 milliards d’économies, toi tu les dépenses en une enchère.`,
     c => `${$(c.amt)} ? Pour ${$(c.price)} de valeur ? ${c.P} ne fait pas une enchère. ${c.P} fait un don.`,
     c => `${c.P} mise ${$(c.amt)} sur ${c.city}. Quelqu’un peut lui dire que c’est pas le Téléthon ?`,
   ],
@@ -134,6 +141,8 @@ export const LINES = {
     c => `Échange accepté entre ${c.P} et ${c.O}. Quelqu’un vient de se faire arnaquer, et je sais qui.`,
   ],
   bankrupt: [
+    c => `${c.P} fait faillite. Même Henry Tran a mieux encaissé son combat, et tout internet s’est moqué du niveau.`,
+    c => `${c.P} ruiné. Ton bilan est désastreux, et pour une fois ce n’est pas Attal qu’on vise.`,
     c => c.rivalry >= 2 && `${c.R}, c’est la ${c.rivalry}e partie où tu ruines ${c.P}. À ce stade, c’est une tradition familiale.`,
     c => c.rivalry >= 3 && `${c.P} ruiné par ${c.R}. Encore. ${c.rivalry} fois. Il faudrait peut-être changer d’amis.`,
     c => `${c.P} fait faillite. Rideau. Les propriétés retournent à la banque, la dignité reste introuvable.`,
@@ -142,12 +151,15 @@ export const LINES = {
     c => c.boast && `Mesdames et messieurs, ${c.P} avait annoncé ${q(c.boast.text)}. Faillite. On encadre ce moment, on l’affiche dans le hall.`,
   ],
   win: [
-    c => `${c.P} gagne avec ${$(c.net)}. Applaudissez, ou au moins faites semblant, bande de pigeons.`,
+    c => `${c.P} gagne. Les autres, vous êtes comme Mbappé au Ballon d’Or : nommés, jamais sacrés.`,
+    c => `${c.P} gagne avec ${$(c.net)}. Applaudissez, ou au moins faites semblant, bande de figurants.`,
     c => `C’est fini. ${c.P} gagne. Les autres peuvent retourner pleurer sur leur Livret A.`,
     c => c.mock && `${c.mock.who} disait ${q(c.mock.text)}. ${c.P} vient de gagner la partie. Je laisse ça là. Je laisse ça LÀ.`,
     c => `${c.P} gagne. Les autres, vous avez servi de décor. Merci, et au revoir.`,
   ],
   afk: [
+    c => `${c.P} ne joue pas. Même Bally Bagayoko devant les lacrymos réagissait plus vite. Lui, au moins, il servait à quelque chose.`,
+    c => `${c.P}, le champion du temps mort, laisse encore passer son tour. Même un guignol est plus réactif que toi.`,
     c => `${c.P} n’a pas joué. Réflexion intense ou sieste en cours, impossible à dire. Tour suivant.`,
     c => `${c.P} laisse filer son tour. Présent physiquement, absent mentalement.`,
     c => c.afkCount >= 2 && `${c.P}, encore personne au clavier. La partie est confiée à un fantôme, et le fantôme joue mieux.`,
@@ -158,6 +170,7 @@ export const LINES = {
     c => `Les marchés ouvrent. ${c.P} commence. Que le moins fauché gagne, les autres finiront en story « j’ai tout perdu ».`,
   ],
   leader: [
+    c => `${c.P} passe en tête. Hanouna a dû tricher au padel pour son top 100. Toi, on cherche encore comment.`,
     c => `Nouveau leader : ${c.P}. Profite, ce genre de trône dure environ deux tours.`,
     c => `${c.P} passe en tête. Les autres viennent de trouver leur ennemi commun. Cheh d’avance.`,
   ],
@@ -167,6 +180,8 @@ export const LINES = {
   ],
   // Debut de tour (au plus un tour sur trois) : une pique sur la situation, jamais un « joue ».
   turn: [
+    c => c.last && `${c.P}, dernière place. Glucksmann plafonne à 11 %, et même lui te regarde de haut.`,
+    c => c.first && `${c.P} en tête. Profite, Trump aussi exige qu’on remplace celui d’en face quand ça tourne mal.`,
     c => c.last && `${c.P}, dernière place avec ${cash(c.cash)}. Même le Livret A a plus d’ambition que toi.`,
     c => c.first && `${c.P} est en tête. Toute la table prie pour que tu tombes sur leurs rues. Ce serait justice.`,
     c => c.cash < 200 && `${c.P} à ${cash(c.cash)}. Chaque case est un piège, chaque loyer une menace. Ça sent la fin de mois depuis le 3.`,
@@ -190,11 +205,13 @@ export const LINES = {
     c => `Un 1. Même un escargot sous anxiolytiques irait plus loin.`,
   ],
   six: [
+    c => `6. ${c.P} rejoue. Même Squeezie n’a pas autant de chance avec les 11-14 ans.`,
     c => `6 ! ${c.P} rejoue. Le hasard récompense même les touristes.`,
     c => `6. ${c.P} rejoue. Même une horloge cassée a raison deux fois par jour.`,
   ],
   // Le presentateur interpelle dans le chat.
   chat: [
+    c => c.last && `Tu parles beaucoup pour quelqu’un de dernier, ${c.P}. Mélenchon en est à sa quatrième candidature, toi à ta quatrième excuse.`,
     c => c.paid > 0 && `Je t’entends, ${c.P}. Et contrairement à toi, j’ai pas lâché ${$(c.paid)} de loyer aujourd’hui, clown.`,
     c => c.cash !== undefined && `Avec ${cash(c.cash)} en poche, ${c.P}, t’es en position de négocier avec… personne.`,
     c => c.last && `${c.P}, t’es en dernière position. Je réponds par pitié, mais je réponds.`,

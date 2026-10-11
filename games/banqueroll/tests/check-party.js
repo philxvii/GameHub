@@ -229,6 +229,18 @@ function makeGame(over = {}) {
   check('Briefing : terminé quand le délai est écoulé', BR.briefingDone(makeGame({ briefing: { endAt: 1, ready: {} } })));
   check('Briefing : une partie sans briefing n’est pas bloquée', !RL.openBlocking(makeGame()) && BR.briefingDone(makeGame()));
 
+  // ---------------------------------------------------------------- fenetre de paris garantie
+  const PB = await load('party.js');
+  const t0 = 1_000_000;
+  const hg = (bets, over = {}) => { const g = makeGame({ gameConfig: CF.makeConfig('custom', ['betting']), turnTimer: 30, turnDeadline: t0 + 30000, lastRoll: { id: 'r1' }, ...over }); g.bets = bets && { key: PB.betKey(g), roller: 'a', status: 'open', at: t0, ...bets }; return g; };
+  check('Fenêtre de paris : le lanceur attend tant que personne n’a parié ni passé', PB.betHold(hg({}), t0 + 2000) === PB.BET_WINDOW_MS - 2000);
+  check('Fenêtre de paris : libre quand tous les autres ont parié ou passé', PB.betHold(hg({ entries: { b: { kind: 'six', amt: 20 } }, skip: { c: true } }), t0 + 1000) === 0
+    && PB.betHold(hg({ skip: { b: true } }), t0 + 1000) > 0);
+  check('Fenêtre de paris : libre une fois le délai écoulé', PB.betHold(hg({}), t0 + PB.BET_WINDOW_MS + 1) === 0);
+  check('Fenêtre de paris : paris pas encore ouverts → courte attente, jamais de blocage', PB.betHold(hg(null), t0 + 1000) === PB.BET_OPEN_WAIT_MS - 1000 && PB.betHold(hg(null), t0 + PB.BET_OPEN_WAIT_MS) === 0);
+  check('Fenêtre de paris : aucune attente en Classique ni pendant les cartes de règles',
+    PB.betHold({ ...hg({}), gameConfig: CF.makeConfig('classic') }, t0) === 0 && PB.betHold(hg({}, { briefing: { endAt: t0 + 60000 } }), t0) === 0);
+
   const passed = results.filter(Boolean).length;
   console.log(`\n===== PARTY (pur) : ${passed}/${results.length} =====`);
   process.exit(results.every(Boolean) ? 0 : 1);

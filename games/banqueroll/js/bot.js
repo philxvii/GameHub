@@ -13,7 +13,7 @@ import { S } from './net.js';
 import * as A from './actions.js';
 import { BOARD } from './board.js';
 import { currentPlayer, playerById, ownedBy, canBuild, canSell, tradeable, openBlocking, ownsFullGroup, BAIL, netWorth, ranking } from './rules.js';
-import { hauntable } from './party.js';
+import { hauntable, betHold } from './party.js';
 import { raidTargets, autoSeizePick } from './chance.js';
 import { isPawnMoving } from './fx.js';
 import { on } from './config.js';
@@ -81,6 +81,7 @@ function nextStep(game) {
         const kind = ['rent', 'rent', 'six', 'jail'][Math.floor(Math.random() * 4)];
         return { delay: jitter(600, 600), run: () => PA.placeBet(kind, bettor.cash > 400 ? 50 : 20, bettor.id) };
       }
+      return { delay: jitter(500, 400), run: () => PA.skipBet(bettor.id) };    // il passe : ne fait pas attendre le lanceur
     }
   }
   if (!bots.length) return null;
@@ -171,6 +172,8 @@ function nextStep(game) {
   const build = ownedBy(game, cur.id).map(pos => ({ pos, c: canBuild(game, cur.id, pos) }))
     .filter(x => x.c.ok && cur.cash - x.c.cost >= BUILD_RESERVE).sort((x, y) => x.c.cost - y.c.cost)[0];
   if (build) return { delay: jitter(1300), run: () => A.buildOn(build.pos, cur.id) };
+  const hold = betHold(game);
+  if (hold > 0) return null;                          // les autres parient encore : le tic suivant relancera
   return { delay: jitter(1500, 700), run: () => A.rollDice(cur.id) };
 }
 

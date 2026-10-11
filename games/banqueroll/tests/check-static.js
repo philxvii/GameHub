@@ -198,6 +198,11 @@ const workerFiles = ['worker.js', 'prompt.js'].map(f => path.join(ROOT, 'ai-host
   const P = await import(pathToFileURL(path.join(ROOT, 'ai-host', 'src', 'prompt.js')).href);
   const clean = P.cleanReply('Bankroll Host : « ' + 'x'.repeat(400) + ' »');
   const ctx = P.sanitize({ mode:'chat', intensity:9, chat:Array.from({ length:40 }, (_, i) => ({ who:'A', text:'m' + i })), players:[{ name:'A'.repeat(99), cash:'12' }] });
+  const sp = P.systemPrompt(() => 0.3);
+  const linesSrc = fs.readFileSync(path.join(ROOT, 'js', 'lines.js'), 'utf8');
+  const stale = /crypto-bro|pigeon|ponzi|labubu|skibidi|quoicoubeh|six seven/i;
+  check('11d. Présentateur : actu tirée au hasard (6 sujets datés), aucune ref périmée dans les répliques locales',
+    (sp.match(/^- .+Angle/gm) || []).length === 6 && sp.includes(P.NEWS_DATE) && P.NEWS.length >= 15 && !stale.test(linesSrc), (linesSrc.match(stale) || [''])[0]);
   check('11b. Worker : contexte borné, réponse nettoyée (≤ 280 car.)', clean.length <= 280 && !/^Bankroll/.test(clean) && ctx.chat.length === 14 && ctx.intensity === 5 && ctx.players[0].name.length === 24);
 
   const O = await import(pathToFileURL(path.join(ROOT, 'ai-host', 'src', 'orchestrator.js')).href);

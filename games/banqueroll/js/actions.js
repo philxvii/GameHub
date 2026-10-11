@@ -24,7 +24,7 @@ import { animateDiceRoll, toast, WHEEL_MS } from './fx.js';
 import { makeConfig, on } from './config.js';
 import { BRIEF_MS, briefingDone } from './briefing.js';
 import { BONUSES, BONUS_VALUE, secretBonuses, bonusUpdates } from './party.js';
-import { partyArbitrate, placeBidExtended, auctionDone, startEventMinigame, maybeStartDuel, openWill, willOpen, maybeHaunt, lockBetsUpdates, startMarket, dealPending } from './party-actions.js';
+import { partyArbitrate, placeBidExtended, auctionDone, startEventMinigame, maybeStartDuel, openWill, willOpen, maybeHaunt, lockBetsUpdates, startMarket, dealPending, betHold } from './party-actions.js';
 
 export const PLAYER_COLORS = ['#2F7FC1','#D99A1E','#D2582A','#7752C2','#2E8F62','#C93F55','#1C949E','#B8509A'];
 const TURN_GRACE_MS = 1500;
@@ -378,6 +378,8 @@ export async function rollDice(by = S.playerId) {
   if (player.inJail) { toast('Règle d’abord ta situation en prison.'); return; }
   if (game.currentAction || openBlocking(game)) { toast('Termine d’abord l’action en cours.'); return; }
   if (dealPending(game, player.id)) { toast('Réponds d’abord au pacte du présentateur.'); return; }
+  const hold = betHold(game);
+  if (hold > 0) { if (!player.bot) toast(`Les autres parient sur ton lancer… encore ${Math.ceil(hold / 1000)} s.`); return; }
   rolling = true;
   try {
     const die = Math.ceil(Math.random() * 6);

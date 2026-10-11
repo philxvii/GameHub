@@ -9,8 +9,8 @@ import { S, serverNow } from './net.js';
 import { MECHANICS, PRESETS, PRESET_ORDER, gameConfig, activeMechanics, on } from './config.js';
 import { BOARD, GROUP_LABELS } from './board.js';
 import { playerById, currentPlayer, roundsOf, targetOf, ranking, netWorth } from './rules.js';
-import { REACTIONS, sendReaction, AUCTION_EXTEND_MS, submitEntry, hauntSquare, placeBet } from './party-actions.js';
-import { WILL_MS, BET_KINDS, BET_STAKES, betKey, DEALS, DEAL_MS, trailSeries, recapTitles, biggestSwing, leadChanges } from './party.js';
+import { REACTIONS, sendReaction, AUCTION_EXTEND_MS, submitEntry, hauntSquare, placeBet, betHold } from './party-actions.js';
+import { WILL_MS, BET_KINDS, BET_STAKES, BET_WINDOW_MS, betKey, DEALS, DEAL_MS, trailSeries, recapTitles, biggestSwing, leadChanges } from './party.js';
 import { recordGame } from './stats.js';
 import { sfx, isMuted, setMuted } from './sfx.js';
 import { HOST_AVATAR } from './render.js';
@@ -624,9 +624,10 @@ function renderBets(game, force = false) {
   const eligible = on(game, 'betting') && game.phase === 'playing' && live && me && b.roller !== me.id && (!me.bankrupt || me.ghost);
   if (!eligible) { bar.hidden = true; bar.dataset.sig = ''; return; }
   const mine = (b.entries || {})[me.id];
+  const skipped = !!(b.skip || {})[me.id];
   const roller = playerById(game, b.roller) || { name: '?' };
   const count = Object.keys(b.entries || {}).length;
-  const sig = JSON.stringify([b.key, b.status, mine, count, betStake, me.cash]);
+  const sig = JSON.stringify([b.key, b.status, mine, skipped, count, betStake, me.cash]);
   if (!force && bar.dataset.sig === sig) return;
   bar.dataset.sig = sig;
   bar.hidden = false;
@@ -639,11 +640,44 @@ function renderBets(game, force = false) {
     bar.innerHTML = `<span class="bet-title">Ton pari</span><span class="bet-note"><b>${esc(label(mine))}</b> sur ${esc(roller.name)}. Rien n’est prélevé avant le résultat.</span>`;
     return;
   }
+  if (skipped) {
+    bar.innerHTML = `<span class="bet-title">Pas de pari</span><span class="bet-note">Tu regardes ${esc(roller.name)} lancer.</span>`;
+    return;
+  }
   const poor = !me.bankrupt && (me.cash || 0) < betStake;
   bar.innerHTML = `<span class="bet-title">Parie sur ${esc(roller.name)}</span>
     <span class="bet-stakes" role="radiogroup" aria-label="Mise">${BET_STAKES.map(v => `<button type="button" class="bet-stake${v === betStake ? ' on' : ''}" role="radio" aria-checked="${v === betStake}" data-act="bet-stake" data-arg="${v}">${fmt(v)}</button>`).join('')}</span>
     <span class="bet-kinds">${Object.entries(BET_KINDS).map(([k, d]) => `<button type="button" class="btn btn-small btn-secondary bet-kind" data-act="bet" data-arg="${k}" ${poor ? 'disabled' : ''} title="${esc(roller.name)} ${esc(d.label)} : mise ×${d.odds}">${esc(d.short)} <b>×${d.odds}</b></button>`).join('')}</span>
+    <button type="button" class="btn btn-small btn-ghost bet-skip" data-act="bet-skip">Pas de pari</button>
+    <span class="bet-left" id="bet-left" aria-live="off"></span>
     ${me.bankrupt ? '<span class="bet-note">Fantôme : pour l’honneur.</span>' : ''}`;
+  tickBetWindow();
+}
+
+// Compte a rebours de la fenetre de paris : chez les parieurs (« ferme dans 5 s ») et
+// sur le bouton du lanceur, bloque tant que les autres n'ont pas parie ou passe.
+let betTicker = null;
+function tickBetWindow() {
+  const game = S.game;
+  const hold = game ? betHold(game) : 0;
+  const b = game && game.bets;
+  const left = $id('bet-left');
+  if (left && b && b.status === 'open') left.textContent = `Ferme dans ${Math.max(0, Math.ceil(((b.at || 0) + BET_WINDOW_MS - Date.now()) / 1000))} s`;
+  document.querySelectorAll('.btn-roll').forEach(btn => {
+    if (!btn.dataset.orig) btn.dataset.orig = btn.innerHTML;
+    if (hold > 0) {
+      btn.disabled = true;
+      btn.classList.add('is-holding');
+      btn.textContent = `Les autres parient… ${Math.ceil(hold / 1000)} s`;
+    } else if (btn.classList.contains('is-holding')) {
+      btn.disabled = false;
+      btn.classList.remove('is-holding');
+      btn.innerHTML = btn.dataset.orig;
+    }
+  });
+  const need = hold > 0 || (b && b.status === 'open');
+  if (need && !betTicker) betTicker = setInterval(tickBetWindow, 400);
+  if (!need && betTicker) { clearInterval(betTicker); betTicker = null; }
 }
 
 // ================================================================ money time
@@ -927,6 +961,7 @@ export function renderParty(game) {
   renderGhostDock(game);
   renderHaunts(game);
   renderBets(game);
+  tickBetWindow();
   renderMoneyTime(game);
   renderDeal(game);
   renderMarket(game);

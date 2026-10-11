@@ -88,6 +88,22 @@ async function joinVia(B, code, name = 'Bob') {
 }
 // Les cartes de regles du lancement bloquent le premier tour : les tests de mecaniques les
 // sautent (le lot 0 les teste a travers l'interface, avec brief: true).
+// Paris actifs : le lanceur attend que les autres aient parie ou passe. Pour lancer tout de
+// suite, on attend l'ouverture des paris puis tous les autres passent.
+async function skipBets(code) {
+  const end = Date.now() + 4000;
+  while (Date.now() < end) {
+    const g = await state(code);
+    const b = g.bets;
+    if (b && b.status === 'open' && b.roller === g.players[g.turnIndex].id) {
+      await rest(code, '/bets/skip', 'PATCH', Object.fromEntries(g.players.filter(p => p.id !== b.roller).map(p => [p.id, true])));
+      await sleep(500);
+      return true;
+    }
+    await sleep(300);
+  }
+  return false;
+}
 const noBrief = code => rest(code, '', 'PATCH', { briefing: null, turnDeadline: Date.now() + 600000 });
 async function startVia(A, { brief = false } = {}) {
   await A.eval(`document.getElementById('start-game-btn').click(); return 1;`);
@@ -535,6 +551,20 @@ async function lot4(b) {
   check('Paris : le 6 tombe -> +200 $ pour Bob (×5), réglé une fois', g.players[ib].cash === cashB + 200 && settled && /Bob \+200/.test(settled.text), settled && settled.text);
   const stamp = await until(B, `document.getElementById('party-stamp').classList.contains('on') && document.getElementById('party-stamp').textContent`, 3000);
   check('Paris : le parieur voit son gain', /\+200/.test(stamp || ''), stamp);
+  // Fenetre garantie : Alice ne peut pas lancer tant que Bob n'a ni parie ni passe.
+  await setTurn(code, ia, { position: 15 });
+  await until(B, `document.querySelector('#bet-bar [data-act="bet-skip"]') ? 1 : 0`, 6000);
+  const holdBtn = await until(A, `(() => { const b = document.querySelector('.btn-roll'); return b && b.disabled && /parient/.test(b.textContent) ? b.textContent : null; })()`, 3000);
+  const r0 = (await state(code)).lastRoll;
+  await A.eval(`window.rollDice(); return 1;`);
+  await sleep(900);
+  const r1 = (await state(code)).lastRoll;
+  check('Paris : le lanceur attend que les autres aient pu parier (bouton bloqué, dé refusé)', !!holdBtn && JSON.stringify(r0) === JSON.stringify(r1), holdBtn);
+  await click(B, '#bet-bar [data-act="bet-skip"]');
+  const freed = await until(A, `(() => { const b = document.querySelector('.btn-roll'); return b && !b.disabled ? 1 : 0; })()`, 3000);
+  const skipNote = await B.eval(`return document.getElementById('bet-bar').textContent;`);
+  check('Paris : « Pas de pari » libère le lanceur aussitôt', freed === 1 && /Pas de pari/.test(skipNote), skipNote.trim().slice(0, 60));
+
   // Tour sans lancer (prison) : paris annules.
   await setTurn(code, ia, { position: 7, inJail: true, jailTurns: 2 });
   await until(B, `document.querySelector('#bet-bar [data-act="bet"]') ? 1 : 0`, 6000);
@@ -556,6 +586,7 @@ async function lot4(b) {
   // Bob tombe sur Jakarta (a Alice) : loyer nu 17 $ -> 34 $.
   await rest(code, '', 'PATCH', { ownership: { 1: idA } });
   await setTurn(code, ib, { position: 0, inJail: false });
+  await skipBets(code);
   const before = await state(code);
   await rig(B, Array(80).fill(0.1));                      // de = 1 : 0 -> 1
   await B.eval(`window.rollDice(); return 1;`);
@@ -567,6 +598,7 @@ async function lot4(b) {
   // --- carapace : Bob (en retard) tombe sur Chance -> controle fiscal sur Alice (en tete)
   await rest(code, `/players/${ia}`, 'PATCH', { cash: 2000 });
   await setTurn(code, ib, { position: 27, cash: 300 });
+  await skipBets(code);
   const cashA = (await state(code)).players[ia].cash;
   await rig(B, Array(80).fill(0.05));                     // de 1 -> Chance ; carapace ; controle fiscal
   await B.eval(`window.rollDice(); return 1;`);

@@ -64,6 +64,7 @@ const ACTS = {
   'brief-prev': () => P.briefStep(-1),
   'brief-go': arg => P.briefGo(arg),
   'brief-ready': () => A.briefReady(),
+  'bet-skip': () => PA.skipBet(),
   delete: () => A.deleteGame(),
   leave: () => { R.toggleDrawer(false); A.leaveGame(); },
   copy: copyCode,
