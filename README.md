@@ -53,10 +53,11 @@ node games/banqueroll/tests/test-browser.js      # parties réelles dans Chrome
 
 Détails : [tools/](tools/README.md) · [tests de Banqueroll](games/banqueroll/tests/README.md).
 
-## Licence
+## Droits
 
-Code sous licence [MIT](LICENSE). Les noms UNO, Qui est-ce ?, Puissance 4 et les
-autres jeux classiques restent des marques de leurs éditeurs respectifs.
+© 2026 XVIIIUUUU, tous droits réservés : le code est visible mais pas libre de
+réutilisation (voir [LICENSE](LICENSE)). Les noms UNO, Qui est-ce ?, Puissance 4 et
+les autres jeux classiques restent des marques de leurs éditeurs respectifs.
 
 ---
 
