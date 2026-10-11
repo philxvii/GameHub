@@ -3,6 +3,7 @@
 // Aucune ecriture ici : c'est actions.js qui commite. Testable dans Node.
 
 import { BOARD, GROUPS, isOwnable, isPublic, JAIL_INDEX, START_INDEX } from './board.js';
+import { on } from './config.js';
 
 // ------------------------------------------------------------ constantes
 export const START_CASH = 1000;      // base de depart de chaque joueur
@@ -72,6 +73,10 @@ export function rentFor(game, pos) {
   const sq = BOARD[pos];
   const owner = ownerOf(game, pos);
   if (!owner || !isOwnable(sq)) return 0;
+  return Math.round(baseRentFor(game, pos, owner, sq) * rentFactor(game, pos));
+}
+
+function baseRentFor(game, pos, owner, sq) {
   if (isPublic(sq)) {
     const count = ownedBy(game, owner).filter(i => isPublic(BOARD[i])).length;
     return PUBLIC_BASE_RENT * count;
@@ -79,6 +84,16 @@ export function rentFor(game, pos) {
   const level = levelOf(game, pos);
   if (level > 0) return baseRent(pos) * RENT_BUILDINGS[level - 1];
   return baseRent(pos) * (ownsFullGroup(game, owner, sq.group) ? RENT_FULL_GROUP : 1);
+}
+
+// Multiplicateurs des mecaniques de party (toujours 1 en Classique) :
+// Money Time x2 sur tout le plateau ; bulle x2 / krach x0,5 sur un groupe.
+export function rentFactor(game, pos) {
+  let f = 1;
+  if (on(game, 'moneyTime') && game.moneyTime && game.moneyTime.active) f *= 2;
+  const m = game.market;
+  if (on(game, 'marketCrash') && m && m.group && BOARD[pos].group === m.group && (game.round || 1) <= m.until) f *= m.kind === 'bubble' ? 2 : 0.5;
+  return f;
 }
 
 // Valeur d'une propriete pour la fortune nette : prix + batiments payes.
@@ -135,7 +150,9 @@ export function canSell(game, playerId, pos) {
 export function openBlocking(game) {
   return !!((game.auction && game.auction.status === 'open')
     || (game.trade && game.trade.status === 'pending')
-    || (game.swap && game.swap.status === 'open'));
+    || (game.swap && game.swap.status === 'open')
+    || (game.minigame && (game.minigame.status === 'active' || game.minigame.status === 'resolving'))
+    || (game.will && game.will.status !== 'resolved'));
 }
 
 // Fin de tour : relance sur 6, joueurs en faillite et tours sautes.
@@ -214,7 +231,7 @@ export function startingPlayers(players, rng = Math.random) {
   }
   return order.map((p, rank) => ({
     ...p, position: START_INDEX, cash: START_CASH + rank * LATE_BONUS, jailTurns:0, inJail:false,
-    bankrupt:false, skipNext:null, rentBoost:null,
+    bankrupt:false, skipNext:null, rentBoost:null, ghost:null, hauntRound:null,
   }));
 }
 

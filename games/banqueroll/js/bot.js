@@ -12,15 +12,19 @@
 import { S } from './net.js';
 import * as A from './actions.js';
 import { BOARD } from './board.js';
-import { currentPlayer, playerById, ownedBy, canBuild, canSell, tradeable, openBlocking, ownsFullGroup, BAIL } from './rules.js';
+import { currentPlayer, playerById, ownedBy, canBuild, canSell, tradeable, openBlocking, ownsFullGroup, BAIL, netWorth, ranking } from './rules.js';
+import { hauntable } from './party.js';
 import { raidTargets, autoSeizePick } from './chance.js';
 import { isPawnMoving } from './fx.js';
+import { on } from './config.js';
+import * as PA from './party-actions.js';
 
 const RESERVE = 200;          // le bot garde au moins ca apres un achat
 const BUILD_RESERVE = 280;    // et un peu plus apres une construction
 const now = () => Date.now();
 const jitter = (ms, spread = 500) => ms + Math.random() * spread;
 const isBot = (game, id) => !!(playerById(game, id) || {}).bot;
+const betDecided = new Set();         // une decision de pari par bot et par lancer
 const price = pos => (pos === null || pos === undefined || pos < 0 ? 0 : BOARD[pos].price || 0);
 
 let timer = null;
@@ -30,7 +34,7 @@ let busy = false;
 function tick() {
   const game = S.game;
   if (!S.isHost || !game || game.phase !== 'playing' || busy || timer) return;
-  if (!game.players.some(p => p.bot && !p.bankrupt)) return;
+  if (!game.players.some(p => p.bot)) return;
   const step = nextStep(game);
   if (!step) return;
   timer = setTimeout(async () => {
@@ -49,7 +53,36 @@ export function watchBots() {
 
 // ---------------------------------------------------------------- decisions
 function nextStep(game) {
+  // Testament d'un bot : par depit, il legue tout au joueur en lice le plus pauvre.
+  const w = game.will;
+  if (w && w.status === 'choose' && isBot(game, w.playerId)) {
+    const heirs = (w.heirs || []).map(id => playerById(game, id)).filter(p => p && !p.bankrupt);
+    const heir = heirs.sort((x, y) => netWorth(game, x) - netWorth(game, y))[0];
+    return { delay: jitter(2500, 1500), run: () => PA.chooseHeir(heir ? heir.id : 'bank', w.playerId) };
+  }
+  // Bot fantome : il hante une case juste devant le leader, une fois par manche.
+  if (on(game, 'ghost')) {
+    const ghost = game.players.find(p => p.bot && p.bankrupt && p.ghost && (p.hauntRound || 0) !== (game.round || 1));
+    const leader = ranking(game)[0];
+    if (ghost && leader) {
+      let pos = (leader.position + 2 + Math.floor(Math.random() * 4)) % BOARD.length;
+      while (!hauntable(pos)) pos = (pos + 1) % BOARD.length;
+      return { delay: jitter(3500, 2500), run: () => PA.hauntSquare(pos, ghost.id) };
+    }
+  }
   const bots = game.players.filter(p => p.bot && !p.bankrupt);
+  // Paris : un bot sur trois tente sa chance sur le lancer d'un autre.
+  const bt = game.bets;
+  if (on(game, 'betting') && bt && bt.status === 'open') {
+    const bettor = game.players.find(p => p.bot && (!p.bankrupt || p.ghost) && p.id !== bt.roller && !(bt.entries || {})[p.id] && !betDecided.has(`${bt.key}:${p.id}`));
+    if (bettor) {
+      betDecided.add(`${bt.key}:${bettor.id}`);
+      if (Math.random() < 0.33) {
+        const kind = ['rent', 'rent', 'six', 'jail'][Math.floor(Math.random() * 4)];
+        return { delay: jitter(600, 600), run: () => PA.placeBet(kind, bettor.cash > 400 ? 50 : 20, bettor.id) };
+      }
+    }
+  }
   if (!bots.length) return null;
   const a = game.currentAction;
 
@@ -65,6 +98,11 @@ function nextStep(game) {
     const value = price(au.position) * 0.85;
     const bidder = bots.find(b => b.id !== au.highestBidder && au.nextBid <= value && b.cash - au.nextBid >= RESERVE);
     if (bidder) return { delay: jitter(900, 900), run: () => A.placeBid(au.nextBid, bidder.id) };
+    // Encheres tendues : un bot qui ne surencherit pas le dit, l'enchere peut finir plus tot.
+    if (on(game, 'extendedAuctions')) {
+      const passer = bots.find(b => b.id !== au.highestBidder && !(au.passes || {})[b.id]);
+      if (passer) return { delay: jitter(1200, 900), run: () => PA.passAuction(passer.id) };
+    }
   }
 
   // 3. Case Auction (echange de proprietes).
@@ -117,6 +155,9 @@ function nextStep(game) {
     return null;                                      // roue : elle se termine seule
   }
   if (a || openBlocking(game) || (game.event && game.event.status === 'spin')) return null;
+  if (game.deal && game.deal.status === 'offer' && game.deal.playerId === cur.id) {
+    return { delay: jitter(2200, 1500), run: () => PA.answerDeal(Math.random() < 0.5, cur.id) };
+  }
   if (cur.inJail) {
     return { delay: jitter(1500), run: () => (cur.cash >= BAIL + 350 ? A.payBail(cur.id) : A.serveJailTurn(cur.id)) };
   }

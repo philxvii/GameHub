@@ -6,6 +6,7 @@
 // GSAP (CDN) seulement pour les trajets de pions, avec repli sans animation.
 
 import { pawnPath, readableInk as wheelSafe } from './board.js';
+import { sfx } from './sfx.js';
 
 export const DIE_MS = 850;
 export const WHEEL_MS = 4300;
@@ -66,6 +67,7 @@ export function animateDiceRoll(value) {
   if (!die) return Promise.resolve();
   const cube = die.querySelector('.die-cube');
   if (!cube || !canAnimate(cube)) { setDieValue(value); return Promise.resolve(); }
+  sfx('dice');
   die.classList.add('rolling');
   die.dataset.value = '';
   const [tx, ty] = DIE_FACE_ROTATION[value];
@@ -383,6 +385,7 @@ export function coinBurst(fromEl, toEl, count = 6) {
   if (!fromEl || !toEl || reduced() || document.hidden) return;
   const a = centerOf(fromEl), b = centerOf(toEl);
   if (!a.x && !a.y) return;
+  sfx('coin');
   for (let i = 0; i < count; i++) {
     const coin = document.createElement('i');
     coin.className = 'fly-coin';

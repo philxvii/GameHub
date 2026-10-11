@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="css/game.css">
 <link rel="stylesheet" href="css/board.css">
 <link rel="stylesheet" href="css/overlays.css">
+<link rel="stylesheet" href="css/party.css">
 <!-- GSAP : trajets des pions. Sans lui le jeu reste jouable (pions poses sans animation). -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
 <script type="module" src="js/main.js"></script>
@@ -76,6 +77,27 @@
     </div>
   </section>
 
+  <!-- ====================== CHOIX DU MODE ====================== -->
+  <!-- Apres « Créer » ou « Jouer contre des bots » : la configuration est figee ici. -->
+  <section class="screen" id="s-mode">
+    <div class="lobby mode-wrap">
+      <header class="lobby-brand lobby-brand--sm">
+        <h1 class="brand-title">Comment voulez-vous jouer ?</h1>
+        <p>Le mode est figé pour toute la partie, revanche comprise.</p>
+      </header>
+      <div class="mode-grid" id="mode-grid"></div>
+      <section class="card mode-custom hidden" id="mode-custom">
+        <div class="card-head"><h2>Personnalisé</h2><span class="tag">À la carte</span></div>
+        <div class="mode-toggles" id="mode-toggles"></div>
+        <div class="btn-row btn-row--2">
+          <button class="btn btn-ghost btn-block" type="button" data-act="mode-custom-cancel">Retour aux modes</button>
+          <button class="btn btn-primary btn-block btn-lg" type="button" data-act="mode-custom-go">Lancer avec ce mode</button>
+        </div>
+      </section>
+      <button class="btn btn-ghost mode-back" type="button" data-act="mode-back">← Retour</button>
+    </div>
+  </section>
+
   <!-- ====================== CONNEXION ====================== -->
   <section class="screen" id="s-joining">
     <div class="lobby">
@@ -97,6 +119,7 @@
       </header>
       <section class="card card--wide">
         <button class="code-chip" id="lobby-code" data-act="copy" title="Copier le code">—</button>
+        <div class="lobby-mode" id="lobby-mode"></div>
         <div class="lobby-settings" id="lobby-settings"></div>
         <div class="card-head"><h2>Joueurs</h2></div>
         <div id="lobby-players" class="lobby-players"></div>
@@ -114,9 +137,10 @@
   <section class="screen" id="s-game">
     <header class="hud">
       <button class="icon-btn" type="button" aria-label="Quitter la partie" data-act="leave"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      <div class="hud-brand"><span>Banqueroll</span><em id="hud-code"></em></div>
+      <div class="hud-brand"><span>Banqueroll</span><em id="hud-code"></em><span class="hud-mode" id="hud-mode"></span></div>
       <div class="hud-objective" id="ref-objective">—</div>
       <div class="hud-turn"><span class="hud-who" id="turn-player">Chargement…</span><strong class="timer" id="turn-timer">00:00</strong></div>
+      <button class="icon-btn hud-sound" id="sound-toggle" type="button" aria-label="Couper le son" data-act="sound">🔊</button>
       <button class="icon-btn hud-chat" type="button" aria-label="Chat et journal" data-act="drawer"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg><span class="dot" id="chat-dot" hidden></span></button>
     </header>
 
@@ -125,6 +149,8 @@
     <div class="game-grid">
       <aside class="col-left">
         <section class="panel panel-players"><h3>Joueurs</h3><div id="players-panel" class="players"></div></section>
+        <section class="panel panel-react" id="react-dock" hidden></section>
+        <section class="panel panel-ghost" id="ghost-dock" hidden></section>
         <section class="panel panel-assets"><h3>Mes propriétés</h3><div id="my-assets"></div></section>
       </aside>
 
@@ -142,9 +168,13 @@
               </div>
               <div class="event-message" id="event-message">La partie va commencer…</div>
               <div class="host-bubble" id="host-bubble" hidden></div>
+              <div class="bet-bar" id="bet-bar" hidden></div>
               <div class="action-panel" id="action-panel"></div>
             </div>
             <div class="stage-overlay" id="stage-overlay" hidden></div>
+            <div class="mg-overlay" id="mg-overlay" hidden></div>
+            <div class="mg-overlay will-overlay" id="will-overlay" hidden></div>
+            <div class="mg-overlay deal-overlay" id="deal-overlay" hidden></div>
             <div class="pawn-layer" id="pawn-layer" aria-hidden="true"></div>
           </div>
         </div>
@@ -178,6 +208,7 @@
   <div class="modal-card">
     <div class="modal-head"><h3 id="auction-title">Enchère en cours</h3><button class="modal-close" type="button" aria-label="Fermer" data-act="bid-close">✕</button></div>
     <div id="auction-details" class="muted"></div>
+    <div class="auction-x" id="auction-x" hidden></div>
     <div class="field"><label for="auction-bid">Ton offre</label><input id="auction-bid" type="number" min="0" placeholder="Montant"></div>
     <div class="btn-row"><button class="btn btn-primary btn-block" data-act="bid">Enchérir</button></div>
     <div class="modal-foot"><span id="auction-status">Temps restant</span><strong class="auction-countdown">—</strong></div>
@@ -219,13 +250,18 @@
     <h2 id="victory-name">—</h2>
     <p class="victory-worth"><span id="victory-worth">0 $</span> de fortune nette</p>
     <ol class="victory-board" id="victory-board"></ol>
+    <div class="victory-recap" id="victory-recap"></div>
     <div class="btn-row btn-row--2">
-      <button class="btn btn-primary btn-block" id="victory-restart" data-act="restart">Nouvelle partie</button>
+      <button class="btn btn-gold btn-block btn-lg" id="victory-restart" data-act="rematch">🔥 Revanche</button>
       <button class="btn btn-ghost btn-block" data-act="leave">Quitter</button>
     </div>
   </div>
 </div>
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="party-stamp" id="party-stamp" role="status" aria-live="polite"></div>
+<div class="money-banner" id="money-banner" hidden></div>
+<div class="mt-slam" id="mt-slam" hidden aria-hidden="true"></div>
+<div class="react-layer" id="react-layer" aria-hidden="true"></div>
 </body>
 </html>

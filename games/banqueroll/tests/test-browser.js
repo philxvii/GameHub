@@ -92,6 +92,8 @@ async function createGame(A, { name = 'Alice', players = '2', timer = '60' } = {
     document.getElementById('create-players').value=${JSON.stringify(players)};
     document.getElementById('create-timer').value=${JSON.stringify(timer)};
     document.querySelector('[data-act="create"]').click();
+    await new Promise(r=>setTimeout(r,500));
+    document.querySelector('[data-act="mode-pick"][data-arg="classic"]').click();   // ecran « Comment voulez-vous jouer ? »
     await new Promise(r=>setTimeout(r,2600));
     return document.getElementById('lobby-code').textContent.trim();`);
 }
@@ -439,15 +441,17 @@ async function suiteEnd(A, B, ctx) {
   const vB = await until(B, `document.getElementById('victory').classList.contains('active') && document.getElementById('victory-name').textContent`, 6000);
   check('Victoire : écran de fin chez tous, gagnant mis en avant', vA === 'Alice' && vB === 'Alice', `${vA} / ${vB} (${out})`);
   await shot(A, 'victoire.png');
+  // 🔥 Revanche : meme salon, meme configuration, relancee aussitot.
   await A.eval(`document.getElementById('victory-restart').click(); return 1;`);
-  const lobbyA = await until(A, `document.querySelector('.screen.active').id==='s-lobby'`, 6000);
-  const lobbyB = await until(B, `document.querySelector('.screen.active').id==='s-lobby' && !document.getElementById('victory').classList.contains('active')`, 6000);
-  check('Nouvelle partie : retour au salon pour les deux joueurs', lobbyA && lobbyB);
+  const againA = await until(A, `__bq.S.game.phase==='playing' && document.querySelector('.screen.active').id==='s-game' && !document.getElementById('victory').classList.contains('active')`, 8000);
+  const againB = await until(B, `__bq.S.game.phase==='playing' && !document.getElementById('victory').classList.contains('active')`, 8000);
+  const cfg = (await state(code)).gameConfig;
+  check('Revanche : nouvelle partie relancée chez les deux joueurs, même configuration', againA && againB && cfg && cfg.preset === 'classic');
 }
 
 // ---------------------------------------------------------------- responsive
 async function suiteResponsive(A, B, ctx) {
-  await A.eval(`document.getElementById('start-game-btn').click(); return 1;`);
+  await A.eval(`if (__bq.S.game.phase === 'lobby') document.getElementById('start-game-btn').click(); return 1;`);
   await until(A, `__bq.S.game.phase==='playing'`);
   await sleep(1500);
   const sizes = [[1366, 768, false, 600], [1600, 900, false, 760], [1920, 1080, false, 940], [360, 760, true, 330], [390, 844, true, 360], [430, 932, true, 400]];
@@ -503,7 +507,8 @@ async function suiteBots(b) {
   await P.goto(URL);
   await sleep(1500);
   const start = await P.eval(`document.getElementById('bot-name').value='Solo';document.getElementById('bot-count').value='1';
-    document.querySelector('[data-act="bot-game"]').click(); await new Promise(r=>setTimeout(r,3500));
+    document.querySelector('[data-act="bot-game"]').click(); await new Promise(r=>setTimeout(r,500));
+    document.querySelector('[data-act="mode-pick"][data-arg="classic"]').click(); await new Promise(r=>setTimeout(r,3500));
     const g=__bq.S.game; return { code:__bq.S.code, phase:g&&g.phase, bots:(g&&g.players||[]).filter(p=>p.bot).length, screen:document.querySelector('.screen.active').id };`);
   check('Solo : partie contre un bot créée et lancée sans salon', start.phase === 'playing' && start.bots === 1 && start.screen === 's-game', start);
   // Le script joue l'humain (lancer, refuser les achats) jusqu'a ce que le bot ait joue un tour complet.

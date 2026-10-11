@@ -69,6 +69,13 @@ L'ancienne URL `banqueroll.html` et le raccourci `/banqueroll/` sont des relais.
 | `js/presenter.js` | présentateur : évènements, intensité 0–5, chrono, mémoire du chat, IA, badge de source | — |
 | `js/bot.js` | bots joués par le client de l'hôte avec les actions des humains (`by`) | — |
 | `js/main.js` | câblage, délégation des clics `data-act` | — |
+| `js/config.js` | `gameConfig` : registre des 12 mécaniques, presets, `on(game, clé)` | oui |
+| `js/party.js` | testament, fantômes, paris, Money Time, bulle/krach, pactes, primes secrètes, récap | oui |
+| `js/minigames.js` | 7 mini-jeux d'EVENT et duel : génération, entrées, classement, paiements | oui |
+| `js/party-actions.js` | actions des mécaniques et leur arbitrage par l'hôte (`partyArbitrate`) | — |
+| `js/party-ui.js` | écran des modes, cachet de résolution, overlays des mécaniques, récap | — |
+| `js/stats.js` | carnet local (`localStorage`) : parties, rivalités | — |
+| `js/sfx.js` | sons synthétisés (Web Audio), coupables depuis le bandeau | — |
 | `css/*.css` | base (boutons, lobby), game (mise en page), board, overlays | — |
 | `ai-host/` | Worker Cloudflare gratuit : Gemini → OpenRouter → Workers AI → réplique locale | — |
 
@@ -199,6 +206,28 @@ de la capture de référence :
   À éviter : halos lumineux, dégradés décoratifs, badges en pilule, bordures colorées
   sur un seul côté, majuscules très espacées.
 
+- **Modes de jeu** (2026-10-08 → 10-11, mission « grosse évolution ») : à la création,
+  écran « Comment voulez-vous jouer ? » → Classique (tout coupé, mis en avant), Chaos
+  (tout), Party (mécaniques de spectacle + Money Time), Personnalisé (cases à cocher).
+  `game.gameConfig = { preset, reactions, extendedAuctions, eventMinigames, duel, betting,
+  hostDeals, testament, ghost, secretBonuses, moneyTime, blueShell, marketCrash }`
+  (booléens), écrit à la création et **jamais modifié** ; absent = Classique. Toute
+  mécanique se teste avec `on(game, clé)` : en Classique, le jeu d'origine est intact
+  (vérifié par le lot 7 de `test-party`).
+- Résolutions des mécaniques : une seule, écrite par transaction sur un statut
+  (`active→resolving`, `chosen→resolving`, `locked→resolving`, `accepted→resolving`,
+  `open→closing`). L'hôte arbitre les délais. Les nœuds transitoires
+  (`TRANSIENT_NODES` dans `actions.js`) sont vidés au démarrage et à la revanche.
+- Mini-jeux : le dernier paie 100 $ répartis entre les autres ; duel (case occupée) :
+  le perdant paie 50 $ au gagnant. Les fantômes jouent mais ne paient ni ne touchent.
+- Testament : à la faillite, le joueur choisit l'héritier (joueur ou banque), bâtiments
+  compris ; délai dépassé → banque. Fantôme : hante une case, 50 $ à qui s'y arrête.
+- Money Time : 3 dernières manches ou 80 % de l'objectif, une fois par partie, loyers ×2.
+  Carapace : cartes Chance « audit » (−15 % au leader) et « squat ». Bulle ×2 / krach ×0,5
+  sur un groupe pendant 2 manches. Primes secrètes : 300 $ révélés à la fin.
+- Mobile : le bandeau Money Time devient la couleur du bandeau des joueurs (le bandeau
+  flottant masquait les noms à 390 px).
+
 ### Limites connues
 
 L'arbitrage et le présentateur dépendent de l'onglet de l'hôte : fermé ou
@@ -214,11 +243,13 @@ répliques locales.
 ```bash
 node tools/check-links.js                              # structure : hub, relais, chemins de chaque jeu
 node games/banqueroll/tests/check-static.js            # ~2 s, sans navigateur — à lancer toujours
+node games/banqueroll/tests/check-party.js             # ~1 s, mécaniques de party, sans navigateur
 python -m http.server 4173                             # puis, dans un autre terminal :
 node games/banqueroll/tests/test-browser.js            # 50 contrôles, Chrome réel, 2 joueurs + solo contre un bot, IA simulée
 node games/banqueroll/tests/test-browser.js --shots    # + captures dans games/banqueroll/tests/shots/
 node games/banqueroll/tests/test-browser.js --no-gsap  # repli quand le CDN est coupé
 node games/banqueroll/tests/test-browser.js --preview  # fenêtre visible avec une partie de démo
+node games/banqueroll/tests/test-party.js --lot=all    # mécaniques de party, lot par lot (0 à 7)
 node games/banqueroll/tests/ai-mock.js                 # Worker IA local, Gemini et OpenRouter simulés (port 8787)
 ```
 

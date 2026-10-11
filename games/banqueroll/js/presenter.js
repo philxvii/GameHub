@@ -7,6 +7,8 @@
 //   est remplacee sur place. Sinon la locale reste. Rien n'attend l'IA.
 // - Il n'ecrit QUE dans chat/ et hostMem/ : il ne touche jamais au gameplay.
 
+import { MINIGAMES } from './minigames.js';
+import { rivalryCount, topRivalry } from './stats.js';
 import { BOARD, GROUP_LABELS, GROUPS, de } from './board.js';
 import { netWorth, ranking, ownedBy, ownsFullGroup, rentFor, playerById, currentPlayer } from './rules.js';
 import { pickLine } from './lines.js';
@@ -58,6 +60,7 @@ export function aiEndpoint() {
 
 function reset(newCode) {
   code = newCode; seenHist = null; seenChat = null; queue = []; mem = null; prevLeader = null;
+  reactSeen = new Set(); reactBurst.clear();
   clearTimeout(batchTimer); clearTimeout(memTimer);
   lastTurnKey = null; pressure = { deadline: null, s12: false, s5: false }; turnCount = 0; lastTurnPique = -99; lastPressureTurn = -99;
 }
@@ -105,11 +108,39 @@ export function observe(game) {
     if (c.kind !== 'host') ingestChat(game, c);
   });
   watchTurn(game);
+  watchReactions(game);
   if (game.phase === 'playing' && (game.round || 1) >= 2) {
     const leader = (ranking(game)[0] || {}).id || null;
     if (leader && prevLeader && leader !== prevLeader) enqueue({ type:'leader', intensity:2, ctx: baseCtx(game, { p: leader }), text:`${nameOf(game, leader)} prend la tête.` });
     prevLeader = leader;
   }
+}
+
+// ================================================================ reactions
+// Une rafale (5 reactions sur la meme cible en 10 s) fait reagir le presentateur.
+// Il ne commente pas les reactions isolees : elles appartiennent aux joueurs.
+const REACT_LABELS = { tomato:'tomate', coin:'pièce', crown:'couronne', clown:'clown' };
+let reactSeen = new Set();
+const reactBurst = new Map();      // cible -> horodatage du dernier commentaire
+
+function watchReactions(game) {
+  const list = Object.entries(game.reactions || {}).map(([k, v]) => ({ k, ...v }));
+  const t = Date.now();
+  const fresh = list.filter(r => !reactSeen.has(r.k));
+  fresh.forEach(r => reactSeen.add(r.k));
+  if (!fresh.length) return;
+  const recent = list.filter(r => t - (r.ts || 0) < 10000);
+  [...new Set(fresh.map(r => r.to))].forEach(to => {
+    const onTarget = recent.filter(r => r.to === to);
+    if (onTarget.length < 5 || t - (reactBurst.get(to) || 0) < 20000) return;
+    reactBurst.set(to, t);
+    const kinds = onTarget.reduce((acc, r) => ({ ...acc, [r.kind]: (acc[r.kind] || 0) + 1 }), {});
+    const kind = Object.entries(kinds).sort((a, b) => b[1] - a[1])[0][0];
+    const throwers = onTarget.reduce((acc, r) => ({ ...acc, [r.from]: (acc[r.from] || 0) + 1 }), {});
+    const top = Object.entries(throwers).sort((a, b) => b[1] - a[1])[0][0];
+    const ctx = { ...baseCtx(game, { p: to, o: top }), n: onTarget.length, kind, label: REACT_LABELS[kind] || 'tomate', intensity: 2 };
+    enqueue({ type:'reactions', intensity:2, ctx, text:`${nameOf(game, to)} reçoit ${onTarget.length} ${ctx.label}s en dix secondes.`, meta:{ t:'reactions', p: to, o: top } });
+  });
 }
 
 // ================================================================ tour et chrono
@@ -167,10 +198,12 @@ function checkPressure() {
 const TYPE_OF = {
   rent:'rent', buy:'buy', build:'build', sell:'sell', jail:'jail', bail:'bail', steal:'steal', seize:'seize',
   swap:'swap', auction:'auction', trade:'trade', bankrupt:'bankrupt', win:'win', afk:'afk', begin:'begin', event:'event',
-  bid:'bid', six:'six',
+  bid:'bid', six:'six', will:'will', haunt:'haunt', moneytime:'moneytime', bets:'bets',
+  market:'market', 'deal-offer':'dealOffer', deal:'deal',
 };
 
 function lineType(meta) {
+  if (meta.t === 'minigame') return meta.origin === 'duel' ? 'duel' : 'minigame';
   if (meta.t === 'chance') {
     if (meta.kind === 'card') return meta.key === 'jail' ? 'jail' : 'card';
     return meta.kind;            // dilemma | wheel
@@ -241,7 +274,7 @@ function scoreEvent(type, meta, c) {
     case 'build': return c.lvl === 3 ? 2 : 1;
     case 'sell': return c.before < 0 ? 2 : 1;
     case 'bail': return 1;
-    case 'card': return c.amt >= 150 ? 2 : 1;
+    case 'card': return meta.key === 'audit' || meta.key === 'squat' ? 3 : c.amt >= 150 ? 2 : 1;
     case 'dilemma': return meta.key === 'double' && meta.choice === 'A' ? 3 : meta.key === 'loan' && meta.choice === 'A' ? 3 : meta.choice === 'A' ? 2 : 1;
     case 'wheel': return meta.key === 'jackpot' && c.mock ? 5 : ({ jackpot:4, minus500:3, jail:3, fire:3, swap:3, nothing:2, triple:2, raid:2 })[meta.key] || 1;
     case 'bid': return c.price && c.amt >= c.price * 1.4 ? 3 : 0;
@@ -260,6 +293,15 @@ function scoreEvent(type, meta, c) {
     case 'afk': return pressure.s12 || pressure.s5 ? 3 : c.afkCount >= 2 ? 2 : 1;
     case 'begin': return 3;
     case 'event': return c.amt >= 140 ? 1 : 0;
+    case 'minigame': return meta.l ? 2 : 1;
+    case 'will': return meta.o ? 3 : 2;
+    case 'moneytime': return 4;
+    case 'market': return 2;
+    case 'dealOffer': return 3;
+    case 'deal': return meta.success ? 2 : 3;
+    case 'bets': return meta.amt >= 100 ? 2 : 1;
+    case 'haunt': return 2;
+    case 'duel': return meta.l ? 2 : 1;
     default: return 0;
   }
 }
@@ -288,6 +330,20 @@ function ingestEvent(game, meta, text) {
   if (type === 'begin') meta = { ...meta, p: (currentPlayer(game) || {}).id };
   updateStats(type, meta, game);
   const ctx = baseCtx(game, meta);
+  if (type === 'will') ctx.timeout = !!meta.timeout;
+  // Rivalites (carnet local de l'hote) : qui a deja ruine qui, au fil des parties.
+  if (type === 'bankrupt') {
+    const rent = Object.values(game.history || {}).filter(h => h.meta && h.meta.t === 'rent' && h.meta.p === meta.p).sort((a, b) => b.ts - a.ts)[0];
+    const ruiner = rent ? nameOf(game, rent.meta.o) : null;
+    if (ruiner) { const n = rivalryCount(ruiner, nameOf(game, meta.p)) + 1; if (n >= 2) Object.assign(ctx, { rivalry: n, R: ruiner }); }
+  }
+  if (type === 'begin') {
+    const top = topRivalry((game.players || []).map(p => p.name));
+    if (top && top.n >= 2) ctx.rival = top;
+  }
+  if (type === 'market') Object.assign(ctx, { kind: meta.kind, group: GROUP_LABELS[meta.group] || meta.group });
+  if (type === 'dealOffer' || type === 'deal') Object.assign(ctx, { kind: meta.kind, success: !!meta.success, die: meta.v });
+  if (type === 'minigame' || type === 'duel') Object.assign(ctx, { game: (MINIGAMES[meta.kind] || {}).label || 'mini-jeu', kind: meta.kind, nobody: !meta.l });
   const intensity = scoreEvent(type, meta, ctx);
   ctx.intensity = intensity;
   if (intensity >= 3) { mem.facts.push(`Manche ${game.round || 1} : ${text}`); }

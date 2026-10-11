@@ -74,6 +74,9 @@ export const LINES = {
     c => c.key === 'scooter' && `${c.P} se fait flasher en trottinette. On tient enfin l’ennemi public numéro un. Quelle honte.`,
     c => c.key === 'birthday' && `Tout le monde paie l’anniversaire ${de(c.P)}. Le cadeau le plus forcé depuis le pot de départ du collègue que tout le monde déteste.`,
     c => c.key === 'round' && `${c.P} offre une tournée générale. Acheter des amis : la seule stratégie qui te restait.`,
+    c => c.key === 'audit' && c.O && `Contrôle fiscal chez ${c.O}, déclenché par ${c.P}. Le fisc ne vise jamais les pauvres, il paraît.`,
+    c => c.key === 'audit' && c.O && `${c.O} en tête se prend un redressement. Être riche, c’est aussi être une cible.`,
+    c => c.key === 'squat' && c.O && `${c.P} squatte chez ${c.O} et encaisse son loyer. La lutte des classes, version plateau.`,
     c => c.amt > 0 && `${c.P} gagne ${$(c.amt)} grâce à une carte. Zéro talent, 100 % de bol. Profite, ça ne se reproduira pas.`,
     c => c.amt < 0 && `${$(c.amt)} envolés sur une carte Chance. ${c.P} et le hasard, c’est une relation toxique. Faut voir un psy.`,
   ],
@@ -131,6 +134,8 @@ export const LINES = {
     c => `Échange accepté entre ${c.P} et ${c.O}. Quelqu’un vient de se faire arnaquer, et je sais qui.`,
   ],
   bankrupt: [
+    c => c.rivalry >= 2 && `${c.R}, c’est la ${c.rivalry}e partie où tu ruines ${c.P}. À ce stade, c’est une tradition familiale.`,
+    c => c.rivalry >= 3 && `${c.P} ruiné par ${c.R}. Encore. ${c.rivalry} fois. Il faudrait peut-être changer d’amis.`,
     c => `${c.P} fait faillite. Rideau. Les propriétés retournent à la banque, la dignité reste introuvable.`,
     c => `${c.P} n’a plus un rond. On t’enterre avec ton relevé de compte, c’est tout ce qui te reste.`,
     c => c.quote && `${c.P} disait ${q(c.quote.text)}${c.quote.ago}. Ce furent les dernières paroles d’un joueur solvable.`,
@@ -148,6 +153,7 @@ export const LINES = {
     c => c.afkCount >= 2 && `${c.P}, encore personne au clavier. La partie est confiée à un fantôme, et le fantôme joue mieux.`,
   ],
   begin: [
+    c => c.rival && `Petit rappel : ${c.rival.ruiner} a déjà ruiné ${c.rival.victim} ${c.rival.n} fois. ${c.rival.victim}, ce soir c’est la revanche ou la honte.`,
     c => `Bonsoir bande de clowns et bienvenue dans Banqueroll ! ${c.n} joueurs, une banque, zéro pitié. ${c.P}, à toi l’honneur de perdre en premier.`,
     c => `Les marchés ouvrent. ${c.P} commence. Que le moins fauché gagne, les autres finiront en story « j’ai tout perdu ».`,
   ],
@@ -199,6 +205,74 @@ export const LINES = {
     c => c.shutUp && `Me taire ? ${c.P}, je suis payé à la vanne. Toi, tu paies au loyer.`,
     c => c.quote && `${c.P}, tu disais ${q(c.quote.text)}${c.quote.ago}. Je garde tout. C’est mon métier.`,
     c => `${c.P}, t’as écrit ça avec tes pouces ou avec tes pieds ?`,
+  ],
+  // Bulle / krach : kind = bubble | crash, group = nom du groupe.
+  market: [
+    c => c.kind === 'bubble' && `Bulle sur le groupe ${c.group} : loyers ×2. Les proprios sablent le champagne, les locataires sablent leurs économies.`,
+    c => c.kind === 'bubble' && `Spéculation sur ${c.group}. Deux manches de loyers doublés : c’est le moment de ne pas y mettre les pieds.`,
+    c => c.kind === 'crash' && `Krach sur ${c.group} : loyers divisés par deux. Les proprios découvrent la notion de patrimoine fictif.`,
+    c => c.kind === 'crash' && `${c.group} s’effondre. Deux manches à prix cassés : profitez-en, ça n’arrive qu’aux autres.`,
+    c => `Le marché s’emballe sur ${c.group || 'un groupe'}. Personne ne comprend rien, comme à la vraie Bourse.`,
+  ],
+  // Pacte du presentateur : P = le joueur a qui le moteur propose le marche.
+  dealOffer: [
+    c => `${c.P}, je te propose un marché. Tu acceptes, et on verra si le dé t’aime autant que toi.`,
+    c => `Pacte sur la table pour ${c.P}. Huit secondes pour décider si tu as du cran ou juste de la chance.`,
+    c => c.kind === 'six' && `${c.P}, un 6 et je te paie. Sinon c’est toi qui paies. Simple, cruel, efficace.`,
+  ],
+  deal: [
+    c => c.success && `${c.P} tient son pacte avec un ${c.die}. Je paie, mais je retiens ton nom.`,
+    c => !c.success && `${c.P} accepte le pacte et fait ${c.die}. Merci pour la contribution, j’en ferai bon usage.`,
+    c => !c.success && `Pacte perdu pour ${c.P}. Signer sans lire, c’est un mode de vie chez toi.`,
+    c => `Le pacte ${de(c.P)} est soldé. La maison gagne toujours, sauf quand elle perd.`,
+  ],
+  // Money Time : fin de partie, loyers doubles.
+  moneytime: [
+    c => `MONEY TIME. Les loyers doublent. Ceux qui ont des rues sourient, les autres prient.`,
+    c => `On entre dans le dur : loyers ×2 jusqu’à la fin. C’est maintenant qu’on voit qui a un plan et qui a un pion.`,
+    c => c.P && `${c.P} approche de l’objectif, alors on double tout. Personne n’est à l’abri, surtout pas toi.`,
+  ],
+  // Paris : P = le plus gros perdant (ou gagnant), O = le lanceur.
+  bets: [
+    c => c.amt >= 100 && `Quelqu’un a misé sur la chute ${de(c.O)} et a eu raison. L’amitié, ce soir, coûte cher.`,
+    c => c.O && `Les paris sur ${c.O} sont réglés. La table spécule sur ses amis : on est bien dans un jeu de banquiers.`,
+    c => `Paris réglés. Les bookmakers du canapé repartent avec leurs gains, ou leurs larmes.`,
+  ],
+  // Testament : P = joueur ruine, O = heritier (vide = la banque).
+  will: [
+    c => c.O && `${c.P} lègue tout à ${c.O}. Un dernier doigt d’honneur aux autres, avec acte notarié.`,
+    c => c.O && `Testament ${de(c.P)} : ${c.O} hérite. L’amour, la rancune, ou les deux.`,
+    c => !c.O && !c.timeout && `${c.P} laisse tout à la banque. Même ruiné, ça reste un client fidèle.`,
+    c => c.timeout && `${c.P} n’a pas réussi à rédiger un testament en dix secondes. La banque ramasse tout, comme d’habitude.`,
+    c => `${c.P} quitte la partie les poches vides. Le notaire n’a même pas eu le temps de s’asseoir.`,
+  ],
+  // Case hantee : P = la victime, O = le fantome.
+  haunt: [
+    c => c.O && `👻 ${c.P} marche sur la case hantée par ${c.O}. Même mort, ${c.O} te fait les poches.`,
+    c => `${c.P} perd 50 $ à cause d’un fantôme. Le capitalisme ne meurt jamais.`,
+  ],
+  // Mini-jeu de case EVENT : P = dernier (paie), O = gagnant, game = nom du jeu.
+  minigame: [
+    c => c.O && c.P !== c.O && `${c.P} termine à la dernière place de « ${c.game} ». ${c.O} encaisse sans même dire merci.`,
+    c => c.O && c.P !== c.O && `« ${c.game} » : ${c.O} plane, ${c.P} rame. Cent dollars la leçon.`,
+    c => c.kind === 'trap' && c.O !== c.P && `${c.P} a cliqué. Le bouton disait littéralement de ne pas cliquer. Lis, ${c.P}. Lis.`,
+    c => c.kind === 'math' && `${c.P} perd au calcul mental face à un écran. Le système éducatif a des questions.`,
+    c => c.kind === 'blind' && `Enchère à l’aveugle : ${c.P} mise comme on joue au Loto. Avec le même résultat.`,
+    c => `${c.P} paie toute la table après « ${c.game} ». Les doigts gourds, le portefeuille aussi.`,
+  ],
+  duel: [
+    c => c.O && c.P !== c.O && `Duel : ${c.O} dégaine plus vite que ${c.P}. Cinquante dollars et un ego en moins.`,
+    c => c.O && c.P !== c.O && `${c.P} perd son duel contre ${c.O}. Même Lucky Luke trouverait ça lent.`,
+    c => `${c.P} provoque un duel et se fait abattre. Western, version tragédie.`,
+  ],
+  // Rafale de reactions sur un meme joueur (n, label, O = plus gros lanceur).
+  reactions: [
+    c => `${c.P} se fait canarder par toute la table. C’est personnel maintenant.`,
+    c => c.n && `${c.P} vient de se prendre ${c.n} ${c.label}s. Le jury a délibéré, et il a la main lourde.`,
+    c => c.kind === 'crown' && `${c.n} couronnes pour ${c.P}. Profite, c’est la seule royauté que tu toucheras ce soir.`,
+    c => c.kind === 'clown' && `${c.n} clowns sur ${c.P}. Le vote est unanime et le maquillage est offert.`,
+    c => c.kind === 'coin' && `On jette des pièces à ${c.P}. Même la charité a un sens de l’humour.`,
+    c => c.O && c.O !== c.P && `${c.O} vide son stock de ${c.label}s sur ${c.P}. Respire, ça reste un jeu. Ou pas.`,
   ],
   // Reaction spontanee a une pique ou une vantardise dans le chat.
   taunt: [

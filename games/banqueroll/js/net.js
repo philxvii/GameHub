@@ -21,6 +21,12 @@ export const db = getDatabase(app);
 export { ref, set, get, update, onValue, remove, push, onDisconnect, runTransaction };
 
 export const gameRef = code => ref(db, `banqueroll/${code}`);
+
+// Heure du serveur Firebase : les mini-jeux (quelques secondes) demarrent au meme
+// instant chez tout le monde, meme si les horloges des appareils different.
+let serverOffset = 0;
+onValue(ref(db, '.info/serverTimeOffset'), snap => { serverOffset = Number(snap.val()) || 0; });
+export const serverNow = () => Date.now() + serverOffset;
 export const presenceRef = (code, playerId) => ref(db, `banqueroll/${code}/presence/${playerId}`);
 
 // Session locale. Rien ici n'est lu par la logique d'un autre client.

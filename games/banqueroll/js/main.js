@@ -5,11 +5,13 @@ import * as A from './actions.js';
 import * as R from './render.js';
 import { observe, presenterDebug } from './presenter.js';
 import { watchBots, botDebug } from './bot.js';
+import * as P from './party-ui.js';
+import * as PA from './party-actions.js';
 import { toast, syncPawns, finishMoves, guillocheSVG, enableTilt } from './fx.js';
 import { getSquareColor, BOARD } from './board.js';
 
-A.hooks.onGame = game => { R.renderState(game); observe(game); };
-A.hooks.onGone = () => { R.resetVisualState(); R.toggleDrawer(false); };
+A.hooks.onGame = game => { R.renderState(game); P.renderParty(game); observe(game); };
+A.hooks.onGone = () => { R.resetVisualState(); P.resetParty(); R.toggleDrawer(false); };
 A.hooks.onShow = id => R.show(id);
 
 const $id = id => document.getElementById(id);
@@ -51,7 +53,13 @@ const ACTS = {
   start: () => A.startGame(),
   'add-bot': () => A.addBot(),
   'bot-game': () => A.createBotGame(),
+  'mode-pick': arg => (arg === 'custom' ? P.showCustomPanel(true) : A.chooseMode(arg)),
+  'mode-custom-go': () => A.chooseMode('custom', P.customPicks()),
+  'mode-custom-cancel': () => P.showCustomPanel(false),
+  'mode-back': () => { P.showCustomPanel(false); R.show('s-home'); },
   restart: () => A.restartGame(),
+  rematch: () => A.rematch(),
+  sound: () => P.toggleSound(),
   delete: () => A.deleteGame(),
   leave: () => { R.toggleDrawer(false); A.leaveGame(); },
   copy: copyCode,
@@ -61,6 +69,15 @@ const ACTS = {
   'bid-open': () => R.openAuctionModal(),
   bid: () => A.placeBid($id('auction-bid').value),
   'bid-close': () => R.dismissAuction(),
+  'bid-pass': () => PA.passAuction(),
+  'bid-quick': arg => A.placeBid(arg),
+  react: arg => P.pickReaction(arg),
+  will: arg => PA.chooseHeir(arg),
+  bet: arg => P.betPick(arg),
+  deal: arg => PA.answerDeal(arg === 'yes'),
+  'bet-stake': arg => P.setBetStake(arg),
+  haunt: () => P.startHaunt(),
+  'react-target': arg => P.pickReactionTarget(arg),
   'trade-open': () => R.openTradeModal(),
   'trade-send': proposeTrade,
   'trade-close': () => R.closeModal('modal-trade'),
@@ -144,10 +161,12 @@ Object.assign(window, {
   rollDice: A.rollDice, buyProperty: A.buyProperty, startAuction: A.startAuction, openTradeModal: R.openTradeModal,
   proposeTrade, acceptTrade: A.acceptTrade, declineTrade: A.declineTrade, payBail: A.payBail, serveJailTurn: A.serveJailTurn,
   leaveGame: A.leaveGame, restartGame: A.restartGame, toggleDrawer: R.toggleDrawer,
-  __bq: { S, A, R, presenter: presenterDebug, bot: botDebug },
+  __bq: { S, A, R, P, PA, presenter: presenterDebug, bot: botDebug },
 });
 
 R.initBoard();
+P.initModeScreen();
+P.renderSoundButton();
 paintLobbyStrip();
 watchBots();
 // Rosaces guillochees : sceau de l'accueil, centre du plateau, certificat de victoire.

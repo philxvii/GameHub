@@ -17,6 +17,8 @@ import {
   wheelSVG, spinWheel, rainCoins, DIE_MS, WHEEL_MS,
 } from './fx.js';
 import { HOST_NAME } from './presenter.js';
+import { on } from './config.js';
+import { sfx } from './sfx.js';
 
 // ================================================================ utilitaires
 export const esc = v => String(v === undefined || v === null ? '' : v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -163,7 +165,7 @@ function playerCard(game, player, index, compact) {
   const net = netWorth(game, player);
   const target = targetOf(game);
   const tags = [player.id === game.hostId ? 'Hôte' : '', player.bot ? 'Bot' : '', player.id === S.playerId ? 'Toi' : ''].filter(Boolean).join(' · ');
-  const status = player.bankrupt ? '<span class="pstat pstat-out">Faillite</span>'
+  const status = player.bankrupt ? (player.ghost ? '<span class="pstat pstat-ghost">👻 Fantôme</span>' : '<span class="pstat pstat-out">Faillite</span>')
     : player.inJail ? `<span class="pstat pstat-jail">Prison · ${player.jailTurns || 0}</span>`
     : player.skipNext ? '<span class="pstat">Passe son tour</span>'
     : player.rentBoost ? '<span class="pstat pstat-boost">Loyer ×3</span>' : '';
@@ -295,8 +297,10 @@ function actionHTML(game) {
   if (game.auction && game.auction.status === 'open') {
     const a = game.auction;
     const bidder = playerById(game, a.highestBidder);
+    // Encheres tendues : « Je passe » directement dans le panneau.
+    const canPass = on(game, 'extendedAuctions') && me && !me.bankrupt && a.highestBidder !== S.playerId && !(a.passes || {})[S.playerId];
     return box(`Enchère · ${esc(BOARD[a.position].name)}`, `Meilleure offre : <strong>${fmt(a.highestBid || 0)}</strong>${bidder ? ` par ${esc(bidder.name)}` : ''}. Minimum : ${fmt(a.nextBid)}. <span class="countdown auction-countdown"></span>`,
-      btn('Faire une offre', 'bid-open'));
+      btn('Faire une offre', 'bid-open') + (canPass ? btn('Je passe', 'bid-pass', 'btn-ghost') : ''));
   }
   if (game.swap && game.swap.status === 'open') return swapHTML(game, me);
   const a = game.currentAction;
@@ -604,11 +608,13 @@ function renderAuctionModal(game) {
   const modal = $id('modal-auction');
   const a = game.auction;
   if (!a || a.status !== 'open') { modal.classList.remove('active'); return; }
-  const key = `${a.position}@${a.endAt}`;
+  const key = a.id || `${a.position}@${a.endAt}`;
   if (seen.auctionDismissed === key) return;
   modal.classList.add('active');
   const bidder = playerById(game, a.highestBidder);
-  $id('auction-details').innerHTML = `<strong>${esc(BOARD[a.position].name)}</strong> (prix ${fmt(BOARD[a.position].price)}). Offre actuelle : <strong>${fmt(a.highestBid || 0)}</strong>${bidder ? ` par ${esc(bidder.name)}` : ''}. Minimum : ${fmt(a.nextBid)}.`;
+  // Encheres tendues : l'offre et le meneur sont affiches en grand juste en dessous.
+  if (on(game, 'extendedAuctions')) $id('auction-details').innerHTML = `<strong>${esc(BOARD[a.position].name)}</strong> · prix ${fmt(BOARD[a.position].price)} · minimum ${fmt(a.nextBid)}`;
+  else $id('auction-details').innerHTML = `<strong>${esc(BOARD[a.position].name)}</strong> (prix ${fmt(BOARD[a.position].price)}). Offre actuelle : <strong>${fmt(a.highestBid || 0)}</strong>${bidder ? ` par ${esc(bidder.name)}` : ''}. Minimum : ${fmt(a.nextBid)}.`;
   const input = $id('auction-bid');
   if (document.activeElement !== input) input.value = a.nextBid;
   const status = $id('auction-status');
@@ -616,7 +622,7 @@ function renderAuctionModal(game) {
 }
 export function dismissAuction() {
   const a = S.game && S.game.auction;
-  if (a) seen.auctionDismissed = `${a.position}@${a.endAt}`;
+  if (a) seen.auctionDismissed = a.id || `${a.position}@${a.endAt}`;
   $id('modal-auction').classList.remove('active');
 }
 export function openAuctionModal() { seen.auctionDismissed = null; if (S.game) renderAuctionModal(S.game); }
@@ -739,6 +745,7 @@ function feedback(game) {
       if (seen.owned[k] === owned[k]) return;
       const node = document.querySelector(`.square[data-index="${k}"]`);
       pulse(node, 'just-bought', 1500);
+      sfx('stamp');
       const card = visibleCard(owned[k]);
       if (card && !losers.length) coinBurst(card, node, 4);
     });

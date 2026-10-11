@@ -10,21 +10,33 @@ import {
   TARGETS, ROUND_LIMITS, LATE_BONUS,
   targetOf, roundsOf, playerById, indexOfPlayer, ownerOf, ownedBy, rentFor, ownsFullGroup, levelOf,
   canBuild, canSell, tradeable, planNextTurn, isBankrupt, bankruptcyUpdates, winnerCheck,
-  startingPlayers, jailUpdates, openBlocking, netWorth, currentPlayer, isMyTurn,
+  startingPlayers, jailUpdates, openBlocking, netWorth, currentPlayer, isMyTurn, applyUpdates, ranking,
 } from './rules.js';
 import {
   drawChance, resolveCard, resolveDilemma, resolveWheel, resolveSteal, resolveSeize, autoSeizePick,
   DILEMMAS, WHEEL,
 } from './chance.js';
 import {
-  S, get, set, remove, onValue, runTransaction, onDisconnect, gameRef, presenceRef,
+  S, db, ref, get, set, remove, onValue, runTransaction, onDisconnect, gameRef, presenceRef,
   pushHistory, pushChat, commit, saveLocal, clearLocal,
 } from './net.js';
 import { animateDiceRoll, toast, WHEEL_MS } from './fx.js';
+import { makeConfig, on } from './config.js';
+import { BONUSES, BONUS_VALUE, secretBonuses, bonusUpdates } from './party.js';
+import { partyArbitrate, placeBidExtended, auctionDone, startEventMinigame, maybeStartDuel, openWill, willOpen, maybeHaunt, lockBetsUpdates, startMarket, dealPending } from './party-actions.js';
 
 export const PLAYER_COLORS = ['#2F7FC1','#D99A1E','#D2582A','#7752C2','#2E8F62','#C93F55','#1C949E','#B8509A'];
 const TURN_GRACE_MS = 1500;
 const WHEEL_FALLBACK_MS = 9000;  // l'hote termine une roue abandonnee apres ce delai
+
+// Etat temporaire des mecaniques de party : remis a zero au lancement et a la revanche,
+// pour qu'aucune fenetre ni aucun effet ne survive a une partie.
+export const TRANSIENT_NODES = ['minigame', 'bets', 'deal', 'will', 'market', 'moneyTime', 'haunts', 'reactions', 'trail', 'bonuses', 'duelRoll'];
+const clearTransient = () => Object.fromEntries(TRANSIENT_NODES.map(k => [k, null]));
+
+// Creation en deux temps : le formulaire est valide, puis l'ecran « Comment voulez-vous
+// jouer ? » fixe la configuration. La partie n'existe qu'apres ce choix.
+export const pending = { kind: null };
 
 // Le rendu et le presentateur s'abonnent ici (main.js) : evite les imports circulaires.
 export const hooks = { onGame: null, onGone: null, onShow: null };
@@ -112,7 +124,7 @@ function botPlayer(taken, index) {
     color:PLAYER_COLORS[index % PLAYER_COLORS.length], ready:true };
 }
 
-export async function createGame() {
+export async function createGame(config) {
   const name = val('create-name').trim();
   const players = parseInt(val('create-players'), 10);
   const timer = parseInt(val('create-timer'), 10);
@@ -123,6 +135,7 @@ export async function createGame() {
   if (!name) { err.textContent = 'Entre ton prénom.'; return; }
   if (players < 2 || players > 8) { err.textContent = 'Choisis entre 2 et 8 joueurs.'; return; }
   if (!Number.isFinite(timer) || timer < 10 || timer > 120) { err.textContent = 'Durée de tour invalide.'; return; }
+  if (!config) { pending.kind = 'create'; show('s-mode'); return; }
   const settings = {
     target: TARGETS.includes(target) ? target : TARGETS[0],
     maxRounds: ROUND_LIMITS.includes(maxRounds) ? maxRounds : ROUND_LIMITS[0],
@@ -131,7 +144,7 @@ export async function createGame() {
   S.playerId = makeId(); S.name = name; S.color = PLAYER_COLORS[0]; S.isHost = true;
   saveLocal();
   const player = { id:S.playerId, name, position:START_INDEX, cash:START_CASH, jailTurns:0, inJail:false, color:S.color, ready:true };
-  const game = { code:S.code, hostId:S.playerId, maxPlayers:players, turnTimer:timer, settings, players:[player], phase:'lobby',
+  const game = { code:S.code, hostId:S.playerId, maxPlayers:players, turnTimer:timer, settings, gameConfig: config, players:[player], phase:'lobby',
     turnIndex:0, round:1, currentAction:null, ownership:{}, auction:null, trade:null, winnerId:null, turnDeadline:null,
     createdAt:now(), updatedAt:now() };
   await set(gameRef(S.code), game);
@@ -141,7 +154,7 @@ export async function createGame() {
 }
 
 // Partie contre des bots : creee, remplie et lancee d'un coup, sans passer par le salon.
-export async function createBotGame() {
+export async function createBotGame(config) {
   const name = val('bot-name').trim();
   const count = parseInt(val('bot-count'), 10);
   const target = parseInt(val('bot-target'), 10);
@@ -149,13 +162,14 @@ export async function createBotGame() {
   err.textContent = '';
   if (!name) { err.textContent = 'Entre ton prénom.'; return; }
   if (!(count >= 1 && count <= 7)) { err.textContent = 'Choisis entre 1 et 7 bots.'; return; }
+  if (!config) { pending.kind = 'bots'; show('s-mode'); return; }
   const settings = { target: TARGETS.includes(target) ? target : TARGETS[0], maxRounds: ROUND_LIMITS[0] };
   S.code = await freeCode();
   S.playerId = makeId(); S.name = name; S.color = PLAYER_COLORS[0]; S.isHost = true;
   saveLocal();
   const players = [{ id:S.playerId, name, position:START_INDEX, cash:START_CASH, jailTurns:0, inJail:false, color:S.color, ready:true }];
   for (let i = 0; i < count; i++) players.push(botPlayer(players, i + 1));
-  const game = { code:S.code, hostId:S.playerId, maxPlayers:players.length, turnTimer:30, settings, players, phase:'lobby',
+  const game = { code:S.code, hostId:S.playerId, maxPlayers:players.length, turnTimer:30, settings, gameConfig: config, players, phase:'lobby',
     turnIndex:0, round:1, currentAction:null, ownership:{}, auction:null, trade:null, winnerId:null, turnDeadline:null,
     createdAt:now(), updatedAt:now() };
   await set(gameRef(S.code), game);
@@ -261,11 +275,24 @@ export async function startGame() {
   const players = startingPlayers(game.players);
   await commit(game.code, { players, phase:'playing', turnIndex:0, round:1, currentAction:null, ownership:null, buildings:null,
     auction:null, trade:null, swap:null, event:null, extraRoll:null, turnRolled:null, lastRoll:null, winnerId:null,
-    hostMem:null, turnDeadline:deadline(game), updatedAt:now() });
+    hostMem:null, ...clearTransient(), turnDeadline:deadline(game), updatedAt:now() });
   const max = roundsOf(game);
   const late = players.slice(1).map((p, i) => `${p.name} +${(i + 1) * LATE_BONUS} $`).join(', ');
   pushHistory(game.code, `La partie commence : ${targetOf(game)} $ de fortune nette${max ? ` ou ${max} manches` : ', sans limite de manches'}. `
     + `Ordre tiré au sort : ${players.map(p => p.name).join(' → ')}.${late ? ` Bonus de retard : ${late}.` : ''}`, { t:'begin' });
+  if (on(game, 'secretBonuses')) {
+    pushHistory(game.code, `Primes secrètes en jeu (+${BONUS_VALUE} $ chacune, révélées à la fin) : ${BONUSES.map(b => b.label).join(', ')}.`, { t:'bonus-announce' });
+  }
+}
+
+// Revanche : meme salon, meme configuration, relancee aussitot.
+export async function rematch() {
+  if (!S.game || !S.isHost) return;
+  const code = S.game.code;
+  await restartGame();
+  const end = now() + 5000;
+  while (now() < end && !(S.game && S.game.code === code && S.game.phase === 'lobby')) await new Promise(r => setTimeout(r, 80));
+  if (S.game && S.game.phase === 'lobby') return startGame();
 }
 
 // Relance une partie terminee en repartant du salon, sans perdre les joueurs.
@@ -273,11 +300,11 @@ export async function restartGame() {
   const game = S.game;
   if (!game || !S.isHost) return;
   resetGuards();
-  const players = game.players.map(p => ({ ...p, position:START_INDEX, cash:START_CASH, jailTurns:0, inJail:false,
+  const players = game.players.map(p => ({ ...p, position:START_INDEX, cash:START_CASH, jailTurns:0, inJail:false, ghost:null, hauntRound:null,
     bankrupt:false, skipNext:null, rentBoost:null }));
   await commit(game.code, { players, phase:'lobby', turnIndex:0, round:1, currentAction:null, ownership:null, buildings:null,
     auction:null, trade:null, swap:null, event:null, extraRoll:null, turnRolled:null, lastRoll:null, winnerId:null,
-    history:null, hostMem:null, turnDeadline:null, updatedAt:now() });
+    history:null, hostMem:null, ...clearTransient(), turnDeadline:null, updatedAt:now() });
   toast('Nouvelle partie prête.');
 }
 
@@ -329,6 +356,7 @@ export async function rollDice(by = S.playerId) {
   const player = me(game, by);
   if (player.inJail) { toast('Règle d’abord ta situation en prison.'); return; }
   if (game.currentAction || openBlocking(game)) { toast('Termine d’abord l’action en cours.'); return; }
+  if (dealPending(game, player.id)) { toast('Réponds d’abord au pacte du présentateur.'); return; }
   rolling = true;
   try {
     const die = Math.ceil(Math.random() * 6);
@@ -346,6 +374,7 @@ export async function rollDice(by = S.playerId) {
       turnDeadline: deadline(game), updatedAt: now(),
     };
     if (passedStart) updates[`players/${idx}/cash`] = player.cash + START_BONUS;
+    Object.assign(updates, lockBetsUpdates(game, player, die, rollId));   // paris : fermes au tirage
     await commit(game.code, updates);
     pushHistory(game.code, `${player.name} lance ${die} et avance de ${die} case${die > 1 ? 's' : ''} jusqu’à ${BOARD[nextPos].name}.`,
       { t:'roll', p: player.id, v: die, pos: nextPos });
@@ -356,11 +385,15 @@ export async function rollDice(by = S.playerId) {
   } finally { rolling = false; }
 }
 
-export async function handleLanding(position) {
+export async function handleLanding(position, { skipDuel = false, skipHaunt = false } = {}) {
   const game = S.game;
   const player = currentPlayer(game);
   const idx = game.turnIndex;
   const square = BOARD[position];
+  // Duel (mecanique optionnelle) : il passe avant la case, qui est resolue ensuite par l'hote.
+  if (!skipDuel && await maybeStartDuel(game, player, position)) return;
+  // Case hantee par un fantome : -50 $, puis la case est resolue avec l'argent a jour.
+  if (!skipHaunt && await maybeHaunt(game, player, position)) return handleLanding(position, { skipDuel: true, skipHaunt: true });
   if (square.type === 'start') return endTurn(game, {}, [{ text:`${player.name} s’arrête pile sur le Départ.`, meta:{ t:'land', p: player.id, pos: position } }]);
   if (isOwnable(square)) {
     const owner = ownerOf(game, position);
@@ -403,6 +436,13 @@ async function payRent(game, position) {
 }
 
 async function handleEvent(game, position) {
+  // Case EVENT enrichie : un mini-jeu pour toute la table, une bulle / un krach, ou l'evenement d'argent d'origine.
+  const mini = on(game, 'eventMinigames'), market = on(game, 'marketCrash');
+  if (mini || market) {
+    const r = Math.random();
+    if (mini && r < (market ? 0.55 : 0.65)) return startEventMinigame(game);
+    if (market && r < (mini ? 0.8 : 0.45)) return startMarket(game);
+  }
   const effects = [
     { text:'touche un dividende', amount:120 }, { text:'subit une rénovation imprévue', amount:-100 },
     { text:'voit son commerce prospérer', amount:140 }, { text:'reçoit une amende municipale', amount:-130 },
@@ -509,6 +549,7 @@ export async function startAuction(by = S.playerId) {
   const square = BOARD[a.position];
   const nextBid = Math.max(20, Math.ceil(square.price * 0.3));
   const auction = { status:'open', position:a.position, nextBid, highestBid:0, highestBidder:null, endAt: now() + AUCTION_DURATION * 1000 };
+  if (on(game, 'extendedAuctions')) Object.assign(auction, { id: makeId(), log: [], passes: {}, by });
   await commit(game.code, { auction, currentAction:null, updatedAt:now() });
   pushHistory(game.code, `${me(game, by).name} met ${square.name} aux enchères.`, { t:'auction-open', p: by, pos: a.position });
 }
@@ -522,6 +563,13 @@ export async function placeBid(amount, by = S.playerId) {
   if (!Number.isFinite(bid)) { toast('Montant invalide.'); return; }
   if (player.cash < bid) { toast('Pas assez de liquidités.'); return; }
   if (bid < game.auction.nextBid) { toast('Offre trop faible.'); return; }
+  if (on(game, 'extendedAuctions')) {
+    const { outcome } = await placeBidExtended(game, bid, by);
+    if (outcome === 'ok' || outcome === 'extended') {
+      pushHistory(game.code, `${player.name} enchérit ${bid} $.${outcome === 'extended' ? ' Prolongation : +5 s !' : ''}`, { t:'bid', p: by, amt: bid, pos: game.auction.position, ext: outcome === 'extended' });
+    }
+    return;
+  }
   await commit(game.code, { auction: { ...game.auction, highestBid: bid, highestBidder: by, nextBid: bid + 10 }, updatedAt: now() });
   pushHistory(game.code, `${player.name} enchérit ${bid} $.`, { t:'bid', p: by, amt: bid, pos: game.auction.position });
 }
@@ -708,15 +756,19 @@ export function hostArbitrate(game, fromTick = false) {
   maybeRescueWheel(game);
   maybeBankrupt(game);
   maybeFinishGame(game);
+  partyArbitrate(game);
   if (fromTick) enforceTurnDeadline(game);
 }
 
 function maybeResolveAuction(game) {
   const auction = game.auction;
-  if (!auction || auction.status !== 'open' || now() <= auction.endAt) return;
-  const key = `${auction.position}@${auction.endAt}`;
+  if (!auction || auction.status !== 'open') return;
+  const early = auctionDone(game);
+  if (!early && now() <= auction.endAt) return;
+  const key = auction.id || `${auction.position}@${auction.endAt}`;
   if (guards.auction === key) return;
   guards.auction = key;
+  if (on(game, 'extendedAuctions')) return resolveAuctionOnce(game, auction, early);
   const winner = auction.highestBidder ? playerById(game, auction.highestBidder) : null;
   const extra = { 'auction/status':'closed' };
   let text = `Aucune offre pour ${BOARD[auction.position].name}.`;
@@ -728,6 +780,33 @@ function maybeResolveAuction(game) {
     text = `${winner.name} remporte ${BOARD[auction.position].name} pour ${auction.highestBid} $.`;
   } else if (winner) text = `${winner.name} ne peut plus payer : ${BOARD[auction.position].name} reste à la banque.`;
   endTurn(game, extra, [{ text, meta:{ t:'auction', p: winner && winner.id, pos: auction.position, amt: auction.highestBid } }]);
+}
+
+// Mode tendu : la cloture passe par une transaction (open -> closing). Si deux
+// arbitrages se croisaient, un seul gagne et ecrit le resultat.
+async function resolveAuctionOnce(game, auction, early) {
+  let mine = false;
+  try {
+    await runTransaction(ref(db, `banqueroll/${game.code}/auction/status`), st => {
+      mine = st === 'open';
+      return mine ? 'closing' : undefined;
+    });
+  } catch (e) { guards.auction = null; return; }      // transaction annulee : l'hote reessaiera
+  if (!mine) return;
+  const fresh = S.game;
+  const a = fresh.auction || auction;
+  const winner = a.highestBidder ? playerById(fresh, a.highestBidder) : null;
+  const extra = { 'auction/status':'closed', 'auction/closedAt': now(), 'auction/early': !!early };
+  const sq = BOARD[a.position].name;
+  let text = `Personne ne veut de ${sq} : la case reste à la banque.`;
+  if (winner && winner.cash >= a.highestBid) {
+    const wi = indexOfPlayer(fresh, winner.id);
+    extra[`ownership/${a.position}`] = winner.id;
+    extra[`players/${wi}/cash`] = winner.cash - a.highestBid;
+    extra['auction/winner'] = winner.id;
+    text = `Adjugé ! ${winner.name} remporte ${sq} pour ${a.highestBid} $${early ? ' : tous les autres ont passé' : ''}.`;
+  } else if (winner) text = `${winner.name} ne peut plus payer : ${sq} reste à la banque.`;
+  endTurn(fresh, extra, [{ text, meta:{ t:'auction', p: winner && winner.id, pos: a.position, amt: a.highestBid, early: !!early } }]);
 }
 
 function maybeResolveTradeTimeout(game) {
@@ -767,10 +846,16 @@ function maybeRescueWheel(game) {
 function maybeBankrupt(game) {
   game.players.forEach((player, idx) => {
     if (!isBankrupt(game, player) || guards.bankrupt.has(player.id)) return;
+    // Un testament a la fois : la faillite suivante attend la fin du precedent.
+    if (willOpen(game)) return;
     guards.bankrupt.add(player.id);
-    let extra = bankruptcyUpdates(game, player);
-    if (game.trade && game.trade.status === 'pending' && [game.trade.fromId, game.trade.toId].includes(player.id)) extra['trade/status'] = 'cancelled';
-    if (game.swap && game.swap.status === 'open' && game.swap.ownerId === player.id) extra['swap/status'] = 'cancelled';
+    const cancels = {};
+    if (game.trade && game.trade.status === 'pending' && [game.trade.fromId, game.trade.toId].includes(player.id)) cancels['trade/status'] = 'cancelled';
+    if (game.swap && game.swap.status === 'open' && game.swap.ownerId === player.id) cancels['swap/status'] = 'cancelled';
+    // Testament : le joueur choisit son heritier (s'il a quelque chose a leguer).
+    if (on(game, 'testament') && ownedBy(game, player.id).length) { openWill(game, player, idx, cancels); return; }
+    let extra = { ...bankruptcyUpdates(game, player), ...cancels };
+    if (on(game, 'ghost')) extra[`players/${idx}/ghost`] = true;
     const line = { text:`${player.name} fait faillite (${player.cash} $, fortune ${netWorth(game, player)} $). Ses propriétés retournent à la banque.`,
       meta:{ t:'bankrupt', p: player.id, amt: player.cash } };
     if (game.turnIndex === idx) { endTurn(game, extra, [line], { advance: true }); return; }
@@ -781,12 +866,25 @@ function maybeBankrupt(game) {
 
 // Seul l'hote ecrit le resultat.
 function maybeFinishGame(game) {
+  if (willOpen(game)) return;                     // le testament peut changer le classement
   const result = winnerCheck(game);
   if (!result || guards.finished === game.code) return;
   guards.finished = game.code;
-  const w = result.winner;
-  commit(game.code, { phase:'finished', winnerId: w.id, currentAction:null, turnDeadline:null, updatedAt:now() });
-  const worth = netWorth(game, w);
+  let w = result.winner;
+  const extra = {};
+  let after = game;
+  // Primes secretes : +300 $ par categorie. Hors « dernier survivant », le classement est
+  // recalcule apres les primes : la victoire peut basculer a la derniere seconde.
+  if (on(game, 'secretBonuses')) {
+    const bonuses = secretBonuses(game);
+    Object.assign(extra, bonusUpdates(game, bonuses), { bonuses });
+    after = applyUpdates(game, extra);
+    if (result.reason !== 'survivor') w = ranking(after)[0] || w;
+  }
+  const trail = {};
+  after.players.forEach(p => { trail[p.id] = p.bankrupt ? Math.min(0, p.cash || 0) : netWorth(after, p); });
+  commit(game.code, { ...extra, 'trail/final': trail, phase:'finished', winnerId: w.id, finishedAt: now(), currentAction:null, turnDeadline:null, updatedAt:now() });
+  const worth = netWorth(after, w);
   const text = result.reason === 'target' ? `${w.name} atteint ${targetOf(game)} $ de fortune nette et remporte la partie.`
     : result.reason === 'survivor' ? `${w.name} reste seul en lice et remporte la partie.`
     : `Fin des ${roundsOf(game)} manches : ${w.name} gagne avec ${worth} $ de fortune nette.`;
@@ -831,3 +929,13 @@ export function sendChat(text) {
 }
 
 export { WHEEL };
+
+// ================================================================ choix du mode
+// preset : classic | chaos | party | custom (picks = cles choisies a la main).
+export function chooseMode(preset, picks = []) {
+  const config = makeConfig(preset, picks);
+  const kind = pending.kind;
+  pending.kind = null;
+  if (kind === 'bots') return createBotGame(config);
+  return createGame(config);
+}

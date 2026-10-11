@@ -14,8 +14,9 @@
 import { BOARD, de, START_INDEX, crossesStart, isPublic, isOwnable } from './board.js';
 import {
   START_BONUS, ownedBy, levelOf, playerById, indexOfPlayer, alivePlayers, netWorth,
-  tradeable, jailUpdates, buildCost,
+  tradeable, jailUpdates, buildCost, ranking, rentFor,
 } from './rules.js';
+import { on } from './config.js';
 
 // ------------------------------------------------------------ outils
 function ledger(game) {
@@ -74,6 +75,25 @@ export const CARDS = [
     run(g, me, i, L) { return moveTo(g, L, i, me.position, START_INDEX); } },
   { id:'jail', title:'Garde à vue', text:'Va directement en prison. Ne touche pas les 200 $.',
     run(g, me, i, L) { Object.entries(jailUpdates(g, i)).forEach(([k, v]) => L.set(k, v)); return 'end'; } },
+  // Carapace du leader (mecanique optionnelle, rare) : jamais tirees normalement.
+  { id:'audit', special:true, title:'Contrôle fiscal du leader', text:'Le joueur en tête perd 15 % de son argent.',
+    run(g, me, i, L) {
+      const lead = ranking(g)[0];
+      if (!lead || lead.id === me.id) return 'end';
+      const j = indexOfPlayer(g, lead.id);
+      L.add(j, -Math.max(0, Math.round(L.cash(j) * 0.15)));
+      return 'end';
+    } },
+  { id:'squat', special:true, title:'Squat', text:'Tu encaisses une fois le loyer de la plus belle propriété du leader.',
+    run(g, me, i, L) {
+      const lead = ranking(g)[0];
+      if (!lead || lead.id === me.id) return 'end';
+      const best = ownedBy(g, lead.id).map(pos => ({ pos, r: rentFor(g, pos) })).sort((a, b) => b.r - a.r)[0];
+      const amt = best ? best.r : 50;
+      const j = indexOfPlayer(g, lead.id);
+      L.add(j, -amt); L.add(i, amt);
+      return 'end';
+    } },
   { id:'transit', title:'Correspondance', text:'Avance jusqu’à la prochaine propriété publique.',
     run(g, me, i, L) {
       let to = me.position;
@@ -223,8 +243,13 @@ export function raidTargets(game, me) {
 export function drawChance(game, playerId, rng = Math.random) {
   const me = playerById(game, playerId);
   const r = rng();
+  // Carapace du leader : rare (1 tirage sur 10), et seulement pour un joueur qui n'est pas en tete.
+  if (on(game, 'blueShell')) {
+    const lead = ranking(game)[0];
+    if (lead && lead.id !== playerId && rng() < 0.1) return { kind:'card', key: rng() < 0.5 ? 'audit' : 'squat', detail:{} };
+  }
   if (r < 0.42) {
-    const card = pick(CARDS, rng);
+    const card = pick(CARDS.filter(c => !c.special), rng);
     return { kind:'card', key: card.id, detail:{} };
   }
   if (r < 0.74) {
@@ -260,6 +285,14 @@ export function resolveCard(game, playerId, cardId) {
   const delta = L.cash(i) - before;
   let text = `${me.name} pioche « ${card.title} » : ${card.text}`;
   if (card.id === 'repairs') text = delta ? `${me.name} subit une inspection : ${money(delta)} pour ses bâtiments.` : `${me.name} subit une inspection. Rien à inspecter. C’est presque triste.`;
+  if (card.special) {
+    const lead = ranking(game)[0];
+    const j = lead ? indexOfPlayer(game, lead.id) : -1;
+    const hit = j >= 0 && L.updates[`players/${j}/cash`] !== undefined ? L.cash(j) - (game.players[j].cash || 0) : 0;
+    text = card.id === 'audit' ? `${me.name} déclenche un contrôle fiscal : ${lead ? lead.name : 'le leader'} perd ${Math.abs(hit)} $.`
+      : `${me.name} squatte chez ${lead ? lead.name : 'le leader'} et encaisse ${Math.abs(hit)} $ de loyer.`;
+    return { updates: L.updates, text, then, meta:{ t:'chance', kind:'card', key: card.id, p: playerId, o: lead ? lead.id : null, amt: delta, hit } };
+  }
   return { updates: L.updates, text, then, meta:{ t:'chance', kind:'card', key: card.id, p: playerId, amt: delta } };
 }
 

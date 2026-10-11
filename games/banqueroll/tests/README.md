@@ -56,6 +56,37 @@ node games/banqueroll/tests/test-browser.js
 Variables d'environnement : `BQ_URL` (défaut `http://localhost:4173/games/banqueroll/?ai=off`),
 `CHROME_PATH`, `CDP_PORT` (défaut 9222), `AI_MOCK_PORT` (défaut 8787).
 
+### Mécaniques de party (modes Chaos, Party, Personnalisé)
+
+```bash
+node games/banqueroll/tests/check-party.js       # 60 contrôles purs, sans navigateur (~1 s)
+node games/banqueroll/tests/test-party.js --lot=all          # tous les lots, Chrome réel
+node games/banqueroll/tests/test-party.js --lot=2 --shots    # un lot, + captures
+```
+
+`check-party` importe `config.js`, `party.js`, `minigames.js` et `stats.js` (avec un faux
+`localStorage`) : presets et `gameConfig` immuable, 7 mini-jeux et leurs paiements, duel,
+testament, fantômes, paris, Money Time, facteurs de loyer, carapace du leader, bulle et
+krach, pactes du présentateur, primes secrètes, récapitulatif et carnet local.
+
+`test-party` rejoue chaque lot dans deux fenêtres :
+
+| Lot | Contenu |
+|---|---|
+| 0 | écran « Comment voulez-vous jouer ? », presets, personnalisé, config figée, ancienne partie = Classique |
+| 1 | réactions rapides (anti-spam, cible), enchères étendues (prolongation, « je passe », adjugé) |
+| 2 | 7 mini-jeux d'EVENT (le dernier paie 100 $), duel sur une case occupée, bots |
+| 3 | testament (héritier, délai → banque), fantômes (hantise, pénalité) |
+| 4 | paris sur le tour d'un autre, Money Time (loyers ×2), carapace du leader (audit, squat) |
+| 5 | bulle et krach d'un groupe, pacte du présentateur (accepté, refusé, annulé) |
+| 6 | primes secrètes, récapitulatif (podium, courbe, titres), revanche, rivalités |
+| 7 | Classique : aucune mécanique nouvelle ne s'active, règles d'origine intactes |
+
+`--debug` affiche l'état Firebase en cas d'échec. Pour déterminiser un tirage, la suite
+truque `Math.random` dans la page du joueur **qui n'est pas l'hôte** et remplit le
+tirage de valeurs identiques : le présentateur et l'animation du dé consomment aussi
+des nombres aléatoires.
+
 ```bash
 node games/banqueroll/tests/ai-mock.js
 ```
