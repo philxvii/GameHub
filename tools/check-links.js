@@ -90,7 +90,7 @@ else {
 // Icones du site : a la racine, c'est la que les navigateurs vont chercher /favicon.ico
 // (toutes les pages des jeux en heritent sans lien dans leur HTML).
 const siteIcons = ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png'];
-const allowed = new Set(['index.html', '404.html', 'CNAME', 'README.md', 'games', 'tools', 'shared', ...siteIcons]);
+const allowed = new Set(['index.html', '404.html', 'CNAME', 'README.md', 'LICENSE', 'games', 'tools', 'shared', ...siteIcons]);
 const stray = fs.readdirSync(ROOT).filter(f => !f.startsWith('.') && !allowed.has(f));
 check('Racine propre : aucun code de jeu ni fichier en trop', stray.length === 0, stray.length ? 'en trop : ' + stray.join(', ') : '');
 
