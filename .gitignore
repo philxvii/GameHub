@@ -1,0 +1,17 @@
+# Notes et réglages locaux
+.claude/
+.vscode/
+.idea/
+
+# Captures des tests
+games/*/tests/shots/
+
+# Outillage local
+node_modules/
+.wrangler/
+.dev.vars
+
+# Système
+.DS_Store
+Thumbs.db
+*.backup

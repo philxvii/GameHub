@@ -3,12 +3,13 @@
 //
 //   node tools/check-links.js
 //
-// Couvre : liens du hub, pages relais a la racine (anciennes URL), et pour
+// Couvre : liens du hub, redirection des anciennes URL par 404.html, et pour
 // chaque jeu de games/<jeu>/ : href / src du HTML, url() des CSS, imports des
 // modules JS. Signale aussi tout code de jeu laisse a la racine.
 
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
 const GAMES = path.join(ROOT, 'games');
@@ -56,35 +57,44 @@ check('Hub : chaque carte mene a games/<jeu>/',
   hubLinks.length > 0 && hubLinks.every(u => u.startsWith('games/') && resolves(hub, u)),
   `${hubLinks.length} cartes${hubLinks.filter(u => !resolves(hub, u)).map(u => ' ; casse : ' + u).join('')}`);
 
-// 2. Chaque dossier de games/ a son entree, et chaque jeu son ancienne URL relais.
+// 2. Chaque dossier de games/ a son entree.
 const games = fs.readdirSync(GAMES, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name);
 const noEntry = games.filter(g => !fs.existsSync(path.join(GAMES, g, 'index.html')));
 check('Chaque jeu a games/<jeu>/index.html', noEntry.length === 0, `${games.length} jeux${noEntry.length ? ' ; sans entree : ' + noEntry.join(', ') : ''}`);
 
-const relays = fs.readdirSync(ROOT).filter(f => f.endsWith('.html') && f !== 'index.html');
-const badRelays = relays.filter(f => {
-  const s = fs.readFileSync(path.join(ROOT, f), 'utf8');
-  const m = s.match(/location\.replace\('([^']+)' \+ location\.search \+ location\.hash\)/);
-  return !m || m[1] !== `games/${f.replace('.html', '')}/` || !resolves(path.join(ROOT, f), m[1]) || s.length > 1500;
-});
-const missingRelays = games.filter(g => !relays.includes(g + '.html'));
-check('Pages relais : ancienne URL -> games/<jeu>/ avec ?query et #hash',
-  badRelays.length === 0 && missingRelays.length === 0,
-  `${relays.length} relais${badRelays.length ? ' ; invalides : ' + badRelays.join(', ') : ''}${missingRelays.length ? ' ; manquants : ' + missingRelays.join(', ') : ''}`);
+// 3. Anciennes URL publiques : 404.html (servie par GitHub Pages pour toute adresse
+//    inconnue) renvoie /<jeu>.html et /<jeu>/ vers /games/<jeu>/ en gardant ?query et #hash.
+//    On execute son script avec de fausses adresses.
+const page404 = path.join(ROOT, '404.html');
+const redirectOf = (pathname, search = '', hash = '') => {
+  const script = (fs.readFileSync(page404, 'utf8').match(/<script>([\s\S]*?)<\/script>/) || [])[1] || '';
+  let to = null;
+  vm.runInNewContext(script, { location: { pathname, search, hash, replace: u => { to = u; } } });
+  return to;
+};
+if (!fs.existsSync(page404)) check('404.html : redirection des anciennes URL', false, 'absente');
+else {
+  const wrong = [];
+  for (const g of games) {
+    for (const old of [`/${g}.html`, `/${g}/`, `/${g}`, `/${g}/index.html`]) {
+      const to = redirectOf(old, '?code=ABCD-12', '#j');
+      if (to !== `/games/${g}/?code=ABCD-12#j`) wrong.push(`${old} -> ${to}`);
+    }
+  }
+  for (const other of ['/', '/inconnu.html', '/games/uno/x', '/uno.html/x']) if (redirectOf(other) !== null) wrong.push(`${other} ne doit pas rediriger`);
+  check('404.html : /<jeu>.html et /<jeu>/ -> /games/<jeu>/ avec ?query et #hash', wrong.length === 0,
+    `${games.length} jeux${wrong.length ? ' ; ' + wrong.join(' ; ') : ''}`);
+}
 
-// 3. Plus aucun code de jeu a la racine : seulement le hub, les relais et les dossiers prevus.
+// 4. Racine : seulement le hub, la page 404, les icones et les dossiers prevus.
 // Icones du site : a la racine, c'est la que les navigateurs vont chercher /favicon.ico
 // (toutes les pages des jeux en heritent sans lien dans leur HTML).
 const siteIcons = ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png'];
-const allowed = new Set(['index.html', 'CNAME', 'CLAUDE.md', 'games', 'tools', 'shared', 'banqueroll', ...siteIcons, ...relays]);
+const allowed = new Set(['index.html', '404.html', 'CNAME', 'README.md', 'games', 'tools', 'shared', ...siteIcons]);
 const stray = fs.readdirSync(ROOT).filter(f => !f.startsWith('.') && !allowed.has(f));
-const bqDir = path.join(ROOT, 'banqueroll');
-const bqDirOk = !fs.existsSync(bqDir) || (fs.readdirSync(bqDir).join() === 'index.html'
-  && fs.readFileSync(path.join(bqDir, 'index.html'), 'utf8').includes("location.replace('../games/banqueroll/'"));
-check('Racine : aucun code de jeu', stray.length === 0 && bqDirOk,
-  stray.length ? 'en trop : ' + stray.join(', ') : 'banqueroll/ ne contient que le relais du raccourci /banqueroll/');
+check('Racine propre : aucun code de jeu ni fichier en trop', stray.length === 0, stray.length ? 'en trop : ' + stray.join(', ') : '');
 
-// 4. Dans chaque jeu, tout chemin relatif mene a un fichier, sans sortir du jeu
+// 5. Dans chaque jeu, tout chemin relatif mene a un fichier, sans sortir du jeu
 //    (sauf le retour au hub, ../../index.html).
 for (const g of games) {
   const files = walk(path.join(GAMES, g)).filter(f => /\.(html|css|js)$/.test(f));
