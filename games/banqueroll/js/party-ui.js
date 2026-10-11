@@ -15,6 +15,7 @@ import { recordGame } from './stats.js';
 import { sfx, isMuted, setMuted } from './sfx.js';
 import { HOST_AVATAR } from './render.js';
 import { MINIGAMES, MEMORY_COLORS } from './minigames.js';
+import { briefingCards, briefingActive, briefingPending } from './briefing.js';
 
 const $id = id => document.getElementById(id);
 const esc = v => String(v === undefined || v === null ? '' : v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -87,7 +88,21 @@ export function renderConfig(game) {
 
 // ================================================================ tampon de resolution
 // Le meme pour toutes les mecaniques : un cachet bref, en haut, qui ne bloque rien.
-export function showStamp({ kicker = '', title, text = '', tone = 'ink', ms = 2400, sound }) {
+// Les cachets passent l'un apres l'autre (avant, le second ecrasait le premier aussitot),
+// chacun le temps d'etre lu : ~ 55 ms par caractere, entre 3,2 et 7 s.
+const stampQueue = [];
+let stampBusy = false;
+export function showStamp(opts) {
+  if (document.hidden) return;                       // onglet masque : rien a lire, rien a empiler
+  stampQueue.push(opts);
+  if (stampQueue.length > 3) stampQueue.splice(0, stampQueue.length - 3);
+  if (!stampBusy) nextStamp();
+}
+function nextStamp() {
+  const s = stampQueue.shift();
+  if (!s) { stampBusy = false; return; }
+  stampBusy = true;
+  const { kicker = '', title, text = '', tone = 'ink', ms = 0, sound } = s;
   sfx(sound || (tone === 'green' ? 'win' : tone === 'red' ? 'lose' : 'stamp'));
   let el = $id('party-stamp');
   if (!el) {
@@ -99,7 +114,8 @@ export function showStamp({ kicker = '', title, text = '', tone = 'ink', ms = 24
   el.innerHTML = `${kicker ? `<span class="ps-kicker">${esc(kicker)}</span>` : ''}<strong class="ps-title">${esc(title)}</strong>${text ? `<span class="ps-text">${esc(text)}</span>` : ''}`;
   el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
   clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('on'), ms);
+  const read = Math.min(7000, Math.max(3200, 1800 + `${kicker} ${title} ${text}`.length * 55));
+  el._t = setTimeout(() => { el.classList.remove('on'); el._t = setTimeout(nextStamp, 300); }, Math.max(ms, read));
 }
 
 // ================================================================ reactions
@@ -477,7 +493,7 @@ function showMgResult(game, mg) {
     <div class="mg-head"><span class="mg-kicker">${mg.origin === 'duel' ? 'Duel · résultat' : 'Mini-jeu · résultat'}</span><h3>${esc(def.label)}</h3></div>
     <ol class="mg-rows">${rows}</ol><p class="mg-summary">${esc(res.text || '')}</p></div>`;
   clearTimeout(mgUI.closeTimer);
-  mgUI.closeTimer = setTimeout(closeMg, 4800);
+  mgUI.closeTimer = setTimeout(closeMg, 6500);
 }
 
 // ================================================================ testament
@@ -818,8 +834,89 @@ export function renderSoundButton() {
 
 // ================================================================ points d'entree
 // Appele apres le rendu principal a chaque mise a jour.
+// ================================================================ cartes de regles (lancement)
+// Un paquet a feuilleter : les bases, puis chaque mecanique active. Le premier tour attend
+// que tous les humains aient clique « Pret » (ou 60 s). Chacun feuillette a son rythme.
+const briefUI = { id: null, idx: 0, cards: [], timer: null };
+
+function renderBriefing(game) {
+  const ov = $id('brief-overlay');
+  if (!ov) return;
+  if (!briefingActive(game)) { closeBriefing(); return; }
+  const id = String(game.briefing.endAt);
+  if (briefUI.id !== id) {
+    Object.assign(briefUI, { id, idx: 0, cards: briefingCards(game) });
+    const cfg = gameConfig(game), preset = PRESETS[cfg.preset] || PRESETS.classic;
+    ov.innerHTML = `<div class="brief-box" role="dialog" aria-modal="true" aria-labelledby="brief-title">
+      <p class="brief-kicker">Avant de jouer · ${esc(preset.icon)} Mode ${esc(preset.label)}</p>
+      <div class="brief-card" id="brief-card" aria-live="polite"></div>
+      <div class="brief-nav">
+        <button class="btn btn-ghost" type="button" data-act="brief-prev" aria-label="Carte précédente">←</button>
+        <div class="brief-dots" id="brief-dots"></div>
+        <button class="btn btn-ghost" type="button" data-act="brief-next" aria-label="Carte suivante">→</button>
+      </div>
+      <button class="btn btn-gold btn-block btn-lg" type="button" id="brief-ready" data-act="brief-ready">Prêt !</button>
+      <p class="brief-wait" id="brief-wait"></p>
+    </div>`;
+    ov.hidden = false;
+    drawBriefCard();
+    clearInterval(briefUI.timer);
+    briefUI.timer = setInterval(() => S.game && updateBriefWait(S.game), 500);
+  }
+  updateBriefWait(game);
+}
+
+function drawBriefCard() {
+  const card = $id('brief-card'), dots = $id('brief-dots');
+  const c = briefUI.cards[briefUI.idx];
+  if (!card || !c) return;
+  const n = briefUI.cards.length;
+  card.classList.toggle('special', !!c.special);
+  card.innerHTML = `<span class="brief-count">${briefUI.idx + 1} / ${n}</span><span class="brief-icon" aria-hidden="true">${esc(c.icon)}</span>
+    <h3 id="brief-title">${esc(c.title)}</h3><ul>${c.lines.map(l => `<li class="${l.startsWith('• ') ? 'sub' : ''}">${esc(l.replace(/^• /, ''))}</li>`).join('')}</ul>`;
+  card.classList.remove('flip'); void card.offsetWidth; card.classList.add('flip');
+  if (dots) dots.innerHTML = briefUI.cards.map((x, i) => `<button type="button" class="brief-dot${i === briefUI.idx ? ' on' : ''}${x.special ? ' special' : ''}" data-act="brief-go" data-arg="${i}" aria-label="Carte ${i + 1} : ${esc(x.title)}"></button>`).join('');
+  document.querySelectorAll('[data-act="brief-prev"]').forEach(b => { b.disabled = briefUI.idx === 0; });
+  document.querySelectorAll('[data-act="brief-next"]').forEach(b => { b.disabled = briefUI.idx === n - 1; });
+}
+
+function updateBriefWait(game) {
+  const btn = $id('brief-ready'), wait = $id('brief-wait');
+  if (!btn || !wait || !briefingActive(game)) return;
+  const meReady = !!((game.briefing.ready || {})[S.playerId]);
+  const pending = briefingPending(game);
+  const left = Math.max(0, Math.ceil(((game.briefing.endAt || 0) - Date.now()) / 1000));
+  btn.disabled = meReady;
+  btn.textContent = meReady ? '✓ Prêt' : briefUI.idx === briefUI.cards.length - 1 ? 'Prêt !' : 'Je connais, prêt !';
+  wait.textContent = meReady
+    ? (pending.length ? `On attend ${pending.map(p => p.name).join(', ')}… départ dans ${left} s au plus tard.` : 'C’est parti !')
+    : `La partie démarre quand tout le monde est prêt, ou dans ${left} s.`;
+}
+
+function closeBriefing() {
+  const ov = $id('brief-overlay');
+  clearInterval(briefUI.timer);
+  briefUI.timer = null; briefUI.id = null;
+  if (ov && !ov.hidden) { ov.hidden = true; ov.innerHTML = ''; }
+}
+
+export function briefStep(delta) { briefGo(briefUI.idx + delta); }
+export function briefGo(i) {
+  const n = briefUI.cards.length;
+  if (!n) return;
+  briefUI.idx = Math.max(0, Math.min(n - 1, Number(i) || 0));
+  drawBriefCard();
+  if (S.game) updateBriefWait(S.game);
+}
+document.addEventListener('keydown', e => {
+  if (!briefUI.id || e.target.closest('input, textarea')) return;
+  if (e.key === 'ArrowRight') briefStep(1);
+  else if (e.key === 'ArrowLeft') briefStep(-1);
+});
+
 export function renderParty(game) {
   renderConfig(game);
+  if (game.phase !== 'playing') closeBriefing(); else renderBriefing(game);
   if (game.phase !== 'playing' && game.phase !== 'finished') { seenP.first = true; return; }
   wireMinigames();
   renderReactDock(game);
@@ -840,6 +937,7 @@ export function renderParty(game) {
 // Changement de partie : on oublie ce qui a ete vu.
 export function resetParty() {
   Object.assign(seenP, { first: true, reactions: new Set(), auction: null });
+  closeBriefing();
   stopAuctionTicker();
   reactTarget = null;
   hits.clear();

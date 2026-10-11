@@ -59,7 +59,7 @@ Variables d'environnement : `BQ_URL` (défaut `http://localhost:4173/games/banqu
 ### Mécaniques de party (modes Chaos, Party, Personnalisé)
 
 ```bash
-node games/banqueroll/tests/check-party.js       # 60 contrôles purs, sans navigateur (~1 s)
+node games/banqueroll/tests/check-party.js       # 69 contrôles purs, sans navigateur (~1 s)
 node games/banqueroll/tests/test-party.js --lot=all          # tous les lots, Chrome réel
 node games/banqueroll/tests/test-party.js --lot=2 --shots    # un lot, + captures
 ```
@@ -67,13 +67,16 @@ node games/banqueroll/tests/test-party.js --lot=2 --shots    # un lot, + capture
 `check-party` importe `config.js`, `party.js`, `minigames.js` et `stats.js` (avec un faux
 `localStorage`) : presets et `gameConfig` immuable, 7 mini-jeux et leurs paiements, duel,
 testament, fantômes, paris, Money Time, facteurs de loyer, carapace du leader, bulle et
-krach, pactes du présentateur, primes secrètes, récapitulatif et carnet local.
+krach, pactes du présentateur, primes secrètes, récapitulatif, carnet local et cartes de règles.
+
+Le briefing du lancement bloque le premier tour : `test-party` le saute (`noBrief`) sauf au
+lot 0, et `test-browser` le retire par l'API REST.
 
 `test-party` rejoue chaque lot dans deux fenêtres :
 
 | Lot | Contenu |
 |---|---|
-| 0 | écran « Comment voulez-vous jouer ? », presets, personnalisé, config figée, ancienne partie = Classique |
+| 0 | écran « Comment voulez-vous jouer ? », presets, personnalisé, config figée, ancienne partie = Classique, cartes de règles du lancement (dé bloqué, « Prêt » des deux joueurs, solo) |
 | 1 | réactions rapides (anti-spam, cible), enchères étendues (prolongation, « je passe », adjugé) |
 | 2 | 7 mini-jeux d'EVENT (le dernier paie 100 $), duel sur une case occupée, bots |
 | 3 | testament (héritier, délai → banque), fantômes (hantise, pénalité) |

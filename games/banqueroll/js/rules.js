@@ -152,7 +152,8 @@ export function openBlocking(game) {
     || (game.trade && game.trade.status === 'pending')
     || (game.swap && game.swap.status === 'open')
     || (game.minigame && (game.minigame.status === 'active' || game.minigame.status === 'resolving'))
-    || (game.will && game.will.status !== 'resolved'));
+    || (game.will && game.will.status !== 'resolved')
+    || (game.phase === 'playing' && !!game.briefing));       // cartes de regles du lancement
 }
 
 // Fin de tour : relance sur 6, joueurs en faillite et tours sautes.

@@ -6,7 +6,7 @@ import { BOARD, GROUPS, START_INDEX, JAIL_INDEX } from './board.js';
 import { ownedBy, playerById, indexOfPlayer, roundsOf, targetOf, ranking, netWorth } from './rules.js';
 
 // ================================================================ testament
-export const WILL_MS = 10000;
+export const WILL_MS = 15000;
 
 // Heritiers possibles : les joueurs encore en lice.
 export const willHeirs = (game, deceasedId) => (game.players || []).filter(p => p.id !== deceasedId && !p.bankrupt).map(p => p.id);
@@ -143,7 +143,7 @@ export const marketExpired = game => !!(game.market && game.market.group && (gam
 // ================================================================ pacte du presentateur
 // Le moteur (pas l'IA) propose un pari au joueur avant son lancer. 8 secondes pour repondre ;
 // le silence vaut refus. Regle a la fin du tour, sur la valeur du de deja tiree.
-export const DEAL_MS = 8000;
+export const DEAL_MS = 12000;
 export const DEALS = {
   six:  { label: 'Fais un 6', reward: 200, penalty: 100, test: v => v === 6 },
   high: { label: 'Fais 5 ou 6', reward: 120, penalty: 80, test: v => v >= 5 },

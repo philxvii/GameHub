@@ -115,6 +115,7 @@ async function suiteGameplay(A, B) {
   check('Deuxième joueur rejoint', joined.ecran === 's-lobby' && !joined.err, joined);
   await A.eval(`document.getElementById('start-game-btn').click(); return 1;`);
   await until(A, `__bq.S.game && __bq.S.game.phase==='playing'`);
+  await rest(code, '', 'PATCH', { briefing: null, turnDeadline: Date.now() + 600000 });   // cartes de regles : testees par test-party (lot 0)
   await sleep(1200);
   let g = await state(code);
   const ia = g.players.findIndex(p => p.name === 'Alice'), ib = 1 - ia;
@@ -453,6 +454,7 @@ async function suiteEnd(A, B, ctx) {
 async function suiteResponsive(A, B, ctx) {
   await A.eval(`if (__bq.S.game.phase === 'lobby') document.getElementById('start-game-btn').click(); return 1;`);
   await until(A, `__bq.S.game.phase==='playing'`);
+  await rest(await A.eval(`return __bq.S.code;`), '', 'PATCH', { briefing: null });
   await sleep(1500);
   const sizes = [[1366, 768, false, 600], [1600, 900, false, 760], [1920, 1080, false, 940], [360, 760, true, 330], [390, 844, true, 360], [430, 932, true, 400]];
   for (const [w, h, mobile, minBoard] of sizes) {
@@ -484,7 +486,7 @@ async function suiteNoGsap(b) {
   await until(A, `__bq.S.game.phase==='playing'`);
   const g = await rest(code, '');
   const ia = g.players.findIndex(p => p.name === 'Alice');
-  await rest(code, '', 'PATCH', { turnIndex: ia, turnDeadline: Date.now() + 600000 });
+  await rest(code, '', 'PATCH', { turnIndex: ia, briefing: null, turnDeadline: Date.now() + 600000 });
   await rest(code, `/players/${ia}`, 'PATCH', { position: 21 });
   await sleep(1300);
   await rig(A, [0.4]);
@@ -514,6 +516,7 @@ async function suiteBots(b) {
   // Le script joue l'humain (lancer, refuser les achats) jusqu'a ce que le bot ait joue un tour complet.
   const botPlayed = await until(P, `(() => {
     const { S, A } = __bq; const g = S.game; const cur = g.players[g.turnIndex]; const a = g.currentAction;
+    if (g.briefing) { A.briefReady(); return null; }
     if (cur && cur.id === S.playerId) {
       if (a && a.type === 'buy') A.startAuction(); else if (a && a.type === 'dilemma') A.chooseDilemma('B');
       else if (a && a.type === 'swapPick') A.skipSwap(); else if (a && a.type === 'steal') A.skipSteal();

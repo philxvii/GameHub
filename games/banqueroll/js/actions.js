@@ -22,6 +22,7 @@ import {
 } from './net.js';
 import { animateDiceRoll, toast, WHEEL_MS } from './fx.js';
 import { makeConfig, on } from './config.js';
+import { BRIEF_MS, briefingDone } from './briefing.js';
 import { BONUSES, BONUS_VALUE, secretBonuses, bonusUpdates } from './party.js';
 import { partyArbitrate, placeBidExtended, auctionDone, startEventMinigame, maybeStartDuel, openWill, willOpen, maybeHaunt, lockBetsUpdates, startMarket, dealPending } from './party-actions.js';
 
@@ -31,7 +32,7 @@ const WHEEL_FALLBACK_MS = 9000;  // l'hote termine une roue abandonnee apres ce 
 
 // Etat temporaire des mecaniques de party : remis a zero au lancement et a la revanche,
 // pour qu'aucune fenetre ni aucun effet ne survive a une partie.
-export const TRANSIENT_NODES = ['minigame', 'bets', 'deal', 'will', 'market', 'moneyTime', 'haunts', 'reactions', 'trail', 'bonuses', 'duelRoll'];
+export const TRANSIENT_NODES = ['briefing', 'minigame', 'bets', 'deal', 'will', 'market', 'moneyTime', 'haunts', 'reactions', 'trail', 'bonuses', 'duelRoll'];
 const clearTransient = () => Object.fromEntries(TRANSIENT_NODES.map(k => [k, null]));
 
 // Creation en deux temps : le formulaire est valide, puis l'ecran « Comment voulez-vous
@@ -273,9 +274,11 @@ export async function startGame() {
   resetGuards();
   if (game.players.length < 2) { toast('Il faut au moins 2 joueurs pour démarrer.'); return; }
   const players = startingPlayers(game.players);
+  // Cartes de regles d'abord : le premier tour (et son chrono) attend que chaque humain soit pret.
+  const briefing = { endAt: now() + BRIEF_MS, ready: Object.fromEntries(players.filter(p => p.bot).map(p => [p.id, true])) };
   await commit(game.code, { players, phase:'playing', turnIndex:0, round:1, currentAction:null, ownership:null, buildings:null,
     auction:null, trade:null, swap:null, event:null, extraRoll:null, turnRolled:null, lastRoll:null, winnerId:null,
-    hostMem:null, ...clearTransient(), turnDeadline:deadline(game), updatedAt:now() });
+    hostMem:null, ...clearTransient(), briefing, turnDeadline:null, updatedAt:now() });
   const max = roundsOf(game);
   const late = players.slice(1).map((p, i) => `${p.name} +${(i + 1) * LATE_BONUS} $`).join(', ');
   pushHistory(game.code, `La partie commence : ${targetOf(game)} $ de fortune nette${max ? ` ou ${max} manches` : ', sans limite de manches'}. `
@@ -283,6 +286,24 @@ export async function startGame() {
   if (on(game, 'secretBonuses')) {
     pushHistory(game.code, `Primes secrètes en jeu (+${BONUS_VALUE} $ chacune, révélées à la fin) : ${BONUSES.map(b => b.label).join(', ')}.`, { t:'bonus-announce' });
   }
+}
+
+// Cartes de regles lues : ce joueur est pret. Le briefing deja termine, on n'ecrit rien
+// (sinon le noeud renaitrait et bloquerait la partie jusqu'au tick suivant de l'hote).
+export async function briefReady(by = S.playerId) {
+  const game = S.game;
+  if (!game || !game.briefing || !by || (game.briefing.ready || {})[by]) return;
+  await commit(game.code, { [`briefing/ready/${by}`]: true });
+}
+
+// Hote : fin du briefing quand tous les humains sont prets ou que le delai est ecoule.
+// Le chrono du premier tour ne part qu'a ce moment-la.
+function maybeEndBriefing(game) {
+  if (!game.briefing || !briefingDone(game, now())) return;
+  const key = `brief:${game.briefing.endAt}`;
+  if (guards.briefing === key) return;
+  guards.briefing = key;
+  commit(game.code, { briefing: null, turnDeadline: deadline(game), updatedAt: now() });
 }
 
 // Revanche : meme salon, meme configuration, relancee aussitot.
@@ -750,6 +771,7 @@ export async function sellProperty(pos, by = S.playerId) {
 // ================================================================ arbitrage de l'hote
 export function hostArbitrate(game, fromTick = false) {
   if (!S.isHost || !game || game.phase !== 'playing') return;
+  maybeEndBriefing(game);
   maybeResolveAuction(game);
   maybeResolveTradeTimeout(game);
   maybeResolveSwap(game);

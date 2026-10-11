@@ -207,6 +207,28 @@ function makeGame(over = {}) {
   check('Carnet local : rivalité « Alice a ruiné Chloé »', ST.rivalryCount('Alice', 'Chloé') === 1 && ST.topRivalry(['Alice', 'Chloé', 'Bob']).n === 1);
   check('Carnet local : aucune donnée sensible (prénoms et compteurs seulement)', Object.keys(JSON.parse(store['banqueroll-stats-v1'])).sort().join() === 'players,rivals,seen');
 
+  // ---------------------------------------------------------------- cartes de regles du lancement
+  const BR = await load('briefing.js');
+  const CF = await load('config.js');
+  const deck = cfg => BR.briefingCards(makeGame({ gameConfig: CF.makeConfig(cfg) }));
+  const cl = deck('classic'), ch = deck('chaos'), pa = deck('party');
+  check('Cartes de règles : Classique = les 3 bases, sans mécanique', cl.length === 3 && cl.every(c => !c.special) && /3000\s\$/.test(cl[0].lines[0]) && /30 manches/.test(cl[0].lines[0]));
+  check('Cartes de règles : Chaos = bases + 12 mécaniques, paris expliqués en premier', ch.length === 15 && ch[3].key === 'betting'
+    && ch[3].lines.some(l => /×5/.test(l)) && ch[3].lines.some(l => /20\s\$ ou 50\s\$/.test(l)), ch.map(c => c.key).join());
+  check('Cartes de règles : Party = une carte par mécanique active, rien de plus', pa.length === 3 + CF.PRESETS.party.keys.length && !pa.some(c => c.key === 'blueShell'));
+  check('Cartes de règles : chiffres tirés du moteur (pacte 12 s, testament 15 s, mini-jeu 100 $)',
+    ch.find(c => c.key === 'hostDeals').lines.some(l => /12 s/.test(l)) && ch.find(c => c.key === 'testament').lines.some(l => /15 s/.test(l))
+    && ch.find(c => c.key === 'eventMinigames').lines.some(l => /100\s\$/.test(l)));
+  check('Cartes de règles : texte court (≤ 6 lignes, ≤ 150 caractères par ligne)', ch.every(c => c.lines.length <= 6 && c.lines.every(l => l.length <= 150)));
+  const RL = await load('rules.js');
+  const bg = makeGame({ briefing: { endAt: Date.now() + 60000, ready: {} } });
+  bg.players[2].bot = true;
+  check('Briefing : bloque le lancer tant que tout le monde n’est pas prêt', RL.openBlocking(bg) && !BR.briefingDone(bg) && BR.briefingPending(bg).map(p => p.id).join() === 'a,b');
+  bg.briefing.ready = { a: true, b: true };
+  check('Briefing : terminé quand tous les humains sont prêts (les bots ne comptent pas)', BR.briefingDone(bg));
+  check('Briefing : terminé quand le délai est écoulé', BR.briefingDone(makeGame({ briefing: { endAt: 1, ready: {} } })));
+  check('Briefing : une partie sans briefing n’est pas bloquée', !RL.openBlocking(makeGame()) && BR.briefingDone(makeGame()));
+
   const passed = results.filter(Boolean).length;
   console.log(`\n===== PARTY (pur) : ${passed}/${results.length} =====`);
   process.exit(results.every(Boolean) ? 0 : 1);

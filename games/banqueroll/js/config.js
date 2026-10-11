@@ -15,7 +15,7 @@ export const MECHANICS = [
   { key:'eventMinigames',   icon:'⚡', label:'Mini-jeux EVENT',    family:'show',    desc:'La case EVENT lance un mini-jeu pour toute la table. Le dernier paie.' },
   { key:'duel',             icon:'🤺', label:'Duels',              family:'show',    desc:'Deux pions sur la même case : duel de réflexe, 50 $ en jeu.' },
   { key:'betting',          icon:'🎲', label:'Paris',              family:'show',    desc:'Pendant le tour d’un autre, mise sur loyer, prison ou 6.' },
-  { key:'hostDeals',        icon:'🤝', label:'Pactes du présentateur', family:'show', desc:'Le présentateur propose un marché risqué. 8 secondes pour répondre.' },
+  { key:'hostDeals',        icon:'🤝', label:'Pactes du présentateur', family:'show', desc:'Le présentateur propose un marché risqué. 12 secondes pour répondre.' },
   { key:'testament',        icon:'📜', label:'Testament',          family:'show',    desc:'En faillite, tu choisis qui hérite de tes biens : la banque ou un joueur.' },
   { key:'ghost',            icon:'👻', label:'Fantômes',           family:'show',    desc:'Les joueurs en faillite restent et hantent une case par manche.' },
   { key:'secretBonuses',    icon:'🏅', label:'Primes secrètes',    family:'show',    desc:'Trois primes de 300 $ révélées à la fin. Le classement peut basculer.' },

@@ -241,7 +241,8 @@ function renderHud(game) {
   const cur = currentPlayer(game);
   const who = $id('turn-player');
   if (who) {
-    who.innerHTML = game.phase === 'playing' && cur
+    who.innerHTML = game.phase === 'playing' && game.briefing ? 'Lecture des règles'
+      : game.phase === 'playing' && cur
       ? `<i style="--pc:${esc(cur.color)}"></i>${cur.id === S.playerId ? 'À toi de jouer' : `Tour ${de(esc(cur.name))}`}`
       : game.phase === 'finished' ? 'Terminée' : 'Salon';
   }
@@ -251,7 +252,8 @@ function renderHud(game) {
   // affiche le temps qui compte vraiment, celui de l'enchere.
   const auctionOpen = game.auction && game.auction.status === 'open';
   const swapOpen = game.swap && game.swap.status === 'open';
-  const until = auctionOpen ? game.auction.endAt : swapOpen ? game.swap.endAt : game.turnDeadline;
+  // Cartes de regles du lancement : le bandeau compte le temps avant le depart.
+  const until = game.briefing ? game.briefing.endAt : auctionOpen ? game.auction.endAt : swapOpen ? game.swap.endAt : game.turnDeadline;
   const secs = end => Math.max(0, Math.round((end - Date.now()) / 1000));
   const tick = () => {
     if (!timer) return;
@@ -535,7 +537,7 @@ function renderOverlay(game) {
     const card = CARDS.find(c => c.id === ev.key) || { title:'Chance', text:'' };
     ov.dataset.mode = 'done-card';
     ov.innerHTML = `<div class="chance-card" data-act="overlay-close"><div class="cc-kicker">CHANCE · ${esc(player.name)}</div><div class="cc-mark">?</div><h3>${esc(card.title)}</h3><p>${esc(card.text)}</p><small>Toucher pour fermer</small></div>`;
-    overlayTimer = setTimeout(closeOverlay, 4200);
+    overlayTimer = setTimeout(closeOverlay, readMs(card.title, card.text));
     return;
   }
   if (ev.kind === 'dilemma') {
@@ -550,7 +552,7 @@ function renderOverlay(game) {
       <h3>${esc(d ? d.title : 'Dilemme')}</h3><p class="dilemma-prompt">${esc(d ? d.prompt : '')}</p>
       <div class="dilemma-options">${opts.map(o => `<button class="dopt${chosen === o.id ? ' chosen' : ''}${chosen && chosen !== o.id ? ' faded' : ''}" data-act="dilemma" data-arg="${o.id}" ${mine && ev.status === 'choose' ? '' : 'disabled'}><b>${o.id}</b><span>${esc(o.label)}</span></button>`).join('')}</div>
       <p class="dilemma-foot">${ev.status === 'choose' ? (mine ? 'CHOISIS TON MALHEUR.' : `${esc(player.name)} hésite…`) : esc(lastLine || '')}</p></div>`;
-    if (ev.status === 'done') overlayTimer = setTimeout(closeOverlay, 4200);
+    if (ev.status === 'done') overlayTimer = setTimeout(closeOverlay, readMs(d ? d.prompt : '', lastLine || '', ...opts.map(o => o.label)));
     return;
   }
   if (ev.kind === 'wheel') {
@@ -567,10 +569,15 @@ function renderOverlay(game) {
     if (ev.status === 'done') {
       // Le resultat s'affiche a la fin de l'animation (promesse de spinWheel), pas avant.
       ov.dataset.mode = 'done-wheel';
-      overlayTimer = setTimeout(closeOverlay, 4200);
+      // Le compte demarre a la fin de la rotation, pas a l'ecriture du tirage : sinon le resultat disparaissait aussitot affiche.
+      const spinLeft = Math.max(0, (ev.spinAt || 0) + WHEEL_MS - Date.now());
+      overlayTimer = setTimeout(closeOverlay, spinLeft + readMs(seg.label, seg.sub || ''));
     }
   }
 }
+
+// Temps de lecture d'une fenetre qui se ferme seule : ~ 55 ms par caractere, entre 4,5 et 9 s.
+const readMs = (...parts) => Math.min(9000, Math.max(4500, 2500 + parts.join(' ').length * 55));
 
 function showWheelResult(seg) {
   const res = $id('wheel-result');
@@ -598,7 +605,7 @@ function showEventCard(game, entry) {
   ov.dataset.mode = 'event';
   ov.innerHTML = `<div class="event-card ${amt >= 0 ? 'gain' : 'loss'}" data-act="overlay-close"><div class="cc-kicker">ÉVÈNEMENT · ${esc(who.name)}</div>
     <div class="ev-amount">${signed(amt)}</div><p>${esc(entry.text)}</p><small>Toucher pour fermer</small></div>`;
-  overlayTimer = setTimeout(closeOverlay, 3200);
+  overlayTimer = setTimeout(closeOverlay, readMs(entry.text));
 }
 
 export function overlayClose() { closeOverlay(); }

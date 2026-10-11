@@ -24,7 +24,7 @@ export function toast(message) {
   el.className = 'toast';
   el.textContent = message;
   host.appendChild(el);
-  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 260); }, 2600);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 260); }, Math.min(6000, Math.max(3500, 1800 + message.length * 50)));
 }
 
 // ================================================================ de 3D

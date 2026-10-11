@@ -86,9 +86,14 @@ async function joinVia(B, code, name = 'Bob') {
     document.querySelector('[data-act="join"]').click(); await new Promise(r=>setTimeout(r,2400));
     return document.querySelector('.screen.active').id;`);
 }
-async function startVia(A) {
+// Les cartes de regles du lancement bloquent le premier tour : les tests de mecaniques les
+// sautent (le lot 0 les teste a travers l'interface, avec brief: true).
+const noBrief = code => rest(code, '', 'PATCH', { briefing: null, turnDeadline: Date.now() + 600000 });
+async function startVia(A, { brief = false } = {}) {
   await A.eval(`document.getElementById('start-game-btn').click(); return 1;`);
-  return until(A, `__bq.S.game && __bq.S.game.phase==='playing'`, 6000);
+  const ok = await until(A, `__bq.S.game && __bq.S.game.phase==='playing'`, 6000);
+  if (ok && !brief) { await noBrief(await A.eval(`return __bq.S.code;`)); await sleep(600); }
+  return ok;
 }
 // Partie a deux, lancee, avec le mode demande. Renvoie les index et ids.
 async function duo(A, B, opts = {}) {
@@ -103,7 +108,7 @@ async function duo(A, B, opts = {}) {
 // Place un tour : joueur, position, argent ; plus aucune action ni enchere en cours.
 async function setTurn(code, i, patch = {}, extra = {}) {
   await rest(code, `/players/${i}`, 'PATCH', patch);
-  await rest(code, '', 'PATCH', { turnIndex: i, currentAction: null, turnRolled: null, extraRoll: null, event: null, swap: null, auction: null,
+  await rest(code, '', 'PATCH', { turnIndex: i, currentAction: null, turnRolled: null, extraRoll: null, event: null, swap: null, auction: null, briefing: null,
     turnDeadline: Date.now() + 600000, ...extra });
   await sleep(1200);
 }
@@ -136,9 +141,33 @@ async function lot0(b) {
   g = await state(code);
   check('Mode Chaos : toutes les mécaniques ON', Object.entries(g.gameConfig).filter(([k]) => k !== 'preset').every(([, v]) => v === true), g.gameConfig.preset);
   await joinVia(B, code);
-  await startVia(A);
+  await startVia(A, { brief: true });
   const hud = await until(B, `document.getElementById('hud-mode').textContent`, 4000);
   check('Mode Chaos : badge visible dans le bandeau des deux joueurs', /Chaos/.test(hud || ''), hud);
+  // Cartes de regles : chez les deux joueurs, avant le premier tour, qui attend que tous soient prets.
+  const deckOf = P => until(P, `(() => { const o = document.getElementById('brief-overlay'); return !o.hidden && document.querySelectorAll('#brief-dots .brief-dot').length; })()`, 5000);
+  const nA = await deckOf(A), nB = await deckOf(B);
+  check('Lancement : cartes de règles chez les deux joueurs (3 bases + 12 mécaniques)', nA === 15 && nB === 15, `${nA} / ${nB}`);
+  g = await state(code);
+  check('Lancement : pas de chrono ni de lancer tant que le briefing est ouvert', g.briefing && !g.turnDeadline, { briefing: !!g.briefing, deadline: g.turnDeadline });
+  await click(A, '[data-act="brief-next"]');
+  const card2 = await A.eval(`return document.querySelector('#brief-card h3').textContent;`);
+  await shot(A, 'party-lot0-briefing.png');
+  const cur = g.players[g.turnIndex];
+  const P1 = cur.name === 'Alice' ? A : B;
+  const before = (await state(code)).turnRolled;
+  await P1.eval(`__bq.A.rollDice(); return 1;`);
+  await sleep(900);
+  check('Lancement : le dé est refusé pendant le briefing', !(await state(code)).lastRoll && before == null);
+  await click(A, '#brief-ready');
+  await sleep(1200);
+  g = await state(code);
+  const waitTxt = await A.eval(`return document.getElementById('brief-wait').textContent;`);
+  check('Lancement : un joueur prêt attend l’autre (son nom est affiché)', g.briefing && g.briefing.ready && Object.keys(g.briefing.ready).length === 1 && /Bob/.test(waitTxt), waitTxt);
+  await click(B, '#brief-ready');
+  const gone = await until(A, `document.getElementById('brief-overlay').hidden && !__bq.S.game.briefing ? 1 : 0`, 5000);
+  g = await state(code);
+  check('Lancement : tous prêts → cartes fermées, le chrono du premier tour démarre', gone === 1 && !g.briefing && g.turnDeadline > Date.now(), { card2 });
   await A.eval(`__bq.A.leaveGame(); return 1;`); await B.eval(`__bq.A.leaveGame(); return 1;`);
   await sleep(600);
 
@@ -176,6 +205,11 @@ async function lot0(b) {
   if (solo) codes.add(solo);
   g = solo ? await state(solo) : {};
   check('Solo contre un bot : mode choisi puis partie lancée', g.gameConfig && g.gameConfig.preset === 'party' && g.phase === 'playing');
+  // Le bot est pret d'office ; le seul humain clique « Pret » et la partie part aussitot.
+  await until(A, `!document.getElementById('brief-overlay').hidden ? 1 : 0`, 4000);
+  await click(A, '#brief-ready');
+  const soloGo = await until(A, `!__bq.S.game.briefing && __bq.S.game.turnDeadline ? 1 : 0`, 5000);
+  check('Solo : le bot est prêt d’office, la partie démarre dès que l’humain est prêt', soloGo === 1);
   await A.eval(`__bq.A.leaveGame(); return 1;`);
   return [A, B];
 }
@@ -623,12 +657,12 @@ async function lot5(b) {
   await click(B, '#deal-overlay [data-act="deal"][data-arg="no"]');
   await sleep(900);
   check('Pacte : refus enregistré, la fenêtre se ferme', (await rest(code, '/deal')).status === 'refused' && (await B.eval(`return document.getElementById('deal-overlay').hidden;`)) === true);
-  // --- expiration : pas de reponse en 8 s -> refus
+  // --- expiration : pas de reponse en 12 s -> refus
   await setTurn(code, ib, { position: 15 });
   await A.eval(`__bq.PA.offerDeal(__bq.S.game, 'high'); return 1;`);
   const t3 = Date.now();
-  while (Date.now() - t3 < 13000) { d = await rest(code, '/deal'); if (d && d.status !== 'offer') break; await sleep(500); }
-  check('Pacte : silence pendant 8 s -> refus automatique', d && d.status === 'refused' && d.timeout === true, d && d.status);
+  while (Date.now() - t3 < 18000) { d = await rest(code, '/deal'); if (d && d.status !== 'offer') break; await sleep(500); }
+  check('Pacte : silence pendant 12 s -> refus automatique', d && d.status === 'refused' && d.timeout === true, d && d.status);
   return [A, B];
 }
 

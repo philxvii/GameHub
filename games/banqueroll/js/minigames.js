@@ -15,7 +15,7 @@ import { playerById, indexOfPlayer } from './rules.js';
 export const PENALTY = 100;      // le dernier paie 100 $, partages entre les autres
 export const DUEL_STAKE = 50;    // duel : le perdant paie 50 $ au gagnant
 export const BLIND_EXTRA = 50;   // enchere a l'aveugle : le plus petit paie 50 $ au gagnant
-export const INTRO_MS = 2600;    // annonce + compte a rebours avant le depart
+export const INTRO_MS = 4500;    // annonce + regle + compte a rebours : le temps de lire avant le depart
 
 const COLORS = [
   { id:'rouge', hex:'#C63A2F', shape:'●' }, { id:'bleu', hex:'#2F7FC1', shape:'■' },
