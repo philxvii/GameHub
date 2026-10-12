@@ -292,20 +292,8 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
-  authDomain:"undercover-game-b0d2a.firebaseapp.com",
-  databaseURL:"https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:"undercover-game-b0d2a",
-  storageBucket:"undercover-game-b0d2a.firebasestorage.app",
-  messagingSenderId:"195280531653",
-  appId:"1:195280531653:web:94d72b25760b05af6bc0ac"
-};
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+import { ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { db, freeRoomCode, createRoom, openRoom, closeRoom } from '../../shared/firebase.js';
 
 const GRID = 10;
 const SHIPS = [
@@ -340,13 +328,13 @@ window.createGame=async()=>{
   const errEl=document.getElementById('create-err');
   if(!name){errEl.style.display='block';errEl.textContent='Entre ton prénom.';return;}
   errEl.style.display='none';
-  const code=genCode();
+  const code=await freeRoomCode('bn', genCode);
   const game={code,players:[{name,ready:false},null],phase:'lobby',turn:0,
     grids:{0:emptyGrid(),1:emptyGrid()},
     shots:{0:emptyGrid(),1:emptyGrid()},
     ships:{0:null,1:null},
     createdAt:Date.now()};
-  await set(ref(db,`bn/${code}`),game);
+  await createRoom('bn', code, game);
   myCode=code;myName=name;myPnum=0;isHost=true;
   startListener(code);renderLobby(game);show('s-lobby');
 };
@@ -378,7 +366,7 @@ window.startPlacement=async()=>{
   await update(ref(db,`bn/${myCode}`),{phase:'placement'});
 };
 window.deleteGame=async()=>{
-  if(myCode)await remove(ref(db,`bn/${myCode}`));
+  if(myCode)await closeRoom('bn', myCode);
   myCode=null;currentGame=null;show('s-home');
 };
 
@@ -389,7 +377,7 @@ window.joinGame=async()=>{
   if(!code){errEl.style.display='block';errEl.textContent='Entre le code.';return;}
   if(!name){errEl.style.display='block';errEl.textContent='Entre ton prénom.';return;}
   errEl.style.display='none';show('s-joining');
-  const snap=await get(ref(db,`bn/${code}`));
+  const snap=await openRoom('bn', code);
   if(!snap.exists()){show('s-join');errEl.style.display='block';errEl.textContent='Code introuvable.';return;}
   const game=snap.val();
   const players=game.players||[];

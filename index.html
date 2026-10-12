@@ -173,9 +173,8 @@
 <div id="admin-gate" class="hidden">
   <div class="admin-gate-box">
     <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--accent);margin-bottom:0.5rem;">⚙ Admin</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:1.5rem;">Mot de passe requis</div>
-    <input type="password" id="admin-pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()"/>
-    <button onclick="adminLogin()" style="width:100%;padding:11px;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:#07090f;transition:all 0.15s;margin-bottom:8px;">Entrer</button>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:1.5rem;">Compte Google administrateur</div>
+    <button onclick="adminLogin()" style="width:100%;padding:11px;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:#07090f;transition:all 0.15s;margin-bottom:8px;">Se connecter avec Google</button>
     <div class="gate-error" id="admin-pwd-err" style="margin-top:0;"></div>
     <button onclick="closeAdminGate()" style="width:100%;padding:9px;border-radius:var(--r);font-size:13px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);margin-top:6px;">Annuler</button>
   </div>
@@ -408,22 +407,8 @@
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue, remove, increment, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
-  authDomain:"undercover-game-b0d2a.firebaseapp.com",
-  databaseURL:"https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:"undercover-game-b0d2a",
-  storageBucket:"undercover-game-b0d2a.firebasestorage.app",
-  messagingSenderId:"195280531653",
-  appId:"1:195280531653:web:94d72b25760b05af6bc0ac"
-};
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-const ADMIN_PASSWORD = "ADMINNXVI";
+import { ref, set, get, update, onValue, remove, increment, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { db, adminSignIn } from './shared/firebase.js';
 
 // All games with Firebase db paths
 const GAMES = [
@@ -503,25 +488,25 @@ onValue(ref(db, 'hub/updateLog'), snap => {
 // ── Admin ──
 window.openAdminGate = () => {
   document.getElementById('admin-gate').classList.remove('hidden');
-  setTimeout(() => document.getElementById('admin-pwd').focus(), 100);
 };
 window.closeAdminGate = () => {
   document.getElementById('admin-gate').classList.add('hidden');
-  document.getElementById('admin-pwd').value = '';
   document.getElementById('admin-pwd-err').textContent = '';
 };
-window.adminLogin = () => {
-  const pwd = document.getElementById('admin-pwd').value;
+// Les droits sont vérifiés par les règles de la base (admins/<uid>), pas ici.
+window.adminLogin = async () => {
   const errEl = document.getElementById('admin-pwd-err');
-  if(pwd !== ADMIN_PASSWORD){
-    errEl.textContent = 'Mot de passe incorrect.';
+  let res;
+  try { res = await adminSignIn(); }
+  catch (e) { errEl.textContent = 'Connexion Google annulée ou impossible.'; return; }
+  if(!res.isAdmin){
+    errEl.textContent = `Compte non autorisé. Pour l'autoriser : admins/${res.uid} = true dans la console Firebase.`;
     const box = document.querySelector('.admin-gate-box');
     box.style.animation='none'; box.offsetHeight; box.style.animation='shake 0.4s ease';
-    document.getElementById('admin-pwd').value = '';
     return;
   }
+  errEl.textContent = '';
   document.getElementById('admin-gate').classList.add('hidden');
-  document.getElementById('admin-pwd').value = '';
   openAdminPanel();
 };
 window.closeAdmin = () => { document.getElementById('admin-panel').classList.add('hidden'); };
@@ -618,6 +603,10 @@ window.loadParties = async () => {
 
 window.adminDeleteParty = async (dbPath, code) => {
   if(!confirm(`Supprimer la partie ${code} ?`)) return;
+  if(dbPath === 'games'){
+    await remove(ref(db, `ucSecret/${code}`));
+    await remove(ref(db, `ucHost/${code}`));
+  }
   await remove(ref(db, `${dbPath}/${code}`));
   logActivity('Partie', `${code} supprimée`, dbPath);
   loadParties(); loadAdminStats();
@@ -639,6 +628,7 @@ window.adminKickPlayer = async (dbPath, code, playerIdx) => {
 window.adminClearAllParties = async () => {
   if(!confirm('Supprimer TOUTES les parties ? Irréversible.')) return;
   for(const g of GAMES){ if(!g.db) continue; await remove(ref(db, g.db)); }
+  await remove(ref(db, 'ucSecret')); await remove(ref(db, 'ucHost'));
   logActivity('Global', 'Toutes les parties supprimées', 'toutes');
   loadParties(); loadAdminStats();
 };

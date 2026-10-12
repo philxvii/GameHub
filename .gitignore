@@ -10,6 +10,7 @@ games/*/tests/shots/
 node_modules/
 .wrangler/
 .dev.vars
+*-debug.log
 
 # Système
 .DS_Store

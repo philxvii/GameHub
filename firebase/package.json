@@ -1,0 +1,14 @@
+{
+  "name": "gamehub-firebase-rules",
+  "private": true,
+  "description": "Règles Realtime Database de GameHub et leurs tests dans l'émulateur",
+  "type": "module",
+  "scripts": {
+    "test": "firebase emulators:exec --only database --project demo-gamehub \"node --test --test-concurrency=1\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "6.0.0",
+    "firebase": "^13.0.0",
+    "firebase-tools": "15.33.0"
+  }
+}

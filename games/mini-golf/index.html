@@ -238,20 +238,8 @@ canvas#golf{display:block;width:100%;cursor:crosshair;}
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
-  authDomain:"undercover-game-b0d2a.firebaseapp.com",
-  databaseURL:"https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:"undercover-game-b0d2a",
-  storageBucket:"undercover-game-b0d2a.firebasestorage.app",
-  messagingSenderId:"195280531653",
-  appId:"1:195280531653:web:94d72b25760b05af6bc0ac"
-};
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+import { ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { db, freeRoomCode, createRoom, openRoom, closeRoom } from '../../shared/firebase.js';
 
 // ═══════════════════════════════════════
 // CONSTANTS
@@ -812,10 +800,10 @@ window.createGame=async()=>{
   if(!name){errEl.style.display='block';errEl.textContent='Entre ton prénom.';return;}
   if(isBannedName(name)){errEl.style.display='block';errEl.textContent=BANNED_MSG;return;}
   errEl.style.display='none';
-  const code=genCode();
+  const code=await freeRoomCode('mg', genCode);
   const player={name,scores:[],shots:0,ballX:HOLES[0].ball.x,ballY:HOLES[0].ball.y,finishedHole:false};
   const game={code,maxPlayers,players:[player],phase:'lobby',currentHole:1,currentPlayerTurn:0,createdAt:Date.now()};
-  await set(ref(db,`mg/${code}`),game);
+  await createRoom('mg', code, game);
   myCode=code;myName=name;myPnum=0;isHost=true;
   startListener(code);renderLobby(game);show('s-lobby');
 };
@@ -846,7 +834,7 @@ window.startGame=async()=>{
 
 window.deleteGame=async()=>{
   if(animRAF)cancelAnimationFrame(animRAF);
-  if(myCode)await remove(ref(db,`mg/${myCode}`));
+  if(myCode)await closeRoom('mg', myCode);
   myCode=null;currentGame=null;show('s-home');
 };
 
@@ -858,7 +846,7 @@ window.joinGame=async()=>{
   if(!name){errEl.style.display='block';errEl.textContent='Entre ton prénom.';return;}
   if(isBannedName(name)){errEl.style.display='block';errEl.textContent=BANNED_MSG;return;}
   errEl.style.display='none';show('s-joining');
-  const snap=await get(ref(db,`mg/${code}`));
+  const snap=await openRoom('mg', code);
   if(!snap.exists()){show('s-join');errEl.style.display='block';errEl.textContent='Code introuvable.';return;}
   const game=snap.val();const players=game.players||[];
   const ex=players.findIndex(p=>p&&p.name.toLowerCase()===name.toLowerCase());

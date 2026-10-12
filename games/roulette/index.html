@@ -343,20 +343,8 @@ canvas#rwheel{display:block;border-radius:50%;}
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
-  authDomain:"undercover-game-b0d2a.firebaseapp.com",
-  databaseURL:"https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:"undercover-game-b0d2a",
-  storageBucket:"undercover-game-b0d2a.firebasestorage.app",
-  messagingSenderId:"195280531653",
-  appId:"1:195280531653:web:94d72b25760b05af6bc0ac"
-};
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+import { ref, set, get, update, onValue, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { db, freeRoomCode, createRoom, openRoom, closeRoom } from '../../shared/firebase.js';
 
 // ═══════════════════════════════════════
 // WHEEL DATA — European roulette (official pocket order clockwise from 0)
@@ -867,9 +855,9 @@ window.createGame = async()=>{
     return;
 }
   errEl.style.display='none';
-  const code=genCode();
+  const code=await freeRoomCode('rl', genCode);
   const game={code,startBalance,spinDelay,players:[{name,balance:startBalance,bets:{},betTotal:0}],phase:'lobby',round:0,spinData:null,createdAt:Date.now()};
-  await set(ref(db,`rl/${code}`),game);
+  await createRoom('rl', code, game);
   myCode=code; myName=name; myPnum=0; isHost=true;
   startListener(code); renderLobby(game); show('s-lobby');
 };
@@ -888,7 +876,7 @@ function renderLobby(game){
 window.openTable = async()=>{ await update(ref(db,`rl/${myCode}`),{phase:'betting'}); };
 window.deleteGame = async()=>{
   clearInterval(countdownInterval); clearTimeout(autoSpinTimer);
-  if(myCode) await remove(ref(db,`rl/${myCode}`));
+  if(myCode) await closeRoom('rl', myCode);
   myCode=null; currentGame=null; show('s-home');
 };
 
@@ -903,7 +891,7 @@ window.joinGame = async()=>{
   return;
 }
   errEl.style.display='none'; show('s-joining');
-  const snap=await get(ref(db,`rl/${code}`)); if(!snap.exists()){ show('s-join'); errEl.style.display='block'; errEl.textContent='Code introuvable.'; return; }
+  const snap=await openRoom('rl', code, () => true); if(!snap.exists()){ show('s-join'); errEl.style.display='block'; errEl.textContent='Code introuvable.'; return; }
   const game=snap.val(); const players=game.players||[];
   const ex=players.findIndex(p=>p&&p.name.toLowerCase()===name.toLowerCase());
   if(ex!==-1){ myCode=code; myName=name; myPnum=ex; isHost=ex===0; startListener(code); return; }

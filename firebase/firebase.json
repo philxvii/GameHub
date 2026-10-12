@@ -1,0 +1,11 @@
+{
+  "database": {
+    "rules": "database.rules.transition.json"
+  },
+  "emulators": {
+    "database": { "port": 9000 },
+    "auth": { "port": 9099 },
+    "ui": { "enabled": false },
+    "singleProjectMode": true
+  }
+}

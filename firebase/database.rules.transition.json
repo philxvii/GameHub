@@ -1,0 +1,295 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "hub": {
+      "online": {
+        ".read": true,
+        "$key": {
+          ".write": "$key.matches(/^[a-z0-9]{1,16}$/)",
+          ".validate": "newData.hasChildren(['t'])",
+          "t": {
+            ".validate": "newData.isNumber()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      },
+      "stats": {
+        "visits": {
+          ".read": true,
+          ".write": "newData.isNumber() && ((!data.exists() && newData.val() === 1) || (data.isNumber() && newData.val() === data.val() + 1) || (auth != null && root.child('admins').child(auth.uid).val() === true && newData.val() === 0))"
+        }
+      },
+      "hidden": {
+        ".read": true,
+        ".write": "auth != null && root.child('admins').child(auth.uid).val() === true",
+        "$id": {
+          ".validate": "newData.isBoolean()"
+        }
+      },
+      "settings": {
+        ".write": "auth != null && root.child('admins').child(auth.uid).val() === true",
+        "ageGate": {
+          ".read": true,
+          ".validate": "newData.isBoolean()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      },
+      "updateLog": {
+        ".read": true,
+        ".write": "auth != null && root.child('admins').child(auth.uid).val() === true",
+        "$i": {
+          ".validate": "newData.hasChildren(['ts'])",
+          "ts": {
+            ".validate": "newData.isNumber()"
+          },
+          "datetime": {
+            ".validate": "newData.isString() && newData.val().length <= 40 && !newData.val().contains('<')"
+          },
+          "game": {
+            ".validate": "newData.isString() && newData.val().length <= 40 && !newData.val().contains('<')"
+          },
+          "change": {
+            ".validate": "newData.isString() && newData.val().length <= 200 && !newData.val().contains('<')"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "games": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
+      "$code": {
+        ".read": true,
+        ".write": "$code.matches(/^[A-Z]{3,5}-[0-9]{2}$/) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".validate": "newData.hasChild('phase')",
+        "phase": {
+          ".validate": "newData.isString() && newData.val().length <= 32"
+        },
+        "players": {
+          "$i": {
+            "name": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')"
+            }
+          }
+        },
+        "hostUid": {
+          ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val())"
+        }
+      }
+    },
+    "banqueroll": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
+      "$code": {
+        ".read": true,
+        ".write": "$code.matches(/^[A-Z]{3,5}-[0-9]{2}(-[a-z0-9]{1,3})?$/) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".validate": "newData.hasChild('phase')",
+        "phase": {
+          ".validate": "newData.isString() && newData.val().length <= 32"
+        },
+        "players": {
+          "$i": {
+            "name": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')"
+            }
+          }
+        },
+        "hostUid": {
+          ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val())"
+        }
+      }
+    },
+    "p4": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
+      "$code": {
+        ".read": true,
+        ".write": "$code.matches(/^[A-Z]{3,5}-[0-9]{2}$/) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".validate": "newData.hasChild('phase')",
+        "phase": {
+          ".validate": "newData.isString() && newData.val().length <= 32"
+        },
+        "players": {
+          "$i": {
+            "name": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')"
+            }
+          }
+        },
+        "hostUid": {
+          ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val())"
+        }
+      }
+    },
+    "qec2": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
+      "$code": {
+        ".read": true,
+        ".write": "$code.matches(/^[A-Z]{3,5}-[0-9]{2}$/) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".validate": "newData.hasChild('phase')",
+        "phase": {
+          ".validate": "newData.isString() && newData.val().length <= 32"
+        },
+        "players": {
+          "$i": {
+            "name": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')"
+            }
+          }
+        },
+        "hostUid": {
+          ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val())"
+        }
+      }
+    },
+    "bn": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
+      "$code": {
+        ".read": true,
+        ".write": "$code.matches(/^[A-Z]{3,5}-[0-9]{2}$/) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".validate": "newData.hasChild('phase')",
+        "phase": {
+          ".validate": "newData.isString() && newData.val().length <= 32"
+        },
+        "players": {
+          "$i": {
+            "name": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')"
+            }
+          }
+        },
+        "hostUid": {
+          ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val())"
+        }
+      }
+    },
+    "rl": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
+      "$code": {
+        ".read": true,
+        ".write": "$code.matches(/^[A-Z]{3,5}-[0-9]{2}$/) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".validate": "newData.hasChild('phase')",
+        "phase": {
+          ".validate": "newData.isString() && newData.val().length <= 32"
+        },
+        "players": {
+          "$i": {
+            "name": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')"
+            }
+          }
+        },
+        "hostUid": {
+          ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val())"
+        }
+      }
+    },
+    "mg": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
+      "$code": {
+        ".read": true,
+        ".write": "$code.matches(/^[A-Z]{3,5}-[0-9]{2}$/) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".validate": "newData.hasChild('phase')",
+        "phase": {
+          ".validate": "newData.isString() && newData.val().length <= 32"
+        },
+        "players": {
+          "$i": {
+            "name": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')"
+            }
+          }
+        },
+        "hostUid": {
+          ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val())"
+        }
+      }
+    },
+    "uno": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
+      "$code": {
+        ".read": true,
+        ".write": "$code.matches(/^[A-Z]{3,5}-[0-9]{2}$/) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".validate": "newData.hasChild('phase')",
+        "phase": {
+          ".validate": "newData.isString() && newData.val().length <= 32"
+        },
+        "players": {
+          "$i": {
+            "name": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')"
+            }
+          }
+        },
+        "hostUid": {
+          ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val())"
+        }
+      }
+    },
+    "admins": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid"
+      }
+    },
+    "ucHost": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
+      "$code": {
+        ".read": "auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".write": "auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".validate": "newData.hasChildren(['civilWord', 'undercoverWord', 'roles'])",
+        "civilWord": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60"
+        },
+        "undercoverWord": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60"
+        },
+        "roles": {
+          "$i": {
+            ".validate": "newData.isString() && newData.val().matches(/^(civil|undercover|mrwhite)$/)"
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "ucSecret": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
+      "$code": {
+        ".read": "auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".write": "auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['role'])",
+          "role": {
+            ".validate": "newData.isString() && newData.val().matches(/^(civil|undercover|mrwhite)$/)"
+          },
+          "word": {
+            ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "wr": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()"
+    }
+  }
+}

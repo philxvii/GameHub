@@ -336,10 +336,9 @@
       <div class="admin-label">Accès restreint</div>
       <h2>Panel Admin</h2>
     </div>
-    <label>Mot de passe</label>
-    <input type="password" id="admin-pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()"/>
+    <p style="font-size:14px;color:var(--muted);">Connexion avec le compte Google administrateur.</p>
     <div class="error-msg" id="admin-err"></div>
-    <button class="btn btn-primary" onclick="adminLogin()" style="margin-top:1.25rem;">Entrer</button>
+    <button class="btn btn-primary" onclick="adminLogin()" style="margin-top:1.25rem;">Se connecter avec Google</button>
     <button class="btn" onclick="show('s-home')">Retour</button>
   </div>
 
@@ -398,23 +397,9 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { ref, set, get, update, onValue, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { db, ensureAuth, freeRoomCode, createRoom, openRoom, closeRoom, adminSignIn } from '../../shared/firebase.js';
 
-const firebaseConfig = {
-  apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
-  authDomain:"undercover-game-b0d2a.firebaseapp.com",
-  databaseURL:"https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:"undercover-game-b0d2a",
-  storageBucket:"undercover-game-b0d2a.firebasestorage.app",
-  messagingSenderId:"195280531653",
-  appId:"1:195280531653:web:94d72b25760b05af6bc0ac"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-const ADMIN_PASSWORD = "XVIADMIN";
 const BOT_NAMES = ["Alpha","Beta","Gamma","Delta","Epsilon","Zeta","Eta","Theta"];
 const AVCOLORS = ['#4ade8022','#f8717122','#94a3b822','#e8d5a322','#a78bfa22','#38bdf822','#fb923c22','#a3e63522'];
 const AVTEXTS  = ['#4ade80','#f87171','#94a3b8','#e8d5a3','#a78bfa','#38bdf8','#fb923c','#a3e635'];
@@ -429,6 +414,11 @@ let isHost = false;
 let gameListener = null;
 let selectedVote = null;
 let lastPhase = null;
+let myUid = null;
+let hostSecrets = null;      // hôte seulement : { civilWord, undercoverWord, roles }
+let secretListener = null;
+let rolePending = false;
+const secretsSent = new Set();
 
 // ── Utils ──
 window.show = (id) => {
@@ -521,6 +511,48 @@ function genCode() {
   return w[Math.floor(Math.random()*w.length)]+'-'+Math.floor(10+Math.random()*90);
 }
 
+// ── Secrets : jamais dans games/<code> ──
+// ucHost/<code> : les deux mots et tous les rôles, pour l'hôte qui arbitre.
+// ucSecret/<code>/<uid> : le rôle et le mot d'un joueur, lisibles par lui seul.
+const wordFor = (role, s) => role==='civil' ? s.civilWord : role==='undercover' ? s.undercoverWord : null;
+
+async function loadHostSecrets(code) {
+  if (!hostSecrets) hostSecrets = (await get(ref(db,`ucHost/${code}`))).val();
+  return hostSecrets;
+}
+
+// L'hôte remet à chaque joueur son rôle dès qu'il apparaît dans la partie.
+async function distributeSecrets(game) {
+  const s = await loadHostSecrets(game.code);
+  if (!s) return;
+  (game.players||[]).forEach((p,i) => {
+    if (!p || !p.uid || secretsSent.has(p.uid)) return;
+    secretsSent.add(p.uid);
+    const role = s.roles[i], word = wordFor(role, s);
+    set(ref(db,`ucSecret/${game.code}/${p.uid}`), word ? {role,word} : {role}).catch(() => secretsSent.delete(p.uid));
+  });
+}
+
+function listenSecret(code) {
+  if (secretListener) secretListener();
+  secretListener = onValue(ref(db,`ucSecret/${code}/${myUid}`), snap => {
+    const s = snap.val();
+    if (!s) return;
+    myRole = s.role; myWord = s.word || null;
+    if (rolePending) { rolePending = false; showMyRole(); }
+  });
+}
+
+// Fin de partie : l'hôte publie les mots et les rôles avec le résultat.
+const reveal = () => ({ civilWord:hostSecrets.civilWord, undercoverWord:hostSecrets.undercoverWord, roles:hostSecrets.roles });
+
+// Secrets d'abord : leurs règles vérifient l'hôte dans games/<code>.
+async function removeGame(code) {
+  await remove(ref(db,`ucSecret/${code}`)).catch(() => {});
+  await remove(ref(db,`ucHost/${code}`)).catch(() => {});
+  await closeRoom('games', code);
+}
+
 // ══════════════════════════════════════
 // CREATE GAME
 // ══════════════════════════════════════
@@ -536,13 +568,13 @@ window.startCreation = async () => {
   show('s-creating');
 
   const words = await generateWords();
-  const code = genCode();
+  const code = await freeRoomCode('games', genCode);
   const roles = assignRoles(playerCount, ucCount, mwCount);
+  myUid = (await ensureAuth()).uid;
 
   const game = {
     code, hostName, playerCount, ucCount, mwCount,
-    civilWord:words.civil, undercoverWord:words.undercover,
-    roles, players:[{name:hostName,ready:false}],
+    players:[{name:hostName,ready:false,uid:myUid}],
     phase:'lobby', // lobby | playing | voting | elimination | gameover
     round:1, turnIndex:0,
     descriptions:{}, // round_N: [{author,text}]
@@ -552,12 +584,16 @@ window.startCreation = async () => {
     createdAt:Date.now()
   };
 
-  await set(ref(db,`games/${code}`), game);
+  await createRoom('games', code, game);
+  hostSecrets = { civilWord:words.civil, undercoverWord:words.undercover, roles };
+  await set(ref(db,`ucHost/${code}`), hostSecrets);
   myCode=code; myName=hostName; myIndex=0; isHost=true;
   myRole=roles[0];
-  myWord=myRole==='civil'?words.civil:myRole==='undercover'?words.undercover:null;
+  myWord=wordFor(myRole, hostSecrets);
+  secretsSent.clear();
 
   startGameListener(code);
+  listenSecret(code);
   renderLobby(game);
   show('s-lobby');
 };
@@ -599,7 +635,7 @@ window.startGame = async () => {
 
 window.deleteGame = async () => {
   if (!confirm('Supprimer la partie ?')) return;
-  if (myCode) await remove(ref(db,`games/${myCode}`));
+  if (myCode) await removeGame(myCode);
   myCode=null; show('s-home');
 };
 
@@ -640,33 +676,35 @@ window.joinGame = async () => {
   errEl.style.display='none';
   show('s-joining');
 
-  const snap=await get(ref(db,`games/${code}`));
+  const snap=await openRoom('games', code);
   if(!snap.exists()){show('s-join');errEl.style.display='block';errEl.textContent='Code introuvable.';return;}
 
   const game=snap.val();
   const players=game.players||[];
+  myUid=(await ensureAuth()).uid;
 
-  // Already joined?
-  const existing=players.findIndex(p=>p.name.toLowerCase()===name.toLowerCase());
+  // Already joined? Même navigateur, donc même compte anonyme.
+  const existing=players.findIndex(p=>p.uid===myUid);
   if(existing!==-1){
-    myCode=code; myName=name; myIndex=existing; isHost=existing===0;
-    myRole=game.roles[existing];
-    myWord=myRole==='civil'?game.civilWord:myRole==='undercover'?game.undercoverWord:null;
+    myCode=code; myName=players[existing].name; myIndex=existing; isHost=existing===0;
+    myRole=null; myWord=null; hostSecrets=null; secretsSent.clear();
+    listenSecret(code);
     startGameListener(code);
     handlePhase(game);
     return;
   }
 
   if(game.phase!=='lobby'){show('s-join');errEl.style.display='block';errEl.textContent='La partie est déjà en cours.';return;}
+  if(players.some(p=>p.name.toLowerCase()===name.toLowerCase())){show('s-join');errEl.style.display='block';errEl.textContent='Ce prénom est déjà pris dans cette partie.';return;}
   if(players.length>=game.playerCount){show('s-join');errEl.style.display='block';errEl.textContent='La partie est complète.';return;}
 
   const newIndex=players.length;
-  const updatedPlayers=[...players,{name,ready:false}];
+  const updatedPlayers=[...players,{name,ready:false,uid:myUid}];
   await update(ref(db,`games/${code}`),{players:updatedPlayers});
 
   myCode=code; myName=name; myIndex=newIndex; isHost=false;
-  myRole=game.roles[newIndex];
-  myWord=myRole==='civil'?game.civilWord:myRole==='undercover'?game.undercoverWord:null;
+  myRole=null; myWord=null;   // remis par l'hôte dans ucSecret/<code>/<uid>
+  listenSecret(code);
   startGameListener(code);
   // Show waiting lobby (player sees who else is in)
   show('s-game-wait');
@@ -687,6 +725,7 @@ function startGameListener(code) {
 
 function handlePhase(game) {
   const phase=game.phase;
+  if(isHost) distributeSecrets(game);
 
   // Lobby updates
   if(phase==='lobby'){
@@ -747,6 +786,12 @@ function handlePhase(game) {
 // ROLE REVEAL
 // ══════════════════════════════════════
 function showMyRole() {
+  if(!myRole){
+    rolePending=true;
+    show('s-game-wait');
+    document.getElementById('game-wait-msg').textContent='Distribution des rôles…';
+    return;
+  }
   let word,sub,badgeHtml,info;
   if(myRole==='civil'){
     word=myWord; sub='Ton mot secret';
@@ -958,7 +1003,7 @@ window.submitVote = async () => {
 // ══════════════════════════════════════
 // VOTE COUNTING (host only)
 // ══════════════════════════════════════
-function computeVotes(game) {
+async function computeVotes(game) {
   const votes=game.votes||{};
   const tally={};
   Object.values(votes).forEach(v=>{
@@ -983,7 +1028,7 @@ function computeVotes(game) {
   const elimPlayer=game.players.find(p=>p.name===eliminated);
   if(!elimPlayer) return;
   const elimIndex=game.players.indexOf(elimPlayer);
-  const elimRole=game.roles[elimIndex];
+  const elimRole=(await loadHostSecrets(game.code)).roles[elimIndex];
 
   const eliminatedList=[...(game.eliminated||[]),{name:eliminated,role:elimRole}];
 
@@ -1000,6 +1045,10 @@ function computeVotes(game) {
 function handleEliminationPhase(game) {
   const elim=game.lastEliminated;
   if(!elim) return;
+
+  // L'hôte arbitre ce qui exige les secrets : tentative de Mr. White, tour suivant.
+  if(isHost && game.mrwhiteGuess){ resolveMrWhite(game); return; }
+  if(isHost && game.continueAsk){ nextRound(game, elim); return; }
 
   document.getElementById('elim-name').textContent=elim.name;
   const roleLabel=elim.role==='civil'?'Civil':elim.role==='undercover'?'Undercover':'Mr. White';
@@ -1035,38 +1084,48 @@ function handleEliminationPhase(game) {
   show('s-elim');
 }
 
+// Mr. White ne connaît pas le mot civil : il envoie sa tentative, l'hôte la juge.
 window.mrWhiteGuess = async () => {
   const guess=document.getElementById('mrwhite-guess-input').value.trim().toLowerCase();
   if(!guess) return;
-  const snap=await get(ref(db,`games/${myCode}`));
-  if(!snap.exists()) return;
-  const game=snap.val();
-  const correct=game.civilWord.toLowerCase()===guess;
-  await update(ref(db,`games/${myCode}`),{
-    mrwhiteResult:correct?'win':'lose',
-    phase:'gameover',
-    winner:correct?'mrwhite':'civils'
-  });
+  await update(ref(db,`games/${myCode}`),{mrwhiteGuess:{text:guess}});
 };
 
 window.mrWhiteSkip = async () => {
-  await update(ref(db,`games/${myCode}`),{mrwhiteResult:'skip',phase:'gameover',winner:'civils'});
+  await update(ref(db,`games/${myCode}`),{mrwhiteGuess:{skip:true}});
 };
 
+async function resolveMrWhite(game) {
+  const s=await loadHostSecrets(game.code);
+  const g=game.mrwhiteGuess;
+  const result=g.skip?'skip':s.civilWord.toLowerCase()===String(g.text||'').toLowerCase()?'win':'lose';
+  await update(ref(db,`games/${myCode}`),{
+    mrwhiteResult:result, mrwhiteGuess:null,
+    phase:'gameover', winner:result==='win'?'mrwhite':'civils', reveal:reveal()
+  });
+}
+
 window.continueAfterElim = async () => {
+  if(!isHost){ await update(ref(db,`games/${myCode}`),{continueAsk:Date.now()}); return; }
   const snap=await get(ref(db,`games/${myCode}`));
   if(!snap.exists()) return;
   const game=snap.val();
   nextRound(game, game.lastEliminated);
 };
 
-function nextRound(game, elimInfo) {
+let advancedFrom=null;
+async function nextRound(game, elimInfo) {
+  // Un seul passage par tour, même si d'autres mises à jour arrivent pendant l'écriture.
+  const key=`${game.code}-${game.createdAt}-${game.round}-${game.phase}`;
+  if(advancedFrom===key) return;
+  advancedFrom=key;
+  const roles=(await loadHostSecrets(game.code)).roles;
   // Check win conditions
   const eliminated=(game.eliminated||[]);
   const alive=getAlive(game);
   const aliveRoles=alive.map(p=>{
     const i=game.players.findIndex(pl=>pl.name===p.name);
-    return game.roles[i];
+    return roles[i];
   });
 
   const undercoverAlive=aliveRoles.filter(r=>r==='undercover').length;
@@ -1075,12 +1134,12 @@ function nextRound(game, elimInfo) {
 
   // Undercover wins if only 2 players remain (1 civ + 1 uc OR 1 uc + 1 mr white)
   if(undercoverAlive>0 && alive.length<=2){
-    update(ref(db,`games/${myCode}`),{phase:'gameover',winner:'undercover'});
+    update(ref(db,`games/${myCode}`),{phase:'gameover',winner:'undercover',reveal:reveal(),continueAsk:null});
     return;
   }
   // All undercoverts eliminated → civils win
   if(undercoverAlive===0 && mrwhiteAlive===0){
-    update(ref(db,`games/${myCode}`),{phase:'gameover',winner:'civils'});
+    update(ref(db,`games/${myCode}`),{phase:'gameover',winner:'civils',reveal:reveal(),continueAsk:null});
     return;
   }
 
@@ -1088,7 +1147,7 @@ function nextRound(game, elimInfo) {
   const nextRound=((game.round)||1)+1;
   update(ref(db,`games/${myCode}`),{
     phase:'playing', round:nextRound, turnIndex:0,
-    votes:{}, mrwhiteResult:null, lastEliminated:null
+    votes:{}, mrwhiteResult:null, lastEliminated:null, continueAsk:null
   });
 }
 
@@ -1108,14 +1167,14 @@ function handleGameOver(game) {
   document.getElementById('go-title').style.color=winner==='civils'?'var(--civil)':winner==='undercover'?'var(--undercover)':'var(--mrwhite)';
 
   document.getElementById('go-words').innerHTML=
-    `<span style="font-size:13px;color:var(--muted);">Mot civil : </span><strong style="color:var(--civil);font-family:'Syne',sans-serif;">${game.civilWord}</strong>
+    `<span style="font-size:13px;color:var(--muted);">Mot civil : </span><strong style="color:var(--civil);font-family:'Syne',sans-serif;">${(game.reveal||{}).civilWord||'?'}</strong>
      &nbsp;&nbsp;
-     <span style="font-size:13px;color:var(--muted);">Mot undercover : </span><strong style="color:var(--undercover);font-family:'Syne',sans-serif;">${game.undercoverWord}</strong>`;
+     <span style="font-size:13px;color:var(--muted);">Mot undercover : </span><strong style="color:var(--undercover);font-family:'Syne',sans-serif;">${(game.reveal||{}).undercoverWord||'?'}</strong>`;
 
   const rolesEl=document.getElementById('go-roles');
   rolesEl.innerHTML='';
   (game.players||[]).forEach((p,i)=>{
-    const role=game.roles[i];
+    const role=((game.reveal||{}).roles||[])[i];
     const roleLabel=role==='civil'?'Civil':role==='undercover'?'Undercover':'Mr. White';
     const isElim=(game.eliminated||[]).some(e=>e.name===p.name);
     const div=document.createElement('div');
@@ -1136,11 +1195,12 @@ function handleGameOver(game) {
 // ══════════════════════════════════════
 // ADMIN
 // ══════════════════════════════════════
-window.adminLogin = () => {
-  const pwd=document.getElementById('admin-pwd').value;
+window.adminLogin = async () => {
   const errEl=document.getElementById('admin-err');
-  if(pwd!==ADMIN_PASSWORD){errEl.style.display='block';errEl.textContent='Mot de passe incorrect.';document.getElementById('admin-pwd').value='';return;}
-  errEl.style.display='none'; document.getElementById('admin-pwd').value='';
+  let res;
+  try { res=await adminSignIn(); } catch(e) { errEl.style.display='block'; errEl.textContent='Connexion Google annulée ou impossible.'; return; }
+  if(!res.isAdmin){errEl.style.display='block';errEl.textContent=`Compte non autorisé. Pour l'autoriser : admins/${res.uid} = true dans la console Firebase.`;return;}
+  errEl.style.display='none';
   document.getElementById('admin-result').style.display='none';
   adminLoadGames(); show('s-admin');
 };
@@ -1157,18 +1217,18 @@ window.adminCreateGame = async () => {
   btn.textContent='Génération…'; btn.disabled=true;
 
   const words=await generateWords();
-  const code='TEST-'+Math.floor(10+Math.random()*90);
+  const code=await freeRoomCode('games', ()=>'TEST-'+Math.floor(10+Math.random()*90));
   const roles=assignRoles(totalPlayers,ucCount,mwCount);
-  const players=[{name:'Admin (toi)',ready:true}];
+  const players=[{name:'Admin (toi)',ready:true,uid:(await ensureAuth()).uid}];
   for(let i=0;i<botCount;i++) players.push({name:`Bot-${BOT_NAMES[i]}`,ready:true});
 
   const game={
     code, hostName:'Admin', playerCount:totalPlayers, ucCount, mwCount,
-    civilWord:words.civil, undercoverWord:words.undercover,
-    roles, players, phase:'playing', round:1, turnIndex:0,
+    players, phase:'playing', round:1, turnIndex:0,
     descriptions:{}, votes:{}, eliminated:[], createdAt:Date.now(), isTest:true
   };
-  await set(ref(db,`games/${code}`),game);
+  await createRoom('games', code, game);
+  await set(ref(db,`ucHost/${code}`),{civilWord:words.civil, undercoverWord:words.undercover, roles});
 
   btn.textContent='Créer partie test'; btn.disabled=false;
   document.getElementById('admin-code-display').textContent=code;
@@ -1199,7 +1259,7 @@ window.adminCreateGame = async () => {
 window.adminDeleteGame = async () => {
   if(!window._adminTestCode) return;
   if(!confirm(`Supprimer ${window._adminTestCode} ?`)) return;
-  await remove(ref(db,`games/${window._adminTestCode}`));
+  await removeGame(window._adminTestCode);
   window._adminTestCode=null;
   document.getElementById('admin-result').style.display='none';
   adminLoadGames(); showToast('Supprimé.');
@@ -1225,7 +1285,7 @@ window.adminLoadGames = async () => {
 
 window.adminForceDelete = async (code) => {
   if(!confirm(`Supprimer ${code} ?`)) return;
-  await remove(ref(db,`games/${code}`));
+  await removeGame(code);
   adminLoadGames(); showToast(`${code} supprimé.`);
 };
 </script>

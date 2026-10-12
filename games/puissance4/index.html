@@ -219,21 +219,8 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
-  authDomain:"undercover-game-b0d2a.firebaseapp.com",
-  databaseURL:"https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:"undercover-game-b0d2a",
-  storageBucket:"undercover-game-b0d2a.firebasestorage.app",
-  messagingSenderId:"195280531653",
-  appId:"1:195280531653:web:94d72b25760b05af6bc0ac"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+import { ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { db, freeRoomCode, createRoom, openRoom, closeRoom } from '../../shared/firebase.js';
 
 const ROWS = 6, COLS = 7;
 
@@ -319,7 +306,7 @@ window.createGame = async () => {
   if (!name) { errEl.style.display = 'block'; errEl.textContent = 'Entre ton prénom.'; return; }
   errEl.style.display = 'none';
 
-  const code = genCode();
+  const code = await freeRoomCode('p4', genCode);
   const game = {
     code, bo,
     players: [{ name, score: 0 }, null],
@@ -332,7 +319,7 @@ window.createGame = async () => {
     createdAt: Date.now()
   };
 
-  await set(ref(db, `p4/${code}`), game);
+  await createRoom('p4', code, game);
   myCode = code; myName = name; myPnum = 0; isHost = true;
   startListener(code);
   renderLobby(game);
@@ -372,7 +359,7 @@ window.startGame = async () => {
 };
 
 window.deleteGame = async () => {
-  if (myCode) await remove(ref(db, `p4/${myCode}`));
+  if (myCode) await closeRoom('p4', myCode);
   myCode = null; currentGame = null; show('s-home');
 };
 
@@ -388,7 +375,7 @@ window.joinGame = async () => {
   errEl.style.display = 'none';
   show('s-joining');
 
-  const snap = await get(ref(db, `p4/${code}`));
+  const snap = await openRoom('p4', code);
   if (!snap.exists()) { show('s-join'); errEl.style.display='block'; errEl.textContent='Code introuvable.'; return; }
 
   const game = snap.val();

@@ -304,20 +304,8 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey:"AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA",
-  authDomain:"undercover-game-b0d2a.firebaseapp.com",
-  databaseURL:"https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:"undercover-game-b0d2a",
-  storageBucket:"undercover-game-b0d2a.firebasestorage.app",
-  messagingSenderId:"195280531653",
-  appId:"1:195280531653:web:94d72b25760b05af6bc0ac"
-};
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+import { ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { db, freeRoomCode, createRoom, openRoom, closeRoom } from '../../shared/firebase.js';
 
 // 24 personnages
 const CHARS = [
@@ -404,9 +392,9 @@ window.createGame = async () => {
   if (!name) { errEl.style.display='block'; errEl.textContent='Entre ton prénom.'; return; }
   if (isBannedName(name)) { errEl.style.display='block'; errEl.textContent=BANNED_MSG; return; }
   errEl.style.display = 'none';
-  const code = genCode();
+  const code = await freeRoomCode('qec2', genCode);
   const game = { code, rounds, players:[{name,score:0,secretId:null,ready:false},null], phase:'lobby', turn:0, round:1, questions:[], pendingQuestion:null, pendingGuess:null, roundResult:null, createdAt:Date.now() };
-  await set(ref(db,`qec2/${code}`), game);
+  await createRoom('qec2', code, game);
   myCode=code; myName=name; myPnum=0; isHost=true;
   startListener(code); renderLobby(game); show('s-lobby');
 };
@@ -425,7 +413,7 @@ function renderLobby(game) {
 }
 
 window.startGame=async()=>{ await update(ref(db,`qec2/${myCode}`),{phase:'pick',questions:[],pendingQuestion:null,pendingGuess:null}); };
-window.deleteGame=async()=>{ if(myCode) await remove(ref(db,`qec2/${myCode}`)); myCode=null; currentGame=null; show('s-home'); };
+window.deleteGame=async()=>{ if(myCode) await closeRoom('qec2', myCode); myCode=null; currentGame=null; show('s-home'); };
 
 window.joinGame=async()=>{
   const code=document.getElementById('join-code').value.trim().toUpperCase();
@@ -435,7 +423,7 @@ window.joinGame=async()=>{
   if(!name){errEl.style.display='block';errEl.textContent='Entre ton prénom.';return;}
   if(isBannedName(name)){errEl.style.display='block';errEl.textContent=BANNED_MSG;return;}
   errEl.style.display='none'; show('s-joining');
-  const snap=await get(ref(db,`qec2/${code}`));
+  const snap=await openRoom('qec2', code);
   if(!snap.exists()){show('s-join');errEl.style.display='block';errEl.textContent='Code introuvable.';return;}
   const game=snap.val(); const players=game.players||[];
   const ex=players.findIndex(p=>p&&p.name.toLowerCase()===name.toLowerCase());

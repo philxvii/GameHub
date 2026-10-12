@@ -18,7 +18,7 @@ import {
 } from './chance.js';
 import {
   S, db, ref, get, set, remove, onValue, runTransaction, onDisconnect, gameRef, presenceRef,
-  pushHistory, pushChat, commit, saveLocal, clearLocal,
+  pushHistory, pushChat, commit, saveLocal, clearLocal, ensureAuth, createRoom, openRoom, closeRoom,
 } from './net.js';
 import { animateDiceRoll, toast, WHEEL_MS } from './fx.js';
 import { makeConfig, on } from './config.js';
@@ -105,11 +105,12 @@ function waitForPosition(playerId, position, timeout = 4000) {
 
 // ================================================================ salon
 async function freeCode() {
+  await ensureAuth();
   const words = ['ROLL','BANK','VALE','LIFT','NOVA','PLAZA','CASH','LOOP','ARCO','MINT'];
   const gen = () => words[Math.floor(Math.random() * words.length)] + '-' + Math.floor(10 + Math.random() * 90);
   for (let attempt = 0; attempt < 12; attempt++) {
     const candidate = gen();
-    const snap = await get(gameRef(candidate));
+    const snap = await get(ref(db, `banqueroll/${candidate}/phase`));
     if (!snap.exists()) return candidate;
   }
   return gen() + '-' + makeId().slice(0, 3);
@@ -148,7 +149,7 @@ export async function createGame(config) {
   const game = { code:S.code, hostId:S.playerId, maxPlayers:players, turnTimer:timer, settings, gameConfig: config, players:[player], phase:'lobby',
     turnIndex:0, round:1, currentAction:null, ownership:{}, auction:null, trade:null, winnerId:null, turnDeadline:null,
     createdAt:now(), updatedAt:now() };
-  await set(gameRef(S.code), game);
+  await createRoom('banqueroll', S.code, game);
   attachPresence();
   startGameListener(S.code);
   show('s-lobby');
@@ -173,7 +174,7 @@ export async function createBotGame(config) {
   const game = { code:S.code, hostId:S.playerId, maxPlayers:players.length, turnTimer:30, settings, gameConfig: config, players, phase:'lobby',
     turnIndex:0, round:1, currentAction:null, ownership:{}, auction:null, trade:null, winnerId:null, turnDeadline:null,
     createdAt:now(), updatedAt:now() };
-  await set(gameRef(S.code), game);
+  await createRoom('banqueroll', S.code, game);
   attachPresence();
   S.game = game;
   startGameListener(S.code);
@@ -206,6 +207,9 @@ export async function joinGame() {
   if (!code) { err.textContent = 'Entre le code de la partie.'; return; }
   if (!name) { err.textContent = 'Entre ton prénom.'; return; }
   show('s-joining');
+  const pre = await openRoom('banqueroll', code).catch(() => null);
+  if (!pre || !pre.exists()) { err.textContent = 'Code introuvable.'; show('s-home'); return; }
+  if (pre.preview) { err.textContent = 'La partie est déjà lancée.'; show('s-home'); return; }
   const ref = gameRef(code);
   // Un listener actif amorce le cache local : sans lui, runTransaction demarre
   // avec current===null et la transaction s'annule immediatement.
@@ -335,7 +339,7 @@ export async function deleteGame() {
   const code = S.game.code;
   stopGameListener();
   S.game = null;
-  await remove(gameRef(code));
+  await closeRoom('banqueroll', code);
   clearLocal();
   Object.assign(S, { code:null, playerId:null, isHost:false });
   if (hooks.onGone) hooks.onGone();
@@ -356,7 +360,7 @@ export function leaveGame() {
 
 export function autoReconnect() {
   if (!S.code || !S.playerId) return;
-  get(gameRef(S.code)).then(snap => {
+  ensureAuth().then(() => get(gameRef(S.code))).then(snap => {
     if (!snap.exists()) { clearLocal(); return; }
     const game = snap.val();
     const existing = (game.players || []).find(p => p.id === S.playerId);
@@ -364,7 +368,7 @@ export function autoReconnect() {
     S.name = existing.name; S.color = existing.color; S.isHost = game.hostId === S.playerId;
     saveLocal(); attachPresence(); startGameListener(S.code);
     show(game.phase === 'lobby' ? 's-lobby' : 's-game');
-  });
+  }).catch(() => clearLocal());
 }
 
 // ================================================================ de et deplacement

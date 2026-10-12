@@ -88,12 +88,13 @@ else {
 
 // 4. Racine : seulement le hub, la page 404, les icones et les dossiers prevus.
 // Icones du site : dans icons/, declarees par chaque page (hub, 404, jeux).
-const allowed = new Set(['index.html', '404.html', 'CNAME', 'README.md', 'LICENSE', 'games', 'icons', 'tools', 'shared']);
+const allowed = new Set(['index.html', '404.html', 'CNAME', 'README.md', 'LICENSE', 'games', 'icons', 'tools', 'shared', 'firebase']);
 const stray = fs.readdirSync(ROOT).filter(f => !f.startsWith('.') && !allowed.has(f));
 check('Racine propre : aucun code de jeu ni fichier en trop', stray.length === 0, stray.length ? 'en trop : ' + stray.join(', ') : '');
 
 // 5. Dans chaque jeu, tout chemin relatif mene a un fichier, sans sortir du jeu
-//    (sauf le retour au hub, ../../index.html, et les icones du site, ../../icons/).
+//    (sauf le retour au hub, ../../index.html, les icones du site, ../../icons/, et le
+//    code commun, ../../shared/, dont la configuration Firebase).
 for (const g of games) {
   const files = walk(path.join(GAMES, g)).filter(f => /\.(html|css|js)$/.test(f));
   const broken = [], escaping = [];
@@ -101,7 +102,7 @@ for (const g of games) {
     for (const u of refsOf(f)) {
       if (!resolves(f, u)) broken.push(`${rel(f)} -> ${u}`);
       const target = path.resolve(path.dirname(f), u.split(/[?#]/)[0]);
-      if (!target.startsWith(path.join(GAMES, g)) && target !== hub && !target.startsWith(path.join(ROOT, 'icons') + path.sep)) escaping.push(`${rel(f)} -> ${u}`);
+      if (!target.startsWith(path.join(GAMES, g)) && target !== hub && !target.startsWith(path.join(ROOT, 'icons') + path.sep) && !target.startsWith(path.join(ROOT, 'shared') + path.sep)) escaping.push(`${rel(f)} -> ${u}`);
     }
   }
   check(`games/${g} : chemins relatifs`, broken.length === 0 && escaping.length === 0,
