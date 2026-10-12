@@ -3,3 +3,5 @@
 # Secrets de developpement local : ne JAMAIS les versionner.
 .dev.vars
 .dev.vars.*
+# Prompt prive du presentateur : reste sur la machine qui deploie (modele : src/persona.example.js).
+src/persona.js

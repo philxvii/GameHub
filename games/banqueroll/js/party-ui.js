@@ -6,7 +6,7 @@
 // le meme chez tous) -> RETOUR AU JEU (la fenetre se ferme seule).
 
 import { S, serverNow } from './net.js';
-import { MECHANICS, PRESETS, PRESET_ORDER, gameConfig, activeMechanics, on } from './config.js';
+import { MECHANICS, PRESETS, PRESET_ORDER, gameConfig, activeMechanics, on, adultHost } from './config.js';
 import { BOARD, GROUP_LABELS } from './board.js';
 import { playerById, currentPlayer, roundsOf, targetOf, ranking, netWorth } from './rules.js';
 import { REACTIONS, sendReaction, AUCTION_EXTEND_MS, submitEntry, hauntSquare, placeBet, betHold } from './party-actions.js';
@@ -66,6 +66,7 @@ export function showCustomPanel(open) {
 }
 
 export const customPicks = () => [...document.querySelectorAll('#mode-toggles input:checked')].map(i => i.value);
+export const adultPick = () => !!($id('mode-adult') && $id('mode-adult').checked);
 
 // ================================================================ configuration affichee
 // Salon : le mode et ses mecaniques. HUD : un tampon discret.
@@ -76,11 +77,12 @@ export function renderConfig(game) {
   const lobby = $id('lobby-mode');
   if (lobby) {
     lobby.innerHTML = `<span class="mode-badge mode-badge--${cfg.preset}">${preset.icon} ${esc(preset.label)}</span>
+      ${adultHost(game) ? '<span class="mode-chip mode-chip--adult" title="Présentateur sans filtre : humour cru, partie réservée aux majeurs">🔞 Sans filtre</span>' : ''}
       ${active.length ? active.map(m => `<span class="mode-chip" title="${esc(m.label)} : ${esc(m.desc)}">${m.icon} ${esc(m.label)}</span>`).join('') : '<span class="mode-chip mode-chip--none">Règles d’origine, aucune nouvelle mécanique</span>'}`;
   }
   const hud = $id('hud-mode');
   if (hud) {
-    hud.textContent = `${preset.icon} ${preset.label}`;
+    hud.textContent = `${preset.icon} ${preset.label}${adultHost(game) ? ' · 🔞' : ''}`;
     hud.title = active.length ? active.map(m => `${m.icon} ${m.label}`).join('\n') : 'Règles d’origine';
     hud.dataset.preset = cfg.preset;
   }

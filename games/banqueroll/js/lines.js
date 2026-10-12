@@ -17,6 +17,8 @@ const cash = n => `${n < 0 ? '−' : ''}${$(n)}`;   // solde : garde le signe mo
 
 export const LINES = {
   rent: [
+    c => c.adult && `${c.P} raque ${$(c.amt)} à ${c.O}. Tu te fais baiser à chaque tour et t’as même pas droit au petit-déj.`,
+    c => c.adult && c.paidTo >= 2 && `${c.O} passe encore sur ${c.P}. À ce stade c’est plus un loyer, c’est un plan cul tarifé, et c’est toi qui paies.`,
     c => c.paidTo >= 2 && `${c.P} paie encore ${c.O}. Le mème « c’est Nicolas qui paie » a trouvé son Nicolas.`,
     c => c.intensity >= 2 && `${c.P} lâche ${$(c.amt)} à ${c.O}. Le 17 octobre, mets ton gilet jaune : la vie chère, c’est toi.`,
     c => c.cash < 0 && `${c.P} à ${cash(c.cash)}. Comme dirait Louise Montangon à Attal : ton bilan est désastreux.`,
@@ -40,6 +42,7 @@ export const LINES = {
     c => `${c.P} paie ${$(c.amt)}. Skill issue. Énorme skill issue.`,
   ],
   buy: [
+    c => c.adult && c.cash < 100 && `${c.P} met tout dans ${c.city}. Tout donner dès le premier soir : on reconnaît ta technique.`,
     c => c.amt >= 300 && `${c.P} claque ${$(c.amt)} pour ${c.city}. Le train de vie de Léna Situations, le compte en banque d’un stagiaire.`,
     c => c.completes && `Groupe ${c.group} complet pour ${c.P}. Les autres, sortez le RIB et pleurez en silence.`,
     c => c.completes && `${c.P} rafle tout le groupe ${c.group}. Les loyers doublent, les amitiés meurent. Masterclass d’enflure.`,
@@ -63,6 +66,7 @@ export const LINES = {
     c => `${c.P} brade ${c.city}. Même Vinted refuserait l’annonce.`,
   ],
   jail: [
+    c => c.adult && `${c.P} en taule. Trois tours sans rien toucher : tu ne verras pas la différence avec ta vie sentimentale.`,
     c => `${c.P} en prison. Tu vas dire que c’est un montage grossier, comme Bardella avec Mediapart ? Le dé, lui, ne ment pas.`,
     c => `${c.P} en cellule. Enfin une case à ta hauteur.`,
     c => `${c.P} voulait conquérir le plateau. Conquête du jour : 9 m² et un codétenu qui ronfle.`,
@@ -125,6 +129,7 @@ export const LINES = {
     c => `Échange conclu, 100 $ chacun. ${c.P} et ${c.O} se congratulent. Dans trois tours, l’un des deux pleure. Indice : le plus naze.`,
   ],
   auction: [
+    c => c.adult && c.over && `${$(c.amt)} pour ${c.city}. ${c.P} paie le prix fort et repart frustré, comme après un date Tinder.`,
     c => c.over && `${$(c.amt)} pour ${c.city} ? ${c.P} ne fait pas une enchère, ${c.P} fait un don. Quel touriste.`,
     c => c.over && `${$(c.amt)} pour une case qui en vaut ${$(c.price)}. Même la banque a envoyé un « t’es sûr ? ».`,
     c => c.cheap && `${c.P} rafle ${c.city} pour ${$(c.amt)}. Propre. Je commençais à douter que tu aies un cerveau.`,
@@ -141,6 +146,7 @@ export const LINES = {
     c => `Échange accepté entre ${c.P} et ${c.O}. Quelqu’un vient de se faire arnaquer, et je sais qui.`,
   ],
   bankrupt: [
+    c => c.adult && `${c.P} finit à poil : plus une thune, plus une rue, plus de dignité. Rhabille-toi, c’est gênant pour tout le monde.`,
     c => `${c.P} fait faillite. Même Henry Tran a mieux encaissé son combat, et tout internet s’est moqué du niveau.`,
     c => `${c.P} ruiné. Ton bilan est désastreux, et pour une fois ce n’est pas Attal qu’on vise.`,
     c => c.rivalry >= 2 && `${c.R}, c’est la ${c.rivalry}e partie où tu ruines ${c.P}. À ce stade, c’est une tradition familiale.`,
@@ -151,6 +157,7 @@ export const LINES = {
     c => c.boast && `Mesdames et messieurs, ${c.P} avait annoncé ${q(c.boast.text)}. Faillite. On encadre ce moment, on l’affiche dans le hall.`,
   ],
   win: [
+    c => c.adult && `${c.P} gagne. Les autres, vous vous êtes fait mettre toute la partie. Rhabillez-vous, c’est fini.`,
     c => `${c.P} gagne. Les autres, vous êtes comme Mbappé au Ballon d’Or : nommés, jamais sacrés.`,
     c => `${c.P} gagne avec ${$(c.net)}. Applaudissez, ou au moins faites semblant, bande de figurants.`,
     c => `C’est fini. ${c.P} gagne. Les autres peuvent retourner pleurer sur leur Livret A.`,
@@ -158,6 +165,7 @@ export const LINES = {
     c => `${c.P} gagne. Les autres, vous avez servi de décor. Merci, et au revoir.`,
   ],
   afk: [
+    c => c.adult && `${c.P} ne joue pas. Lent à la détente, et quand ça vient c’est fini en deux secondes : on connaît ton profil.`,
     c => `${c.P} ne joue pas. Même Bally Bagayoko devant les lacrymos réagissait plus vite. Lui, au moins, il servait à quelque chose.`,
     c => `${c.P}, le champion du temps mort, laisse encore passer son tour. Même un guignol est plus réactif que toi.`,
     c => `${c.P} n’a pas joué. Réflexion intense ou sieste en cours, impossible à dire. Tour suivant.`,
@@ -205,6 +213,7 @@ export const LINES = {
     c => `Un 1. Même un escargot sous anxiolytiques irait plus loin.`,
   ],
   six: [
+    c => c.adult && `6. ${c.P} rejoue. Enfin un truc qui dure plus de deux minutes chez toi.`,
     c => `6. ${c.P} rejoue. Même Squeezie n’a pas autant de chance avec les 11-14 ans.`,
     c => `6 ! ${c.P} rejoue. Le hasard récompense même les touristes.`,
     c => `6. ${c.P} rejoue. Même une horloge cassée a raison deux fois par jour.`,

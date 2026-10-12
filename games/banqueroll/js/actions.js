@@ -956,8 +956,8 @@ export { WHEEL };
 
 // ================================================================ choix du mode
 // preset : classic | chaos | party | custom (picks = cles choisies a la main).
-export function chooseMode(preset, picks = []) {
-  const config = makeConfig(preset, picks);
+export function chooseMode(preset, picks = [], adult = false) {
+  const config = makeConfig(preset, picks, { adultHost: adult });
   const kind = pending.kind;
   pending.kind = null;
   if (kind === 'bots') return createBotGame(config);

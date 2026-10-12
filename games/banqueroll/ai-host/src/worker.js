@@ -69,7 +69,7 @@ export default {
       ? `Un joueur t'interpelle dans le chat. Réponds-lui. Contexte JSON :\n${JSON.stringify(ctx)}`
       : `Commente cet évènement de la partie. Contexte JSON :\n${JSON.stringify(ctx)}`;
 
-    const out = await orchestrate({ system: systemPrompt(), user, env });
+    const out = await orchestrate({ system: systemPrompt(Math.random, 6, { adult: !!ctx.adult }), user, env });
     // Journal minimal : fournisseurs essayes et raisons, jamais de cle ni de contenu.
     if (out.tried.length) console.log('host', out.ok ? out.provider : 'local', JSON.stringify(out.tried));
     if (!out.ok) return json({ error: 'all_failed', tried: out.tried.map(t => `${t.id}:${t.reason}`) }, 502, headers);

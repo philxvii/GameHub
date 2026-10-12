@@ -37,12 +37,14 @@ export const PRESETS = {
 };
 export const PRESET_ORDER = ['classic', 'chaos', 'party', 'custom'];
 
-// Construit la configuration figee d'une nouvelle partie.
-export function makeConfig(preset = 'classic', picks = []) {
+// Construit la configuration figee d'une nouvelle partie. adultHost : presentateur
+// « sans filtre » (18+), choisi par l'hote ; independant des mecaniques de jeu.
+export function makeConfig(preset = 'classic', picks = [], { adultHost = false } = {}) {
   const p = PRESETS[preset] ? preset : 'classic';
   const keys = p === 'custom' ? picks.filter(k => MECHANIC_KEYS.includes(k)) : PRESETS[p].keys;
   const config = { preset: p };
   MECHANIC_KEYS.forEach(k => { config[k] = keys.includes(k); });
+  config.adultHost = adultHost === true;
   return config;
 }
 
@@ -52,9 +54,11 @@ export function gameConfig(game) {
   if (!raw) return makeConfig('classic');
   const config = { preset: PRESETS[raw.preset] ? raw.preset : 'custom' };
   MECHANIC_KEYS.forEach(k => { config[k] = raw[k] === true; });
+  config.adultHost = raw.adultHost === true;
   return config;
 }
 
 export const on = (game, key) => gameConfig(game)[key] === true;
+export const adultHost = game => gameConfig(game).adultHost === true;
 export const activeMechanics = game => MECHANICS.filter(m => on(game, m.key));
 export const isClassic = game => activeMechanics(game).length === 0;

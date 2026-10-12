@@ -241,6 +241,20 @@ function makeGame(over = {}) {
   check('Fenêtre de paris : aucune attente en Classique ni pendant les cartes de règles',
     PB.betHold({ ...hg({}), gameConfig: CF.makeConfig('classic') }, t0) === 0 && PB.betHold(hg({}, { briefing: { endAt: t0 + 60000 } }), t0) === 0);
 
+  // ---------------------------------------------------------------- presentateur sans filtre (18+)
+  const LN = await load('lines.js');
+  const ADU = CF.makeConfig('party', [], { adultHost: true });
+  check('Sans filtre : choisi à la création, figé dans gameConfig, absent = non', ADU.adultHost === true && CF.makeConfig('chaos').adultHost === false
+    && CF.adultHost(makeGame({ gameConfig: ADU })) && !CF.adultHost(makeGame()));
+  const crude = /baiser|plan cul|poil|Tinder|vie sentimentale|deux minutes|fait mettre|premier soir/;
+  const ctxR = { P: 'Alice', O: 'Bob', amt: 140, city: 'Toronto', cash: 50, paidTo: 3, intensity: 3, over: true, price: 100 };
+  const seen = adult => ['rent', 'jail', 'auction', 'bankrupt', 'win', 'afk', 'six', 'buy'].some(t => (LN.LINES[t] || []).some(f => { try { const x = f({ ...ctxR, adult }); return x && crude.test(x); } catch (e) { return false; } }));
+  check('Sans filtre : répliques crues uniquement quand l’hôte l’a choisi', seen(true) && !seen(false));
+  const PR = await import(pathToFileURL(path.join(__dirname, '..', 'ai-host', 'src', 'prompt.js')).href);
+  check('Sans filtre : la consigne 18+ part au Worker seulement si la partie l’a choisie',
+    PR.sanitize({ adult: true }).adult === true && PR.sanitize({ adult: 'yes' }).adult === undefined
+    && (!PR.ADULT_PROMPT || (PR.systemPrompt(() => 0.5, 6, { adult: true }).includes(PR.ADULT_PROMPT) && !PR.systemPrompt(() => 0.5).includes(PR.ADULT_PROMPT))));
+
   const passed = results.filter(Boolean).length;
   console.log(`\n===== PARTY (pur) : ${passed}/${results.length} =====`);
   process.exit(results.every(Boolean) ? 0 : 1);

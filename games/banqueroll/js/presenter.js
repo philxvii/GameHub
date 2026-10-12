@@ -7,6 +7,7 @@
 //   est remplacee sur place. Sinon la locale reste. Rien n'attend l'IA.
 // - Il n'ecrit QUE dans chat/ et hostMem/ : il ne touche jamais au gameplay.
 
+import { adultHost } from './config.js';
 import { MINIGAMES } from './minigames.js';
 import { rivalryCount, topRivalry } from './stats.js';
 import { BOARD, GROUP_LABELS, GROUPS, de } from './board.js';
@@ -257,6 +258,7 @@ function baseCtx(game, meta) {
     afkCount: meta.p ? stat(meta.p).afk : 0, props: meta.p ? ownedBy(game, meta.p).length : 0,
     chatty: !!p && chatCounts.length > 1 && stat(p.id).chat >= 4 && stat(p.id).chat === Math.max(...chatCounts) && ranks[ranks.length - 1] && ranks[ranks.length - 1].id === p.id,
     first: ranks[0] && p && ranks[0].id === p.id, last: ranks.length > 1 && p && ranks[ranks.length - 1].id === p.id,
+    adult: adultHost(game),
   };
 }
 
@@ -499,6 +501,7 @@ export function aiPayload(item, localLine) {
   const chat = entries(game.chat).slice(-14).map(c => ({ who: c.kind === 'host' ? HOST_NAME : c.author, text: c.text }));
   return {
     code: game.code, mode: item.mode === 'chat' ? 'chat' : 'event', intensity: item.intensity,
+    ...(adultHost(game) ? { adult: true } : {}),
     addressedBy: item.addressedBy, message: item.message,
     event: item.mode === 'chat' ? undefined : { type: item.type, text: item.text, facts: eventFacts(game, item) },
     round, currentPlayer: (currentPlayer(game) || {}).name,

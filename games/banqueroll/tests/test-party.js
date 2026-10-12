@@ -65,12 +65,13 @@ async function openPages(b, n = 2) {
 }
 
 // Cree une partie par le vrai parcours : formulaire -> ecran du mode -> salon.
-async function createVia(A, { name = 'Alice', players = '2', preset = 'classic', picks = [] } = {}) {
+async function createVia(A, { name = 'Alice', players = '2', preset = 'classic', picks = [], adult = false } = {}) {
   await A.eval(`document.getElementById('create-name').value=${JSON.stringify(name)};
     document.getElementById('create-players').value=${JSON.stringify(players)};
     document.getElementById('create-timer').value='60';
     document.querySelector('[data-act="create"]').click(); return 1;`);
   await until(A, `document.getElementById('s-mode').classList.contains('active')`, 4000);
+  await A.eval(`document.getElementById('mode-adult').checked = ${adult ? 'true' : 'false'}; return 1;`);
   if (preset === 'custom') {
     await click(A, '[data-act="mode-pick"][data-arg="custom"]');
     await A.eval(`${JSON.stringify(picks)}.forEach(k => { const i=document.querySelector('#mode-toggles input[value="'+k+'"]'); if (i) i.checked = true; }); return 1;`);
@@ -155,7 +156,7 @@ async function lot0(b) {
   // Chaos : toutes ON, badge dans le bandeau de jeu.
   code = await createVia(A, { preset: 'chaos' });
   g = await state(code);
-  check('Mode Chaos : toutes les mécaniques ON', Object.entries(g.gameConfig).filter(([k]) => k !== 'preset').every(([, v]) => v === true), g.gameConfig.preset);
+  check('Mode Chaos : toutes les mécaniques ON', Object.entries(g.gameConfig).filter(([k]) => k !== 'preset' && k !== 'adultHost').every(([, v]) => v === true), g.gameConfig.preset);
   await joinVia(B, code);
   await startVia(A, { brief: true });
   const hud = await until(B, `document.getElementById('hud-mode').textContent`, 4000);
@@ -187,10 +188,12 @@ async function lot0(b) {
   await A.eval(`__bq.A.leaveGame(); return 1;`); await B.eval(`__bq.A.leaveGame(); return 1;`);
   await sleep(600);
 
-  // Party : spectacle ON, economie lourde OFF.
-  code = await createVia(A, { preset: 'party' });
+  // Party : spectacle ON, economie lourde OFF ; ici avec le presentateur sans filtre (18+).
+  code = await createVia(A, { preset: 'party', adult: true });
   g = await state(code);
   check('Mode Party : spectacle ON, carapace et krach OFF', g.gameConfig.preset === 'party' && g.gameConfig.duel && g.gameConfig.eventMinigames && !g.gameConfig.blueShell && !g.gameConfig.marketCrash);
+  const adultChip = await A.eval(`return (document.querySelector('#lobby-mode .mode-chip--adult') || {}).textContent || '';`);
+  check('Présentateur sans filtre : coché à la création, figé dans gameConfig, badge 🔞 dans le salon', g.gameConfig.adultHost === true && /Sans filtre/.test(adultChip), adultChip);
   await A.eval(`__bq.A.leaveGame(); return 1;`);
   await sleep(500);
 
@@ -203,14 +206,18 @@ async function lot0(b) {
   await sleep(500);
 
   // Ancienne partie sans gameConfig : Classique.
-  const legacy = 'TEST-' + Math.floor(100 + Math.random() * 899);
-  codes.add(legacy);
-  await rest(legacy, '', 'PUT', { code: legacy, hostId: 'h1', maxPlayers: 3, turnTimer: 60, phase: 'lobby', turnIndex: 0, round: 1,
-    players: [{ id: 'h1', name: 'Hôte', position: 21, cash: 1000, color: '#2F7FC1', ready: true }], createdAt: Date.now(), updatedAt: Date.now() });
+  // Les regles de la base refusent de creer une partie par l'API REST : on cree une partie
+  // normale (Chaos) puis on lui retire sa configuration, comme une partie d'avant les modes.
+  const legacy = await createVia(A, { preset: 'chaos' });
+  await rest(legacy, '/gameConfig', 'DELETE');
+  await sleep(600);
   await joinVia(B, legacy);
-  const legacyMode = await until(B, `document.querySelector('#lobby-mode .mode-badge')?.textContent.trim()`, 4000);
+  // Le badge du salon precedent peut rester affiche un instant : on attend celui de cette partie.
+  const legacyMode = await until(B, `__bq.S.code === ${JSON.stringify(legacy)} && document.querySelector('#lobby-mode .mode-badge')?.textContent.trim()`, 6000);
   check('Ancienne partie sans gameConfig : affichée et traitée en Classique', /Classique/.test(legacyMode || ''), legacyMode);
   await B.eval(`__bq.A.leaveGame(); return 1;`);
+  await A.eval(`__bq.A.leaveGame(); return 1;`);
+  await sleep(500);
 
   // Bots : le choix du mode s'applique aussi au solo.
   await A.eval(`document.getElementById('bot-name').value='Solo'; document.getElementById('bot-count').value='1';
@@ -475,9 +482,9 @@ async function lot3(b) {
   await shot(B, 'party-lot3-will.png');
   const tw = Date.now();
   let w = null;
-  while (Date.now() - tw < 16000) { w = await rest(code, '/will'); if (w && w.status === 'resolved') break; await sleep(500); }
+  while (Date.now() - tw < 22000) { w = await rest(code, '/will'); if (w && w.status === 'resolved') break; await sleep(500); }
   g = await state(code);
-  check('Testament : pas de choix en 10 s -> tout revient à la banque', w && w.status === 'resolved' && w.heir === 'bank' && !g.ownership?.[1] && !g.ownership?.[2] && !(g.buildings || {})[1], { heir: w && w.heir });
+  check('Testament : pas de choix en 15 s -> tout revient à la banque', w && w.status === 'resolved' && w.heir === 'bank' && !g.ownership?.[1] && !g.ownership?.[2] && !(g.buildings || {})[1], { heir: w && w.heir });
   const stampA = await until(A, `document.getElementById('party-stamp').classList.contains('on') && document.getElementById('party-stamp').textContent`, 3000);
   check('Testament : résultat annoncé à tous (cachet)', /banque/i.test(stampA || ''), stampA);
 

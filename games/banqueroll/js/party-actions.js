@@ -350,6 +350,7 @@ export function lockBetsUpdates(game, player, die, rollId) {
 }
 
 function arbitrateBets(game) {
+  if (game.briefing) return;                            // cartes de regles : rien ne s'ouvre avant le premier tour
   const cur = currentPlayer(game);
   const b = game.bets;
   if (b && b.status === 'locked') {
