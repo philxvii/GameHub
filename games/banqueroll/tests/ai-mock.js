@@ -11,6 +11,7 @@
 const http = require('http');
 const path = require('path');
 const { pathToFileURL } = require('url');
+require('./ensure-persona');                       // clone neuf : prompt prive absent -> modele public
 
 const PORT = Number(process.env.AI_MOCK_PORT || 8787);
 const HOSTS = { 'generativelanguage.googleapis.com': 'gemini', 'openrouter.ai': 'openrouter' };

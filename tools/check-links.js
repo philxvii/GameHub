@@ -26,6 +26,8 @@ function resolves(fromFile, url) {
   const clean = url.split(/[?#]/)[0];
   if (!clean) return true;
   const p = path.resolve(path.dirname(fromFile), decodeURI(clean));
+  // Fichier prive non versionne (ex. le prompt du presentateur) : son modele public suffit.
+  if (clean.endsWith('.js') && !fs.existsSync(p) && fs.existsSync(p.replace(/\.js$/, '.example.js'))) return true;
   if (clean.endsWith('/')) return fs.existsSync(path.join(p, 'index.html'));
   return fs.existsSync(p) && (fs.statSync(p).isFile() || fs.existsSync(path.join(p, 'index.html')));
 }

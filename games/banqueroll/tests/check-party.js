@@ -5,6 +5,7 @@
 
 const path = require('path');
 const { pathToFileURL } = require('url');
+require('./ensure-persona');                       // clone neuf : prompt prive absent -> modele public
 
 const JS = path.join(__dirname, '..', 'js');
 const load = f => import(pathToFileURL(path.join(JS, f)).href);

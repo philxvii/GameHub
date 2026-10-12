@@ -12,6 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const { pathToFileURL } = require('url');
+require('./ensure-persona');                       // clone neuf : prompt prive absent -> modele public
 
 const ROOT = path.join(__dirname, '..');            // games/banqueroll
 const JS = path.join(ROOT, 'js');
@@ -202,7 +203,8 @@ const workerFiles = ['worker.js', 'prompt.js'].map(f => path.join(ROOT, 'ai-host
   const linesSrc = fs.readFileSync(path.join(ROOT, 'js', 'lines.js'), 'utf8');
   const stale = /crypto-bro|pigeon|ponzi|labubu|skibidi|quoicoubeh|six seven/i;
   check('11d. Présentateur : actu tirée au hasard (6 sujets datés), aucune ref périmée dans les répliques locales',
-    (sp.match(/^- .+Angle/gm) || []).length === 6 && sp.includes(P.NEWS_DATE) && P.NEWS.length >= 15 && !stale.test(linesSrc), (linesSrc.match(stale) || [''])[0]);
+    // Sans le prompt prive (clone neuf, modele public sans actu), seule la regle des refs perimees s'applique.
+    (!P.NEWS.length || ((sp.match(/^- .+Angle/gm) || []).length === 6 && sp.includes(P.NEWS_DATE) && P.NEWS.length >= 15)) && !stale.test(linesSrc), (linesSrc.match(stale) || [''])[0]);
   check('11b. Worker : contexte borné, réponse nettoyée (≤ 280 car.)', clean.length <= 280 && !/^Bankroll/.test(clean) && ctx.chat.length === 14 && ctx.intensity === 5 && ctx.players[0].name.length === 24);
 
   const O = await import(pathToFileURL(path.join(ROOT, 'ai-host', 'src', 'orchestrator.js')).href);
