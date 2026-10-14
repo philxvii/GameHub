@@ -11,7 +11,7 @@
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, connectDatabaseEmulator, ref, get, set, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-import { getAuth, connectAuthEmulator, onAuthStateChanged, signInAnonymously, signInWithPopup, linkWithPopup, GoogleAuthProvider }
+import { getAuth, connectAuthEmulator, onAuthStateChanged, signInAnonymously, signInWithPopup, linkWithPopup, signInWithCredential, GoogleAuthProvider }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 export const firebaseConfig = {
@@ -127,7 +127,13 @@ export async function adminSignIn() {
   let user;
   if (auth.currentUser && auth.currentUser.isAnonymous) {
     try { ({ user } = await linkWithPopup(auth.currentUser, provider)); }
-    catch (e) { if (!/credential-already-in-use|email-already-in-use/.test(e.code || '')) throw e; }
+    catch (e) {
+      if (!/credential-already-in-use|email-already-in-use/.test(e.code || '')) throw e;
+      // Compte Google déjà connu (autre appareil) : on réutilise le jeton du popup.
+      // Un second popup, ouvert hors du clic, serait bloqué par le navigateur.
+      const cred = GoogleAuthProvider.credentialFromError(e);
+      if (cred) ({ user } = await signInWithCredential(auth, cred));
+    }
   }
   if (!user) ({ user } = await signInWithPopup(auth, provider));
   try { localStorage.setItem(SIGNED, user.uid); } catch (_) {}

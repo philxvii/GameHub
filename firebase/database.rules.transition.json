@@ -35,6 +35,10 @@
           ".read": true,
           ".validate": "newData.isBoolean()"
         },
+        "maintenance": {
+          ".read": true,
+          ".validate": "newData.isBoolean()"
+        },
         "$other": {
           ".validate": false
         }
@@ -248,7 +252,7 @@
       ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
       "$code": {
         ".read": "auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid || (auth != null && root.child('admins').child(auth.uid).val() === true)",
-        ".write": "auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".write": "(auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid && root.child('hub').child('settings').child('maintenance').val() !== true) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
         ".validate": "newData.hasChildren(['civilWord', 'undercoverWord', 'roles'])",
         "civilWord": {
           ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60"
@@ -271,7 +275,7 @@
       ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
       "$code": {
         ".read": "auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid || (auth != null && root.child('admins').child(auth.uid).val() === true)",
-        ".write": "auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".write": "(auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid && root.child('hub').child('settings').child('maintenance').val() !== true) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
         "$uid": {
           ".read": "auth != null && auth.uid === $uid",
           ".validate": "newData.hasChildren(['role'])",

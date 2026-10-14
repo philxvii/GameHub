@@ -20,7 +20,9 @@ const GAMES = {
 };
 
 const ADMIN = "auth != null && root.child('admins').child(auth.uid).val() === true";
-const NAME = "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')";
+// Maintenance (hub/settings/maintenance) : plus aucune écriture dans les parties, sauf l'admin.
+const OPEN = "root.child('hub').child('settings').child('maintenance').val() !== true";
+const NAME ="newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')";
 const SHORT_TEXT = n => `newData.isString() && newData.val().length <= ${n} && !newData.val().contains('<')`;
 
 function gameRules(prefix, { code, joinAnyPhase }) {
@@ -29,13 +31,13 @@ function gameRules(prefix, { code, joinAnyPhase }) {
     // Lecture : membres et admin. Jamais sur le préfixe entier (sauf admin).
     '.read': `auth != null && (data.child('members').child(auth.uid).exists() || ${ADMIN})`,
     '.write': [
-      'auth != null && (',
+      `auth != null && ((${OPEN} && (`,
       // création : code au format, l'auteur est l'hôte et le premier membre
       `(!data.exists() && $code.matches(${code}) && newData.child('hostUid').val() === auth.uid && newData.child('members').child(auth.uid).val() === true)`,
       // jeu : tout membre (le modèle client-autoritaire ne permet pas plus fin)
       "|| (data.exists() && newData.exists() && data.child('members').child(auth.uid).exists())",
       // suppression : l'hôte seulement
-      "|| (data.exists() && !newData.exists() && data.child('hostUid').val() === auth.uid)",
+      "|| (data.exists() && !newData.exists() && data.child('hostUid').val() === auth.uid)))",
       `|| (${ADMIN}))`,
     ].join(' '),
     // L'hôte reste membre : personne ne peut l'exclure de sa propre partie.
@@ -44,7 +46,7 @@ function gameRules(prefix, { code, joinAnyPhase }) {
     members: {
       $uid: {
         // Entrer dans une partie : s'inscrire soi-même, tant que la phase le permet.
-        '.write': `auth != null && auth.uid === $uid && !data.exists() && ${joinAnyPhase ? `${phase}.exists()` : `${phase}.val() === 'lobby'`}`,
+        '.write': `auth != null && auth.uid === $uid && !data.exists() && ${OPEN} && ${joinAnyPhase ? `${phase}.exists()` : `${phase}.val() === 'lobby'`}`,
         '.validate': `newData.val() === true && ($uid === auth.uid || data.exists() || (${ADMIN}))`,
       },
     },
@@ -82,7 +84,7 @@ const rules = {
       },
     },
     hidden: { '.read': true, '.write': ADMIN, $id: { '.validate': 'newData.isBoolean()' } },
-    settings: { '.write': ADMIN, ageGate: { '.read': true, '.validate': 'newData.isBoolean()' }, $other: { '.validate': false } },
+    settings: { '.write': ADMIN, ageGate: { '.read': true, '.validate': 'newData.isBoolean()' }, maintenance: { '.read': true, '.validate': 'newData.isBoolean()' }, $other: { '.validate': false } },
     updateLog: {
       '.read': true,
       '.write': ADMIN,
@@ -118,7 +120,7 @@ rules.ucHost = {
   '.write': `${ADMIN} && !newData.exists()`,
   $code: {
     '.read': `${UC_HOST} || (${ADMIN})`,
-    '.write': `${UC_HOST} || (${ADMIN})`,
+    '.write': `(${UC_HOST} && ${OPEN}) || (${ADMIN})`,
     '.validate': "newData.hasChildren(['civilWord', 'undercoverWord', 'roles'])",
     civilWord: { '.validate': WORD },
     undercoverWord: { '.validate': WORD },
@@ -132,7 +134,7 @@ rules.ucSecret = {
   '.write': `${ADMIN} && !newData.exists()`,
   $code: {
     '.read': `${UC_HOST} || (${ADMIN})`,
-    '.write': `${UC_HOST} || (${ADMIN})`,
+    '.write': `(${UC_HOST} && ${OPEN}) || (${ADMIN})`,
     $uid: {
       '.read': 'auth != null && auth.uid === $uid',
       '.validate': "newData.hasChildren(['role'])",

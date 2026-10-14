@@ -248,3 +248,38 @@ describe('Hub et admin', () => {
     await assertSucceeds(remove(ref(admin, 'wr')));
   });
 });
+
+describe('Maintenance', () => {
+  const on = () => seed('hub/settings/maintenance', true);
+
+  test("l'interrupteur : lisible par tous, modifiable par l'admin seul", async () => {
+    await assertSucceeds(get(ref(anon, 'hub/settings/maintenance')));
+    await assertFails(set(ref(alice, 'hub/settings/maintenance'), true));
+    await assertFails(set(ref(anon, 'hub/settings/maintenance'), true));
+    await assertSucceeds(set(ref(admin, 'hub/settings/maintenance'), true));
+    await assertFails(set(ref(admin, 'hub/settings/maintenance'), 'oui'));
+  });
+  for (const [P, code] of Object.entries(GAMES)) {
+    test(`${P} : ni créer, ni rejoindre, ni jouer, ni supprimer ; l'admin si`, async () => {
+      await seed(`${P}/${code}`, { ...lobby(code), members: { alice: true, bob: true } });
+      await on();
+      await assertFails(set(ref(alice, `${P}/ABCD-11`), lobby('ABCD-11')));
+      await assertFails(set(ref(eve, `${P}/${code}/members/eve`), true));
+      await assertFails(update(ref(bob, `${P}/${code}`), { turnIndex: 1 }));
+      await assertFails(remove(ref(alice, `${P}/${code}`)));
+      await assertSucceeds(get(ref(bob, `${P}/${code}`)));
+      await assertSucceeds(update(ref(admin, `${P}/${code}`), { turnIndex: 1 }));
+      await assertSucceeds(remove(ref(admin, `${P}/${code}`)));
+    });
+  }
+  test("Undercover : l'hôte n'écrit plus ses secrets", async () => {
+    await seed('games/LOUP-42', { ...lobby('LOUP-42'), members: { alice: true } });
+    await on();
+    await assertFails(set(ref(alice, 'ucHost/LOUP-42'), { civilWord: 'Café', undercoverWord: 'Thé', roles: ['civil'] }));
+    await assertFails(set(ref(alice, 'ucSecret/LOUP-42/alice'), { role: 'civil', word: 'Café' }));
+  });
+  test('interrupteur coupé : le jeu reprend', async () => {
+    await seed('hub/settings/maintenance', false);
+    await assertSucceeds(set(ref(alice, 'p4/ABCD-11'), lobby('ABCD-11')));
+  });
+});
