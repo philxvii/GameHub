@@ -4,150 +4,250 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Hub</title>
+<meta name="description" content="Neuf jeux en ligne, sans compte : Banqueroll, Undercover, UNO, Puissance 4, Qui est-ce ?, Bataille Navale, Roulette, Mini Golf et WikiRace.">
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="icons/favicon.ico" sizes="48x48">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="theme-color" content="#07090f">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#F5F6F8">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('gh-theme'); } catch (e) {}
+    if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+    if (t === 'dark') document.querySelector('meta[name="theme-color"]').content = '#0D0B12';
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
+<!--
+  Hub de GameHub : les neuf jeux sont des cartes illustrees, distribuees a l'ouverture.
+  Base de design : shared/design/README.md. Affiches : games/<jeu>/cover.webp.
+-->
 <style>
-  :root {
-    --bg:#07090f; --surface:#0e1118; --surface2:#141820;
-    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.14);
-    --text:#eef0f6; --muted:#6b7280; --accent:#e8d5a3; --r:16px;
+  :root{
+    --bg:#F5F6F8; --surface:#FFFFFF; --surface2:#EDEFF3;
+    --border:rgba(14,16,22,.08); --border2:rgba(14,16,22,.16);
+    --text:#0E1016; --muted:#686D79; --accent:#0E1016; --on-accent:#FFFFFF; --brand:#FF5A3C; --focus:#2F5BE3;
+    --back:#111318; --back-line:rgba(255,255,255,.07);
+    --shadow:0 1px 2px rgba(14,16,22,.06),0 14px 28px -16px rgba(14,16,22,.38);
+    --shadow-hi:0 2px 4px rgba(14,16,22,.06),0 26px 40px -18px rgba(14,16,22,.45);
+    --r:24px; --r-sm:10px;
+    --f:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --gutter:clamp(20px,4vw,56px);
+    --d-1:120ms; --d-2:220ms; --d-3:380ms;
+    --e-out:cubic-bezier(.22,1,.36,1); --e-in-out:cubic-bezier(.65,0,.35,1);
+    --gap:28px; --cols:5;
+    --die:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='2.5' y='2.5' width='19' height='19' rx='5.5' fill='none' stroke='white' stroke-width='1.4'/%3E%3Ccircle cx='8' cy='8' r='1.7' fill='white'/%3E%3Ccircle cx='12' cy='12' r='1.7' fill='%23FF5A3C'/%3E%3Ccircle cx='16' cy='16' r='1.7' fill='white'/%3E%3C/svg%3E");
+    --cw:min(400px,calc((100vw - 2 * var(--gutter) - (var(--cols) - 1) * var(--gap)) / var(--cols)));
+    --stage:calc(var(--cw) * var(--cols) + var(--gap) * (var(--cols) - 1));
+  }
+  :root[data-theme="dark"]{
+    --bg:#0D0B12; --surface:#17141F; --surface2:#201C2B;
+    --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.16);
+    --text:#F3F1F7; --muted:#9A95A8; --accent:#F3F1F7; --on-accent:#0D0B12; --focus:#8EA6FF;
+    --back:#1C1826; --back-line:rgba(255,255,255,.06);
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 18px 34px -16px rgba(0,0,0,.85);
+    --shadow-hi:0 2px 4px rgba(0,0,0,.5),0 30px 48px -18px rgba(0,0,0,.9);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
+  html{-webkit-text-size-adjust:100%;}
   html,body{min-height:100vh;}
-  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+  body{background:var(--bg);color:var(--text);font-family:var(--f);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:clip;}
+  html.theming body,html.theming .top,html.theming .intro,html.theming .chip,html.theming .surprise,html.theming .hub-footer{transition:background-color .45s ease,color .45s ease,border-color .45s ease;}
+  :root[data-theme="dark"] .shade{background:rgba(0,0,0,.95);}
+  :root[data-theme="dark"] .front{box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),0 0 0 1px rgba(255,255,255,.05),var(--shadow);}
+  .top-right{display:flex;align-items:center;gap:14px;}
+  .theme-toggle{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;border:1px solid var(--border2);background:transparent;color:var(--text);cursor:pointer;transition:border-color var(--d-2),transform var(--d-1) var(--e-out);}
+  .theme-toggle:hover{border-color:var(--text);}
+  .theme-toggle:active{transform:scale(.92);}
+  .theme-toggle svg{width:17px;height:17px;transition:transform .5s var(--e-out);}
+  .theme-toggle:hover svg{transform:rotate(-20deg);}
+  .theme-toggle .sun{display:none;}
+  :root[data-theme="dark"] .theme-toggle .sun{display:block;}
+  :root[data-theme="dark"] .theme-toggle .moon{display:none;}
+  a{color:inherit;text-decoration:none;}
+  button{font:inherit;color:inherit;}
+  :focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:6px;}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+  .wrap{max-width:calc(var(--stage) + 2 * var(--gutter));margin:0 auto;padding-left:var(--gutter);padding-right:var(--gutter);}
 
-  /* ── Age gate ── */
-  #age-gate{position:fixed;inset:0;z-index:100;background:rgba(7,9,15,0.97);display:flex;align-items:center;justify-content:center;padding:1rem;}
+  /* ── Verification d'age ── */
+  #age-gate{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem;background:var(--bg);}
   #age-gate.hidden{display:none;}
-  .gate-box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:2rem 1.5rem;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.7);}
-  .gate-icon{font-size:44px;margin-bottom:1rem;display:block;}
-  .gate-title{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);margin-bottom:0.5rem;}
-  .gate-sub{font-size:13px;color:var(--muted);margin-bottom:1.5rem;line-height:1.6;}
-  .gate-input-row{display:flex;gap:6px;margin-bottom:1rem;width:100%;}
-  .gate-input-row input{flex:1;min-width:0;padding:11px 4px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'Syne',sans-serif;font-size:18px;font-weight:700;text-align:center;outline:none;letter-spacing:1px;transition:border-color 0.2s;}
-  .gate-input-row input:focus{border-color:var(--accent);}
-  .gate-input-row input::placeholder{color:rgba(107,114,128,0.5);font-size:12px;font-family:'DM Sans',sans-serif;font-weight:400;letter-spacing:0;}
-  .gate-btn{width:100%;padding:13px;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:#07090f;transition:all 0.15s;}
-  .gate-btn:hover{filter:brightness(1.08);}
-  .gate-btn:active{transform:scale(0.98);}
-  .gate-error{font-size:12px;color:#f87171;margin-top:10px;min-height:32px;line-height:1.5;}
-  .gate-legal{font-size:11px;color:var(--muted);margin-top:1.25rem;line-height:1.6;opacity:0.6;}
+  .gate-box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.25rem 1.75rem 1.75rem;text-align:center;box-shadow:var(--shadow);}
+  .gate-icon{display:grid;place-items:center;width:52px;height:52px;margin:0 auto 1.1rem;border-radius:14px;background:var(--accent);color:var(--on-accent);font-weight:600;font-size:17px;letter-spacing:-.01em;}
+  .gate-title{font-weight:600;font-size:24px;letter-spacing:-.025em;margin-bottom:.4rem;}
+  .gate-sub{font-size:15px;color:var(--muted);margin-bottom:1.5rem;line-height:1.55;}
+  .gate-input-row{display:flex;gap:8px;margin-bottom:1rem;width:100%;}
+  .gate-input-row input{flex:1;min-width:0;padding:12px 4px;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-family:var(--f);font-variant-numeric:tabular-nums;font-size:17px;font-weight:500;text-align:center;outline:none;transition:border-color var(--d-2);}
+  .gate-input-row input:focus{border-color:var(--text);}
+  .gate-input-row input::placeholder{color:var(--muted);opacity:.6;font-size:13px;}
+  .gate-btn{width:100%;padding:13px;border-radius:var(--r-sm);font-size:15px;font-weight:600;cursor:pointer;border:none;background:var(--accent);color:var(--on-accent);transition:opacity var(--d-2),transform var(--d-1) var(--e-out);}
+  .gate-btn:hover{opacity:.88;}
+  .gate-btn:active{transform:scale(.98);}
+  .gate-error{font-size:13px;color:#D2402A;margin-top:10px;min-height:32px;line-height:1.5;}
+  .gate-legal{font-size:12px;color:var(--muted);margin-top:1rem;line-height:1.6;}
 
   /* ── Hub ── */
-  #hub{max-width:1000px;margin:0 auto;padding:2.5rem 1.5rem 4rem;opacity:0;transition:opacity 0.4s ease;}
+  #hub{opacity:0;transition:opacity .35s ease;}
   #hub.visible{opacity:1;}
-  .hub-header{margin-bottom:2.5rem;}
-  .hub-title{font-family:'Syne',sans-serif;font-weight:800;font-size:48px;line-height:1;letter-spacing:-2px;color:var(--accent);}
-  .hub-title span{color:rgba(232,213,163,0.35);}
-  .hub-sub{font-size:15px;color:var(--muted);margin-top:8px;}
+  .top{display:flex;align-items:center;justify-content:space-between;height:68px;}
+  .logo{display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:19px;letter-spacing:-.03em;line-height:1;}
+  .logo svg{width:24px;height:24px;flex:none;color:var(--text);}
+  .live{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .live i{width:6px;height:6px;border-radius:50%;background:#2EB872;}
+  .live[hidden]{display:none;}
 
-  /* ── Game grid ── */
-  .game-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
-  .game-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:transform 0.18s,border-color 0.18s,box-shadow 0.18s;text-decoration:none;display:block;position:relative;}
-  .game-card:hover{transform:translateY(-4px);border-color:var(--border2);box-shadow:0 12px 40px rgba(0,0,0,0.4);}
-  .game-card:active{transform:translateY(-2px);}
+  .intro{display:flex;align-items:flex-end;justify-content:space-between;gap:16px 40px;flex-wrap:wrap;padding:6px 0 30px;}
+  h1{font-weight:600;font-size:clamp(30px,2.7vw,40px);line-height:1.05;letter-spacing:-.035em;}
+  .lede{margin-top:6px;font-size:16px;color:var(--muted);letter-spacing:-.005em;}
+  .controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .filters{display:flex;gap:2px;flex-wrap:wrap;}
+  .chip{height:36px;padding:0 13px;border-radius:999px;border:none;background:transparent;font-size:14.5px;font-weight:500;color:var(--muted);cursor:pointer;transition:color var(--d-2),background-color var(--d-2);}
+  .chip:hover{color:var(--text);}
+  .chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);}
+  .surprise{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 15px 0 12px;border-radius:999px;border:1px solid var(--border2);background:transparent;font-size:14.5px;font-weight:500;color:var(--text);cursor:pointer;transition:border-color var(--d-2),background-color var(--d-2),transform var(--d-1) var(--e-out);}
+  .surprise:hover{border-color:var(--text);}
+  .surprise:active{transform:scale(.97);}
+  .surprise svg{width:18px;height:18px;transition:transform .5s var(--e-out);}
+  .surprise.rolling svg{transform:rotate(360deg);transition:transform .9s var(--e-in-out);}
+
+  /* ── Les cartes : l'affiche, puis sa legende ── */
+  .table{padding-bottom:56px;}
+  .cards{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--gap);margin:0 auto;}
+  /* Une rangee incomplete (9 jeux a 5 par rangee) reste centree. */
+  .game-card{position:relative;min-width:0;flex:0 0 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));display:flex;flex-direction:column;container-type:inline-size;transition:opacity var(--d-3) var(--e-out);}
   .game-card.hidden-game{display:none;}
-  .game-card.coming-soon{opacity:0.45;cursor:default;pointer-events:none;}
+  .game-card.coming-soon{opacity:.45;pointer-events:none;}
+  .media{position:relative;aspect-ratio:3/4;perspective:1400px;}
+  .shade{position:absolute;left:10%;right:10%;bottom:0;height:30%;border-radius:50%;background:rgba(10,12,18,.5);filter:blur(var(--sb,16px));
+    transform:translateY(var(--sy,4px)) scale(var(--ss,.9));opacity:var(--so,.55);transition:transform .4s var(--e-out),filter .4s var(--e-out),opacity .4s;}
+  .c3d{position:absolute;inset:0;transform-style:preserve-3d;transform:translateY(var(--lift,0px)) rotateX(var(--rx,0deg)) rotateY(calc(var(--ry,0deg) + var(--flip,0deg))) scale(var(--sc,1));transition:transform .45s var(--e-out);}
+  .face{position:absolute;inset:0;border-radius:var(--r);overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:var(--shadow);transition:box-shadow .4s var(--e-out);}
+  .front{box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),var(--shadow);}
+  .front::before{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,rgba(0,0,0,0) 52%,rgba(0,0,0,.72) 100%);pointer-events:none;}
+  .front::after{content:'';position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity .35s;background:radial-gradient(circle at var(--mx,50%) var(--my,30%),rgba(255,255,255,.22),rgba(255,255,255,0) 55%);mix-blend-mode:soft-light;}
+  .front{background:var(--c);}
+  .front img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(var(--is,1.0));transition:transform .7s var(--e-out);}
+  .glint{position:absolute;inset:-10% -40%;z-index:3;pointer-events:none;opacity:0;background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.3) 50%,transparent 58%);mix-blend-mode:screen;}
+  .back{transform:rotateY(180deg);background:
+      repeating-linear-gradient(0deg,var(--back-line) 0 1px,transparent 1px 12px),
+      repeating-linear-gradient(90deg,var(--back-line) 0 1px,transparent 1px 12px),var(--back);}
+  .back::after{content:'';position:absolute;left:50%;top:50%;width:22%;aspect-ratio:1;transform:translate(-50%,-50%);background:var(--die) center/contain no-repeat;opacity:.95;}
+  .cap{position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 12px;padding:0 clamp(14px,7cqi,24px) clamp(13px,6.5cqi,22px);color:#fff;}
+  .name{display:block;font-weight:600;font-size:clamp(17px,7.4cqi,26px);letter-spacing:-.025em;line-height:1.15;text-shadow:0 1px 12px rgba(0,0,0,.35);}
+  .players{display:block;font-size:14.5px;color:rgba(255,255,255,.78);white-space:nowrap;}
 
-  .card-banner{height:130px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;font-size:54px;}
-  .banner-bg{position:absolute;inset:0;}
-  .banner-emoji{position:relative;z-index:1;}
+  @media (hover:hover) and (pointer:fine){
+    .game-card.is-hover .c3d{--lift:-10px;--sc:1.015;}
+    .game-card.is-hover .front::after{opacity:1;}
+    .game-card.is-hover .face{box-shadow:var(--shadow-hi);}
+    .game-card.is-hover .front img{--is:1.04;}
+    .game-card.is-hover .shade{--sy:14px;--ss:.98;--sb:22px;--so:.45;}
+  }
+  .game-card:focus-visible{outline:none;}
+  .game-card:focus-visible .front{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--focus);}
+  .game-card.is-out{opacity:.26;}
+  .game-card.is-down .c3d{--flip:180deg;transition:transform .55s var(--e-in-out);transition-delay:var(--fd,0ms);}
+  .game-card.is-down{pointer-events:none;}
+  .game-card.is-dim{opacity:.32;}
+  .game-card.is-picked .c3d{--lift:-8px;}
+  .game-card.is-picked .front{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--text),var(--shadow-hi);}
+  .game-card.is-launch .c3d{--lift:-10px;--sc:1.03;transition:transform .2s var(--e-out);}
 
-  .banner-undercover{background:linear-gradient(135deg,#0f0f1a,#1a1040);}
-  .banner-undercover .banner-bg{background:radial-gradient(circle at 30% 60%,rgba(139,92,246,0.3) 0%,transparent 60%),radial-gradient(circle at 70% 30%,rgba(236,72,153,0.2) 0%,transparent 50%);}
-  .banner-p4{background:linear-gradient(135deg,#0f1a0f,#101830);}
-  .banner-p4 .banner-bg{background:radial-gradient(circle at 25% 50%,rgba(249,115,22,0.3) 0%,transparent 55%),radial-gradient(circle at 75% 50%,rgba(59,130,246,0.3) 0%,transparent 55%);}
-  .banner-qec{background:linear-gradient(135deg,#0f1a18,#0f1820);}
-  .banner-qec .banner-bg{background:radial-gradient(circle at 50% 50%,rgba(20,184,166,0.25) 0%,transparent 60%);}
-  .banner-bn{background:linear-gradient(135deg,#060d1a,#0a1a2e);}
-  .banner-bn .banner-bg{background:radial-gradient(circle at 30% 70%,rgba(34,211,238,0.2) 0%,transparent 55%),radial-gradient(circle at 70% 30%,rgba(14,165,233,0.15) 0%,transparent 50%);}
-  .banner-roulette{background:linear-gradient(135deg,#0d0a06,#1a1206);}
-  .banner-roulette .banner-bg{background:radial-gradient(circle at 50% 50%,rgba(212,175,55,0.25) 0%,transparent 60%);position:absolute;inset:0;}
-  .banner-golf{background:linear-gradient(135deg,#061a06,#0a2010);}
-  .banner-golf .banner-bg{background:radial-gradient(circle at 40% 60%,rgba(34,197,94,0.3) 0%,transparent 55%),radial-gradient(circle at 70% 30%,rgba(16,185,129,0.2) 0%,transparent 50%);}
-  .banner-banqueroll{background:linear-gradient(135deg,#101a2a,#19283c);}
-  .banner-banqueroll .banner-bg{background:radial-gradient(circle at 20% 30%,rgba(248,189,56,0.3) 0%,transparent 55%),radial-gradient(circle at 75% 60%,rgba(248,189,56,0.18) 0%,transparent 50%);}
-  .banner-uno{background:linear-gradient(135deg,#1a0606,#200a0a);}
-  .banner-uno .banner-bg{background:radial-gradient(circle at 30% 50%,rgba(239,68,68,0.3) 0%,transparent 55%),radial-gradient(circle at 70% 60%,rgba(59,130,246,0.25) 0%,transparent 50%);}
+  #warp{position:fixed;inset:0;z-index:300;pointer-events:none;visibility:hidden;}
+  #warp.go{visibility:visible;}
+  .launch-img{position:fixed;object-fit:cover;will-change:left,top,width,height,transform;box-shadow:0 40px 80px -30px rgba(0,0,0,.6);}
+  .launch-title{position:fixed;left:0;right:0;bottom:14vh;text-align:center;color:#fff;font-weight:600;font-size:clamp(40px,6.4vw,96px);line-height:1;letter-spacing:-.04em;text-shadow:0 6px 40px rgba(0,0,0,.55);opacity:0;}
+  .launch-veil{position:fixed;inset:0;background:#000;opacity:0;}
 
-  .p4-grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(4,1fr);gap:4px;padding:12px;opacity:0.18;}
-  .p4-dot{border-radius:50%;background:white;} .p4-dot.o{background:#f97316;} .p4-dot.b{background:#3b82f6;}
-  .bn-grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(5,1fr);gap:3px;padding:14px;opacity:0.15;}
-  .bn-cell{border-radius:2px;background:#1e3a5f;} .bn-cell.hit{background:#ef4444;} .bn-cell.ship{background:#2a4a6b;}
+  /* ── Pied de page ── */
+  .hub-footer{border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px 24px;padding-top:20px;padding-bottom:28px;}
+  .footer-text{font-size:13px;color:var(--muted);}
+  .online-dot{width:6px;height:6px;border-radius:50%;background:#2EB872;display:inline-block;margin-right:8px;vertical-align:2px;}
+  .admin-trigger{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:50%;color:var(--muted);opacity:.6;cursor:pointer;user-select:none;background:none;border:none;transition:opacity var(--d-2),transform .7s var(--e-out);}
+  .admin-trigger:hover{opacity:1;transform:rotate(60deg);}
+  .admin-trigger svg{width:16px;height:16px;}
 
-  .card-body{padding:1.1rem 1.25rem 1.25rem;}
-  .card-name{font-family:'Syne',sans-serif;font-weight:700;font-size:19px;color:var(--text);margin-bottom:5px;}
-  .card-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:1rem;}
-  .card-tags{display:flex;gap:6px;flex-wrap:wrap;}
-  .tag{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--border);color:var(--muted);font-family:'Syne',sans-serif;font-weight:500;}
-  .tag-soon{background:rgba(107,114,128,0.1);border-color:rgba(107,114,128,0.2);}
-  .card-arrow{position:absolute;top:1rem;right:1rem;width:28px;height:28px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);transition:all 0.15s;}
-  .game-card:hover .card-arrow{background:var(--accent);color:#07090f;border-color:var(--accent);}
-  .soon-badge{position:absolute;top:10px;left:10px;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:rgba(255,255,255,0.06);color:var(--muted);padding:3px 8px;border-radius:999px;border:1px solid var(--border);font-family:'Syne',sans-serif;}
-
-  /* ── Footer ── */
-  .hub-footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
-  .footer-text{font-size:12px;color:var(--muted);}
-  .online-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block;margin-right:6px;box-shadow:0 0 6px #4ade80;}
-  .admin-trigger{font-size:11px;color:rgba(107,114,128,0.3);cursor:pointer;padding:4px;transition:color 0.2s;user-select:none;}
-  .admin-trigger:hover{color:var(--muted);}
-
-  /* ── Admin gate ── */
-  #admin-gate{position:fixed;inset:0;z-index:200;background:rgba(7,9,15,0.97);display:flex;align-items:center;justify-content:center;padding:1rem;}
+  /* ── Admin ── */
+  #admin-gate{position:fixed;inset:0;z-index:200;background:color-mix(in srgb,var(--bg) 96%,transparent);display:flex;align-items:center;justify-content:center;padding:1rem;}
   #admin-gate.hidden{display:none;}
-  .admin-gate-box{width:100%;max-width:340px;background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:2rem 1.5rem;text-align:center;}
-  .admin-gate-box input{width:100%;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:15px;text-align:center;outline:none;letter-spacing:3px;margin-bottom:10px;font-family:'Syne',sans-serif;font-weight:700;}
-  .admin-gate-box input:focus{border-color:var(--accent);}
-
-  /* ── Admin panel ── */
+  .admin-gate-box{width:100%;max-width:340px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2rem 1.5rem;text-align:center;box-shadow:var(--shadow);}
+  .admin-gate-box input{width:100%;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:15px;text-align:center;outline:none;letter-spacing:3px;margin-bottom:10px;font-weight:600;}
   #admin-panel{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;padding:1.5rem;}
   #admin-panel.hidden{display:none;}
   .admin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;padding-bottom:1rem;border-bottom:1px solid var(--border);}
-  .admin-title{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:var(--accent);}
+  .admin-title{font-weight:600;font-size:26px;letter-spacing:-.03em;}
   .admin-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;}
-  .admin-section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--text);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.08em;}
+  .admin-section-title{font-weight:600;font-size:14px;color:var(--text);margin-bottom:1rem;}
   .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
-  .stat-card{background:var(--surface2);border-radius:var(--r);padding:1rem;text-align:center;}
-  .stat-val{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--accent);}
-  .stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-top:3px;}
-
-  /* Toggle */
+  .stat-card{background:var(--surface2);border-radius:var(--r-sm);padding:1rem;text-align:center;}
+  .stat-val{font-weight:600;font-size:28px;letter-spacing:-.03em;}
+  .stat-lbl{font-size:12px;color:var(--muted);margin-top:3px;}
   .game-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
   .game-toggle-row:last-child{border-bottom:none;}
   .toggle{position:relative;width:40px;height:22px;cursor:pointer;flex-shrink:0;}
   .toggle input{opacity:0;width:0;height:0;}
-  .toggle-slider{position:absolute;inset:0;background:#333;border-radius:22px;transition:0.2s;}
-  .toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:white;border-radius:50%;transition:0.2s;}
+  .toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:22px;transition:.2s;}
+  .toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.2s;}
   .toggle input:checked+.toggle-slider{background:var(--accent);}
-  .toggle input:checked+.toggle-slider::before{transform:translateX(18px);}
-
-  .btn-admin{padding:8px 16px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text);transition:all 0.15s;width:auto;}
-  .btn-admin:hover{border-color:var(--border2);}
-  .btn-admin-danger{border-color:rgba(239,68,68,0.3);color:#ef4444;}
-  .btn-admin-danger:hover{background:rgba(239,68,68,0.08);}
-  .btn-admin-primary{background:var(--accent);color:#07090f;border-color:var(--accent);font-weight:700;}
-  .btn-admin-primary:hover{filter:brightness(1.08);}
+  .toggle input:checked+.toggle-slider::before{transform:translateX(18px);background:var(--on-accent);}
+  .btn-admin{padding:8px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .15s;width:auto;}
+  .btn-admin:hover{border-color:var(--text);}
+  .btn-admin-danger{border-color:rgba(210,64,42,.35);color:#D2402A;}
+  .btn-admin-danger:hover{background:rgba(210,64,42,.08);}
+  .btn-admin-primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:600;}
   .game-row{display:flex;align-items:center;gap:10px;}
   .party-item{padding:10px 0;border-bottom:1px solid var(--border);}
   .party-item:last-child{border-bottom:none;}
-  .party-code{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--accent);}
+  .party-code{font-weight:600;font-size:15px;letter-spacing:.04em;}
   .party-info{font-size:12px;color:var(--muted);margin-top:2px;}
   .party-players{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
   .player-badge{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:12px;}
-  .player-kick{background:none;border:none;color:rgba(239,68,68,0.6);cursor:pointer;font-size:12px;padding:0 2px;transition:color 0.15s;}
-  .player-kick:hover{color:#ef4444;}
+  .player-kick{background:none;border:none;color:#D2402A;opacity:.7;cursor:pointer;font-size:12px;padding:0 2px;}
+  .player-kick:hover{opacity:1;}
   .log-item{font-size:12px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:8px;}
   .log-item:last-child{border-bottom:none;}
-  .log-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:3px;}
-  .log-time{font-size:11px;color:rgba(107,114,128,0.6);white-space:nowrap;}
+  .log-dot{width:6px;height:6px;border-radius:50%;background:var(--text);flex-shrink:0;margin-top:3px;}
+  .log-time{font-size:11px;color:var(--muted);white-space:nowrap;}
   .log-msg{flex:1;}
-
   @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
-  @media(max-width:600px){.hub-title{font-size:36px;}.game-grid{grid-template-columns:1fr 1fr;}.stat-grid{grid-template-columns:1fr 1fr;}}
-  @media(max-width:380px){.game-grid{grid-template-columns:1fr;}}
+
+  /* ── Tablette ── */
+  @media (max-width:1100px){
+    :root{--gap:24px;--cols:3;}
+  }
+  /* ── Mobile : deux colonnes, la premiere carte en large ── */
+  @media (max-width:640px){
+    :root{--gap:12px;--gutter:16px;--cols:2;--cw:calc((100vw - 2 * var(--gutter) - var(--gap)) / 2);--stage:calc(100vw - 2 * var(--gutter));}
+    .top{height:60px;}
+    .logo{font-size:18px;}
+    .intro{padding:6px 0 22px;gap:16px;}
+    h1{font-size:34px;}
+    .lede{font-size:15.5px;margin-top:6px;}
+    .controls{width:100%;flex-wrap:nowrap;gap:8px;}
+    .filters{flex:1;min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
+    .filters::-webkit-scrollbar{display:none;}
+    .chip{flex:none;padding:0 12px;}
+    .surprise{flex:none;width:38px;padding:0;justify-content:center;}
+    .surprise span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+    .table{padding-bottom:36px;overflow-x:clip;}
+    .cards{gap:22px var(--gap);}
+    .game-card[data-wide]{flex-basis:100%;}
+    .game-card[data-wide] .media{aspect-ratio:4/3;}
+    .game-card[data-wide] .front img{object-position:50% 38%;}
+    .name{font-size:17px;}
+    .players{font-size:12.5px;}
+    .cap{display:block;padding:0 14px 13px;}
+    .game-card[data-wide] .name{font-size:22px;}
+    .face{border-radius:13px;}
+    .stat-grid{grid-template-columns:1fr 1fr;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:1ms !important;animation-delay:0ms !important;transition-duration:1ms !important;transition-delay:0ms !important;}
+  }
 </style>
 </head>
 <body>
@@ -155,13 +255,13 @@
 <!-- ── AGE GATE ── -->
 <div id="age-gate">
   <div class="gate-box">
-    <span class="gate-icon">🔞</span>
+    <span class="gate-icon" aria-hidden="true">18+</span>
     <div class="gate-title">Vérification d'âge</div>
     <div class="gate-sub">Ce site est réservé aux personnes majeures.<br>Entre ta date de naissance.</div>
     <div class="gate-input-row">
-      <input type="text" id="gate-dd" placeholder="JJ" maxlength="2" inputmode="numeric" oninput="gateInput(this,'gate-mm',2)"/>
-      <input type="text" id="gate-mm" placeholder="MM" maxlength="2" inputmode="numeric" oninput="gateInput(this,'gate-yyyy',2)"/>
-      <input type="text" id="gate-yyyy" placeholder="AAAA" maxlength="4" inputmode="numeric" oninput="gateInput(this,null,4)"/>
+      <input type="text" id="gate-dd" placeholder="JJ" maxlength="2" inputmode="numeric" aria-label="Jour" oninput="gateInput(this,'gate-mm',2)"/>
+      <input type="text" id="gate-mm" placeholder="MM" maxlength="2" inputmode="numeric" aria-label="Mois" oninput="gateInput(this,'gate-yyyy',2)"/>
+      <input type="text" id="gate-yyyy" placeholder="AAAA" maxlength="4" inputmode="numeric" aria-label="Année" oninput="gateInput(this,null,4)"/>
     </div>
     <button class="gate-btn" onclick="checkAge()">Entrer</button>
     <div class="gate-error" id="gate-error"></div>
@@ -172,11 +272,11 @@
 <!-- ── ADMIN GATE ── -->
 <div id="admin-gate" class="hidden">
   <div class="admin-gate-box">
-    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--accent);margin-bottom:0.5rem;">⚙ Admin</div>
+    <div style="font-family:var(--f-display);font-weight:800;font-size:26px;color:var(--accent);margin-bottom:0.5rem;">Admin</div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:1.5rem;">Compte Google administrateur</div>
-    <button onclick="adminLogin()" style="width:100%;padding:11px;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:#07090f;transition:all 0.15s;margin-bottom:8px;">Se connecter avec Google</button>
+    <button onclick="adminLogin()" style="width:100%;padding:12px;border-radius:var(--r-sm);font-family:var(--f-body);font-size:15px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:var(--ink);transition:all 0.15s;margin-bottom:8px;">Se connecter avec Google</button>
     <div class="gate-error" id="admin-pwd-err" style="margin-top:0;"></div>
-    <button onclick="closeAdminGate()" style="width:100%;padding:9px;border-radius:var(--r);font-size:13px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);margin-top:6px;">Annuler</button>
+    <button onclick="closeAdminGate()" style="width:100%;padding:10px;border-radius:var(--r-sm);font-size:13px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);margin-top:6px;">Annuler</button>
   </div>
 </div>
 
@@ -184,8 +284,8 @@
 <div id="admin-panel" class="hidden">
   <div style="max-width:700px;margin:0 auto;">
     <div class="admin-header">
-      <div class="admin-title">⚙ Panel Admin</div>
-      <button onclick="closeAdmin()" style="padding:8px 16px;border-radius:var(--r);font-size:13px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);">✕ Fermer</button>
+      <div class="admin-title">Panel Admin</div>
+      <button onclick="closeAdmin()" style="padding:8px 16px;border-radius:var(--r-sm);font-size:13px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);">✕ Fermer</button>
     </div>
 
     <!-- Stats -->
@@ -252,159 +352,323 @@
   </div>
 </div>
 
+
+
 <!-- ── HUB ── -->
 <div id="hub">
-  <div class="hub-header">
-    <div class="hub-title">GAME<span>.</span>HUB</div>
-    <div class="hub-sub">Choisis un jeu et joue en ligne avec tes amis 🎮</div>
-  </div>
-
-  <div class="game-grid" id="game-grid">
-
-    <!-- Undercover -->
-    <a class="game-card" href="games/undercover/" id="card-undercover">
-      <div class="card-banner banner-undercover"><div class="banner-bg"></div><span class="banner-emoji">🕵️</span></div>
-      <div class="card-body">
-        <div class="card-name">Undercover</div>
-        <div class="card-desc">Trouve l'imposteur avant qu'il ne te démasque.</div>
-        <div class="card-tags"><span class="tag">3–9 joueurs</span><span class="tag">Déduction</span></div>
-      </div>
-      <div class="card-arrow">→</div>
+  <header class="wrap top">
+    <a class="logo" href="./" aria-label="Game Hub, accueil">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor"/><circle cx="8" cy="8" r="1.8" fill="var(--bg)"/><circle cx="12" cy="12" r="1.8" fill="#FF5A3C"/><circle cx="16" cy="16" r="1.8" fill="var(--bg)"/></svg>
+      <span>GameHub</span>
     </a>
+    <div class="top-right">
+      <span class="live" id="live-mini" hidden><i></i><span></span></span>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Passer en mode sombre">
+        <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </header>
 
-    <!-- Puissance 4 -->
-    <a class="game-card" href="games/puissance4/" id="card-puissance4">
-      <div class="card-banner banner-p4">
-        <div class="banner-bg"></div>
-        <div class="p4-grid">
-          <div class="p4-dot"></div><div class="p4-dot"></div><div class="p4-dot o"></div><div class="p4-dot"></div><div class="p4-dot b"></div><div class="p4-dot"></div><div class="p4-dot"></div>
-          <div class="p4-dot"></div><div class="p4-dot o"></div><div class="p4-dot b"></div><div class="p4-dot o"></div><div class="p4-dot"></div><div class="p4-dot b"></div><div class="p4-dot"></div>
-          <div class="p4-dot b"></div><div class="p4-dot o"></div><div class="p4-dot o"></div><div class="p4-dot b"></div><div class="p4-dot o"></div><div class="p4-dot b"></div><div class="p4-dot o"></div>
-          <div class="p4-dot o"></div><div class="p4-dot b"></div><div class="p4-dot o"></div><div class="p4-dot o"></div><div class="p4-dot b"></div><div class="p4-dot o"></div><div class="p4-dot b"></div>
+  <main class="wrap">
+    <div class="intro">
+      <div>
+        <h1>On joue&nbsp;?</h1>
+        <p class="lede"><span data-count-words>Neuf</span> jeux en ligne, sans compte. Crée une partie, partage le code.</p>
+      </div>
+      <div class="controls">
+        <div class="filters" role="group" aria-label="Filtrer les jeux">
+          <button class="chip" type="button" data-filter="all" aria-pressed="true">Tous</button>
+          <button class="chip" type="button" data-filter="amis" aria-pressed="false">À plusieurs</button>
+          <button class="chip" type="button" data-filter="duel" aria-pressed="false">En duel</button>
+          <button class="chip" type="button" data-filter="solo" aria-pressed="false">En solo</button>
+          <button class="chip" type="button" data-filter="bluff" aria-pressed="false">Bluff</button>
+          <button class="chip" type="button" data-filter="strategie" aria-pressed="false">Stratégie</button>
+          <button class="chip" type="button" data-filter="chance" aria-pressed="false">Hasard</button>
         </div>
-        <span class="banner-emoji" style="position:relative;z-index:1;">🔴</span>
+        <button class="surprise" id="surprise" type="button" aria-label="Surprends-moi : tirer un jeu au hasard">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="8.5" cy="8.5" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.7" fill="currentColor"/></svg>
+          <span>Surprends-moi</span>
+        </button>
       </div>
-      <div class="card-body">
-        <div class="card-name">Puissance 4</div>
-        <div class="card-desc">Aligne 4 jetons avant ton adversaire.</div>
-        <div class="card-tags"><span class="tag">2 joueurs</span><span class="tag">Stratégie</span></div>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <!-- Qui est-ce -->
-    <a class="game-card" href="games/qui-est-ce/" id="card-quiestce">
-      <div class="card-banner banner-qec"><div class="banner-bg"></div><span class="banner-emoji">🤔</span></div>
-      <div class="card-body">
-        <div class="card-name">Qui est-ce ?</div>
-        <div class="card-desc">Pose des questions pour deviner le personnage adverse.</div>
-        <div class="card-tags"><span class="tag">2 joueurs</span><span class="tag">Devinette</span></div>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <!-- Bataille navale -->
-    <a class="game-card" href="games/bataille-navale/" id="card-bataille">
-      <div class="card-banner banner-bn">
-        <div class="banner-bg"></div>
-        <div class="bn-grid">
-          <div class="bn-cell"></div><div class="bn-cell ship"></div><div class="bn-cell ship"></div><div class="bn-cell ship"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell hit"></div><div class="bn-cell"></div>
-          <div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell ship"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell"></div>
-          <div class="bn-cell hit"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell ship"></div><div class="bn-cell"></div><div class="bn-cell ship"></div><div class="bn-cell ship"></div>
-          <div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell hit"></div><div class="bn-cell"></div><div class="bn-cell ship"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell"></div>
-          <div class="bn-cell"></div><div class="bn-cell ship"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell"></div><div class="bn-cell hit"></div><div class="bn-cell"></div>
-        </div>
-        <span class="banner-emoji" style="position:relative;z-index:1;">⚓</span>
-      </div>
-      <div class="card-body">
-        <div class="card-name">Bataille Navale</div>
-        <div class="card-desc">Place ta flotte et coule celle de l'adversaire.</div>
-        <div class="card-tags"><span class="tag">2 joueurs</span><span class="tag">Tactique</span></div>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <!-- Roulette -->
-    <a class="game-card" href="games/roulette/" id="card-roulette">
-      <div class="card-banner banner-roulette"><div class="banner-bg"></div><span class="banner-emoji">🎰</span></div>
-      <div class="card-body">
-        <div class="card-name">Roulette</div>
-        <div class="card-desc">Misez vos jetons, la roue tourne automatiquement.</div>
-        <div class="card-tags"><span class="tag">2–8 joueurs</span><span class="tag">Casino</span></div>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <!-- Mini Golf -->
-    <a class="game-card" href="games/mini-golf/" id="card-minigolf">
-      <div class="card-banner banner-golf"><div class="banner-bg"></div><span class="banner-emoji">⛳</span></div>
-      <div class="card-body">
-        <div class="card-name">Mini Golf</div>
-        <div class="card-desc">9 trous, vise et ajuste la puissance. Le moins de coups gagne !</div>
-        <div class="card-tags"><span class="tag">2–4 joueurs</span><span class="tag">Sport</span></div>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <!-- Banqueroll -->
-    <a class="game-card" href="games/banqueroll/" id="card-banqueroll">
-      <div class="card-banner banner-banqueroll"><div class="banner-bg"></div><span class="banner-emoji">💼</span></div>
-      <div class="card-body">
-        <div class="card-name">Banqueroll</div>
-        <div class="card-desc">Un plateau financier moderne avec enchères, échanges et stratégie en temps réel.</div>
-        <div class="card-tags"><span class="tag">2–8 joueurs</span><span class="tag">Plateau</span></div>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <!-- UNO (coming soon) -->
-    <!-- WikiRace -->
-<a class="game-card" href="games/wikirace/" id="card-wikirace">
-  <div class="card-banner" style="background:linear-gradient(135deg,#0a0f1a,#101a2a);">
-    <div class="banner-bg" style="background:radial-gradient(circle at 30% 60%,rgba(59,130,246,0.25) 0%,transparent 60%),radial-gradient(circle at 70% 30%,rgba(34,197,94,0.2) 0%,transparent 50%);"></div>
-    <span class="banner-emoji">🌍</span>
-  </div>
-  <div class="card-body">
-    <div class="card-name">WikiRace</div>
-    <div class="card-desc">Atteins la page cible en naviguant uniquement via les liens Wikipédia.</div>
-    <div class="card-tags">
-      <span class="tag">2–6 joueurs</span>
-      <span class="tag">Réflexion</span>
     </div>
-  </div>
-  <div class="card-arrow">→</div>
-</a>
 
-<!-- UNO (jouable) -->
-<a class="game-card" href="games/uno/" id="card-uno-real">
-  <div class="card-banner banner-uno">
-    <div class="banner-bg"></div>
-    <span class="banner-emoji">🃏</span>
-  </div>
-  <div class="card-body">
-    <div class="card-name">UNO</div>
-    <div class="card-desc">Pose tes cartes, bloque tes adversaires et crie UNO avant la fin !</div>
-    <div class="card-tags">
-      <span class="tag">2–6 joueurs</span>
-      <span class="tag">Cartes</span>
+    <div class="table" id="table">
+      <div class="cards" id="game-grid">
+        <a class="game-card" href="games/banqueroll/" id="card-banqueroll" data-game="banqueroll" data-tags="amis solo strategie chance" data-wide style="--c:#1FA36B">
+          <span class="media"><span class="shade" aria-hidden="true"></span><span class="c3d"><span class="face front"><img src="games/banqueroll/cover.webp" width="720" height="960" alt="" decoding="async" fetchpriority="high"><span class="cap"><span class="name">Banqueroll</span><span class="players">2 à 8 joueurs</span></span></span><span class="face back" aria-hidden="true"></span></span></span>
+        </a>
+        <a class="game-card" href="games/undercover/" id="card-undercover" data-game="undercover" data-tags="amis bluff" style="--c:#6B4CD6">
+          <span class="media"><span class="shade" aria-hidden="true"></span><span class="c3d"><span class="face front"><img src="games/undercover/cover.webp" width="720" height="960" alt="" decoding="async" fetchpriority="high"><span class="cap"><span class="name">Undercover</span><span class="players">3 à 9 joueurs</span></span></span><span class="face back" aria-hidden="true"></span></span></span>
+        </a>
+        <a class="game-card" href="games/uno/" id="card-uno" data-game="uno" data-tags="amis chance" style="--c:#2F4DE0">
+          <span class="media"><span class="shade" aria-hidden="true"></span><span class="c3d"><span class="face front"><img src="games/uno/cover.webp" width="720" height="960" alt="" decoding="async" fetchpriority="high"><span class="cap"><span class="name">UNO</span><span class="players">2 à 6 joueurs</span></span></span><span class="face back" aria-hidden="true"></span></span></span>
+        </a>
+        <a class="game-card" href="games/puissance4/" id="card-puissance4" data-game="puissance4" data-tags="duel strategie" style="--c:#E8800F">
+          <span class="media"><span class="shade" aria-hidden="true"></span><span class="c3d"><span class="face front"><img src="games/puissance4/cover.webp" width="720" height="960" alt="" decoding="async" fetchpriority="high"><span class="cap"><span class="name">Puissance 4</span><span class="players">2 joueurs</span></span></span><span class="face back" aria-hidden="true"></span></span></span>
+        </a>
+        <a class="game-card" href="games/qui-est-ce/" id="card-quiestce" data-game="quiestce" data-tags="duel bluff" style="--c:#13A08C">
+          <span class="media"><span class="shade" aria-hidden="true"></span><span class="c3d"><span class="face front"><img src="games/qui-est-ce/cover.webp" width="720" height="960" alt="" decoding="async" fetchpriority="high"><span class="cap"><span class="name">Qui est-ce&nbsp;?</span><span class="players">2 joueurs</span></span></span><span class="face back" aria-hidden="true"></span></span></span>
+        </a>
+        <a class="game-card" href="games/bataille-navale/" id="card-bataille" data-game="bataille" data-tags="duel bluff strategie" style="--c:#1E6FD9">
+          <span class="media"><span class="shade" aria-hidden="true"></span><span class="c3d"><span class="face front"><img src="games/bataille-navale/cover.webp" width="720" height="960" alt="" decoding="async"><span class="cap"><span class="name">Bataille Navale</span><span class="players">2 joueurs</span></span></span><span class="face back" aria-hidden="true"></span></span></span>
+        </a>
+        <a class="game-card" href="games/roulette/" id="card-roulette" data-game="roulette" data-tags="amis chance" style="--c:#C4213D">
+          <span class="media"><span class="shade" aria-hidden="true"></span><span class="c3d"><span class="face front"><img src="games/roulette/cover.webp" width="720" height="960" alt="" decoding="async"><span class="cap"><span class="name">Roulette</span><span class="players">2 à 8 joueurs</span></span></span><span class="face back" aria-hidden="true"></span></span></span>
+        </a>
+        <a class="game-card" href="games/mini-golf/" id="card-minigolf" data-game="minigolf" data-tags="amis" style="--c:#2E9BE8">
+          <span class="media"><span class="shade" aria-hidden="true"></span><span class="c3d"><span class="face front"><img src="games/mini-golf/cover.webp" width="720" height="960" alt="" decoding="async"><span class="cap"><span class="name">Mini Golf</span><span class="players">2 à 4 joueurs</span></span></span><span class="face back" aria-hidden="true"></span></span></span>
+        </a>
+        <a class="game-card" href="games/wikirace/" id="card-wikirace" data-game="wikirace" data-tags="solo" style="--c:#5F6FE8">
+          <span class="media"><span class="shade" aria-hidden="true"></span><span class="c3d"><span class="face front"><img src="games/wikirace/cover.webp" width="720" height="960" alt="" decoding="async"><span class="cap"><span class="name">WikiRace</span><span class="players">Solo</span></span></span><span class="face back" aria-hidden="true"></span></span></span>
+        </a>
+      </div>
     </div>
-  </div>
-  <div class="card-arrow">→</div>
-</a>
+    <p class="sr-only" id="announce" aria-live="polite"></p>
+  </main>
 
-  </div>
-
-  <div class="hub-footer">
-    <div class="footer-text">
-      <span class="online-dot"></span>
-      <span id="online-count">Chargement…</span>
-    </div>
+  <footer class="wrap hub-footer">
+    <span class="footer-text"><span class="online-dot"></span><span id="online-count">Chargement…</span></span>
     <div style="display:flex;align-items:center;gap:12px;">
       <div class="footer-text">By XVIIIUUUU</div>
-      <span class="admin-trigger" onclick="openAdminGate()">⚙</span>
+      <button class="admin-trigger" type="button" onclick="openAdminGate()" aria-label="Administration">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      </button>
     </div>
-  </div>
+  </footer>
 </div>
+
+<div id="warp" aria-hidden="true"></div>
+
+<!-- Interface : distribution, survol, filtres, tirage, transition. Sans Firebase, pour que
+     la page reste navigable si le module ci-dessous ne charge pas. -->
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const fine = matchMedia('(hover: hover) and (pointer: fine)');
+  const table = document.getElementById('table');
+  const grid = document.getElementById('game-grid');
+  const cards = [...grid.querySelectorAll('.game-card')];
+  const announce = document.getElementById('announce');
+  const WORDS = ['Aucun', 'Un', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit', 'Neuf', 'Dix'];
+  const visible = () => cards.filter(c => !c.classList.contains('hidden-game'));
+  const nameOf = c => c.querySelector('.name').textContent;
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const anim = (el, frames, opts) => el.animate(frames, { fill: 'backwards', ...opts });
+  cards.forEach(c => c.querySelector('.front').insertAdjacentHTML('beforeend', '<span class="glint" aria-hidden="true"></span>'));
+
+  // ── Distribution : les cartes partent du paquet face cachee, tournent avec leur
+  //    trajectoire, se retournent et se posent ; l'ombre suit leur hauteur ──
+  const hub = document.getElementById('hub');
+  let dealt = false;
+  async function deal() {
+    if (dealt || !hub.classList.contains('visible')) return;
+    // Onglet en arriere-plan : on garde la distribution pour le moment ou il devient visible.
+    if (document.hidden) { addEventListener('visibilitychange', deal, { once: true }); return; }
+    dealt = true;
+    if (reduce.matches) return;
+    const shown = visible();
+    await Promise.race([Promise.all(shown.map(c => c.querySelector('img').decode().catch(() => {}))), wait(700)]);
+    const g = grid.getBoundingClientRect(), mobile = innerWidth < 640;
+    const ox = g.left + g.width / 2, oy = mobile ? g.top + 140 : Math.min(g.top + g.height * 0.62, g.top + innerHeight * 0.42);
+    const step = mobile ? 70 : 85, dur = mobile ? 760 : 900, t0 = 380, lift = mobile ? 30 : 46;
+    // 1. L'en-tete arrive en douceur pendant que le paquet se forme.
+    [...document.querySelectorAll('.top > *, .intro h1, .intro .lede, .intro .controls')].forEach((el, k) =>
+      anim(el, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 560, delay: k * 60, easing: 'cubic-bezier(.22,1,.36,1)' }));
+    const runs = [];
+    shown.forEach((c, k) => {
+      const r = c.getBoundingClientRect();
+      // 2. Le paquet : cartes face cachee, empilees et un peu de travers.
+      const dx = ox - (r.left + r.width / 2), dy = oy - (r.top + r.height / 2) - (shown.length - k) * 2.5;
+      const deckRot = ((k * 37) % 9 - 4) * 1.1;
+      const o = { duration: dur, delay: t0 + k * step, easing: 'cubic-bezier(.33,0,.15,1)' };
+      // 3. La carte decolle, decrit un arc, se retourne en vol et se pose avec un leger depassement.
+      anim(c, [
+        { transform: `translate(${dx}px, ${dy}px) rotate(${deckRot}deg) scale(.8)` },
+        { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - lift}px) rotate(${deckRot * 0.5 + (dx > 0 ? -5 : 5)}deg) scale(1.04)`, offset: 0.45 },
+        { transform: 'translate(0, -6px) rotate(0deg) scale(1.01)', offset: 0.82 },
+        { transform: 'none' }], o);
+      anim(c.querySelector('.c3d'), [
+        { transform: 'rotateY(180deg)' }, { transform: 'rotateY(180deg)', offset: 0.28 },
+        { transform: 'rotateY(0deg)', offset: 0.78 }, { transform: 'rotateY(0deg)' }], { ...o, easing: 'cubic-bezier(.45,0,.2,1)' });
+      runs.push(c.getAnimations()[0]);
+      // L'ombre grandit quand la carte monte, se resserre quand elle se pose.
+      anim(c.querySelector('.shade'), [
+        { transform: 'translateY(10px) scale(.86)', opacity: 0.35, filter: 'blur(14px)' },
+        { transform: `translateY(${lift}px) scale(1.15)`, opacity: 0.18, filter: 'blur(34px)', offset: 0.45 },
+        { transform: 'translateY(4px) scale(.9)', opacity: 0.55, filter: 'blur(16px)' }], o);
+      // 4. Le projecteur s'allume quand la carte se pose, un reflet la traverse.
+      const lightAt = t0 + k * step + dur * 0.72;
+      anim(c.querySelector('.front img'), [{ filter: 'brightness(.16) saturate(.5)' }, { filter: 'brightness(1) saturate(1)' }], { duration: 650, delay: lightAt, easing: 'cubic-bezier(.4,0,.2,1)' });
+      const glint = c.querySelector('.glint');
+      if (glint) glint.animate([{ transform: 'translateX(-130%) skewX(-12deg)', opacity: 0 }, { opacity: 1, offset: 0.35 }, { transform: 'translateX(130%) skewX(-12deg)', opacity: 0 }],
+        { duration: 900, delay: lightAt + 120, easing: 'cubic-bezier(.4,0,.2,1)' });
+    });
+    // Cartes posees : on fait recalculer la mise en page, sinon Chrome garde le debordement
+    // des trajectoires et la page reste deplacable de quelques pixels sur mobile.
+    await Promise.all(runs.map(a => a && a.finished.catch(() => {})));
+    grid.classList.add('dealt');
+  }
+  new MutationObserver(deal).observe(hub, { attributes: true, attributeFilter: ['class'] });
+
+  // ── Survol : la carte vient vers soi, s'incline sous le pointeur, ses voisines s'ecartent ──
+  const sameRow = (a, b) => Math.abs(a.offsetTop - b.offsetTop) < 8;
+  cards.forEach(c => {
+    c.addEventListener('pointerenter', () => {
+      if (!fine.matches) return;
+      c.classList.add('is-hover');
+      const row = visible().filter(x => sameRow(x, c)), k = row.indexOf(c);
+      row.forEach((x, j) => { if (x !== c && Math.abs(j - k) === 1) x.style.setProperty('--px', `${(j - k) * 8}px`); });
+    });
+    c.addEventListener('pointermove', e => {
+      if (!fine.matches) return;
+      const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height, s = c.style;
+      if (!reduce.matches) {
+        s.setProperty('--rx', `${(0.5 - y) * 10}deg`); s.setProperty('--ry', `${(x - 0.5) * 12}deg`);
+        s.setProperty('--ix', `${(0.5 - x) * 10}px`); s.setProperty('--iy', `${(0.5 - y) * 8}px`);
+      }
+      s.setProperty('--mx', `${x * 100}%`); s.setProperty('--my', `${y * 100}%`);
+    });
+    c.addEventListener('pointerleave', () => {
+      c.classList.remove('is-hover');
+      ['--rx', '--ry', '--ix', '--iy'].forEach(p => c.style.removeProperty(p));
+      cards.forEach(x => x.style.removeProperty('--px'));
+    });
+  });
+  // La table s'incline un peu avec le pointeur.
+  let raf = 0;
+  table.addEventListener('pointermove', e => {
+    if (!fine.matches || reduce.matches || raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0; const r = table.getBoundingClientRect();
+      grid.style.setProperty('--ty', `${((e.clientX - r.left) / r.width - 0.5) * 3}deg`);
+      grid.style.setProperty('--tx', `${(0.5 - (e.clientY - r.top) / r.height) * 2.4}deg`);
+    });
+  });
+  table.addEventListener('pointerleave', () => { grid.style.setProperty('--ty', '0deg'); grid.style.setProperty('--tx', '0deg'); });
+
+  // ── Filtres : les jeux ecartes s'enfoncent et s'eteignent ; rien ne change de place ──
+  const chips = [...document.querySelectorAll('.chip')];
+  let filter = 'all';
+  const matches = c => filter === 'all' || c.dataset.tags.split(' ').includes(filter);
+  function setDown(c, down, delay = 0) {
+    c.style.setProperty('--fd', `${delay}ms`);
+    c.classList.toggle('is-down', down);
+  }
+  function applyFilter() {
+    chips.forEach(ch => ch.setAttribute('aria-pressed', String(ch.dataset.filter === filter)));
+    visible().forEach(c => {
+      const out = !matches(c);
+      c.classList.toggle('is-out', out);
+      if (out) c.tabIndex = -1; else c.removeAttribute('tabindex');
+    });
+    const n = visible().filter(matches).length;
+    announce.textContent = filter === 'all' ? '' : `${n} jeu${n > 1 ? 'x' : ''}`;
+  }
+
+  // ── Surprends-moi : on retourne la table, on melange, une carte revient ──
+  const btn = document.getElementById('surprise');
+  let picked = null, last = null, run = 0;
+  function clearPick() {
+    run++; picked = null;
+    cards.forEach(c => { c.classList.remove('is-picked', 'is-dim'); setDown(c, false); });
+  }
+  chips.forEach(ch => ch.addEventListener('click', () => { if (filter === ch.dataset.filter && !picked) return; clearPick(); filter = ch.dataset.filter; applyFilter(); }));
+  btn.addEventListener('click', async () => {
+    const pool = visible().filter(matches);
+    const choices = pool.filter(c => c.dataset.game !== last);
+    if (!choices.length) return;
+    const pick = choices[Math.floor(Math.random() * choices.length)];
+    clearPick(); const id = run; last = pick.dataset.game;
+    btn.classList.remove('rolling'); void btn.offsetWidth; btn.classList.add('rolling');
+    if (!reduce.matches) {
+      pool.forEach((c, k) => setDown(c, true, k * 34));
+      await wait(560 + pool.length * 34); if (id !== run) return;
+      pool.forEach((c, k) => c.animate([{ transform: 'none' },
+        { transform: `translate(${(k % 2 ? -1 : 1) * 8}px, ${(k % 3 - 1) * 6}px) rotate(${(k % 2 ? 2.5 : -2.5)}deg)` }, { transform: 'none' }],
+        { duration: 400, easing: 'cubic-bezier(.45,0,.2,1)', composite: 'add' }));
+      await wait(420); if (id !== run) return;
+      setDown(pick, false);
+      await wait(440); if (id !== run) return;
+    }
+    picked = pick;
+    pool.forEach((c, k) => { if (c !== pick) { setDown(c, false, k * 22); c.classList.add('is-dim'); } });
+    pick.classList.add('is-picked');
+    announce.textContent = `Tiré au sort : ${nameOf(pick)}`;
+    if (fine.matches) pick.focus({ preventScroll: true });
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && picked) clearPick(); });
+  table.addEventListener('click', e => { if (picked && !e.target.closest('.game-card')) clearPick(); });
+
+  // ── Vers un jeu : la carte vient au centre, fait un tour sur elle-meme (on voit passer
+  //    son dos), s'avance vers soi, l'ecran passe au noir et le jeu s'ouvre ──
+  const warp = document.getElementById('warp');
+  let launching = false;
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a.game-card');
+    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || reduce.matches) return;
+    e.preventDefault();
+    if (launching) return;
+    launching = true;
+    a.classList.add('is-launch');
+    a.style.zIndex = 50;
+    const keep = { fill: 'forwards' };
+    const r = a.querySelector('.media').getBoundingClientRect();
+    const dx = innerWidth / 2 - (r.left + r.width / 2), dy = innerHeight / 2 - (r.top + r.height / 2);
+    const s1 = Math.min(1.45, (innerHeight * 0.62) / r.height), s2 = s1 * 1.18;
+    // Le reste de la page s'efface.
+    cards.forEach(c => { if (c !== a) c.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.94)' }], { duration: 380, easing: 'cubic-bezier(.4,0,.2,1)', ...keep }); });
+    document.querySelectorAll('.top, .intro, .hub-footer').forEach(el => el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 320, ...keep }));
+    // La carte gagne le centre en grandissant, puis s'avance encore.
+    a.animate([
+      { transform: 'none' },
+      { transform: `translate(${dx}px, ${dy}px) scale(${s1})`, offset: 0.62 },
+      { transform: `translate(${dx}px, ${dy}px) scale(${s2})` }], { duration: 1050, easing: 'cubic-bezier(.65,0,.25,1)', ...keep });
+    // Un tour complet sur elle-meme : affiche, dos au de GameHub, affiche.
+    a.querySelector('.c3d').animate([
+      { transform: 'rotateY(0deg)' }, { transform: 'rotateY(360deg)', offset: 0.72 }, { transform: 'rotateY(360deg)' }],
+      { duration: 1050, easing: 'cubic-bezier(.55,0,.2,1)', ...keep });
+    a.querySelector('.shade').animate([{ opacity: 0.55 }, { opacity: 0.2, transform: 'translateY(40px) scale(1.15)', filter: 'blur(30px)' }], { duration: 700, ...keep });
+    // Fondu au noir, puis le jeu.
+    const veil = document.createElement('div'); veil.className = 'launch-veil';
+    warp.replaceChildren(veil); warp.classList.add('go');
+    veil.animate([{ opacity: 0 }, { opacity: 0, offset: 0.7 }, { opacity: 1 }], { duration: 1150, easing: 'cubic-bezier(.4,0,1,1)', ...keep });
+    setTimeout(() => { location.href = a.href; }, 1150);
+  });
+  // Retour arriere (cache de navigation) : la page revient telle quelle.
+  addEventListener('pageshow', () => {
+    launching = false;
+    warp.classList.remove('go'); warp.replaceChildren();
+    document.querySelectorAll('.game-card, .game-card .c3d, .game-card .shade, .top, .intro, .hub-footer').forEach(el => el.getAnimations().forEach(x => { if (x.effect && x.effect.getTiming().fill === 'forwards') x.cancel(); }));
+    cards.forEach(c => { c.classList.remove('is-launch'); c.style.removeProperty('z-index'); });
+  });
+
+  // ── Mode clair / sombre : memorise ; par defaut, le reglage de l'appareil ──
+  const toggle = document.getElementById('theme-toggle');
+  const syncToggle = () => {
+    const dark = root.dataset.theme === 'dark';
+    toggle.setAttribute('aria-label', dark ? 'Passer en mode clair' : 'Passer en mode sombre');
+    document.querySelector('meta[name="theme-color"]').content = dark ? '#0D0B12' : '#F5F6F8';
+  };
+  const root = document.documentElement;
+  toggle.addEventListener('click', () => {
+    root.classList.add('theming');
+    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('gh-theme', root.dataset.theme); } catch (e) {}
+    syncToggle();
+    setTimeout(() => root.classList.remove('theming'), 500);
+  });
+  syncToggle();
+
+  // Appele par le module Firebase quand la liste des jeux masques change.
+  window.hubRefresh = () => {
+    const n = visible().length;
+    document.querySelectorAll('[data-count-words]').forEach(el => { el.textContent = WORDS[n] || n; });
+    applyFilter();
+  };
+  window.hubRefresh();
+})();
+</script>
 
 <script type="module">
 import { ref, set, get, update, onValue, remove, increment, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -437,6 +701,8 @@ onValue(ref(db, 'hub/online'), snap => {
   const count = snap.exists() ? Object.keys(snap.val()).length : 0;
   const el = document.getElementById('online-count');
   if(el) el.textContent = `${count} personne${count>1?'s':''} connectée${count>1?'s':''} actuellement`;
+  const mini = document.getElementById('live-mini');
+  if(mini){ mini.lastElementChild.textContent = `${count} en ligne`; mini.hidden = false; }
   const statEl = document.getElementById('stat-online');
   if(statEl) statEl.textContent = count;
 });
@@ -449,14 +715,13 @@ onValue(ref(db, 'hub/stats/visits'), snap => {
 });
 
 // ── Game visibility ──
+// Chaque jeu apparait deux fois (affiche + carte de la main) : on suit data-game.
 onValue(ref(db, 'hub/hidden'), snap => {
   const hidden = snap.exists() ? snap.val() : {};
   GAMES.forEach(g => {
-    const card = document.getElementById('card-'+g.id);
-    if(!card) return;
-    if(hidden[g.id]) card.classList.add('hidden-game');
-    else card.classList.remove('hidden-game');
+    document.querySelectorAll(`[data-game="${g.id}"]`).forEach(el => el.classList.toggle('hidden-game', !!hidden[g.id]));
   });
+  window.hubRefresh?.();
 });
 
 // ── Age gate setting ──
@@ -722,9 +987,5 @@ get(ref(db, 'hub/settings/ageGate')).then(snap => {
   }
 });
 </script>
-
-<style>
-@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
-</style>
 </body>
 </html>
