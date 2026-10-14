@@ -294,6 +294,158 @@
     "wr": {
       ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
       ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()"
+    },
+    "qec3": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
+      "$code": {
+        ".read": "auth != null && (data.child('members').child(auth.uid).exists() || auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".write": "auth != null && ((root.child('hub').child('settings').child('maintenance').val() !== true && ( (!data.exists() && $code.matches(/^[A-Z]{3,5}-[0-9]{2}$/) && newData.child('hostUid').val() === auth.uid && newData.child('members').child(auth.uid).val() === true && newData.child('seats').child('p1').val() === auth.uid) || (data.exists() && !newData.exists() && data.child('hostUid').val() === auth.uid))) || (auth != null && root.child('admins').child(auth.uid).val() === true))",
+        ".validate": "newData.hasChildren(['phase', 'hostUid'])",
+        "hostUid": {
+          ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val())"
+        },
+        "members": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && !data.exists() && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('qec3').child($code).child('phase').val() === 'lobby'",
+            ".validate": "newData.val() === true"
+          }
+        },
+        "seats": {
+          "$seat": {
+            ".write": "auth != null && !data.exists() && newData.val() === auth.uid && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true",
+            ".validate": "$seat.matches(/^p[12]$/) && newData.isString()"
+          }
+        },
+        "phase": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true",
+          ".validate": "newData.isString() && newData.val().matches(/^(lobby|choose|play|end)$/)"
+        },
+        "players": {
+          "$seat": {
+            ".write": "auth != null && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('qec3').child($code).child('seats').child($seat).val() === auth.uid",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')"
+            },
+            "ready": {
+              ".validate": "newData.isBoolean()"
+            },
+            "left": {
+              ".validate": "newData.isBoolean()"
+            },
+            "crossed": {
+              "$i": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 24"
+              }
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "turn": {
+          ".write": "auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true && (((root.child('qec3').child($code).child('seats').child('p1').val() === auth.uid && root.child('qec3').child($code).child('turn').val() === 'p1') || (root.child('qec3').child($code).child('seats').child('p2').val() === auth.uid && root.child('qec3').child($code).child('turn').val() === 'p2')) || root.child('qec3').child($code).child('phase').val() !== 'play')",
+          ".validate": "newData.isString() && newData.val().matches(/^p[12]$/)"
+        },
+        "ask": {
+          ".write": "(auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true && ((root.child('qec3').child($code).child('seats').child('p1').val() === auth.uid && root.child('qec3').child($code).child('turn').val() === 'p1') || (root.child('qec3').child($code).child('seats').child('p2').val() === auth.uid && root.child('qec3').child($code).child('turn').val() === 'p2')) && root.child('qec3').child($code).child('phase').val() === 'play') || (auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true && !newData.exists() && root.child('qec3').child($code).child('phase').val() === 'end')",
+          ".validate": "!newData.child('answer').exists() || newData.child('answer').val() === data.child('answer').val() || !((root.child('qec3').child($code).child('seats').child('p1').val() === auth.uid && root.child('qec3').child($code).child('turn').val() === 'p1') || (root.child('qec3').child($code).child('seats').child('p2').val() === auth.uid && root.child('qec3').child($code).child('turn').val() === 'p2'))",
+          "by": {
+            ".validate": "newData.isString() && newData.val().matches(/^p[12]$/)"
+          },
+          "q": {
+            ".validate": "newData.isString() && newData.val().length <= 24 && !newData.val().contains('<')"
+          },
+          "answer": {
+            ".write": "auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true && !data.exists() && ((root.child('qec3').child($code).child('seats').child('p1').val() === auth.uid && root.child('qec3').child($code).child('ask').child('by').val() === 'p2') || (root.child('qec3').child($code).child('seats').child('p2').val() === auth.uid && root.child('qec3').child($code).child('ask').child('by').val() === 'p1'))",
+            ".validate": "newData.isBoolean()"
+          }
+        },
+        "log": {
+          ".write": "auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true",
+          "$i": {
+            "by": {
+              ".validate": "newData.isString() && newData.val().matches(/^p[12]$/)"
+            },
+            "q": {
+              ".validate": "newData.isString() && newData.val().length <= 24 && !newData.val().contains('<')"
+            },
+            "answer": {
+              ".validate": "newData.isBoolean()"
+            },
+            "round": {
+              ".validate": "newData.isNumber()"
+            }
+          }
+        },
+        "guess": {
+          ".write": "(auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true && ((root.child('qec3').child($code).child('seats').child('p1').val() === auth.uid && root.child('qec3').child($code).child('turn').val() === 'p1') || (root.child('qec3').child($code).child('seats').child('p2').val() === auth.uid && root.child('qec3').child($code).child('turn').val() === 'p2')) && !data.exists() && root.child('qec3').child($code).child('phase').val() === 'play') || (auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true && !newData.exists() && root.child('qec3').child($code).child('phase').val() === 'end')",
+          "by": {
+            ".validate": "newData.isString() && newData.val().matches(/^p[12]$/)"
+          },
+          "id": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 24"
+          },
+          "right": {
+            ".write": "auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true && !data.exists() && ((root.child('qec3').child($code).child('seats').child('p1').val() === auth.uid && root.child('qec3').child($code).child('guess').child('by').val() === 'p2') || (root.child('qec3').child($code).child('seats').child('p2').val() === auth.uid && root.child('qec3').child($code).child('guess').child('by').val() === 'p1'))",
+            ".validate": "newData.isBoolean()"
+          }
+        },
+        "reveal": {
+          ".write": "(auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true && !newData.exists() && root.child('qec3').child($code).child('phase').val() === 'end')",
+          "$seat": {
+            ".write": "auth != null && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('qec3').child($code).child('seats').child($seat).val() === auth.uid && newData.parent().parent().child('phase').val() === 'end'",
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 24"
+          }
+        },
+        "rematch": {
+          ".write": "(auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true && !newData.exists() && root.child('qec3').child($code).child('phase').val() === 'end')",
+          "$seat": {
+            ".write": "auth != null && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('qec3').child($code).child('seats').child($seat).val() === auth.uid",
+            ".validate": "newData.isBoolean()"
+          }
+        },
+        "winner": {
+          ".write": "auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true",
+          ".validate": "newData.isString() && newData.val().matches(/^p[12]$/)"
+        },
+        "scores": {
+          ".write": "auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true",
+          "$seat": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          }
+        },
+        "round": {
+          ".write": "auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true",
+          ".validate": "newData.isNumber() && newData.val() >= 1"
+        },
+        "startedAt": {
+          ".write": "auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true",
+          ".validate": "newData.isNumber()"
+        },
+        "endedAt": {
+          ".write": "auth != null && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('hub').child('settings').child('maintenance').val() !== true",
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+    "qec3Secret": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
+      "$code": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('qec3').child($code).child('phase').val() !== 'end'",
+          ".validate": "newData.hasChildren(['id'])",
+          "id": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 24"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
     }
   }
 }

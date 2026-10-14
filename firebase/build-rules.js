@@ -145,6 +145,92 @@ rules.ucSecret = {
   },
 };
 
+// qec3/<code> : Qui est-ce ? 3D (branche proto/qui-est-ce-3d, games/qui-est-ce/v3d/). Plus
+// strict que les autres jeux : un membre n'écrit pas toute la partie, seulement sa place, et
+// les coups du tour à son tour (question, désignation, passage du tour) ; la réponse vient de
+// l'autre joueur. Le secret de chacun est dans qec3Secret/<code>/<uid>, lisible par lui seul ;
+// il n'est publié (reveal/<place>) qu'à la fin, par son propriétaire.
+const Q3 = "root.child('qec3').child($code)";
+const Q3NEW = "newData.parent().parent()";                                  // la partie après l'écriture (depuis un enfant direct)
+const SEAT3 = s => `${Q3}.child('seats').child('${s}').val() === auth.uid`;
+const TURN3 = `((${SEAT3('p1')} && ${Q3}.child('turn').val() === 'p1') || (${SEAT3('p2')} && ${Q3}.child('turn').val() === 'p2'))`;
+const MEMBER3 = `auth != null && ${Q3}.child('members').child(auth.uid).exists() && ${OPEN}`;
+const OTHER3 = by => `((${SEAT3('p1')} && ${by} === 'p2') || (${SEAT3('p2')} && ${by} === 'p1'))`;
+const SEATNAME = "newData.isString() && newData.val().matches(/^p[12]$/)";
+// fin de manche : tout membre peut effacer question, désignation, revanche et révélation (relance)
+const CLEAR3 = `(${MEMBER3} && !newData.exists() && ${Q3}.child('phase').val() === 'end')`;
+rules.qec3 = {
+  '.read': ADMIN,
+  '.write': `${ADMIN} && !newData.exists()`,
+  $code: {
+    '.read': `auth != null && (data.child('members').child(auth.uid).exists() || ${ADMIN})`,
+    '.write': [
+      `auth != null && ((${OPEN} && (`,
+      `(!data.exists() && $code.matches(${CODE}) && newData.child('hostUid').val() === auth.uid && newData.child('members').child(auth.uid).val() === true && newData.child('seats').child('p1').val() === auth.uid)`,
+      "|| (data.exists() && !newData.exists() && data.child('hostUid').val() === auth.uid)))",
+      `|| (${ADMIN}))`,
+    ].join(' '),
+    '.validate': "newData.hasChildren(['phase', 'hostUid'])",
+    hostUid: { '.validate': 'newData.isString() && (!data.exists() || newData.val() === data.val())' },
+    members: { $uid: {
+      '.write': `auth != null && auth.uid === $uid && !data.exists() && ${OPEN} && ${Q3}.child('phase').val() === 'lobby'`,
+      '.validate': 'newData.val() === true',
+    } },
+    seats: { $seat: {
+      '.write': `auth != null && !data.exists() && newData.val() === auth.uid && ${Q3}.child('members').child(auth.uid).exists() && ${OPEN}`,
+      '.validate': "$seat.matches(/^p[12]$/) && newData.isString()",
+    } },
+    phase: { '.read': 'auth != null', '.write': MEMBER3, '.validate': "newData.isString() && newData.val().matches(/^(lobby|choose|play|end)$/)" },
+    players: { $seat: {
+      '.write': `auth != null && ${OPEN} && ${Q3}.child('seats').child($seat).val() === auth.uid`,
+      name: { '.validate': NAME }, ready: { '.validate': 'newData.isBoolean()' }, left: { '.validate': 'newData.isBoolean()' },
+      crossed: { $i: { '.validate': 'newData.isNumber() && newData.val() >= 0 && newData.val() < 24' } },
+      $other: { '.validate': false },
+    } },
+    // le tour ne passe que par celui qui l'a (ou hors manche : mise en place, revanche)
+    turn: { '.write': `${MEMBER3} && (${TURN3} || ${Q3}.child('phase').val() !== 'play')`, '.validate': SEATNAME },
+    ask: {
+      '.write': `(${MEMBER3} && ${TURN3} && ${Q3}.child('phase').val() === 'play') || ${CLEAR3}`,
+      // celui qui a posé la question ne peut pas y répondre lui-même
+      '.validate': `!newData.child('answer').exists() || newData.child('answer').val() === data.child('answer').val() || !${TURN3}`,
+      by: { '.validate': SEATNAME }, q: { '.validate': SHORT_TEXT(24) },
+      answer: {
+        '.write': `${MEMBER3} && !data.exists() && ${OTHER3(`${Q3}.child('ask').child('by').val()`)}`,
+        '.validate': 'newData.isBoolean()',
+      },
+    },
+    log: { '.write': MEMBER3, $i: { by: { '.validate': SEATNAME }, q: { '.validate': SHORT_TEXT(24) }, answer: { '.validate': 'newData.isBoolean()' }, round: { '.validate': 'newData.isNumber()' } } },
+    guess: {
+      '.write': `(${MEMBER3} && ${TURN3} && !data.exists() && ${Q3}.child('phase').val() === 'play') || ${CLEAR3}`,
+      by: { '.validate': SEATNAME }, id: { '.validate': 'newData.isNumber() && newData.val() >= 0 && newData.val() < 24' },
+      // seul le joueur désigné (il connaît son secret) dit si c'est juste
+      right: { '.write': `${MEMBER3} && !data.exists() && ${OTHER3(`${Q3}.child('guess').child('by').val()`)}`, '.validate': 'newData.isBoolean()' },
+    },
+    reveal: { '.write': CLEAR3, $seat: {
+      '.write': `auth != null && ${OPEN} && ${Q3}.child('seats').child($seat).val() === auth.uid && ${Q3NEW}.child('phase').val() === 'end'`,
+      '.validate': 'newData.isNumber() && newData.val() >= 0 && newData.val() < 24',
+    } },
+    rematch: { '.write': CLEAR3, $seat: { '.write': `auth != null && ${OPEN} && ${Q3}.child('seats').child($seat).val() === auth.uid`, '.validate': 'newData.isBoolean()' } },
+    // arbitrage client (comme les autres jeux) : score, vainqueur, manche, horodatages
+    winner: { '.write': MEMBER3, '.validate': SEATNAME },
+    scores: { '.write': MEMBER3, $seat: { '.validate': 'newData.isNumber() && newData.val() >= 0' } },
+    round: { '.write': MEMBER3, '.validate': 'newData.isNumber() && newData.val() >= 1' },
+    startedAt: { '.write': MEMBER3, '.validate': 'newData.isNumber()' },
+    endedAt: { '.write': MEMBER3, '.validate': 'newData.isNumber()' },
+  },
+};
+rules.qec3Secret = {
+  '.read': ADMIN,
+  '.write': `${ADMIN} && !newData.exists()`,
+  $code: { $uid: {
+    '.read': 'auth != null && auth.uid === $uid',
+    '.write': `auth != null && auth.uid === $uid && ${OPEN} && root.child('qec3').child($code).child('members').child(auth.uid).exists() && root.child('qec3').child($code).child('phase').val() !== 'end'`,
+    '.validate': "newData.hasChildren(['id'])",
+    id: { '.validate': 'newData.isNumber() && newData.val() >= 0 && newData.val() < 24' },
+    $other: { '.validate': false },
+  } },
+};
+
 writeFileSync(new URL('./database.rules.phase2.json', import.meta.url), JSON.stringify({ rules }, null, 2) + '\n');
 console.log('database.rules.phase2.json écrit');
 
@@ -153,7 +239,7 @@ console.log('database.rules.phase2.json écrit');
 // secrets d'Undercover, admins/ et les droits de l'admin. À publier avant les clients,
 // puis à remplacer par la phase 2 une fois les anciens onglets disparus.
 const phase1 = JSON.parse(readFileSync(new URL('./database.rules.json', import.meta.url), 'utf8')).rules;
-const transition = { ...phase1, admins: rules.admins, ucHost: rules.ucHost, ucSecret: rules.ucSecret, wr: rules.wr };
+const transition = { ...phase1, admins: rules.admins, ucHost: rules.ucHost, ucSecret: rules.ucSecret, wr: rules.wr, qec3: rules.qec3, qec3Secret: rules.qec3Secret };
 for (const prefix of Object.keys(GAMES)) {
   const room = { ...phase1[prefix].$code };
   room['.write'] = `${room['.write']} || (${ADMIN})`;
