@@ -264,7 +264,7 @@ mesure de repeinte dépasse le délai de 60 s de `cdp.js` en rendu logiciel (à 
 Mémoire GPU : 28 géométries, 235 textures (dont surtout les textures d'os des 24 squelettes),
 23 programmes.
 
-## L4 — accessoires et pilosité (en cours)
+## L4 — accessoires et pilosité
 
 Outils : `tools/accessories/head.py` (peau skin + scalp, 53 expressions de la peau, yeux,
 nez, arête du nez par lancer de rayon, oreilles ; test intérieur / extérieur par parité de
@@ -328,6 +328,23 @@ Créole inclinée de 25° (le bas s'écarte de la mâchoire), moitié arrière v
 0 sommet dans la tête hors perçage (6 mm autour du lobe) pour les 5 expressions.
 `earrings-hoops.glb` 13 612 o, `earrings-pearls.glb` 5 252 o. Planche :
 `reports/accessories/boucles-oreilles.jpg`.
+
+Coiffures supplémentaires (propositions sur planche, jamais attachées au personnage 01) :
+`gen_cards.py` accepte une teinte par style (`root`, `tip`) ; la V4.1 reste identique à
+l'octet (vérifié). Quatre styles `prop-*` : rasée, courte grise, mi-longue ondulée rousse,
+longue raide blonde (3,1 à 3,9 Mo chacune après gltfpack ; fichiers non versionnés,
+reproductibles par `python tools/hair/gen_cards.py prop-<style>` puis gltfpack). Verdict :
+rasée et courte crédibles ; mi-longue et longue **à retravailler** (les mèches du devant
+retombent sur le visage, la raie laisse une ligne de cuir chevelu sombre : il faut une règle
+« dégager le visage »). Planche : `reports/accessories/coiffures.jpg`.
+
+**Bilan L4** : lunettes (2), barbe, moustache, barbe + moustache, casquette (+ coiffure sous
+casquette), boucles d'oreilles (2) ; tous auto-validés par le critère (aucun sommet dans la
+tête pour 5 expressions extrêmes, lisibles à 120 px), planches dans `reports/accessories/`.
+Accessoires rattachés à l'os Head ; la barbe et la moustache portent leurs propres
+expressions. Reste pour plus tard : chapeau de feutre, colliers, coiffures longues propres.
+
+
 
 ## Validations de l'utilisateur
 

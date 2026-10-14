@@ -126,6 +126,20 @@ STYLES = {
     'hair-curly-v41': dict(name='B — #4 V4.1', note='mat, boucles variées, mèches groupées et rebelles',
                            n=8000, seg=12, length=(6.0, 10.0), width=(0.5, 0.22), lift=0.75, wave=0.0, curl=1.3, gravity=0.1, comb='out',
                            v41=True, rough=0.85, spec=0.06, aniso=0.0),
+    # Propositions pour les autres personnages (planche reports/accessories/coiffures.jpg) :
+    # jamais attachees au personnage 01, dont la coiffure reste la V4.1.
+    'prop-buzz': dict(name='Rasée', note='proposition', n=26000, seg=3, length=(0.28, 0.5), width=(0.13, 0.06), lift=0.02,
+                      wave=0.0, curl=0.0, gravity=0.0, comb='back', edge_w=0.4, edge_a=0.35, rough=0.85, spec=0.08, aniso=0.0,
+                      root=(26, 21, 18), tip=(58, 47, 40)),
+    'prop-short-grey': dict(name='Courte grise', note='proposition', n=12000, seg=6, length=(2.5, 5.0), width=(0.42, 0.15), lift=0.10,
+                            wave=0.0, curl=0.0, gravity=0.3, comb='back', edge_w=0.35, edge_a=0.42, rough=0.8, spec=0.1, aniso=0.0,
+                            root=(96, 93, 90), tip=(186, 183, 178)),
+    'prop-wavy-red': dict(name='Mi-longue ondulée rousse', note='proposition', n=6500, seg=10, length=(8.0, 14.0), width=(0.5, 0.2),
+                          lift=0.10, wave=0.6, curl=0.0, gravity=0.6, comb='side', rough=0.78, spec=0.1, aniso=0.0,
+                          root=(104, 40, 18), tip=(176, 88, 42)),
+    'prop-long-blond': dict(name='Longue raide blonde', note='proposition', n=7500, seg=14, length=(15.0, 21.0), width=(0.55, 0.22),
+                            lift=0.08, wave=0.08, curl=0.0, gravity=1.0, comb='side', rough=0.72, spec=0.12, aniso=0.0,
+                            root=(140, 104, 62), tip=(214, 178, 118)),
 }
 
 
@@ -235,7 +249,9 @@ def cards(pts, N0, st, rng, edge):
     if st.get('v41'):                                                          # teinte par meche groupee
         per_clump = rng.uniform(0.82, 1.18, st['_clump'].max() + 1)
         shade = (per_clump[st['_clump']] * rng.uniform(0.92, 1.08, n))[:, None]
-    rgb = (ROOT_RGB[None, None] + (TIP_RGB - ROOT_RGB)[None, None] * t ** 0.7) * shade[..., None]
+    root_rgb = np.array(st['root']) / 255 if 'root' in st else ROOT_RGB      # teinte par style (propositions)
+    tip_rgb = np.array(st['tip']) / 255 if 'tip' in st else TIP_RGB
+    rgb = (root_rgb[None, None] + (tip_rgb - root_rgb)[None, None] * t ** 0.7) * shade[..., None]
     lin = np.clip(rgb, 0, 1) ** 2.2
     a0 = st.get('edge_a', 0.6)
     av = a0 + (1 - a0) * edge
