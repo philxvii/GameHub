@@ -1,6 +1,6 @@
 {
   "database": {
-    "rules": "database.rules.transition.json"
+    "rules": "database.rules.phase2.json"
   },
   "emulators": {
     "database": { "port": 9000 },
