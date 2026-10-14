@@ -11,6 +11,47 @@ l'utilisateur (Windows, GPU Intel Iris Xe) quand le budget s'épuise.
 
 ---
 
+## MODE AUTONOME (décision de l'utilisateur, 2026-10-14) — LIS CECI EN PREMIER
+
+**L'utilisateur donne carte blanche. Tu ne t'arrêtes pas pour demander.** Ce paragraphe
+l'emporte sur tout ce qui suit qui dirait « attends sa réponse », « pose la question » ou
+« ⛔ validation » : les points ⛔ (G1, G3, G4, G5, déclinaison multijoueur de la DA) ne sont
+**plus bloquants**.
+
+1. **Enchaîne tous les lots sans interruption** : L1 → L2 → DA (déclinaison) → L3 → L5 →
+   L4 → L6, puis R. Ne rends la main qu'à la fin, ou quand le budget l'impose (voir §2), ou
+   si une limite dure (ci-dessous) l'exige. Pas de message d'étape pour demander « je
+   continue ? » : continue.
+2. **Quand une décision relève de l'utilisateur, prends la meilleure décision toi-même**
+   (la plus réversible, la plus conforme au HANDOFF et à la DA choisie), applique-la, et
+   **note-la dans `DECISIONS.md`** : un tableau « date · lot · question · décision prise ·
+   alternative écartée · comment revenir en arrière ». Chaque décision doit être réversible
+   à faible coût (variante à côté de l'original, jamais d'écrasement d'un fichier validé).
+3. **Les validations G1, G3, G4, G5 deviennent des auto-validations** : applique le critère
+   chiffré du plan ; si le critère est atteint, retiens le résultat, sinon reviens à la version
+   précédente. Dans les deux cas, note-le dans `DECISIONS.md` avec la planche correspondante
+   dans `reports/`. L'utilisateur relira **à la fin** et réajustera : rien n'est définitif.
+4. **Questions pour la fin** : tout ce qui n'est pas urgent s'accumule dans `QUESTIONS.md`
+   (question, ce que tu as fait en attendant, impact). Tu ne poses **jamais** de question en
+   cours de route, sauf urgence réelle : une action irréversible ou hors limites, un secret à
+   fournir, un blocage total que ni toi ni un contournement honnête ne peuvent lever.
+5. **Limites dures qui restent absolues** (aucune autonomie ne les lève) : jamais `main`,
+   jamais `--force` ni reset ou rebase destructif, aucun déploiement (site, règles
+   Firebase, Cloudflare), aucun secret ni jeton dans git, aucun contournement de
+   CAPTCHA / MFA / authentification, ne pas modifier le jeu en production ni les autres jeux,
+   ne pas écraser les modèles validés (`character-01-ict.glb`, `hair-curly-v41-opt.glb`), ne
+   pas changer la direction artistique choisie (casting + révélation du salon), IA gratuite
+   uniquement, pas de génération des 23 autres personnages (les photos viennent de Gemini
+   sur le PC de l'utilisateur).
+6. **Continuité sans surveillance** : tu travailles tant qu'il reste du budget et du travail.
+   Après chaque étape : commit + push + `CLOUD_LOG.md`. Si la session s'arrête (limite de
+   contexte, coupure), le prochain « continue » repart de `CLOUD_LOG.md` et du dernier
+   commit : garde-le toujours à jour avec la **prochaine action précise**.
+7. **À la fin (ou au retour R)** : rédige `FIN_DE_MISSION.md` (ce qui est fait, ce qui est
+   en l'état de choix automatique, ce qui reste sur le PC, les 5 décisions les plus
+   discutables, la liste de `QUESTIONS.md`). Un seul message final à l'utilisateur, court,
+   avec le lien vers ce fichier et les captures clés.
+
 ## 0. Règles non négociables
 
 1. **Branche `proto/qui-est-ce-3d` uniquement.** Jamais `main` (= production roulia.me),
@@ -32,9 +73,9 @@ l'utilisateur (Windows, GPU Intel Iris Xe) quand le budget s'épuise.
    de référence se génèrent avec Gemini dans le navigateur de l'utilisateur.
 6. Ne toucher à aucun autre jeu, ni à `games/qui-est-ce/index.html` (jeu en production), ni
    à Firebase, ni à Cloudflare. Aucun secret dans git. IA gratuite uniquement.
-7. **Points de validation** (marqués ⛔) : l'utilisateur juge sur une planche. Pose la
-   question, puis continue les tâches qui ne dépendent pas de sa réponse ; ne valide jamais
-   à sa place.
+7. **Points de validation** (marqués ⛔) : en mode autonome (voir plus haut), ils ne
+   bloquent plus : auto-validation par le critère chiffré, décision notée dans
+   `DECISIONS.md`, relecture par l'utilisateur à la fin.
 
 ## Cadre : c'est un jeu MULTIJOUEUR
 
@@ -98,10 +139,13 @@ Enveloppes indicatives (sur ~100 $) :
 | L2 | Pipeline industrialisé + distribution des 24 personnages | 15 % | ⛔ G2 (distribution) |
 | DA | Direction artistique propre au Qui est-ce ? | 9 % | ⛔ G-DA |
 | L3 | Plateau 3D de 24 cartes, dans la DA validée | 17 % | ⛔ G3 |
-| L4 | Accessoires et pilosité faciale | 13 % | ⛔ G4 (par élément) |
+| L4 | Accessoires et pilosité faciale | 13 % → **8 %** | ⛔ G4 (par élément) |
+| L5 | Jeu complet sur Firebase (émulateur) dans une copie du jeu, sur la branche | **20 %** | ⛔ G5 |
+| L6 | Dossier « PC » : tout ce qui exige l'ordinateur de l'utilisateur, en une commande | **7 %** | — |
 | R | Retour au PC | réserve ~12 % | — |
 
-Ordre : L0 → L1 → (pendant l'attente de G1 : L2, puis DA) → L3 → L4 → R. Si G1 n'est pas
+Ordre : L0 → L1 → (pendant l'attente de G1 : L2, puis DA) → L3 → L5 → L4 → L6 → R.
+L5 passe avant L4 : un jeu jouable à deux compte plus que des accessoires. Si G1 n'est pas
 donné, L3 et L4 travaillent sur `character-01-ict.glb` d'origine et restent des
 prototypes. Si G-DA n'est pas donné, L3 se construit sur des jetons de style (variables
 CSS) faciles à rebasculer vers la direction choisie plus tard.
@@ -333,13 +377,78 @@ attachées par défaut, et la V4.1 reste la coiffure du personnage 01.
 ⛔ **G4** : validation élément par élément. Un élément refusé reste dans le dépôt, marqué
 refusé dans `CLOUD_LOG.md`.
 
-## Hors lots — branchement Firebase (⛔ sur accord explicite uniquement)
+## PRINCIPE DIRECTEUR (décision de l'utilisateur, 2026-10-14) : le cloud fait TOUT ce qui est faisable ici
 
-Ne pas commencer. Si l'utilisateur donne son accord, après G3 : brancher `net-mock.js` sur
-Firebase, d'abord **contre l'émulateur** (voir `firebase/README.md`), avec les règles
-correspondantes dans `firebase/build-rules.js` et le secret de chaque joueur illisible par
-l'adversaire. Jamais de déploiement des règles ni de `main` depuis le cloud : décris la
-marche à suivre dans `CLOUD_LOG.md` pour qu'on l'exécute depuis le PC.
+L'utilisateur veut dépenser le moins possible de jetons sur son PC : **le cloud doit mâcher
+tout le travail**, y compris le branchement Firebase et l'intégration au jeu, et ne laisser à
+la machine locale que ce qui exige physiquement son PC (photos Gemini dans son navigateur,
+GPU réel, mise en ligne). Tout travail faisable dans le cloud **doit** être fait dans le
+cloud ; ne laisse jamais « à voir sur le PC » une chose que tu peux tester ou écrire ici.
+Conséquence : l'accord pour L5 est **donné** (voir ci-dessous), dans les limites fixées.
+
+## L5 — Jeu complet sur Firebase, contre l'émulateur (≈ 20 %) ⛔ G5
+
+Objectif : une **version du Qui est-ce ? 3D qui se joue vraiment à deux humains**, prête à
+être mise en ligne par une seule fusion le jour où l'utilisateur l'aura décidé.
+
+Limites (inchangées) : travail sur la branche `proto/qui-est-ce-3d`, **jamais `main`, jamais
+de déploiement** des règles ou du site, aucun secret dans git, tests contre l'**émulateur**
+Firebase uniquement (voir `firebase/README.md`, `firebase/tests/use-emulator.cjs`, pages
+en `?emu`). Le jeu en production (`games/qui-est-ce/index.html`, nœud `qec2`) **ne change pas**.
+
+1. **Nouvelle copie du jeu** dans `games/qui-est-ce/v3d/` (entrée `index.html`), construite à
+   partir du plateau L3 et de la DA validée ; elle charge `shared/maintenance.js` en tête et
+   `shared/firebase.js` (compte anonyme, salons) comme les autres jeux. Chemins relatifs
+   (`../../shared/`, `../../icons/`) ; `node tools/check-links.js` doit rester vert.
+2. **Réseau réel** : remplacer `net-mock.js` par un module Firebase de **même interface**
+   (créer / rejoindre un salon à code, état de partie, une action par tour). Nouveau nœud
+   `qec3/<code>` (ne touche pas à `qec2`), avec sa règle dans `firebase/build-rules.js` :
+   membres, `hostUid`, **secret de chaque joueur illisible par l'adversaire** jusqu'à la fin
+   (même principe qu'`ucSecret`), écritures limitées au joueur dont c'est le tour, rien d'autre
+   n'est écrit. Mode maintenance respecté (règles comme pages).
+3. **Tests** : règles (`cd firebase && npm test`, avec Java : `~/.jdks/openjdk-25.0.2/bin`) ;
+   partie complète à deux fenêtres Chrome sur l'émulateur (une fenêtre par joueur, voir
+   `tools/cdp.js`) : création, jonction, secrets, tours, réponses, cartes écartées,
+   désignation juste et fausse, fin, revanche, déconnexion de l'adversaire, **tentatives de
+   triche refusées** (lire le secret adverse, jouer hors de son tour). Journal des résultats
+   dans `CLOUD_LOG.md`.
+4. **Parties contre un bot** conservées (adversaire local) : un joueur seul peut jouer sans
+   attendre.
+5. **Roster dynamique** : le jeu lit `data/roster.json` ; tant que seul `character-01` existe,
+   les 23 autres affichent un **personnage de substitution** (le 01 avec une teinte ou un
+   nom distinct, clairement marqué temporaire dans le code) pour que la partie soit jouable
+   de bout en bout ; ajouter un personnage = déposer son GLB et passer son statut à `ready`
+   dans `roster.json`, sans toucher au code.
+6. **Sobriété mobile** : 24 cartes en rendu à la demande, textures partagées, mémoire GPU
+   mesurée ; repli à une image fixe (PNG pré-rendu) pour les cartes hors écran.
+
+⛔ **G5** : l'utilisateur teste (ou vérifie sur capture) ; la mise en ligne ne se fait pas
+d'ici (voir L6).
+
+## L6 — Dossier « PC » : ce qui ne peut pas se faire dans le cloud (≈ 7 %)
+
+Objectif : que l'utilisateur et la session locale dépensent **le minimum**. Écris
+`PC_RUNBOOK.md` et les scripts associés, pour que chaque étape locale soit **une commande ou
+un geste**, sans réflexion :
+
+- **Photos Gemini** : une feuille pas à pas (les 23 fiches `data/prompts/<id>.md` déjà
+  prêtes, où déposer chaque image, noms de fichiers exacts) et un script de contrôle
+  `tools/pipeline/check_refs.py <id>` qui vérifie les 5 vues (nombre, taille, fond uni,
+  visage détecté) et dit précisément ce qui manque.
+- **Fabrication** : `python tools/pipeline/build_character.py <id>` (ou `--all-ready`) fait
+  tout le reste : reconstruction, coiffure, optimisation, banc, planche de validation, mise
+  à jour de `roster.json`. Les étapes qui passent par un Space Hugging Face (Hunyuan) sont
+  décrites avec leurs commandes exactes et leurs erreurs courantes ; aucun jeton ni secret
+  dans le dépôt.
+- **Mesures GPU** : `node tools/measure_pc.js` : un seul script qui lance le banc du
+  personnage, le plateau 24 cartes et la partie, et écrit un `reports/pc/résumé.md`
+  (FPS réels, mémoire GPU, temps de chargement) avec les seuils attendus.
+- **Mise en ligne** : la procédure complète, **non exécutée**, pour fusionner `v3d/` dans
+  `main` : liste de contrôle, tests à relancer, déploiement des règles Firebase
+  (`npx firebase deploy --only database --project undercover-game-b0d2a` depuis `firebase/`,
+  **jamais depuis le cloud**), vérification `smoke-prod.cjs`, retour arrière.
+- **Un seul fichier de reprise** : `PC_RUNBOOK.md` commence par un tableau « à faire / par qui /
+  commande / durée » ; il est mis à jour à chaque lot.
 
 ## R — Retour au PC (réserve ≈ 12 %)
 
