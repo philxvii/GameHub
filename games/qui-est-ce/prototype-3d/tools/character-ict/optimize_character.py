@@ -11,6 +11,7 @@ Passe Python (dans cet ordre) :
                            (liste explicite possible : --drop-targets jawForward,mouthRollUpper)
   --tex MAT=SPEC[,...]     re-encode la texture de couleur d'un materiau. SPEC = format[:qualite][@echelle]
                            format jpeg | webp | webpl (WebP sans perte) | png ; ex. body=jpeg:80@0.5,skin=webp:92
+  --tex-file MAT=IMAGE     remplace la texture de couleur d'un materiau par un fichier (ex. visage rase)
 Passe gltfpack (optionnelle, apres la passe Python) :
   --pack "OPTIONS"         options de gltfpack, ex. "-vp 16 -vt 16 -c" ; -kn -km -ke sont toujours
                            ajoutes (noms des noeuds, materiaux et noms des expressions conserves)
@@ -236,6 +237,7 @@ def main():
     ap.add_argument('--drop-shells', action='store_true')
     ap.add_argument('--drop-targets')
     ap.add_argument('--tex')
+    ap.add_argument('--tex-file')
     ap.add_argument('--pack')
     a = ap.parse_args()
     if os.path.abspath(a.dst) == os.path.abspath(os.path.join(PROTO, 'models', 'character-01-ict.glb')):
@@ -244,6 +246,13 @@ def main():
     glb = Glb(a.src)
     if a.drop_shells: drop_shells(glb)
     if a.drop_targets: drop_targets(glb, a.drop_targets)
+    if a.tex_file:
+        for item in a.tex_file.split(','):
+            mat, path = item.split('=', 1)
+            material = next(m for m in glb.g.materials if m.name == mat)
+            img = glb.g.images[image_source(glb.g.textures[material.pbrMetallicRoughness.baseColorTexture.index])]
+            glb.replaced[img.bufferView] = open(path, 'rb').read()
+            img.mimeType = 'image/png' if path.lower().endswith('.png') else 'image/jpeg'
     if a.tex: reencode(glb, a.tex)
     if a.pack:
         with tempfile.TemporaryDirectory() as tmp:
