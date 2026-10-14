@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Qui est-ce ? — plateau 3D</title>
+<title>Qui est-ce ? — le casting</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,500;1,600&family=Libre+Franklin:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=DM+Mono:wght@400;500&family=Cormorant+Garamond:ital,wght@0,600;1,500;1,600&display=swap">
 <link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/partie.css">
 <link rel="stylesheet" href="css/board.css">
 <script type="importmap">
 {
@@ -18,29 +19,67 @@
 }
 </script>
 </head>
-<body>
-<header class="top">
-  <div class="title">
-    <h1>Qui est-ce ?</h1>
-    <p class="room">Salle 1 · vingt-quatre portraits</p>
+<body data-screen="home" data-phase="none" data-turn="none">
+<!-- Accueil -->
+<section class="home ecran" id="home" aria-label="Accueil">
+  <div class="home-wall" aria-hidden="true">
+    <figure class="pola" style="--tilt:-7deg"><img alt=""><figcaption>Diane</figcaption></figure>
+    <figure class="pola" style="--tilt:4deg"><img alt=""><figcaption>Raphaël</figcaption></figure>
+    <figure class="pola" style="--tilt:-2deg"><img alt=""><figcaption>Jade</figcaption></figure>
   </div>
-  <p class="count" aria-live="polite"><span id="left">24</span> portraits accrochés</p>
-</header>
-
-<section class="ask" aria-label="Question">
-  <label for="question">Votre question</label>
-  <select id="question"></select>
-  <button class="plaque" id="ask">Poser la question</button>
-  <p class="answer" id="answer" aria-live="polite"></p>
-  <button class="plaque plaque-quiet" id="reset">Raccrocher tout</button>
+  <div class="home-text">
+    <h1>Qui est-ce ?</h1>
+    <p class="home-sub">Le casting à deux. Trouve son personnage avant qu'il trouve le tien.</p>
+    <div class="home-actions">
+      <button class="tape-btn film" data-do="play-bot">Défier le bot</button>
+      <button class="tape-btn" data-do="create">Créer un salon</button>
+    </div>
+    <p class="rules">Chacun choisit un personnage secret. À tour de rôle, une question oui / non ; on raye au crayon gras
+      ceux qui ne collent pas. Le premier qui désigne le bon gagne la manche. La partie en ligne arrive au lot suivant ;
+      en attendant, le salon se joue contre le bot.</p>
+  </div>
 </section>
 
-<main class="board-wrap">
-  <div class="board" id="board" role="group" aria-label="Plateau de 24 portraits"></div>
-  <canvas id="gl" aria-hidden="true"></canvas>
-</main>
+<!-- Partie -->
+<div class="ecran game" id="game">
+  <header class="studio-bar"><p class="logo">Qui est-ce ?</p><p class="code" id="code" title="Code du salon">····</p>
+    <p class="score" id="score"></p><div class="players" id="players"></div></header>
+  <section class="play">
+    <div class="main">
+      <main class="board-wrap"><div class="wall-board" id="board" role="group" aria-label="Ton plateau : 24 personnages"></div><canvas id="gl" aria-hidden="true"></canvas></main>
+      <ol class="log" id="log" aria-label="Questions de la manche"></ol>
+    </div>
+    <div class="side">
+      <figure class="mine pola" id="mine" hidden><p class="mine-label">Mon personnage</p><img alt=""><figcaption></figcaption><span class="tape" aria-hidden="true"></span></figure>
+      <div class="action" id="action" aria-live="polite"></div>
+      <div class="sheet" id="their-sheet"></div>
+      <p class="bubble" id="bubble" hidden aria-live="polite"></p>
+      <p id="debug" hidden><button class="tape-btn" data-do="leave-sim">Simuler le départ de l'adversaire</button></p>
+    </div>
+  </section>
+</div>
+
+<!-- Revelation (fin de manche) -->
+<section class="reveal-overlay" id="reveal" hidden aria-live="polite" aria-label="Fin de la manche">
+  <div class="reveal">
+    <h2 id="reveal-title"></h2>
+    <p class="reveal-sub" id="reveal-sub"></p>
+    <div class="hang" id="hang"></div>
+    <p class="final-score" id="final-score"></p>
+    <ul class="titles" id="titles"></ul>
+    <p class="reveal-actions"><button class="tape-btn film big" id="rematch" data-do="rematch">Revanche</button>
+      <button class="tape-btn" data-do="share">Partager la planche</button><button class="quit" data-do="home">Quitter</button></p>
+  </div>
+</section>
+
+<!-- Adversaire parti -->
+<section class="away-overlay" id="away" hidden aria-live="polite">
+  <div class="gone"><span class="empty-photo" aria-hidden="true"></span><p class="gone-note">Ton adversaire a quitté le studio</p></div>
+  <p class="hint">Il reviendra peut-être. Ou pas : il paraît qu'il avait peur de perdre.</p>
+  <p><button class="tape-btn film" data-do="home">Retour à l'accueil</button></p>
+</section>
 
 <p class="note" id="note"></p>
-<script type="module" src="js/board.js"></script>
+<script type="module" src="js/game/app.js"></script>
 </body>
 </html>

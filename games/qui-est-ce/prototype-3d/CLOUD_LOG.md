@@ -244,107 +244,46 @@ d'ensemble `reports/da/partie-mobile.jpg`, `reports/da/partie-bureau.jpg`, repri
 
 ⛔ En attente : validation de la déclinaison multijoueur par l'utilisateur, avant le plateau.
 
-## L3 — plateau (en cours, avant la déclinaison multijoueur)
+## L3 — plateau jouable : partie à deux contre un bot
 
-Première version solo, à transformer en partie à deux contre un bot (`net-mock.js`,
-`bot.js`) une fois la déclinaison multijoueur de la DA validée : `board.html`, `js/board.js`,
-`css/board.css` (écrit avec les jetons du salon : à refaire en casting avec la partie à deux ;
-en l'état il s'affiche mal avec les nouveaux jetons), `css/tokens.css`,
-`js/staging.js` (mise en scène partagée avec `da.html`), `tools/test-board.js`.
-Architecture : un seul `WebGLRenderer` sur un canevas posé sur le plateau (il défile avec la
-page), une scène partagée (un mur, une carte d'ombre 1024², seul le personnage peint est
-visible), pixels conservés (`preserveDrawingBuffer`) : seules les cartes qui changent sont
-repeintes (survol à chaque image, repos ~1 fois par seconde, plein régime pendant un
-clignement ou un changement d'expression). Carte écartée : sa dernière image devient une
-`<img>` animée en CSS. Cadrage commun calculé sur le personnage habillé (V4.1) sans les
-coques : même cadre pour l'original et l'optimisé.
-Cloud (SwiftShader) : 24 cartes peintes en 3,2 s ; `test-board.js` 7/8 : chargement,
-24 cartes, survol (yeux puis tête), poses de repos, clic, clavier, question du bot ; la
-mesure de repeinte dépasse le délai de 60 s de `cdp.js` en rendu logiciel (à refaire sur le PC).
-Mémoire GPU : 28 géométries, 235 textures (dont surtout les textures d'os des 24 squelettes),
-23 programmes.
+`board.html` + `js/game/` (`app.js`, `board3d.js`, `net-mock.js`, `bot.js`, `questions.js`,
+`stats.js`) + `css/board.css` (au-dessus des composants validés de `css/partie.css`).
 
-## L4 — accessoires et pilosité
+- **Partie complète** : accueil, salon (code), choix du secret, tours alternés (question,
+  réponse oui / non de l'autre, croix au crayon gras, « fin du tour »), désignation (une erreur
+  donne la manche à l'adversaire), révélation, revanche en un clic, adversaire parti.
+- **Réseau factice à la forme du jeu en production** (`net-mock.js`) : un état par code de
+  salon, un secret par joueur, actions validées par le « serveur » (tour, phase), secret
+  adverse jamais dans la vue avant la fin ; interface `create / join / subscribe / send` à
+  rebrancher sur Firebase sans toucher à l'affichage.
+- **Bot** (`bot.js`) : branché sur le même réseau ; répond honnêtement, pose une des
+  meilleures questions (pas toujours la meilleure : il reste battable), raye, désigne, accepte
+  la revanche, glisse des piques (« Je demande à revoir la planche contact »).
+- **3D** : un seul `WebGLRenderer` sur un canevas posé sur le plateau, une scène partagée, rendu
+  à la demande (survol à chaque image, repos ~1/s, au plus 2 repeintes de repos par image,
+  pause quand le plateau est caché), portraits nets (480 px) pour la révélation et « mon
+  personnage ». Carte rayée : image figée, plus de 3D.
+- **Substituts** (temporaire, marqué dans le code) : le personnage 01 habillé selon le roster
+  (lunettes, casquette + coiffure sous casquette, boucles d'oreilles, barbe / moustache en
+  cartes, crâne rasé, teinte des cheveux), rasé de près sans barbe ni moustache ; fiche du
+  casting au survol pour ce qu'un substitut ne peut pas montrer (genre, âge, yeux).
+- **Réactions** liées aux évènements, jamais au secret : question posée → méfiance générale ;
+  réponse à ma question → sourire (oui) ou surprise (non) ; carte rayée → surprise ; fin → sourire.
+- **Fidélisation** : score des revanches, statistiques par adversaire dans `localStorage`
+  (victoires, questions moyennes, personnage favori), titres malicieux (« Le Sherlock »,
+  « Éclair au chocolat », « Le Culot », « La Revanche », « Série noire », « Le Kamikaze »),
+  planche contact PNG partageable (24 vues, croix rouges, score).
+- **Aucun son** : évènements `qe:*` émis (`js/events.js`).
 
-Outils : `tools/accessories/head.py` (peau skin + scalp, 53 expressions de la peau, yeux,
-nez, arête du nez par lancer de rayon, oreilles ; test intérieur / extérieur par parité de
-rayons sur 3 directions, vote majoritaire — la distance signée au sommet le plus proche est
-fausse près des structures fines comme l'helix), `common.py` (balayage de profil, triangles
-réorientés selon leurs normales, GLB PBR + extensions, gltfpack `-vp 16 -vt 14 -cc`),
-`sheet.py` (planche sans / avec + rangée « carte 120 px »). `compare.js` : `?acc=a.glb,b.glb`
-(rattachés à l'os Head comme la coiffure, avant la création du rig) ; banc :
-`bench_character.js … --acc`.
-
-| Élément | Fichier | Poids | Triangles | Dégagement (5 expressions extrêmes) | Décision |
-| --- | --- | --- | --- | --- | --- |
-| Lunettes acétate écaille | `models/accessories/glasses-acetate.glb` | 158 588 o | 24 760 | 0 sommet dans la tête ; ≥ 0,52 mm de la peau ; ≥ 3,4 mm des cils | auto-validé |
-| Lunettes métal fin noir mat | `models/accessories/glasses-metal.glb` | 62 092 o | 14 696 | 0 sommet dans la tête ; ≥ 0,34 mm ; ≥ 2,7 mm des cils | auto-validé |
-
-Ajustement au visage : verres à ~1,2 cm de la cornée, monture cambrée (galbe) et inclinée
-(pantoscopique 8-9°), pont posé sur l'arête du nez, découpe nasale (le nez de ce personnage
-penche de 3,5 mm à droite), branches à 4 mm de la tempe, par-dessus l'helix puis derrière
-l'oreille. Verres antireflet (alpha 0,035, IOR 1,5). Corrections faites en route : branches
-qui traversaient l'oreille, coin nasal dans le nez, verres laiteux, monture dorée illisible à
-120 px (remplacée par du noir mat), pont vu de l'intérieur (enroulement des triangles).
-Planche : `reports/accessories/lunettes.jpg` (sans / acétate / métal, 10 états, taille carte).
-
-Pilosité faciale (`tools/accessories/beard.py`) : cartes de poils enracinées sur la peau ICT
-(régions tirées du visage : bouche, lèvres laissées nues avec une ellipse asymétrique, base
-du nez, ligne de joue nez → lobe), peignées vers le bas (moustache : vers le bas et
-l'extérieur), maintenues à 0,6-1,8 mm de la peau. **Chaque carte suit les expressions** :
-deltas de sa racine copiés de la peau (3 sommets les plus proches) pour les expressions
-pilotées par le jeu qui déplacent la zone d'au moins 1 mm ; `rig.js` les pilote seul. La
-mâchoire suit l'os Head à 100 % (vérifié) : pas de décalage sous le menton.
-
-| Élément | Fichier | Poids | Cartes / triangles | Expressions copiées | Corps des poils dans la peau |
-| --- | --- | --- | --- | --- | --- |
-| Barbe courte | `models/accessories/beard.glb` | 2 226 160 o | 9 500 / 57 000 | 14 | 0 au neutre ; quelques pointes au sourire et à la surprise extrêmes (≤ 3 points sur un échantillon de 23) |
-| Moustache | `models/accessories/moustache.glb` | 723 508 o | 2 600 / 20 800 | 12 | 0 |
-| Barbe + moustache | `models/accessories/full.glb` | 2 865 808 o | 12 100 / 77 800 | 14 + 12 | comme la barbe |
-
-Itérations : barre noire (trop dense, trop sombre, bande trop basse) → presque invisible
-(trop fin) → densité moyenne brune, lisible en gros plan comme à 120 px. Poids : les
-expressions copiées par sommet dominent (positions en 12 bits, 0,03 mm) ; mémoire GPU des
-cibles ≈ 20 Mo pour barbe + moustache, chargée une fois et partagée par toutes les cartes qui la
-portent. Planche : `reports/accessories/barbe-moustache.jpg`.
-
-Casquette (`tools/accessories/hat.py`) : six panneaux en coton rouge brique (coutures et
-surpiqûres dans la texture, reflet de tissu `KHR_materials_sheen`), bandeau roulé, visière
-galbée au dessous vert-gris, bouton. Premier essai écarté : une calotte qui suivait
-l'enveloppe des boucles donnait un sac bosselé. Retenu : un dôme lisse ajusté au crâne +
-1,1 cm de cheveux tassés, et une **coiffure « sous casquette »** dérivée de la V4.1 par la
-même chaîne d'optimisation (`optimize_hair.py --keep-mask`, option ajoutée ; sans elle la
-V4.1 optimisée reste identique à l'octet, vérifié) : 1 265 cartes sur 8 000 gardées sous le
-bandeau, aucune ne traverse la calotte. 0 sommet de la casquette dans la tête pour les
-5 expressions. `models/accessories/cap.glb` 90 872 o (12 860 triangles),
-`models/accessories/cap-hair-curly-v41.glb` 390 112 o. Banc : `bench_character.js --hair`.
-Planche : `reports/accessories/casquette.jpg`.
-
-Boucles d'oreilles (`tools/accessories/earrings.py`) : créoles en or de 2,2 cm (taille choisie
-pour se lire sur une carte) et puces perle (nacre irisée : `KHR_materials_iridescence` +
-vernis). Lobe gauche = point le plus bas du pavillon ; lobe droit = sommet de l'oreille droite
-le plus proche du symétrique du gauche (la détection directe tombait à l'arrière du pavillon).
-Créole inclinée de 25° (le bas s'écarte de la mâchoire), moitié arrière vers l'extérieur.
-0 sommet dans la tête hors perçage (6 mm autour du lobe) pour les 5 expressions.
-`earrings-hoops.glb` 13 612 o, `earrings-pearls.glb` 5 252 o. Planche :
-`reports/accessories/boucles-oreilles.jpg`.
-
-Coiffures supplémentaires (propositions sur planche, jamais attachées au personnage 01) :
-`gen_cards.py` accepte une teinte par style (`root`, `tip`) ; la V4.1 reste identique à
-l'octet (vérifié). Quatre styles `prop-*` : rasée, courte grise, mi-longue ondulée rousse,
-longue raide blonde (3,1 à 3,9 Mo chacune après gltfpack ; fichiers non versionnés,
-reproductibles par `python tools/hair/gen_cards.py prop-<style>` puis gltfpack). Verdict :
-rasée et courte crédibles ; mi-longue et longue **à retravailler** (les mèches du devant
-retombent sur le visage, la raie laisse une ligne de cuir chevelu sombre : il faut une règle
-« dégager le visage »). Planche : `reports/accessories/coiffures.jpg`.
-
-**Bilan L4** : lunettes (2), barbe, moustache, barbe + moustache, casquette (+ coiffure sous
-casquette), boucles d'oreilles (2) ; tous auto-validés par le critère (aucun sommet dans la
-tête pour 5 expressions extrêmes, lisibles à 120 px), planches dans `reports/accessories/`.
-Accessoires rattachés à l'os Head ; la barbe et la moustache portent leurs propres
-expressions. Reste pour plus tard : chapeau de feutre, colliers, coiffures longues propres.
-
-
+Tests : `node tools/test-game-logic.mjs` 5/5 (10 manches bot contre bot, secrets jamais
+visibles, action hors tour refusée) ; `node tools/test-board.js` **12/12** dans Chrome (partie
+complète gagnée en 5 questions, survol : yeux −0,26 → +0,32, révélation, statistiques, planche
+PNG, revanche, départ, console propre, 390 px sans défilement). Mesures cloud (SwiftShader,
+temps sans valeur) : 14,1 Mo de GLB pour les 24 cartes (personnage, variante rasée, deux
+coiffures, tous les accessoires), 42 géométries, 256 textures, 27 programmes. **À mesurer sur
+le PC** : FPS au survol, temps de repeinte des 24 cartes, mémoire GPU.
+Captures : `reports/board/` (accueil, choix du secret, mon tour, répondre, cartes écartées,
+révélation, adversaire parti, mobile, planche contact).
 
 ## Validations de l'utilisateur
 

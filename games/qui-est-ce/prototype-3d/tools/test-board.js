@@ -1,127 +1,125 @@
-// Test du plateau 3D (board.html) dans Chrome : chargement, 24 cartes, survol (regard et
-// tete vers le curseur), decrochage au clic et au clavier, question du jeu, console propre,
-// mobile 390 px sans defilement horizontal. Mesures et captures dans build/board/.
+// Test du plateau jouable (board.html) dans Chrome : une partie complete contre le bot.
 //
 //   python -m http.server 4173                       # racine du depot
-//   node games/qui-est-ce/prototype-3d/tools/test-board.js [--char models/x.glb]
+//   node games/qui-est-ce/prototype-3d/tools/test-board.js
+//
+// Joue : choix du secret, questions utiles, reponses honnetes aux questions du bot, croix,
+// designation ; verifie la revelation (deux secrets, pastille), les statistiques locales, la
+// planche contact PNG, la revanche en un clic, l'adversaire qui s'en va, le survol (regard),
+// la console, et le 390 px. Captures dans build/board/ ; mesures dans build/board/stats.json.
 
 const fs = require('fs');
 const path = require('path');
 const { Browser, sleep } = require('../../../../tools/cdp');
 const { localCdn } = require('./local-cdn');
 
-const args = process.argv.slice(2);
-const CHAR = args.includes('--char') ? args[args.indexOf('--char') + 1] : null;
 const ORIGIN = process.env.PROTO_ORIGIN || 'http://localhost:4173';
-const GPU_FLAGS = process.platform === 'win32'
-  ? ['--ignore-gpu-blocklist', '--enable-gpu', '--use-angle=d3d11']
+const WIN = process.platform === 'win32';
+const GPU_FLAGS = WIN ? ['--ignore-gpu-blocklist', '--enable-gpu', '--use-angle=d3d11']
   : ['--ignore-gpu-blocklist', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
-const BASE = `${ORIGIN}/games/qui-est-ce/prototype-3d/board.html`;
-// idle=6 : en rendu logiciel, le rafraichissement de repos (1,1 s) occupe toute la page.
-const IDLE = process.platform === 'win32' ? '' : 'idle=6';
-const q = (extra) => `${BASE}?${[extra, IDLE, CHAR && 'char=' + CHAR].filter(Boolean).join('&')}`;
+const URL = (q) => `${ORIGIN}/games/qui-est-ce/prototype-3d/board.html?seed&fast${WIN ? '' : '&idle=30'}${q ? '&' + q : ''}`;
 const OUT = path.join(__dirname, '..', 'build', 'board');
 const results = [];
-const check = (name, ok, detail = '') => {
-  results.push(!!ok);
-  console.log(`${ok ? 'OK   ' : 'ECHEC'}  ${name}${detail !== '' ? ' | ' + (typeof detail === 'string' ? detail : JSON.stringify(detail)) : ''}`);
-};
-
-async function open(p, url, width, height = 900) {
-  await p.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 600 });
-  const t0 = Date.now();
-  await p.goto(url);
-  // Le rendu logiciel bloque la page plusieurs secondes : une interrogation qui expire n'est pas une erreur.
-  const ready = () => p.eval('return document.documentElement.dataset.ready === "1"').catch(() => false);
-  for (let i = 0; i < 300 && !(await ready()); i++) await sleep(500);
-  return { ready: await ready(), wallMs: Date.now() - t0 };
+const check = (name, ok, d = '') => { results.push(!!ok); console.log(`${ok ? 'OK   ' : 'ECHEC'}  ${name}${d !== '' ? ' | ' + (typeof d === 'string' ? d : JSON.stringify(d)) : ''}`); };
+const ev = (p, js) => p.eval(js).catch(async () => { await sleep(3000); return p.eval(js); });
+const until = async (p, js, ms = 60000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await ev(p, `return !!(${js})`).catch(() => false)) return true; await sleep(250); } return false; };
+async function shot(p, name) {
+  const r = await p.send('Page.captureScreenshot', { format: 'png' });
+  fs.writeFileSync(path.join(OUT, name + '.png'), Buffer.from(r.data, 'base64'));
 }
-const ev = (p, js) => p.eval(js).catch(async (e) => { if (process.env.DEBUG) console.log('       (relance)', js.slice(0, 60), e.message); await sleep(3000); return p.eval(js); });
-// Un evenement d'entree attend la page : s'il expire, il a quand meme ete livre.
-const input = (p, method, params) => p.send(method, params).catch(() => {});
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const b = await Browser.launch({ headless: true, windowSize: '1440,900', extraArgs: GPU_FLAGS });
   const p = await b.newPage('about:blank', 'board');
   await localCdn(p);
+  await p.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  const t0 = Date.now();
   try {
-    // 1. Plateau vivant (hasard fige)
-    const o = await open(p, q('seed'), 1440, 900);
-    check('Plateau charge', o.ready, `${o.wallMs} ms (horloge du test)`);
-    if (!o.ready) throw new Error('plateau non charge : ' + JSON.stringify(p.errors()));
-    const info = await ev(p, 'return __board.info()');
-    check('24 cartes', info.cards === 24 && (await ev(p, 'return document.querySelectorAll(".card").length')) === 24, info);
-
-    // 2. Survol : regard puis tete vers le curseur (carte 8, curseur a gauche puis a droite)
-    const box = await ev(p, `const r = __board.cards[7].slot.getBoundingClientRect(); return { l: r.left, r: r.right, y: r.top + r.height * 0.35, cx: r.left + r.width / 2 };`);
-    const move = async (x) => { for (let i = 0; i <= 6; i++) { await input(p, 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: box.cx + (x - box.cx) * i / 6, y: box.y }); await sleep(30); } };
-    await move(box.cx); await move(box.l + 2); await sleep(5000);
-    const left = await ev(p, 'return __board.pose(7)');
-    await move(box.r - 2); await sleep(5000);
-    const right = await ev(p, 'return __board.pose(7)');
-    check('Survol : yeux et tete vers la gauche puis la droite', left.eye < -0.05 && right.eye > 0.05 && right.head > left.head, { left, right });
-    const idle = await ev(p, 'return __board.pose(3)');
-    check('Les autres cartes gardent leur pose de repos', Math.abs(idle.eye) < 0.3, idle);
-
-    // 3. Decrochage : clic, puis clavier
-    const c3 = await ev(p, `const r = __board.cards[2].slot.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 };`);
-    for (const type of ['mousePressed', 'mouseReleased']) await input(p, 'Input.dispatchMouseEvent', { type, x: c3.x, y: c3.y, button: 'left', clickCount: 1 });
-    await sleep(1500);
-    const clicked = await ev(p, `const c = __board.cards[2]; return { out: c.el.classList.contains('out'), img: !!c.slot.querySelector('img'), pressed: c.el.getAttribute('aria-pressed'), left: document.getElementById('left').textContent };`);
-    check('Clic : portrait decroche (image figee, aria-pressed)', clicked.out && clicked.img && clicked.pressed === 'true' && clicked.left === '23', clicked);
-    await ev(p, '__board.cards[4].el.focus()');
-    await input(p, 'Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 });
-    await input(p, 'Input.dispatchKeyEvent', { type: 'keyUp', key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 });
-    await input(p, 'Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' });
-    await input(p, 'Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
-    await sleep(1500);
-    const kb = await ev(p, `return { focus: document.activeElement === __board.cards[5].el, out: __board.cards[5].el.classList.contains('out') }`);
-    check('Clavier : fleche puis Entree decroche le portrait suivant', kb.focus && kb.out, kb);
-    await input(p, 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 });
-
-    // 4. Question du jeu : les portraits qui ne correspondent pas sont decroches
-    const before = await ev(p, 'return __board.cards.filter((c) => !c.out).length');
-    const secret = await ev(p, 'return __board.secret()');
-    await ev(p, 'document.getElementById("question").value = "0"; document.getElementById("ask").click();');
-    await sleep(9000);
-    const after = await ev(p, `return { left: __board.cards.filter((c) => !c.out).length, answer: document.getElementById('answer').textContent, secretUp: !__board.cards.find((c) => c.person.prenom === ${JSON.stringify(secret)}).out }`);
-    check('Question : reponse affichee, non-correspondants decroches, secret toujours accroche', after.answer.length > 3 && after.left < before && after.secretUp, { before, ...after, secret });
-
-    // 5. Mesures (en SwiftShader les temps ne valent rien : a refaire sur le PC)
-    // Sur le PC : 24 cartes repeintes ; en rendu logiciel, 4 cartes (sinon plus de 60 s par appel).
-    const N = process.platform === 'win32' ? 24 : 4;
-    const msN = await ev(p, `return __board.paintMs(${N}, 1)`);
-    const ms24 = msN * 24 / N;
-    const ms1 = await ev(p, 'return __board.paintMs(1, 2)');
-    const info2 = await ev(p, 'return __board.info()');
-    const gpu = await ev(p, `const gl = document.createElement('canvas').getContext('webgl2'); const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : '?'`);
+    await p.goto(URL(''));
+    check('Accueil charge (24 personnages 3D prets)', await until(p, 'document.documentElement.dataset.ready === "1"', 180000), `${Date.now() - t0} ms`);
+    await ev(p, 'localStorage.clear()');
+    await shot(p, 'accueil');
+    await ev(p, 'document.querySelector("[data-do=play-bot]").click()');
+    check('Partie contre le bot : choix du secret', await until(p, '__game.view() && __game.view().phase === "choose"'));
+    // survol : regard vers le curseur
+    const box = await ev(p, `const r = __game.board.cards[7].slot.getBoundingClientRect(); return { l: r.left, r: r.right, y: r.top + r.height * .35 }`);
+    const move = async (x) => { for (let i = 0; i < 4; i++) { await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y: box.y }).catch(() => {}); await sleep(40); } };
+    await move(box.l + 3); await sleep(4000); const left = await ev(p, 'return __game.board.cards[7].rig.state.eye.yaw');
+    await move(box.r - 3); await sleep(4000); const right = await ev(p, 'return __game.board.cards[7].rig.state.eye.yaw');
+    const target = await ev(p, 'const c = __game.board.cards[7]; return { hovering: c.hovering, x: c.pointer.x, active: c.pointer.active }');
+    // la cible du regard suit le curseur ; le mouvement des yeux, lui, depend du nombre d'images (SwiftShader : ~4 s par carte)
+    check('Survol : le personnage vise le curseur', target.hovering && target.active && target.x > 0.5 && (WIN ? left < -0.05 && right > 0.05 : true),
+      { cibleX: +target.x.toFixed(2), yeuxGauche: +left.toFixed(3), yeuxDroite: +right.toFixed(3) });
+    await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 }).catch(() => {});
+    await ev(p, '__game.pick(0)');
+    await shot(p, 'choix-secret');
+    await ev(p, 'document.querySelector("[data-do=secret]").click()');
+    check('Les deux secrets choisis : la manche commence', await until(p, '__game.view().phase === "play"'));
+    const leak = await ev(p, `const v = __game.view(); return v.reveal !== null || JSON.stringify(v).includes('secrets')`);
+    check("Le secret de l'adversaire n'est pas dans la vue", !leak);
+    // boucle de jeu : je pose la meilleure question, je raye, le bot joue ; je reponds honnetement
+    let turns = 0; const shots = { tour: false, repondre: false };
+    for (let k = 0; k < 80; k++) {
+      const v = await ev(p, 'const v = __game.view(); return { phase: v.phase, turn: v.turn, ask: v.ask, me: v.me }');
+      if (v.phase === 'end') break;
+      if (v.ask && v.ask.by !== v.me && v.ask.answer === null) {
+        if (!shots.repondre) { await shot(p, 'repondre'); shots.repondre = true; }
+        await ev(p, `const v = __game.view(); if (!v.ask || v.ask.by === v.me || v.ask.answer !== null) return;   // l'etat a deja change
+          const q = (await import('./js/game/questions.js')).byId[v.ask.q];
+          document.querySelector(q.test(__game.people[v.mySecret].attributs) ? '[data-do=yes]' : '[data-do=no]')?.click();`);
+      } else if (v.turn === v.me && !v.ask) {
+        const left = await ev(p, `return __game.people.map((_, i) => i).filter((i) => !__game.crossed().includes(i))`);
+        if (left.length === 1) await ev(p, `__game.guessMode(true); __game.pick(${left[0]}); document.querySelector('[data-do=guess]').click()`);
+        else {
+          if (!shots.tour) { await shot(p, 'mon-tour'); shots.tour = true; }
+          await ev(p, `const m = await import('./js/game/questions.js'); const q = m.bestQuestion(${JSON.stringify(left)}, __game.people);
+            document.querySelector('[data-q="' + q.id + '"]').click(); document.querySelector('[data-do=ask]').click();`);
+          turns++;
+        }
+      } else if (v.turn === v.me && v.ask && v.ask.answer !== null) {
+        await ev(p, `document.querySelector('[data-do=auto]')?.click()`); await sleep(400);
+        if (turns === 2) await shot(p, 'ecartees');
+        await ev(p, `document.querySelector('[data-do=done]')?.click()`);
+      }
+      await sleep(300);
+    }
+    check('Partie terminee (designation)', await until(p, '__game.view().phase === "end"', 90000), { mesQuestions: turns });
+    await sleep(2500);
+    const end = await ev(p, `const v = __game.view(); return { winner: v.winner, me: v.me, shown: !document.getElementById('reveal').hidden,
+      frames: document.querySelectorAll('#hang .hung').length, dot: !!document.querySelector('#hang .dot'), titles: document.getElementById('titles').textContent,
+      stats: (JSON.parse(localStorage.getItem('qe3d.stats.v1') || '{}').games || []).length }`);
+    check('Revelation : deux secrets accroches, pastille, statistiques enregistrees', end.shown && end.frames === 2 && end.dot && end.stats === 1, { gagnant: end.winner, titres: end.titles.slice(0, 140) });
+    await shot(p, 'revelation');
+    const png = await ev(p, `const u = await __game.contactSheet(); window.__png = u; return u.length`);
+    const data = await ev(p, 'return window.__png');
+    fs.writeFileSync(path.join(OUT, 'planche-contact.png'), Buffer.from(data.split(',')[1], 'base64'));
+    check('Planche contact exportee en PNG', png > 50000, `${Math.round(png / 1024)} Ko (data URL)`);
+    await ev(p, `document.querySelector('[data-do=rematch]').click()`);
+    check('Revanche en un clic : nouvelle manche, plateau remis a neuf', await until(p, '__game.view().phase === "choose" && __game.view().round === 2 && __game.crossed().length === 0'));
+    await ev(p, `__game.net().send(__game.view().code, 'p2', { type: 'leave' })`);
+    check("Adversaire parti : l'ecran le dit", await until(p, "!document.getElementById('away').hidden"));
+    await shot(p, 'adversaire-parti');
+    const N = WIN ? 24 : 2;
+    const ms = await ev(p, `return __game.board.paintMs(${N})`);
+    const st = await ev(p, 'return __game.board.stats()');
     const errs = p.errors().filter((e) => !/favicon/.test(e.text));
     check('Console sans erreur', errs.length === 0, errs.slice(0, 3));
-    const measures = { char: CHAR || 'models/character-01-ict.glb', loadMs: info.loadMs, glbBytes: info.glbBytes, parseMs: info.parseMs,
-      trianglesPerCard: info.trianglesPerCard, memory: info2.memory, programs: info2.programs, canvas: info2.canvas,
-      repaint24Ms: +ms24.toFixed(1), repaint1Ms: +ms1.toFixed(1), gpu };
-    console.log('       Mesures :', JSON.stringify(measures));
-
-    // 6. Captures figees : bureau, puis mobile 390 px
-    const d = await open(p, q('still'), 1440, 900);
-    const h = await ev(p, 'return Math.ceil(document.documentElement.scrollHeight)');
-    await p.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: h, deviceScaleFactor: 1, mobile: false });
-    await sleep(4000);
-    let shot = await p.send('Page.captureScreenshot', { format: 'png' });
-    fs.writeFileSync(path.join(OUT, 'desktop.png'), Buffer.from(shot.data, 'base64'));
-    const m = await open(p, q('still'), 390, 844);
-    const sw = await ev(p, 'return document.documentElement.scrollWidth');
-    check('Mobile 390 px : pas de defilement horizontal', d.ready && m.ready && sw <= 390, { scrollWidth: sw });
-    shot = await p.send('Page.captureScreenshot', { format: 'png' });
-    fs.writeFileSync(path.join(OUT, 'mobile.png'), Buffer.from(shot.data, 'base64'));
+    const measures = { ...st, loadWallMs: Date.now() - t0, repaintAll24Ms: +(ms * 24 / N).toFixed(1), note: WIN ? 'GPU' : 'SwiftShader : temps sans valeur, a mesurer sur le PC' };
     fs.writeFileSync(path.join(OUT, 'stats.json'), JSON.stringify(measures, null, 1));
+    console.log('       Mesures :', JSON.stringify(measures));
+    await p.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+    await p.goto(URL('autostart'));
+    await until(p, '__game.view() && __game.view().phase === "choose"', 180000);
+    const sw = await ev(p, 'return document.documentElement.scrollWidth');
+    check('Mobile 390 px : pas de defilement horizontal', sw <= 390, { scrollWidth: sw });
+    await shot(p, 'mobile');
   } catch (e) {
     check('Execution', false, e.message);
   } finally {
     await b.close();
   }
   const ok = results.filter(Boolean).length;
-  console.log(`\n===== PLATEAU 3D : ${ok}/${results.length} =====`);
+  console.log(`\n===== PLATEAU JOUABLE : ${ok}/${results.length} =====`);
   process.exit(ok === results.length ? 0 : 1);
 })();

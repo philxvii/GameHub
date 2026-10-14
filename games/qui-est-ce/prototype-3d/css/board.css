@@ -1,69 +1,69 @@
-/* Plateau du Qui est-ce ? 3D : uniquement des jetons de tokens.css.
-   Le rendu 3D est un seul canevas pose sur le plateau (#gl) ; chaque cadre reserve une
-   fenetre (.portrait) ou ce canevas peint le personnage. */
+/* Plateau jouable : complete css/partie.css (composants de la direction casting).
+   Le rendu 3D est un seul canevas (#gl) pose sur le plateau ; chaque Polaroid reserve sa
+   fenetre (.portrait) ou il peint le personnage. PC d'abord ; le mobile ne doit que tenir. */
 
-*, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; background: var(--qe-wall); color: var(--qe-label); font: var(--qe-size-text)/1.45 var(--qe-font-text); }
-button, select { font: inherit; }
-:focus-visible { outline: 2px solid var(--qe-gilt-light); outline-offset: 4px; }
+/* Sur l'accueil, la partie reste mise en page hors de l'ecran : le plateau 3D garde sa taille
+   (portraits de l'accueil et de la revelation peints des le chargement). */
+[hidden] { display: none !important; }   /* une regle display d'auteur ecrasait l'attribut hidden (ecran « adversaire parti » toujours visible) */
 
-.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--qe-space-3) var(--qe-space-5);
-  max-width: 76rem; margin: 0 auto; padding: var(--qe-space-5) 1rem var(--qe-space-4); }
-.top h1 { margin: 0; font: italic 600 var(--qe-size-title)/1 var(--qe-font-title); }
-.room { margin: var(--qe-space-1) 0 0; color: var(--qe-gilt); font-size: .9rem; }
-.count { margin: 0; font: italic 500 1.25rem/1.2 var(--qe-font-title); }
-.count span { font-style: normal; font-weight: 600; color: var(--qe-gilt-light); }
+body[data-screen="home"] #game { position: absolute; left: -10000px; top: 0; width: min(78rem, 100vw); visibility: hidden; }
+body[data-screen="game"] #home { display: none; }
+body[data-screen="home"] .home { display: grid; }
+.home { max-width: 78rem; margin: 0 auto; }
+.home .pola img { aspect-ratio: 3 / 4; background: var(--qe-wall-shade); }
 
-/* Barre de question : un cartel long entre deux filets dores */
-.ask { display: flex; flex-wrap: wrap; align-items: center; gap: var(--qe-space-3); max-width: 76rem; margin: 0 auto var(--qe-space-5);
-  padding: var(--qe-space-3) 1rem; border-top: 1px solid var(--qe-gilt-dark); border-bottom: 1px solid var(--qe-gilt-dark); }
-.ask label { font-size: var(--qe-size-small); color: var(--qe-gilt); }
-.ask select { min-width: 0; flex: 1 1 16rem; max-width: 26rem; padding: .45rem .6rem; background: var(--qe-label); color: var(--qe-ink);
-  border: 1px solid var(--qe-ink); border-radius: var(--qe-radius); font: italic 600 1.1rem/1.2 var(--qe-font-title); }
-.answer { flex: 1 1 12rem; margin: 0; font: italic 500 1.2rem/1.2 var(--qe-font-title); min-height: 1.2em; }
-.plaque { background: var(--qe-gilt); color: var(--qe-ink); border: 1px solid var(--qe-gilt-dark); border-radius: var(--qe-radius); padding: .45rem 1rem;
-  box-shadow: inset 0 0 0 2px var(--qe-gilt-light), inset 0 0 0 3px #8F6D27; font-weight: 600; cursor: pointer; transition: background var(--qe-dur-fast); }
-.plaque:hover { background: #D6B160; }
-.plaque:active { box-shadow: inset 0 0 0 3px #8F6D27; }
-.plaque:disabled { opacity: .5; cursor: default; }
-.plaque-quiet { background: transparent; color: var(--qe-label); border-color: var(--qe-gilt-dark); box-shadow: none; }
-.plaque-quiet:hover { background: var(--qe-wall-deep); }
-
-/* Plateau */
-.board-wrap { position: relative; max-width: 76rem; margin: 0 auto; padding: 0 1rem var(--qe-space-5); }
-.board { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--qe-space-5) var(--qe-space-4); }
+.game .play { grid-template-columns: minmax(0, 1fr) 21rem; }
+.board-wrap { position: relative; }
 #gl { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 1; }
-.card { position: relative; cursor: pointer; border-radius: var(--qe-radius); outline-offset: 6px; }
-.card .frame { position: relative; padding: var(--qe-frame); background: var(--qe-gilt-mid);
-  box-shadow: inset 0 0 0 2px var(--qe-gilt-dark), inset 0 0 0 4px var(--qe-gilt-light), inset 0 0 0 6px #9C7A2C, inset 0 0 0 8px var(--qe-gilt-light), var(--qe-shadow-frame);
-  transition: transform var(--qe-dur-out) var(--qe-ease-out), opacity var(--qe-dur-out); }
-.card .portrait { position: relative; aspect-ratio: 3 / 4; background: var(--qe-wall-deep); box-shadow: 0 0 0 1px #5A4316; overflow: hidden; }
+.wall-board { gap: 1.2rem 1rem; }
+.card { position: relative; cursor: pointer; outline-offset: 5px; }
+.card .portrait { position: relative; aspect-ratio: 3 / 4; background: var(--qe-wall-shade); overflow: hidden; }
 .card .portrait img { display: block; width: 100%; height: 100%; }
-/* Trace laissee sur la cimaise quand le tableau est decroche */
-.card::before { content: ''; position: absolute; inset: 0 0 auto; aspect-ratio: 3 / 4; height: auto; border: 1px solid var(--qe-trace-line); background: var(--qe-trace); pointer-events: none; }
-.card .frame { z-index: 0; }
-.cartel { position: relative; z-index: 2; width: 88%; margin: var(--qe-space-3) auto 0; padding: .3rem .45rem; background: var(--qe-label); color: var(--qe-ink); font-size: .72rem; line-height: 1.25; }
-.cartel p { margin: 0; }
-.cartel .name { font: italic 600 1rem/1.15 var(--qe-font-title); }
-.cartel .num { opacity: .7; }
-.cartel .dot { position: absolute; right: .4rem; top: 50%; width: .7rem; height: .7rem; margin-top: -.35rem; border-radius: 50%; background: var(--qe-dot); transform: scale(0); transition: transform var(--qe-dur) var(--qe-ease-pop); }
-.card.won .dot { transform: scale(1); }
-.card.out .frame { transform: translateY(-12px) rotate(-3deg); opacity: 0; }
-.card.out .cartel { opacity: .55; }
-.card .gone { position: absolute; z-index: 2; left: 50%; top: 42%; transform: translate(-50%, -50%); width: 78%; margin: 0; padding: .3rem; text-align: center;
-  background: var(--qe-label); color: var(--qe-ink); font-size: .68rem; line-height: 1.2; opacity: 0; transition: opacity var(--qe-dur) .35s; pointer-events: none; }
-.card.out .gone { opacity: 1; }
+.card .cross, .card .circle { z-index: 2; }
+.card.x .portrait img { filter: grayscale(.75) contrast(.85) brightness(1.05); }
+.card.x { opacity: .8; }
+.card:hover:not(.x) { transform: rotate(var(--tilt)) translateY(-3px); box-shadow: var(--qe-shadow-lift); }
+/* Fiche du casting (temporaire : substituts) — au survol, sous le Polaroid */
+.fiche { position: absolute; z-index: 3; left: 50%; top: calc(100% - .2rem); width: max(100%, 11rem); transform: translateX(-50%) rotate(-1deg);
+  margin: 0; padding: .35rem .5rem; background: var(--qe-tape); color: var(--qe-film); font-size: .66rem; line-height: 1.35;
+  opacity: 0; pointer-events: none; transition: opacity var(--qe-dur-fast); }
+.fiche em { display: block; font-style: normal; color: var(--qe-grease); }
+.card:hover .fiche, .card:focus-visible .fiche { opacity: 1; }
 
-.note { max-width: 76rem; margin: 0 auto; padding: 0 1rem var(--qe-space-5); font-size: var(--qe-size-small); opacity: .7; }
+/* A qui le tour, sans lire : bandeau du joueur actif souleve, plateau qui palit chez l'autre */
+body[data-turn="them"] .wall-board { opacity: .82; }
+.mine { width: 11rem; align-self: center; padding: 6% 6% 0; }
+.mine img { display: block; width: 100%; aspect-ratio: 3 / 4; }
+.mine-label { position: absolute; top: -1.4rem; left: 0; right: 0; }
+.action:empty { display: none; }
+.action .incoming { width: 100%; margin: -.2rem 0 .3rem; }
+.action .reel { margin-top: .2rem; }
+.action button[disabled] { opacity: .45; cursor: default; }
+.log li.their-q { background: var(--qe-wall-shade); }
+.bubble { position: relative; margin: 0; background: var(--qe-photo); padding: .6rem .8rem; box-shadow: var(--qe-shadow-photo); font: 400 1rem/1.25 var(--qe-font-hand); transform: rotate(-1deg); }
+.bubble.warn { color: var(--qe-grease); }
+
+/* Revelation : la ceremonie du salon par-dessus le studio */
+.reveal-overlay, .away-overlay { position: fixed; inset: 0; z-index: 10; overflow: auto; }
+.reveal-overlay .reveal { min-height: 100%; margin: 0; padding: 3rem 1rem; }
+.reveal-overlay .hang { gap: 4rem; }
+.reveal-overlay .hung { width: 15rem; }
+.titles { list-style: none; margin: 0 auto 1.4rem; padding: 0; max-width: 36rem; color: var(--qe-label); font-size: .85rem; }
+.titles li { margin: .3rem 0; }
+.titles .title b { font: 400 1.15rem var(--qe-font-hand); color: var(--qe-gilt-light); margin-right: .4rem; }
+.reveal .quit { background: none; border: 0; text-decoration: underline; cursor: pointer; }
+.away-overlay { background: rgb(233 229 221 / .94); display: grid; place-content: center; text-align: center; gap: 1rem; }
+.away-overlay .gone { width: 12rem; margin: 0 auto; }
+.note { max-width: 78rem; margin: 0 auto; padding: 0 1rem 2rem; color: var(--qe-grease); }
 
 @media (max-width: 860px) {
-  .board { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--qe-space-4) var(--qe-space-3); }
-  .card .frame { padding: 6px; box-shadow: inset 0 0 0 1px var(--qe-gilt-dark), inset 0 0 0 3px var(--qe-gilt-light), inset 0 0 0 5px #9C7A2C, var(--qe-shadow-frame); }
-  .cartel { width: 100%; font-size: .66rem; }
-  .cartel .name { font-size: .9rem; }
-  .cartel .num { display: none; }
+  .game .play { display: flex; flex-direction: column; }
+  .wall-board { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .8rem .55rem; }
+  .mine { width: 100%; }
+  .mine img { width: 4.6rem; }
+  .reveal-overlay .hang { gap: 1rem; flex-wrap: nowrap; }
+  .reveal-overlay .hung { width: 46%; }
+  .fiche { display: none; }
 }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
-}
+.card .circle { display: none; }
+.card.o .circle { display: block; }
