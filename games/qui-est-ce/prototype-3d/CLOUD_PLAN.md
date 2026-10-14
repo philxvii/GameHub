@@ -36,6 +36,35 @@ l'utilisateur (Windows, GPU Intel Iris Xe) quand le budget s'épuise.
    question, puis continue les tâches qui ne dépendent pas de sa réponse ; ne valide jamais
    à sa place.
 
+## Cadre : c'est un jeu MULTIJOUEUR
+
+Le Qui est-ce ? de GameHub est un jeu **à deux joueurs en ligne** (salon à code, un
+personnage secret par joueur, tours alternés : question oui/non, réponse, cartes écartées,
+désignation finale). Le jeu en production (`games/qui-est-ce/index.html`, nœud Firebase
+`qec2/<code>`) l'est déjà ; la version 3D doit le rester. Tout ce que tu conçois (DA,
+plateau, mesures) vaut pour une **partie à deux**, pas pour une maquette solo.
+
+- **Le réseau ne transporte jamais de 3D** : seulement des identifiants et des choix (mon
+  secret, mes cartes écartées, la question, la réponse). Chaque appareil rend ses propres
+  personnages.
+- **Le secret d'un joueur n'est jamais lisible par l'adversaire** avant la fin de partie
+  (même principe que `ucSecret` d'Undercover). Toute écriture hors de la partie ou nouveau
+  nœud exige d'abord une règle dans `firebase/build-rules.js`.
+- **Mobile d'abord** : une partie se joue souvent sur téléphone. 24 visages 3D sur un petit
+  GPU : poids, mémoire GPU, rendu à la demande et 390 px de large sont des contraintes
+  de conception, pas des finitions.
+- Chaque page de jeu charge `shared/maintenance.js` en tête (voir `HANDOFF.md`).
+- **Aucun branchement à Firebase ni au jeu en production sans accord explicite** de
+  l'utilisateur. Jusqu'à ce que la DA et le plateau soient validés, tout se joue contre un
+  **adversaire simulé en local** (bot) derrière une interface réseau factice
+  (`js/net-mock.js`), conçue pour être remplacée par Firebase sans toucher au reste.
+
+Écrans et états à prévoir partout (DA, plateau, tests) : accueil (créer / rejoindre avec
+code), salon d'attente, choix de **mon personnage secret** (visible en permanence ensuite),
+mon tour (poser une question), tour de l'adversaire (**répondre** oui / non à sa question),
+attente, cartes écartées, désignation finale (bonne ou mauvaise), fin de partie
+(vainqueur, révélation des secrets, revanche), déconnexion de l'adversaire.
+
 ## 1. Économie de crédits
 
 - Décide sur des **chiffres** (poids, écarts de pixels, SSIM), pas en regardant des images.
@@ -216,7 +245,9 @@ Démarche :
    victoire), et sons possibles (Web Audio, comme `sfx.js` de Banqueroll).
 3. Une page **`da.html`** dans le prototype : les trois directions côte à côte, chacune
    avec une vraie carte personnage (le rendu 3D du personnage 01), un extrait de plateau,
-   un bouton, une question du jeu. Captures réduites dans `reports/da/`.
+   un bouton, une question du jeu. Captures réduites dans `reports/da/`. **Les trois
+   directions existent déjà** (lot DA du 2026-10-14) : dossier, casting, salon. Elles ne
+   montrent que le plateau d'un joueur : voir « Déclinaison multijoueur » ci-dessous.
 4. Interdits hérités du site : halos lumineux, dégradés décoratifs, badges en pilule,
    bordures colorées sur un seul côté, majuscules très espacées. Pas d'esthétique
    « tableau de bord » ni de gabarit d'IA générique.
@@ -224,7 +255,17 @@ Démarche :
    rayons, ombres, durées), et une proposition de couverture pour la carte du hub
    (`reports/da/cover.jpg`, **sans toucher** à `games/qui-est-ce/cover.webp` sur `main`).
 
-⛔ **G-DA** : l'utilisateur choisit (ou mixe) une direction. Le plateau L3 l'applique.
+6. **Déclinaison multijoueur de la direction choisie** (seulement après le choix) :
+   `da.html` gagne une section « Partie à deux » avec, dans cette DA, les écrans listés
+   dans « Cadre : c'est un jeu MULTIJOUEUR » : accueil, salon d'attente avec le code,
+   choix du secret, carte « mon personnage » toujours visible, tour de l'adversaire (je
+   réponds oui / non), attente, cartes écartées des deux côtés, désignation finale, fin de
+   partie, revanche, adversaire déconnecté. Version **mobile 390 px** de chacun
+   (captures réduites dans `reports/da/`). Même identité sonore et mouvement pour les deux
+   joueurs ; la DA doit aider à lire **à qui c'est le tour** sans texte.
+
+⛔ **G-DA** : l'utilisateur choisit (ou mixe) une direction, puis valide sa déclinaison
+multijoueur. Le plateau L3 l'applique.
 
 ## L3 — Plateau 3D de 24 cartes (≈ 17 %) ⛔ G3
 
@@ -233,6 +274,15 @@ Prototype de l'architecture du jeu, **dans le dossier du prototype** (`board.htm
 24 fois en attendant les autres, avec les noms et attributs de `data/roster.json` si L2 est
 fait. **Entièrement dans la DA validée** (`css/tokens.css`) : le plateau doit déjà avoir
 l'allure du jeu final, pas d'une maquette technique.
+
+**Partie à deux complète contre un adversaire simulé** : le prototype joue une vraie partie
+de bout en bout (salon, choix du secret, tours alternés, réponses, cartes écartées,
+désignation, fin, revanche), l'adversaire étant un bot local (`js/bot.js`, qui pose des
+questions utiles de `data/roster.json` et répond honnêtement) derrière `js/net-mock.js`
+(créer / rejoindre, envoyer une action, recevoir l'état). L'interface réseau a **la forme
+du jeu en production** (un état de partie par code, un secret par joueur) pour être
+rebranchée sur Firebase sans toucher à l'affichage. Mobile 390 px sans défilement
+horizontal ; mémoire GPU et temps d'image mesurés avec 24 cartes à l'écran.
 
 - **Un seul `WebGLRenderer`**, une zone par carte (scissor), comme `compare.js`.
 - GLB chargé une fois, cloné (`SkeletonUtils.clone`), géométries et textures partagées.
@@ -268,6 +318,14 @@ attachées par défaut, et la V4.1 reste la coiffure du personnage 01.
 
 ⛔ **G4** : validation élément par élément. Un élément refusé reste dans le dépôt, marqué
 refusé dans `CLOUD_LOG.md`.
+
+## Hors lots — branchement Firebase (⛔ sur accord explicite uniquement)
+
+Ne pas commencer. Si l'utilisateur donne son accord, après G3 : brancher `net-mock.js` sur
+Firebase, d'abord **contre l'émulateur** (voir `firebase/README.md`), avec les règles
+correspondantes dans `firebase/build-rules.js` et le secret de chaque joueur illisible par
+l'adversaire. Jamais de déploiement des règles ni de `main` depuis le cloud : décris la
+marche à suivre dans `CLOUD_LOG.md` pour qu'on l'exécute depuis le PC.
 
 ## R — Retour au PC (réserve ≈ 12 %)
 

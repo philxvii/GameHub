@@ -31,6 +31,9 @@ et note son avancement dans [CLOUD_LOG.md](CLOUD_LOG.md).
 Un « Qui est-ce ? » premium, multijoueur, avec **24 personnages humains crédibles en 3D
 temps réel** (Three.js, navigateur, gratuit, sans build) :
 
+- **jeu multijoueur à deux en ligne** (salon à code, un secret par joueur, tours alternés,
+  comme le jeu en production `qec2/<code>`), mobile compris : le réseau ne transporte que des
+  choix, jamais de 3D (voir « Cadre » dans [CLOUD_PLAN.md](CLOUD_PLAN.md)) ;
 - plateau de 24 cartes, chaque carte affiche un personnage vivant ;
 - **survol** : le personnage regarde le curseur (yeux d'abord, puis la tête, le buste suit
   à peine) ;
