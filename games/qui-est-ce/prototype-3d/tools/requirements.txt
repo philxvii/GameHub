@@ -1,0 +1,15 @@
+# Outils Python du prototype 3D (Python 3.11). Versions de la machine de reference (2026-10).
+#   pip install -r games/qui-est-ce/prototype-3d/tools/requirements.txt
+numpy==2.4.6
+scipy==1.17.0
+opencv-python-headless==5.0.0.93
+pygltflib==1.16.5
+pillow==10.3.0
+mediapipe==1.1.0
+trimesh==5.1.1
+fast_simplification==0.2.0
+# Seulement pour regenerer le buste Hunyuan (tools/character/register.py, bake.py) :
+scikit-image==0.26.0
+xatlas==0.0.11
+# Seulement pour les essais Hugging Face ecartes (tools/hunyuan*.py, trellis*.py, sf3d.py) :
+# gradio_client==2.7.2

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qui est-ce ? — prototype personnage 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/proto.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+<main class="stage">
+  <figure class="card" id="card">
+    <canvas id="view" aria-label="Personnage en 3D, il suit le curseur du regard"></canvas>
+    <div class="card-loading" id="loading">Chargement du modèle…</div>
+    <figcaption class="plate">
+      <span class="plate-name" id="plate-name">—</span>
+      <span class="plate-note" id="plate-note"></span>
+    </figcaption>
+  </figure>
+
+  <div class="controls">
+    <div class="chips" id="chips" role="group" aria-label="Expression"></div>
+    <label class="toggle"><input type="checkbox" id="reduced"> Mouvement réduit</label>
+  </div>
+
+  <dl class="info" id="info" aria-live="polite"></dl>
+  <p class="hint">Bouge le curseur : il te suit des yeux, puis de la tête. Glisse pour tourner autour. Touches 1 à 4 : expressions, B : clignement.</p>
+</main>
+</body>
+</html>

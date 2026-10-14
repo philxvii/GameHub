@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qui est-ce ? — comparaison des coiffures</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/compare.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="js/compare.js"></script>
+</head>
+<body>
+<canvas id="view" aria-hidden="true"></canvas>
+<main class="page">
+  <header class="bar">
+    <h1>Personnage 01 — quatre coiffures</h1>
+    <div class="controls">
+      <div class="group" role="group" aria-label="Expression">
+        <button class="chip" data-expr="neutral" aria-pressed="true">Neutre <kbd>1</kbd></button>
+        <button class="chip" data-expr="smile" aria-pressed="false">Sourire <kbd>2</kbd></button>
+        <button class="chip" data-expr="suspicious" aria-pressed="false">Méfiant <kbd>3</kbd></button>
+        <button class="chip" data-expr="surprised" aria-pressed="false">Surpris <kbd>4</kbd></button>
+      </div>
+      <div class="group" role="group" aria-label="Curseur">
+        <button class="chip" data-look="mouse" aria-pressed="true">Souris réelle</button>
+        <button class="chip" data-look="left" aria-pressed="false">À gauche</button>
+        <button class="chip" data-look="right" aria-pressed="false">À droite</button>
+        <button class="chip" data-look="up" aria-pressed="false">Au-dessus</button>
+        <button class="chip" data-look="out" aria-pressed="false">Sortie du hover</button>
+      </div>
+    </div>
+  </header>
+  <section class="cards" id="cards"></section>
+  <p class="note" id="note">Même caméra, même éclairage, même cadrage, même fond et même résolution pour les quatre versions : un seul moteur de rendu découpé en quatre zones.</p>
+</main>
+</body>
+</html>

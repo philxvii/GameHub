@@ -1,0 +1,81 @@
+:root {
+  --page: #141210;
+  --ink: #efe8dc;
+  --muted: #a39a8c;
+  --edge: rgba(239, 232, 220, 0.16);
+  --accent: #e2b77a;
+  --focus: #f3d7a8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: radial-gradient(120% 90% at 50% 30%, #262220 0%, var(--page) 60%);
+  color: var(--ink);
+  font-family: 'Familjen Grotesk', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.stage {
+  min-height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; padding: 28px 16px;
+}
+
+/* La carte : un tirage photo epais, le personnage vit dedans. */
+.card {
+  position: relative;
+  width: min(380px, 86vw, calc((100dvh - 250px) * 0.75));
+  aspect-ratio: 3 / 4;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #1c1916;
+  box-shadow:
+    0 0 0 1px var(--edge),
+    0 0 0 7px #e9e1d3,
+    0 0 0 8px rgba(0, 0, 0, 0.35),
+    0 28px 60px -18px rgba(0, 0, 0, 0.75);
+  touch-action: none;
+}
+.card canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+.card canvas:active { cursor: grabbing; }
+
+.card-loading {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: var(--muted); font-size: 14px;
+}
+.card-loading[hidden] { display: none; }
+
+.plate {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  padding: 26px 16px 12px;
+  background: linear-gradient(to top, rgba(14, 12, 10, 0.82), rgba(14, 12, 10, 0));
+  pointer-events: none;
+}
+.plate-name { font-weight: 700; font-size: 20px; letter-spacing: 0.01em; }
+.plate-note { font-size: 12px; color: var(--muted); }
+
+.controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.chip {
+  font: inherit; font-size: 14px; font-weight: 500;
+  color: var(--ink); background: transparent;
+  border: 1px solid var(--edge); border-radius: 8px;
+  padding: 8px 14px; cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.chip:hover { border-color: rgba(239, 232, 220, 0.4); }
+.chip[aria-pressed="true"] { background: var(--ink); color: #171411; border-color: var(--ink); }
+.chip kbd { font: inherit; opacity: 0.55; margin-left: 6px; font-size: 12px; }
+.chip:focus-visible, .toggle input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.toggle { font-size: 14px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+
+.info {
+  display: grid; grid-template-columns: auto auto; gap: 2px 14px;
+  font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums;
+  max-width: 380px;
+}
+.info dt { text-align: right; }
+.info dd { color: var(--ink); }
+.hint { font-size: 12px; color: var(--muted); max-width: 380px; text-align: center; line-height: 1.5; }

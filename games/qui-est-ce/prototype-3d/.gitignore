@@ -1,0 +1,38 @@
+# Prototype 3D Qui est-ce ? : sorties de travail regenerables, jamais versionnees.
+
+# build/ : seuls les intermediaires que lit build_ict.py sont versionnes
+# (le reste se regenere : captures, bancs, variantes, outils npm).
+build/*
+!build/registration.json
+!build/landmarks3d.npy
+!build/landmarks2d-front.npy
+!build/textured.npz
+!build/albedo.png
+
+# build-ict/ : modele ICT compacte (prepare.py) et ajustement (fit.py) versionnes,
+# images de controle regenerees par fit.py / build_ict.py.
+build-ict/*
+!build-ict/ict.npz
+!build-ict/fit.npz
+
+__pycache__/
+*.pyc
+
+# Essais ecartes, gardes seulement en local (voir HANDOFF.md, « Ce qui est refuse »)
+models/character-01.glb
+models/hair/hair-curly.glb
+models/hair/hair-short.glb
+models/hair/hair-wavy.glb
+models/hair/hair-messy.glb
+models/hair/hair-volume.glb
+models/hair/hairs.json
+models/hair/compare-v41.json
+# tete de demonstration three.js : licence non verifiee, pas dans le depot public
+models/facecap.glb
+models/hunyuan2*/
+models/trellis*
+models/sf3d*
+
+# Captures ad hoc ; les planches de validation vont dans reports/ (petits JPEG)
+*.tmp.png
+*.log

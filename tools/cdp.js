@@ -50,7 +50,8 @@ async function waitForDevtools(timeoutMs = 25000) {
 class Browser {
   constructor(ws) { this.ws = ws; this.id = 0; this.pending = new Map(); this.pages = new Map(); }
 
-  static async launch({ headless = true, windowSize = '1280,900' } = {}) {
+  // extraArgs : drapeaux Chrome en plus (ex. forcer le GPU pour mesurer un rendu WebGL).
+  static async launch({ headless = true, windowSize = '1280,900', extraArgs = [] } = {}) {
     // Profil unique par exécution : un Chrome resté ouvert ne bloque plus le run suivant.
     const dir = path.join(process.env.TEMP || process.env.TMPDIR || '.', 'bq-cdp-' + Date.now().toString(36));
     const args = [
@@ -61,6 +62,7 @@ class Browser {
       '--disable-background-timer-throttling',
       '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding',
       '--window-size=' + windowSize,
+      ...extraArgs,
       'about:blank',
     ];
     if (headless) args.unshift('--headless=new');
