@@ -320,6 +320,15 @@ bandeau, aucune ne traverse la calotte. 0 sommet de la casquette dans la tête p
 `models/accessories/cap-hair-curly-v41.glb` 390 112 o. Banc : `bench_character.js --hair`.
 Planche : `reports/accessories/casquette.jpg`.
 
+Boucles d'oreilles (`tools/accessories/earrings.py`) : créoles en or de 2,2 cm (taille choisie
+pour se lire sur une carte) et puces perle (nacre irisée : `KHR_materials_iridescence` +
+vernis). Lobe gauche = point le plus bas du pavillon ; lobe droit = sommet de l'oreille droite
+le plus proche du symétrique du gauche (la détection directe tombait à l'arrière du pavillon).
+Créole inclinée de 25° (le bas s'écarte de la mâchoire), moitié arrière vers l'extérieur.
+0 sommet dans la tête hors perçage (6 mm autour du lobe) pour les 5 expressions.
+`earrings-hoops.glb` 13 612 o, `earrings-pearls.glb` 5 252 o. Planche :
+`reports/accessories/boucles-oreilles.jpg`.
+
 ## Validations de l'utilisateur
 
 | Point | Date | Décision |

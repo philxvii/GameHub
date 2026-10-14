@@ -1,0 +1,12 @@
+{
+ "style": "pearls",
+ "triangles": 880,
+ "dans_la_tete_hors_percage": {
+  "neutre": 0,
+  "sourcils leves": 0,
+  "sourire": 0,
+  "surprise": 0,
+  "yeux fermes": 0
+ },
+ "octets": 5252
+}
