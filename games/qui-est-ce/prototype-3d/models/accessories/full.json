@@ -1,0 +1,61 @@
+{
+ "style": "full",
+ "nom": "Barbe et moustache",
+ "parties": {
+  "beard": {
+   "cartes": 9500,
+   "triangles": 57000,
+   "expressions": 14,
+   "degagement": {
+    "neutre": {
+     "proches": 0,
+     "dedans_echantillon": "0/0"
+    },
+    "sourcils leves": {
+     "proches": 0,
+     "dedans_echantillon": "0/0"
+    },
+    "sourire": {
+     "proches": 23,
+     "dedans_echantillon": "3/23"
+    },
+    "surprise": {
+     "proches": 13,
+     "dedans_echantillon": "2/13"
+    },
+    "yeux fermes": {
+     "proches": 0,
+     "dedans_echantillon": "0/0"
+    }
+   }
+  },
+  "moustache": {
+   "cartes": 2600,
+   "triangles": 20800,
+   "expressions": 12,
+   "degagement": {
+    "neutre": {
+     "proches": 0,
+     "dedans_echantillon": "0/0"
+    },
+    "sourcils leves": {
+     "proches": 0,
+     "dedans_echantillon": "0/0"
+    },
+    "sourire": {
+     "proches": 2,
+     "dedans_echantillon": "0/2"
+    },
+    "surprise": {
+     "proches": 0,
+     "dedans_echantillon": "0/0"
+    },
+    "yeux fermes": {
+     "proches": 0,
+     "dedans_echantillon": "0/0"
+    }
+   }
+  }
+ },
+ "octets": 2865808
+}

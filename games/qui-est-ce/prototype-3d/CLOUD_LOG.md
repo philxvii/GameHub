@@ -288,6 +288,26 @@ qui traversaient l'oreille, coin nasal dans le nez, verres laiteux, monture dor�
 120 px (remplacée par du noir mat), pont vu de l'intérieur (enroulement des triangles).
 Planche : `reports/accessories/lunettes.jpg` (sans / acétate / métal, 10 états, taille carte).
 
+Pilosité faciale (`tools/accessories/beard.py`) : cartes de poils enracinées sur la peau ICT
+(régions tirées du visage : bouche, lèvres laissées nues avec une ellipse asymétrique, base
+du nez, ligne de joue nez → lobe), peignées vers le bas (moustache : vers le bas et
+l'extérieur), maintenues à 0,6-1,8 mm de la peau. **Chaque carte suit les expressions** :
+deltas de sa racine copiés de la peau (3 sommets les plus proches) pour les expressions
+pilotées par le jeu qui déplacent la zone d'au moins 1 mm ; `rig.js` les pilote seul. La
+mâchoire suit l'os Head à 100 % (vérifié) : pas de décalage sous le menton.
+
+| Élément | Fichier | Poids | Cartes / triangles | Expressions copiées | Corps des poils dans la peau |
+| --- | --- | --- | --- | --- | --- |
+| Barbe courte | `models/accessories/beard.glb` | 2 226 160 o | 9 500 / 57 000 | 14 | 0 au neutre ; quelques pointes au sourire et à la surprise extrêmes (≤ 3 points sur un échantillon de 23) |
+| Moustache | `models/accessories/moustache.glb` | 723 508 o | 2 600 / 20 800 | 12 | 0 |
+| Barbe + moustache | `models/accessories/full.glb` | 2 865 808 o | 12 100 / 77 800 | 14 + 12 | comme la barbe |
+
+Itérations : barre noire (trop dense, trop sombre, bande trop basse) → presque invisible
+(trop fin) → densité moyenne brune, lisible en gros plan comme à 120 px. Poids : les
+expressions copiées par sommet dominent (positions en 12 bits, 0,03 mm) ; mémoire GPU des
+cibles ≈ 20 Mo pour barbe + moustache, chargée une fois et partagée par toutes les cartes qui la
+portent. Planche : `reports/accessories/barbe-moustache.jpg`.
+
 ## Validations de l'utilisateur
 
 | Point | Date | Décision |

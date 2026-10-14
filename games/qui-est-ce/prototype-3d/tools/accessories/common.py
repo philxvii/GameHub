@@ -144,24 +144,27 @@ class Glb:
         self.g.accessors.append(acc); return len(self.g.accessors) - 1
 
     def image(self, img, mime='image/png'):
+        if isinstance(img, np.ndarray): img = Image.fromarray(img)
         b = io.BytesIO(); img.save(b, 'PNG' if mime == 'image/png' else 'JPEG', quality=90); v = self._view(b.getvalue())
         self.g.images.append(G.Image(bufferView=v, mimeType=mime))
         self.g.samplers.append(G.Sampler(magFilter=9729, minFilter=9987, wrapS=10497, wrapT=10497))
         self.g.textures.append(G.Texture(source=len(self.g.images) - 1, sampler=len(self.g.samplers) - 1))
         return len(self.g.textures) - 1
 
-    def material(self, name, color=(1, 1, 1, 1), metal=0.0, rough=0.5, tex=None, blend=False, double=False, ext=None):
+    def material(self, name, color=(1, 1, 1, 1), metal=0.0, rough=0.5, tex=None, blend=False, double=False, ext=None, mask=None):
         pbr = G.PbrMetallicRoughness(baseColorFactor=list(color), metallicFactor=metal, roughnessFactor=rough,
                                      baseColorTexture=G.TextureInfo(index=tex) if tex is not None else None)
-        m = G.Material(name=name, pbrMetallicRoughness=pbr, doubleSided=double, alphaMode='BLEND' if blend else 'OPAQUE', extensions=ext or {})
+        mode = 'MASK' if mask is not None else 'BLEND' if blend else 'OPAQUE'
+        m = G.Material(name=name, pbrMetallicRoughness=pbr, doubleSided=double, alphaMode=mode, alphaCutoff=mask, extensions=ext or {})
         for k in (ext or {}): self.used.add(k)
         self.g.materials.append(m); return len(self.g.materials) - 1
 
-    def mesh(self, name, mesh, material, targets=None, target_names=None):
+    def mesh(self, name, mesh, material, targets=None, target_names=None, colors=None):
         P, N, UV, I = mesh.arrays()
         attrs = G.Attributes(POSITION=self._acc(P.astype(np.float32), G.VEC3, minmax=True),
                              NORMAL=self._acc((N / (np.linalg.norm(N, axis=1, keepdims=True) + 1e-12)).astype(np.float32), G.VEC3),
                              TEXCOORD_0=self._acc(UV.astype(np.float32), G.VEC2))
+        if colors is not None: attrs.COLOR_0 = self._acc(np.asarray(colors, np.float32), G.VEC4)
         prim = G.Primitive(attributes=attrs, indices=self._acc(I.astype(np.uint32).reshape(-1), G.SCALAR, G.UNSIGNED_INT, G.ELEMENT_ARRAY_BUFFER), material=material)
         extras = {}
         if targets is not None:
@@ -172,7 +175,7 @@ class Glb:
         self.g.nodes[0].children.append(len(self.g.nodes) - 1)
         return int(len(I))
 
-    def save(self, path, pack=True, extras=None):
+    def save(self, path, pack=True, extras=None, vp=16):
         if extras: self.g.nodes[0].extras = extras
         self.g.extensionsUsed = sorted(self.used)
         self.g.buffers = [G.Buffer(byteLength=len(self.buf))]; self.g.set_binary_blob(bytes(self.buf))
@@ -181,7 +184,7 @@ class Glb:
             self.g.save_binary(path); return os.path.getsize(path)
         with tempfile.TemporaryDirectory() as tmp:
             raw = os.path.join(tmp, 'raw.glb'); self.g.save_binary(raw)
-            r = subprocess.run([GLTFPACK, '-i', raw, '-o', path, '-kn', '-km', '-ke', '-vp', '16', '-vt', '14', '-cc'], capture_output=True, text=True)
+            r = subprocess.run([GLTFPACK, '-i', raw, '-o', path, '-kn', '-km', '-ke', '-vp', str(vp), '-vt', '14', '-cc'], capture_output=True, text=True)
             if r.returncode: raise SystemExit(r.stderr or r.stdout)
         return os.path.getsize(path)
 

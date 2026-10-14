@@ -1,0 +1,34 @@
+{
+ "style": "beard",
+ "nom": "Barbe courte",
+ "parties": {
+  "beard": {
+   "cartes": 9500,
+   "triangles": 57000,
+   "expressions": 14,
+   "degagement": {
+    "neutre": {
+     "proches": 0,
+     "dedans_echantillon": "0/0"
+    },
+    "sourcils leves": {
+     "proches": 0,
+     "dedans_echantillon": "0/0"
+    },
+    "sourire": {
+     "proches": 23,
+     "dedans_echantillon": "3/23"
+    },
+    "surprise": {
+     "proches": 13,
+     "dedans_echantillon": "2/13"
+    },
+    "yeux fermes": {
+     "proches": 0,
+     "dedans_echantillon": "0/0"
+    }
+   }
+  }
+ },
+ "octets": 2226160
+}
