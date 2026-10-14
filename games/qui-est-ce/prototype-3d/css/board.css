@@ -11,6 +11,9 @@ body[data-screen="game"] #home { display: none; }
 body[data-screen="home"] .home { display: grid; }
 .home { max-width: 78rem; margin: 0 auto; }
 .home .pola img { aspect-ratio: 3 / 4; background: var(--qe-wall-shade); }
+.online { border-top: 1px solid var(--qe-film); margin-top: 1.4rem; padding-top: 1rem; }
+.online p { margin: 0 0 .7rem; }
+.online input { padding: .4rem .5rem; border: 1px solid var(--qe-film); background: var(--qe-photo); }
 
 .game .play { grid-template-columns: minmax(0, 1fr) 21rem; }
 .board-wrap { position: relative; }

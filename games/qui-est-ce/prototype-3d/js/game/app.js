@@ -45,6 +45,7 @@ function buildBoard() {
 function render(v) {
   const prev = view; view = v;
   const me = v.players[seat], oppSeat = seat === 'p1' ? 'p2' : 'p1', opp = v.players[oppSeat];
+  if (ONLINE) oppName = opp?.name || 'ton adversaire';
   document.body.dataset.phase = v.phase;
   document.body.dataset.turn = v.phase === 'play' ? (v.turn === seat ? 'me' : 'them') : 'none';
   $('#code').textContent = v.code;
@@ -89,7 +90,8 @@ function actions(v) {
   box.className = 'action'; let html = '';
   const myTurn = v.phase === 'play' && v.turn === seat;
   if (v.phase === 'lobby') {
-    html = `<p class="ask-label">Salon ${v.code} : envoie ce code… ou laisse ${oppName} entrer.</p><button class="tape-btn film" data-do="bot-join">Faire entrer ${oppName}</button>`;
+    html = ONLINE ? `<p class="ask-label">Envoie ce code à ton adversaire</p><p class="guess">${v.code}</p><p class="hint">Le studio attend… le café refroidit.</p>`
+      : `<p class="ask-label">Salon ${v.code} : envoie ce code… ou laisse ${oppName} entrer.</p><button class="tape-btn film" data-do="bot-join">Faire entrer ${oppName}</button>`;
   } else if (v.phase === 'choose') {
     box.classList.add('me');
     html = v.players[seat].ready ? `<p>${oppName} choisit son personnage… pas de triche, on regarde ailleurs.</p>`
@@ -241,6 +243,8 @@ function wireUi() {
       case 'home': location.href = location.pathname + location.search; break;
       case 'leave-sim': await net.send(code, seat === 'p1' ? 'p2' : 'p1', { type: 'leave' }); break;
       case 'play-bot': await start(true); break;
+      case 'online-create': await online(false); break;
+      case 'online-join': await online(true); break;
       case 'create': await start(false); break;
     }
   });
@@ -274,6 +278,22 @@ async function start(vsBot) {
   if (vsBot) await joinBot();
 }
 
+// En ligne (games/qui-est-ce/v3d/, window.QE_ONLINE) : Firebase n'est charge qu'ici, a la demande.
+let ONLINE = false;
+async function online(join) {
+  const name = ($('#my-name').value || 'Anonyme').trim().slice(0, 20); try { localStorage.setItem('qe3d.name', name); } catch (_) {}
+  const [{ db, ensureAuth }, fb, { createNetFirebase }] = await Promise.all([
+    import('../../../../../shared/firebase.js'), import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js'), import('./net-firebase.js')]);
+  const user = await ensureAuth();
+  net = createNetFirebase({ db, uid: user.uid, fb }); ONLINE = true;
+  try {
+    if (join) { code = $('#join-code').value.trim().toUpperCase(); ({ seat } = await net.join(code, { name })); }
+    else { ({ code, seat } = await net.create({ name })); }
+  } catch (e) { say(e.message, true); return; }
+  document.body.dataset.screen = 'game'; board.pause(false);
+  net.subscribe(code, seat, render);
+}
+
 async function main() {
   people = (await (await fetch('data/roster.json')).json()).personnages;
   net = createNet();
@@ -285,6 +305,7 @@ async function main() {
   board.pause(true);                                                // l'accueil ne montre que des images
   $$('.home-wall img').forEach((im, k) => { im.src = portraits[[4, 0, 9][k]]; });
   if (Q.has('debug')) $('#debug').hidden = false;
+  if (window.QE_ONLINE) { $('#online').hidden = false; $('[data-do=create]').hidden = true; try { $('#my-name').value = localStorage.getItem('qe3d.name') || ''; } catch (_) {} }
   window.__game = { net: () => net, view: () => view, seat, people, board, cross, crossed: () => [...crossed], send, start, contactSheet, pick: (i) => { picked = i; render(view); },
     guessMode: (on) => { guessMode = on; render(view); } };
   document.documentElement.dataset.ready = '1';

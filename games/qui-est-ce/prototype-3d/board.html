@@ -34,9 +34,15 @@
       <button class="tape-btn film" data-do="play-bot">Défier le bot</button>
       <button class="tape-btn" data-do="create">Créer un salon</button>
     </div>
+    <div class="online" id="online" hidden>
+      <p><label for="my-name">Ton nom</label> <input id="my-name" maxlength="20" autocomplete="nickname"></p>
+      <p><button class="tape-btn film" data-do="online-create">Créer un salon en ligne</button></p>
+      <form class="join" onsubmit="return false"><label for="join-code">Code</label><input id="join-code" maxlength="7" placeholder="ABCD-12" autocomplete="off" spellcheck="false">
+        <button class="tape-btn" data-do="online-join">Rejoindre</button></form>
+    </div>
     <p class="rules">Chacun choisit un personnage secret. À tour de rôle, une question oui / non ; on raye au crayon gras
-      ceux qui ne collent pas. Le premier qui désigne le bon gagne la manche. La partie en ligne arrive au lot suivant ;
-      en attendant, le salon se joue contre le bot.</p>
+      ceux qui ne collent pas. Le premier qui désigne le bon gagne la manche. Contre le bot, ou en ligne : crée un salon
+      et envoie le code à un ami.</p>
   </div>
 </section>
 

@@ -17,7 +17,9 @@ const ORIGIN = process.env.PROTO_ORIGIN || 'http://localhost:4173';
 const WIN = process.platform === 'win32';
 const GPU_FLAGS = WIN ? ['--ignore-gpu-blocklist', '--enable-gpu', '--use-angle=d3d11']
   : ['--ignore-gpu-blocklist', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
-const URL = (q) => `${ORIGIN}/games/qui-est-ce/prototype-3d/board.html?seed&fast${WIN ? '' : '&idle=30'}${q ? '&' + q : ''}`;
+// QE_PAGE=v3d : la meme partie sur l'entree du jeu (games/qui-est-ce/v3d/, maintenance + mode en ligne)
+const PAGE = process.env.QE_PAGE === 'v3d' ? 'v3d/index.html' : 'prototype-3d/board.html';
+const URL = (q) => `${ORIGIN}/games/qui-est-ce/${PAGE}?seed&fast${WIN ? '' : '&idle=30'}${q ? '&' + q : ''}`;
 const OUT = path.join(__dirname, '..', 'build', 'board');
 const results = [];
 const check = (name, ok, d = '') => { results.push(!!ok); console.log(`${ok ? 'OK   ' : 'ECHEC'}  ${name}${d !== '' ? ' | ' + (typeof d === 'string' ? d : JSON.stringify(d)) : ''}`); };
@@ -66,14 +68,14 @@ async function shot(p, name) {
       if (v.ask && v.ask.by !== v.me && v.ask.answer === null) {
         if (!shots.repondre) { await shot(p, 'repondre'); shots.repondre = true; }
         await ev(p, `const v = __game.view(); if (!v.ask || v.ask.by === v.me || v.ask.answer !== null) return;   // l'etat a deja change
-          const q = (await import('./js/game/questions.js')).byId[v.ask.q];
+          const q = (await import(new URL('js/game/questions.js', document.baseURI))).byId[v.ask.q];
           document.querySelector(q.test(__game.people[v.mySecret].attributs) ? '[data-do=yes]' : '[data-do=no]')?.click();`);
       } else if (v.turn === v.me && !v.ask) {
         const left = await ev(p, `return __game.people.map((_, i) => i).filter((i) => !__game.crossed().includes(i))`);
         if (left.length === 1) await ev(p, `__game.guessMode(true); __game.pick(${left[0]}); document.querySelector('[data-do=guess]').click()`);
         else {
           if (!shots.tour) { await shot(p, 'mon-tour'); shots.tour = true; }
-          await ev(p, `const m = await import('./js/game/questions.js'); const q = m.bestQuestion(${JSON.stringify(left)}, __game.people);
+          await ev(p, `const m = await import(new URL('js/game/questions.js', document.baseURI)); const q = m.bestQuestion(${JSON.stringify(left)}, __game.people);
             document.querySelector('[data-q="' + q.id + '"]').click(); document.querySelector('[data-do=ask]').click();`);
           turns++;
         }
@@ -103,7 +105,8 @@ async function shot(p, name) {
     const N = WIN ? 24 : 2;
     const ms = await ev(p, `return __game.board.paintMs(${N})`);
     const st = await ev(p, 'return __game.board.stats()');
-    const errs = p.errors().filter((e) => !/favicon/.test(e.text));
+    // ERR_TUNNEL_CONNECTION_FAILED : hote refuse par le reseau du cloud (interrupteur de maintenance du site)
+    const errs = p.errors().filter((e) => !/ERR_TUNNEL_CONNECTION_FAILED/.test(e));
     check('Console sans erreur', errs.length === 0, errs.slice(0, 3));
     const measures = { ...st, loadWallMs: Date.now() - t0, repaintAll24Ms: +(ms * 24 / N).toFixed(1), note: WIN ? 'GPU' : 'SwiftShader : temps sans valeur, a mesurer sur le PC' };
     fs.writeFileSync(path.join(OUT, 'stats.json'), JSON.stringify(measures, null, 1));

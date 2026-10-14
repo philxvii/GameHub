@@ -4,6 +4,7 @@
     python tools/pipeline/build_character.py character-07 --list     # etat de chaque etape, sans rien lancer
     python tools/pipeline/build_character.py character-07 --from fit # reprend a une etape
     python tools/pipeline/build_character.py character-07 --hair hair-curly-v41 --bench
+    python tools/pipeline/build_character.py --all-ready --bench      # tous ceux dont les 5 photos sont la
 
 S'arrete proprement, avec la marche a suivre, aux etapes qui demandent le PC de
 l'utilisateur : photos Gemini (data/prompts/<id>.md) et maillage Hunyuan3D-2mv (Space
@@ -86,6 +87,16 @@ def steps(ch, a, entry):
         run(['node', 'tools/character-ict/bench_character.js', os.path.relpath(opt_glb if os.path.exists(opt_glb) else ch.glb, PROTO), out])
         sheet(os.path.join(PROTO, out), os.path.join(PROTO, 'reports', 'characters', ch.id + '.jpg'))
 
+    def roster():
+        # le jeu prend ce GLB a la place du substitut ; la coiffure suit si elle existe
+        path = os.path.join(PROTO, 'data', 'roster.json')
+        r = json.load(open(path, encoding='utf-8'))
+        e = next(c for c in r['personnages'] if c['id'] == ch.id)
+        e['statut'] = 'modelise'; e['glb'] = os.path.relpath(opt_glb, PROTO).replace(os.sep, '/')
+        if a.hair and os.path.exists(hair): e['coiffure'] = os.path.relpath(hair, PROTO).replace(os.sep, '/')
+        with open(path, 'w', encoding='utf-8', newline='\n') as f: json.dump(r, f, ensure_ascii=False, indent=1); f.write('\n')
+        print(f"  roster.json : {ch.id} -> modelise ({e['glb']})")
+
     return [
         ('refs', refs, None),
         ('mv', mv, ch.refs_mv),
@@ -97,6 +108,7 @@ def steps(ch, a, entry):
         ('hair', hair_step, hair if a.hair else ch.hair),
         ('opt', opt, opt_glb),
         ('bench', bench, None),
+        ('roster', roster, None),
     ]
 
 
@@ -116,12 +128,39 @@ def sheet(bench_dir, path):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('id')
+    ap.add_argument('id', nargs='?')
+    ap.add_argument('--all-ready', action='store_true', help='enchaine tous les personnages dont les 5 photos sont deposees et pas encore optimises')
     ap.add_argument('--list', action='store_true', help='affiche l\'etat des etapes sans rien lancer')
     ap.add_argument('--from', dest='start', help='reprend a cette etape')
     ap.add_argument('--hair', help='style de tools/hair/gen_cards.py a generer pour ce personnage')
     ap.add_argument('--bench', action='store_true', help='banc et planche a la fin')
     a = ap.parse_args()
+    if a.all_ready: return all_ready(a)
+    if not a.id: ap.error('id ou --all-ready')
+    build(a)
+
+
+def all_ready(a):
+    """Chaque personnage pret (5 photos, pas encore de GLB optimise) passe dans un sous-processus :
+    un arret (Hunyuan a faire, coiffure a choisir) n'empeche pas les suivants."""
+    roster = json.load(open(os.path.join(PROTO, 'data', 'roster.json'), encoding='utf-8'))
+    ready = []
+    for c in roster['personnages']:
+        if c['id'] == DEFAULT: continue
+        ch = paths(c['id'])
+        if all(os.path.exists(os.path.join(ch.refs, v + '.jpg')) for v in VIEWS) and not os.path.exists(ch.glb.replace('-ict.glb', '-ict-opt.glb')):
+            ready.append(c['id'])
+    if not ready: print('aucun personnage pret (photos dans characters/<id>/refs/, voir PC_RUNBOOK.md)'); return
+    extra = (['--hair', a.hair] if a.hair else []) + (['--bench'] if a.bench else [])
+    report = []
+    for cid in ready:
+        print(f'===== {cid}', flush=True)
+        r = subprocess.run([PY, os.path.abspath(__file__), cid] + extra, cwd=PROTO)
+        report.append((cid, {0: 'termine', 3: 'arrete (etape du PC a faire)'}.get(r.returncode, f'echec ({r.returncode})')))
+    print('\nBilan :'); [print(f'  {cid:14} {st}') for cid, st in report]
+
+
+def build(a):
     if a.id == DEFAULT:
         raise SystemExit('character-01 est valide : utiliser les scripts directement (HANDOFF.md), jamais l\'orchestrateur')
     roster = json.load(open(os.path.join(PROTO, 'data', 'roster.json'), encoding='utf-8'))

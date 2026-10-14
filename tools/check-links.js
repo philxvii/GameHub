@@ -101,9 +101,12 @@ for (const g of games) {
   const files = walk(path.join(GAMES, g)).filter(f => /\.(html|css|js)$/.test(f));
   const broken = [], escaping = [];
   for (const f of files) {
-    for (const u of refsOf(f)) {
-      if (!resolves(f, u)) broken.push(`${rel(f)} -> ${u}`);
-      const target = path.resolve(path.dirname(f), u.split(/[?#]/)[0]);
+    // <base href> d'une page : ses chemins relatifs partent de ce dossier, comme dans le navigateur
+    const base = f.endsWith('.html') && (fs.readFileSync(f, 'utf8').match(/<base\s+href="([^"]+)"/) || [])[1];
+    const from = base && !isExternal(base) ? path.join(path.resolve(path.dirname(f), base), 'page.html') : f;
+    for (const u of refsOf(f).filter(u => u !== base)) {
+      if (!resolves(from, u)) broken.push(`${rel(f)} -> ${u}`);
+      const target = path.resolve(path.dirname(from), u.split(/[?#]/)[0]);
       if (!target.startsWith(path.join(GAMES, g)) && target !== hub && !target.startsWith(path.join(ROOT, 'icons') + path.sep) && !target.startsWith(path.join(ROOT, 'shared') + path.sep)) escaping.push(`${rel(f)} -> ${u}`);
     }
   }
