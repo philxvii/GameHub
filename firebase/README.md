@@ -38,6 +38,20 @@ payante) : l'hôte connaît tous les secrets ; un membre peut modifier toute sa
 partie ; les mains d'UNO, flottes, personnages choisis et primes secrètes
 restent lisibles par les autres membres de la même partie.
 
+## Connexion Google (admin)
+
+Sur roulia.me, `authDomain` vaut `roulia.me` ([shared/firebase.js](../shared/firebase.js)) :
+la fenêtre de Google affiche roulia.me plutôt que le nom du projet, et la connexion
+reste sur le domaine du site. Les pages de connexion de Firebase sont copiées telles
+quelles dans `__/auth/` (`.nojekyll` à la racine, sinon GitHub Pages ignore ce dossier).
+En local, `authDomain` reste `undercover-game-b0d2a.firebaseapp.com`.
+
+- Le client OAuth web (Google Cloud, « Identifiants ») doit autoriser l'URI de
+  redirection `https://roulia.me/__/auth/handler` ; `roulia.me` figure dans les
+  domaines autorisés de Firebase Authentication.
+- Les copies ne suivent pas seules Firebase : `node tools/auth-helpers.js` signale un
+  écart, `--write` les recopie (puis tester la connexion admin).
+
 ## Tester
 
 Java 11+ requis (les émulateurs sont des JAR).

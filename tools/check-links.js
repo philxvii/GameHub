@@ -90,7 +90,7 @@ else {
 
 // 4. Racine : seulement le hub, la page 404, les icones et les dossiers prevus.
 // Icones du site : dans icons/, declarees par chaque page (hub, 404, jeux).
-const allowed = new Set(['index.html', '404.html', 'CNAME', 'README.md', 'LICENSE', 'games', 'icons', 'tools', 'shared', 'firebase']);
+const allowed = new Set(['index.html', '404.html', 'CNAME', 'README.md', 'LICENSE', 'games', 'icons', 'tools', 'shared', 'firebase', '__']);
 const stray = fs.readdirSync(ROOT).filter(f => !f.startsWith('.') && !allowed.has(f));
 check('Racine propre : aucun code de jeu ni fichier en trop', stray.length === 0, stray.length ? 'en trop : ' + stray.join(', ') : '');
 
@@ -109,6 +109,21 @@ for (const g of games) {
   }
   check(`games/${g} : chemins relatifs`, broken.length === 0 && escaping.length === 0,
     `${files.length} fichiers${broken.length ? ' ; introuvables : ' + broken.join(' ; ') : ''}${escaping.length ? ' ; sortent du jeu : ' + escaping.join(' ; ') : ''}`);
+}
+
+// 6. Connexion Google sur roulia.me : copie des pages de Firebase (tools/auth-helpers.js).
+//    GitHub Pages sert __/auth/handler.html a l'adresse /__/auth/handler, et ignore les
+//    dossiers en _ sans .nojekyll.
+{
+  const AUTH = ['experiments.js', 'handler.html', 'handler.js', 'iframe.html', 'iframe.js'];
+  const dir = path.join(ROOT, '__', 'auth');
+  const found = fs.existsSync(dir) ? fs.readdirSync(dir).sort() : [];
+  const extra = fs.readdirSync(path.join(ROOT, '__')).filter(f => f !== 'auth');
+  const scripts = found.includes('handler.html') && /src="experiments\.js"[\s\S]*src="handler\.js"/.test(fs.readFileSync(path.join(dir, 'handler.html'), 'utf8'))
+    && found.includes('iframe.html') && /src="iframe\.js"/.test(fs.readFileSync(path.join(dir, 'iframe.html'), 'utf8'));
+  const domain = /authDomain: location\.hostname === 'roulia\.me'/.test(fs.readFileSync(path.join(ROOT, 'shared', 'firebase.js'), 'utf8'));
+  check('Connexion Google : __/auth complet, .nojekyll, authDomain roulia.me', found.join() === AUTH.join() && !extra.length && scripts && domain
+    && fs.existsSync(path.join(ROOT, '.nojekyll')), found.join(', '));
 }
 
 const ok = results.filter(Boolean).length;

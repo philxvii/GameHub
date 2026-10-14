@@ -16,7 +16,10 @@ import { getAuth, connectAuthEmulator, onAuthStateChanged, signInAnonymously, si
 
 export const firebaseConfig = {
   apiKey: 'AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA',
-  authDomain: 'undercover-game-b0d2a.firebaseapp.com',
+  // Sur roulia.me, la connexion Google passe par les pages de Firebase copiées dans
+  // __/auth/ (tools/auth-helpers.js) : la fenêtre de Google affiche roulia.me, et la
+  // connexion reste sur le domaine du site (les cookies tiers bloqués n'y changent rien).
+  authDomain: location.hostname === 'roulia.me' ? 'roulia.me' : 'undercover-game-b0d2a.firebaseapp.com',
   databaseURL: 'https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app',
   projectId: 'undercover-game-b0d2a',
   storageBucket: 'undercover-game-b0d2a.firebasestorage.app',
