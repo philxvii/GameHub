@@ -1,39 +1,46 @@
 /* Jetons de style du Qui est-ce ? 3D.
-   Provisoire : direction C « Le salon des portraits » (recommandee), en attendant le choix de
-   l'utilisateur (G-DA). Le plateau (board.css) n'utilise que ces variables : changer de
-   direction = remplacer ce fichier (et la mise en scene 3D : ?look= dans board.html). */
+   Direction validee (G-DA, 2026-10-14) : B « La seance de casting », avec la revelation de
+   fin de partie empruntee a C « Le salon des portraits ». Toute page du jeu n'utilise que
+   ces variables. Contrastes verifies sur da.html. */
 
 :root {
-  /* Palette (contrastes WCAG verifies sur da.html) */
-  --qe-wall: #4A1C22;          /* cimaise */
-  --qe-wall-deep: #2E1014;     /* cimaise dans l'ombre (bas de page, panneaux) */
-  --qe-gilt: #C9A24E;          /* dorure : ce qui compte */
-  --qe-gilt-light: #E4C57C;
-  --qe-gilt-dark: #7A5E22;
-  --qe-gilt-mid: #A9842F;
+  /* Casting : le studio */
+  --qe-wall: #E9E5DD;          /* fond papier sans raccord */
+  --qe-wall-shade: #DCD7CD;    /* le meme papier dans l'ombre (zones inactives) */
+  --qe-film: #171615;          /* film noir, encre */
+  --qe-film-soft: #2B2926;
+  --qe-photo: #FBFAF6;         /* bord blanc du Polaroid */
+  --qe-grease: #C42F25;        /* crayon gras : croix, cercles, ce qui compte */
+  --qe-tape: #E4D49E;          /* scotch de masquage */
+  --qe-tape-clear: rgb(228 212 158 / .82);
+  --qe-edge: #E8A33D;          /* marquage du film (numeros de vue) */
+  --qe-tally: #D7261E;         /* voyant de tournage allume : a qui c'est le tour */
+  --qe-tally-off: #5B5650;
+
+  /* Salon : la revelation de fin de partie */
+  --qe-salon-wall: #4A1C22;
+  --qe-gilt: #C9A24E; --qe-gilt-light: #E4C57C; --qe-gilt-dark: #7A5E22; --qe-gilt-mid: #A9842F;
   --qe-label: #F3EEE3;         /* cartel ivoire */
-  --qe-ink: #221B17;           /* encre */
-  --qe-dot: #B3261E;           /* pastille rouge : le gagnant */
-  --qe-trace: rgb(243 238 227 / .06);   /* trace d'un tableau decroche */
-  --qe-trace-line: rgb(243 238 227 / .2);
+  --qe-ink: #221B17;
+  --qe-dot: #B3261E;           /* pastille rouge du gagnant */
 
   /* Typographie */
-  --qe-font-title: 'Cormorant Garamond', Georgia, serif;
-  --qe-font-text: 'Libre Franklin', system-ui, sans-serif;
-  --qe-size-title: clamp(2rem, 4.5vw, 3.2rem);
-  --qe-size-text: 1rem;
-  --qe-size-small: .8rem;
+  --qe-font-hand: 'Permanent Marker', 'Comic Sans MS', cursive;   /* ecrit a la main sur le mur */
+  --qe-font-text: 'DM Mono', ui-monospace, monospace;              /* numeros, consignes, interface */
+  --qe-font-reveal: 'Cormorant Garamond', Georgia, serif;         /* cartels de la revelation */
+  --qe-size-text: 15px;
+  --qe-size-small: .78rem;
 
   /* Espacements, rayons, ombres */
   --qe-space-1: .25rem; --qe-space-2: .5rem; --qe-space-3: .8rem; --qe-space-4: 1.2rem; --qe-space-5: 2rem;
-  --qe-radius: 1px;
-  --qe-frame: 10px;            /* epaisseur du cadre dore */
-  --qe-shadow-frame: 0 14px 24px -12px rgb(0 0 0 / .75);
+  --qe-radius: 2px;
+  --qe-shadow-photo: 0 1px 1px rgb(0 0 0 / .2), 0 12px 18px -12px rgb(0 0 0 / .5);
+  --qe-shadow-lift: 0 2px 2px rgb(0 0 0 / .18), 0 22px 26px -14px rgb(0 0 0 / .55);
 
   /* Mouvement */
-  --qe-dur-fast: .15s;
-  --qe-dur: .3s;
-  --qe-dur-out: .55s;          /* tableau decroche */
-  --qe-ease-out: cubic-bezier(.5, 0, .7, .4);
-  --qe-ease-pop: cubic-bezier(.3, 1.8, .5, 1);
+  --qe-dur-fast: .12s;
+  --qe-dur: .25s;
+  --qe-dur-cross: .22s;        /* un trait de la croix au crayon gras */
+  --qe-dur-reveal: 1.2s;       /* la lampe du tableau s'allume */
+  --qe-ease-pop: cubic-bezier(.3, 1.6, .5, 1);
 }

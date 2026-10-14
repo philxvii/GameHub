@@ -220,11 +220,34 @@ n'est qu'une bande sous le cou au bord déchiré ; le bas du cadre doit rester a
 
 ⛔ **G-DA** en attente : choix (ou mélange) de l'utilisateur.
 
+## DA — déclinaison multijoueur (point 6), direction retenue
+
+Direction retenue par l'utilisateur : B « casting » + révélation finale du salon + revanche
+en un clic. `css/tokens.css` porte désormais ses jetons (casting, plus ceux de la révélation).
+`partie.html` (+ `css/partie.css`, `js/partie.js`) : les 11 écrans d'une partie à deux —
+accueil (créer / rejoindre), salon d'attente avec le code, choix du secret, mon tour (question),
+tour de l'adversaire (je réponds oui / non), attente, cartes écartées des deux côtés (ma
+planche de Polaroïds, sa planche contact), désignation, désignation ratée, fin (révélation des
+deux secrets dans des cadres dorés, lampe qui s'allume, pastille rouge, score des revanches,
+« Revanche » en un clic, planche contact partageable), adversaire déconnecté.
+Lecture du tour sans texte : voyant de tournage rouge allumé et Polaroïd soulevé pour le joueur
+actif, l'autre pâlit ; barre d'action en film noir quand c'est à moi, en papier sinon.
+Mobile : barre d'action collée en bas, « mon personnage » en bandeau en haut, plateau en
+4 colonnes, Oui / Non en deux grandes cibles. Portraits rendus une fois (6 poses casting,
+2 poses salon) puis réutilisés en images : ces maquettes n'animent pas 24 visages.
+Captures (`tools/partie_shots.js`) : 22 (bureau page entière, mobile 390 × 844), console
+propre, aucun défilement horizontal. `reports/da/partie/` (une par écran) et deux planches
+d'ensemble `reports/da/partie-mobile.jpg`, `reports/da/partie-bureau.jpg`, reprises dans
+`da.html` (section « Partie à deux »).
+
+⛔ En attente : validation de la déclinaison multijoueur par l'utilisateur, avant le plateau.
+
 ## L3 — plateau (en cours, avant la déclinaison multijoueur)
 
 Première version solo, à transformer en partie à deux contre un bot (`net-mock.js`,
 `bot.js`) une fois la déclinaison multijoueur de la DA validée : `board.html`, `js/board.js`,
-`css/board.css`, `css/tokens.css` (jetons encore ceux du salon, à passer au casting),
+`css/board.css` (écrit avec les jetons du salon : à refaire en casting avec la partie à deux ;
+en l'état il s'affiche mal avec les nouveaux jetons), `css/tokens.css`,
 `js/staging.js` (mise en scène partagée avec `da.html`), `tools/test-board.js`.
 Architecture : un seul `WebGLRenderer` sur un canevas posé sur le plateau (il défile avec la
 page), une scène partagée (un mur, une carte d'ombre 1024², seul le personnage peint est

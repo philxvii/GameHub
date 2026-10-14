@@ -14,6 +14,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .intro p { max-width: 46rem; }
 .intro-nav { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; }
 .intro-nav a { color: inherit; }
+.duo { max-width: 72rem; margin: 0 auto; padding: 3rem 1rem 1rem; }
+.duo h2 { margin: 0 0 .6rem; font: 400 2.2rem/1.1 'Permanent Marker', cursive; }
+.duo p { max-width: 50rem; }
+.duo a { color: inherit; }
+.duo figure { margin: 1.5rem 0 0; }
+.duo img { display: block; width: 100%; height: auto; }
+.duo figcaption { font-size: .85rem; opacity: .75; margin-top: .3rem; }
 .outro { max-width: 72rem; margin: 0 auto; padding: 2rem 1rem 4rem; opacity: .75; font-size: .9rem; }
 
 /* ── Ossature commune ── */
