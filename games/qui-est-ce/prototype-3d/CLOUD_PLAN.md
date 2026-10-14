@@ -11,6 +11,47 @@ l'utilisateur (Windows, GPU Intel Iris Xe) quand le budget s'épuise.
 
 ---
 
+## MODE AUTONOME (décision de l'utilisateur, 2026-10-14) — LIS CECI EN PREMIER
+
+**L'utilisateur donne carte blanche. Tu ne t'arrêtes pas pour demander.** Ce paragraphe
+l'emporte sur tout ce qui suit qui dirait « attends sa réponse », « pose la question » ou
+« ⛔ validation » : les points ⛔ (G1, G3, G4, G5, déclinaison multijoueur de la DA) ne sont
+**plus bloquants**.
+
+1. **Enchaîne tous les lots sans interruption** : L1 → L2 → DA (déclinaison) → L3 → L5 →
+   L4 → L6, puis R. Ne rends la main qu'à la fin, ou quand le budget l'impose (voir §2), ou
+   si une limite dure (ci-dessous) l'exige. Pas de message d'étape pour demander « je
+   continue ? » : continue.
+2. **Quand une décision relève de l'utilisateur, prends la meilleure décision toi-même**
+   (la plus réversible, la plus conforme au HANDOFF et à la DA choisie), applique-la, et
+   **note-la dans `DECISIONS.md`** : un tableau « date · lot · question · décision prise ·
+   alternative écartée · comment revenir en arrière ». Chaque décision doit être réversible
+   à faible coût (variante à côté de l'original, jamais d'écrasement d'un fichier validé).
+3. **Les validations G1, G3, G4, G5 deviennent des auto-validations** : applique le critère
+   chiffré du plan ; si le critère est atteint, retiens le résultat, sinon reviens à la version
+   précédente. Dans les deux cas, note-le dans `DECISIONS.md` avec la planche correspondante
+   dans `reports/`. L'utilisateur relira **à la fin** et réajustera : rien n'est définitif.
+4. **Questions pour la fin** : tout ce qui n'est pas urgent s'accumule dans `QUESTIONS.md`
+   (question, ce que tu as fait en attendant, impact). Tu ne poses **jamais** de question en
+   cours de route, sauf urgence réelle : une action irréversible ou hors limites, un secret à
+   fournir, un blocage total que ni toi ni un contournement honnête ne peuvent lever.
+5. **Limites dures qui restent absolues** (aucune autonomie ne les lève) : jamais `main`,
+   jamais `--force` ni reset ou rebase destructif, aucun déploiement (site, règles
+   Firebase, Cloudflare), aucun secret ni jeton dans git, aucun contournement de
+   CAPTCHA / MFA / authentification, ne pas modifier le jeu en production ni les autres jeux,
+   ne pas écraser les modèles validés (`character-01-ict.glb`, `hair-curly-v41-opt.glb`), ne
+   pas changer la direction artistique choisie (casting + révélation du salon), IA gratuite
+   uniquement, pas de génération des 23 autres personnages (les photos viennent de Gemini
+   sur le PC de l'utilisateur).
+6. **Continuité sans surveillance** : tu travailles tant qu'il reste du budget et du travail.
+   Après chaque étape : commit + push + `CLOUD_LOG.md`. Si la session s'arrête (limite de
+   contexte, coupure), le prochain « continue » repart de `CLOUD_LOG.md` et du dernier
+   commit : garde-le toujours à jour avec la **prochaine action précise**.
+7. **À la fin (ou au retour R)** : rédige `FIN_DE_MISSION.md` (ce qui est fait, ce qui est
+   en l'état de choix automatique, ce qui reste sur le PC, les 5 décisions les plus
+   discutables, la liste de `QUESTIONS.md`). Un seul message final à l'utilisateur, court,
+   avec le lien vers ce fichier et les captures clés.
+
 ## 0. Règles non négociables
 
 1. **Branche `proto/qui-est-ce-3d` uniquement.** Jamais `main` (= production roulia.me),
@@ -32,9 +73,9 @@ l'utilisateur (Windows, GPU Intel Iris Xe) quand le budget s'épuise.
    de référence se génèrent avec Gemini dans le navigateur de l'utilisateur.
 6. Ne toucher à aucun autre jeu, ni à `games/qui-est-ce/index.html` (jeu en production), ni
    à Firebase, ni à Cloudflare. Aucun secret dans git. IA gratuite uniquement.
-7. **Points de validation** (marqués ⛔) : l'utilisateur juge sur une planche. Pose la
-   question, puis continue les tâches qui ne dépendent pas de sa réponse ; ne valide jamais
-   à sa place.
+7. **Points de validation** (marqués ⛔) : en mode autonome (voir plus haut), ils ne
+   bloquent plus : auto-validation par le critère chiffré, décision notée dans
+   `DECISIONS.md`, relecture par l'utilisateur à la fin.
 
 ## Cadre : c'est un jeu MULTIJOUEUR
 
