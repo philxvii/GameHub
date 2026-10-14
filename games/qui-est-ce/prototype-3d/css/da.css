@@ -1,0 +1,185 @@
+/* Trois directions artistiques du Qui est-ce ? : chaque section porte ses propres jetons.
+   Interdits du site : halos, degrades decoratifs, pastilles en pilule, bordure coloree d'un
+   seul cote, capitales tres espacees. Les matieres sont faites de bruit SVG et d'aplats. */
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: #151413; color: #ECE7DE; font: 16px/1.5 'Libre Franklin', system-ui, sans-serif; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+
+.intro { max-width: 72rem; margin: 0 auto; padding: 3rem 1rem 2rem; }
+.intro-kicker { margin: 0; opacity: .7; }
+.intro h1 { margin: .2rem 0 .8rem; font: 600 clamp(2rem, 5vw, 3.2rem)/1.05 'Cormorant Garamond', serif; }
+.intro p { max-width: 46rem; }
+.intro-nav { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; }
+.intro-nav a { color: inherit; }
+.outro { max-width: 72rem; margin: 0 auto; padding: 2rem 1rem 4rem; opacity: .75; font-size: .9rem; }
+
+/* ── Ossature commune ── */
+.dir { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 2.5rem; padding: 3.5rem max(1rem, calc((100vw - 72rem) / 2)); position: relative; }
+.dir-letter { margin: 0; font-size: 1rem; }
+.dir h2 { margin: .1rem 0 1rem; }
+.dir-metaphor { font-size: 1.12rem; margin: 0 0 1.5rem; }
+.palette { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .5rem; margin: 0 0 .5rem; }
+.palette div { margin: 0; }
+.palette dt { font-size: .78rem; line-height: 1.2; }
+.palette dt::before { content: ''; display: block; height: 3.2rem; margin-bottom: .35rem; background: var(--c); border: 1px solid rgb(0 0 0 / .25); }
+.palette dd { margin: .1rem 0 0; font-size: .74rem; opacity: .8; }
+.contrast { font-size: .8rem; margin: 0 0 1.4rem; min-height: 1.2em; }
+.specimen { margin-bottom: 1.2rem; }
+.specimen p { margin: 0 0 .3rem; }
+.notes { padding: 0; margin: 0 0 1.2rem; list-style: none; font-size: .92rem; }
+.notes li { margin-bottom: .45rem; }
+.sounds { display: flex; flex-wrap: wrap; gap: .5rem; }
+.dir-demo { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); grid-template-areas: 'card question' 'board board'; gap: 1.8rem; align-content: start; }
+.card { grid-area: card; position: relative; outline-offset: 6px; cursor: pointer; }
+.card-photo { position: relative; aspect-ratio: 3 / 4; overflow: hidden; }
+.stage { display: block; width: 100%; height: 100%; }
+.question { grid-area: question; align-self: center; }
+.question p { margin: 0 0 .6rem; }
+.q-actions { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+.board { grid-area: board; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .8rem; }
+.mini { position: relative; margin: 0; cursor: pointer; }
+.mini img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+.mini figcaption { font-size: .8rem; line-height: 1.2; margin-top: .3rem; }
+
+/* ═════════ A · LE DOSSIER ═════════ */
+.da-dossier {
+  --papier: #F1EAD8; --kraft: #C8A46A; --encre: #1F1D1A; --tampon: #5B2A86; --acier: #4D5A58;
+  background-color: var(--acier); color: var(--papier);
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  /* toile de fond : tole peinte, grain fin */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.da-dossier h2, .da-dossier .sp-title { font: 700 2.6rem/1 'Zilla Slab', serif; }
+.da-dossier .sp-title { font-size: 1.5rem; }
+.da-dossier .dir-letter { font-family: 'Zilla Slab', serif; font-weight: 700; color: var(--kraft); }
+.da-dossier .btn {
+  background: var(--papier); color: var(--encre); border: 2px solid var(--encre); border-radius: 2px;
+  padding: .45rem 1rem .4rem; font-weight: 700; box-shadow: 3px 3px 0 var(--encre); transition: transform .08s, box-shadow .08s;
+}
+.da-dossier .btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--encre); }
+.da-dossier .btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--encre); }
+.da-dossier .btn-primary { color: var(--tampon); border-color: var(--tampon); box-shadow: 3px 3px 0 var(--tampon); }
+.da-dossier .tab { /* onglet de chemise */
+  background: var(--kraft); color: var(--encre); padding: .25rem .9rem .2rem; font-size: .85rem;
+  clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+}
+.da-dossier .card {
+  background: var(--papier) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .25 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color: var(--encre); padding: .9rem .9rem 1rem; transform: rotate(-1.2deg); box-shadow: 0 1px 0 rgb(0 0 0 / .3), 0 10px 18px -8px rgb(0 0 0 / .55);
+}
+.da-dossier .card-photo { border: 1px solid var(--encre); }
+.da-dossier .clip { position: absolute; top: -1.6rem; right: 1.2rem; width: .9rem; color: #8C918F; transform: rotate(8deg); }
+.da-dossier .card-fields { margin-top: .7rem; font-size: .9rem; }
+.da-dossier .card-fields p { margin: 0; padding: .12rem 0; border-bottom: 1px solid rgb(31 29 26 / .35); }
+.da-dossier .card-fields span { display: inline-block; min-width: 4.2rem; color: rgb(31 29 26 / .65); }
+.da-dossier .mark {
+  position: absolute; left: 50%; top: 38%; margin: 0; padding: .1rem .7rem; color: var(--tampon); border: 4px double var(--tampon);
+  font: 700 2rem/1 'Zilla Slab', serif; transform: translate(-50%, -50%) rotate(-14deg) scale(1.6); opacity: 0; pointer-events: none; mix-blend-mode: multiply;
+}
+.da-dossier .out .mark { animation: stamp .32s cubic-bezier(.3, 1.6, .5, 1) forwards; }
+.da-dossier .card.out .card-photo, .da-dossier .mini.out img { filter: grayscale(.85) contrast(.8) brightness(1.08); transition: filter .5s .15s; }
+@keyframes stamp { 60% { opacity: .95; transform: translate(-50%, -50%) rotate(-14deg) scale(.96); } to { opacity: .9; transform: translate(-50%, -50%) rotate(-14deg) scale(1); } }
+.da-dossier .question { background: var(--papier); color: var(--encre); padding: 1rem 1.1rem; border: 1px solid var(--encre); }
+.da-dossier .q-num { font-size: .85rem; color: rgb(31 29 26 / .7); }
+.da-dossier .q-text { font-size: 1.2rem; font-weight: 700; }
+.da-dossier .mini { background: var(--papier); color: var(--encre); padding: .35rem .35rem .4rem; }
+.da-dossier .mini .mark { font-size: 1rem; border-width: 3px; }
+.da-dossier .contrast { color: var(--papier); opacity: .85; }
+
+/* ═════════ B · LA SÉANCE DE CASTING ═════════ */
+.da-casting {
+  --mur: #E9E5DD; --film: #171615; --gras: #C42F25; --scotch: #E4D49E; --bord: #E8A33D;
+  background: var(--mur); color: var(--film); font-family: 'DM Mono', ui-monospace, monospace; font-size: 15px;
+}
+.da-casting h2 { font: 400 2.8rem/1 'Permanent Marker', cursive; transform: rotate(-1.5deg); }
+.da-casting .sp-title { font: 400 1.6rem/1.1 'Permanent Marker', cursive; color: var(--gras); }
+.da-casting .dir-letter { font-family: 'Permanent Marker', cursive; font-size: 1.6rem; color: var(--gras); }
+.da-casting .btn { /* bande de scotch annotee */
+  background: var(--scotch); color: var(--film); border: 0; padding: .5rem 1.1rem .45rem; font: 400 1rem/1 'Permanent Marker', cursive;
+  clip-path: polygon(0 8%, 4% 0, 9% 7%, 14% 1%, 86% 0, 92% 6%, 96% 0, 100% 9%, 99% 92%, 95% 100%, 90% 94%, 84% 100%, 12% 99%, 7% 93%, 3% 100%, 0 90%);
+  transition: transform .12s;
+}
+.da-casting .btn:hover { transform: rotate(-2deg) translateY(-1px); }
+.da-casting .btn:active { transform: scale(.97); }
+.da-casting .btn-primary { background: var(--film); color: var(--bord); }
+.da-casting .question .btn:not(.btn-primary) { background: #FBFAF6; }
+.da-casting .tab { font-size: .8rem; padding: .15rem .5rem; border: 1px solid var(--film); border-radius: 2px; }
+.da-casting .card { background: #FBFAF6; padding: .75rem .75rem 0; transform: rotate(1.6deg); box-shadow: 0 1px 1px rgb(0 0 0 / .2), 0 14px 20px -12px rgb(0 0 0 / .45); transition: transform .25s; }
+.da-casting .card:hover { transform: rotate(.6deg) translateY(-3px); }
+.da-casting .card-name { margin: 0; padding: .7rem 0 1.4rem; font: 400 1.35rem/1 'Permanent Marker', cursive; text-align: center; }
+.da-casting .tape { position: absolute; z-index: 2; top: -.8rem; left: 50%; width: 6rem; height: 1.6rem; transform: translateX(-50%) rotate(-3deg); background: rgb(228 212 158 / .82);
+  clip-path: polygon(0 10%, 5% 0, 95% 4%, 100% 0, 98% 90%, 100% 100%, 4% 96%, 0 100%); }
+.da-casting .mark { position: absolute; inset: .75rem .75rem auto; aspect-ratio: 3 / 4; pointer-events: none; overflow: visible; }
+.da-casting .mark path { fill: none; stroke: var(--gras); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; }
+.da-casting .out .mark path { opacity: 1; }  /* sinon les bouts arrondis restent visibles au repos */
+.da-casting .out .mark path:nth-child(1) { animation: draw .22s ease-out forwards; }
+.da-casting .out .mark path:nth-child(2) { animation: draw .22s .2s ease-out forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.da-casting .card.flash .card-photo::after { content: ''; position: absolute; inset: 0; background: #fff; animation: flash .35s ease-out forwards; }
+@keyframes flash { from { opacity: .75; } to { opacity: 0; } }
+.da-casting .question { background: var(--scotch); padding: 1rem 1.2rem; transform: rotate(-1deg); }
+.da-casting .q-num { font-size: .8rem; }
+.da-casting .q-text { font: 400 2rem/1 'Permanent Marker', cursive; }
+.da-casting .board { background: var(--film); color: var(--bord); padding: 1.6rem .8rem; gap: .5rem;
+  /* perforations du film : un motif SVG repete en haut et en bas */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='12'%3E%3Crect x='5' y='2' width='12' height='8' rx='2' fill='%23E9E5DD'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='12'%3E%3Crect x='5' y='2' width='12' height='8' rx='2' fill='%23E9E5DD'/%3E%3C/svg%3E");
+  background-repeat: repeat-x; background-position: 0 4px, 0 calc(100% - 4px);
+}
+.da-casting .mini figcaption { font-size: .72rem; color: var(--bord); }
+.da-casting .mini .mark { inset: 0 0 auto; }
+
+/* ═════════ C · LE SALON DES PORTRAITS ═════════ */
+.da-salon {
+  --cimaise: #4A1C22; --dorure: #C9A24E; --cartel: #F3EEE3; --encre: #221B17; --pastille: #B3261E;
+  background: var(--cimaise); color: var(--cartel); font-family: 'Libre Franklin', system-ui, sans-serif;
+}
+.da-salon h2 { font: 600 3rem/1 'Cormorant Garamond', serif; }
+.da-salon .sp-title { font: 500 1.7rem/1.1 'Cormorant Garamond', serif; color: var(--dorure); }
+.da-salon .dir-letter { font: italic 600 1.5rem 'Cormorant Garamond', serif; color: var(--dorure); }
+.da-salon .btn { /* plaque de laiton gravee */
+  background: var(--dorure); color: var(--encre); border: 1px solid #7A5E22; border-radius: 1px; padding: .45rem 1.1rem;
+  box-shadow: inset 0 0 0 2px #E2C27A, inset 0 0 0 3px #8F6D27; font-weight: 600; transition: background .15s;
+}
+.da-salon .btn:hover { background: #D6B160; }
+.da-salon .btn:active { box-shadow: inset 0 0 0 3px #8F6D27; }
+.da-salon .btn-primary { background: var(--cartel); border-color: var(--encre); box-shadow: inset 0 0 0 2px var(--cartel), inset 0 0 0 3px var(--encre); }
+.da-salon .tab { background: var(--cartel); color: var(--encre); font-size: .8rem; padding: .15rem .6rem; }
+/* cadre : quatre bandes d'aplats (baguette, gorge, perles, filet), aucune transition de couleur */
+.da-salon .frame { padding: .9rem; background: #A9842F; box-shadow: inset 0 0 0 3px #7A5E22, inset 0 0 0 6px #D9B565, inset 0 0 0 9px #9C7A2C, inset 0 0 0 12px #E4C57C, 0 18px 30px -12px rgb(0 0 0 / .7); }
+.da-salon .card-photo { box-shadow: 0 0 0 2px #5A4316; }
+.da-salon .cartel { position: relative; width: 82%; margin: 1.1rem auto 0; background: var(--cartel); color: var(--encre); padding: .55rem .7rem; font-size: .78rem; line-height: 1.35; }
+.da-salon .cartel p { margin: 0; }
+.da-salon .c-title { font: 600 1.05rem/1.2 'Cormorant Garamond', serif; }
+.da-salon .c-num { margin-top: .25rem !important; opacity: .7; }
+.da-salon .dot { position: absolute; right: .55rem; bottom: .55rem; width: .8rem; height: .8rem; border-radius: 50%; background: var(--pastille); transform: scale(0); transition: transform .3s cubic-bezier(.3, 1.8, .5, 1); }
+.da-salon .won .dot { transform: scale(1); }
+.da-salon .card .frame, .da-salon .mini img { transition: transform .45s cubic-bezier(.5, 0, .7, .4), opacity .45s; }
+.da-salon .card.out .frame, .da-salon .mini.out img { transform: translateY(-14px) rotate(-4deg); opacity: 0; }
+.da-salon .card::before, .da-salon .mini::before { /* trace laissee sur la cimaise */
+  content: ''; position: absolute; left: 0; right: 0; top: 0; aspect-ratio: 3 / 3.75; border: 1px solid rgb(243 238 227 / .18); background: rgb(243 238 227 / .05); pointer-events: none;
+}
+.da-salon .mini::before { aspect-ratio: 3 / 4; }
+.da-salon .mark { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); margin: 0; width: 70%; text-align: center; background: var(--cartel); color: var(--encre); font-size: .78rem; padding: .35rem .4rem; opacity: 0; transition: opacity .3s .4s; }
+.da-salon .out .mark { opacity: 1; }
+.da-salon .question { border-top: 1px solid var(--dorure); border-bottom: 1px solid var(--dorure); padding: 1rem 0; }
+.da-salon .q-num { font-size: .82rem; color: var(--dorure); }
+.da-salon .q-text { font: 500 1.7rem/1.15 'Cormorant Garamond', serif; }
+.da-salon .mini { padding: 0; }
+.da-salon .mini img { box-shadow: 0 0 0 4px #A9842F, 0 0 0 6px #E4C57C, 0 0 0 7px #7A5E22; }
+.da-salon .mini figcaption { margin-top: .7rem; font: italic 600 .95rem/1 'Cormorant Garamond', serif; }
+.da-salon .mini .mark { top: 40%; width: 90%; font-size: .62rem; }
+
+/* ── Mobile ── */
+@media (max-width: 860px) {
+  .dir { grid-template-columns: minmax(0, 1fr); gap: 1.8rem; padding-top: 2.5rem; padding-bottom: 2.5rem; }
+  .palette { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dir-demo { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'card' 'question' 'board'; }
+  .card { width: min(17rem, 100%); justify-self: center; }
+  .board { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

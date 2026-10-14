@@ -3,7 +3,7 @@
 // par personnage.
 //
 //   python -m http.server 4173                                   # racine du depot
-//   node games/qui-est-ce/prototype-3d/tools/character-ict/bench_character.js models/character-01-ict.glb build/bench/ict-ref
+//   node games/qui-est-ce/prototype-3d/tools/character-ict/bench_character.js models/character-01-ict.glb build/bench/ict-ref [--no-time]
 //
 // Ecrit <dossier>/<etat>.png, <dossier>/zones.json (yeux et bouche, en pixels, par etat) et
 // <dossier>/stats.json : poids, temps d'analyse du GLB, triangles, draw calls, cout d'une
@@ -12,8 +12,10 @@
 const fs = require('fs');
 const path = require('path');
 const { Browser, sleep } = require('../../../../../tools/cdp');
+const { localCdn } = require('../local-cdn');                  // THREE_LOCAL=1 : CDN servis depuis npm (cloud)
 
-const [glb, outDir] = process.argv.slice(2);
+const [glb, outDir, ...rest] = process.argv.slice(2);
+const NO_TIME = rest.includes('--no-time');           // machine sans GPU : les temps ne valent rien
 if (!glb || !outDir) { console.error('usage : bench_character.js <personnage.glb> <dossier>'); process.exit(2); }
 const HAIR = 'models/hair/hair-curly-v41-opt.glb';
 const ROOT = path.join(__dirname, '..', '..');
@@ -42,6 +44,7 @@ const STATES = [
   const b = await Browser.launch({ headless: true, windowSize: '1000,1300', extraArgs: GPU_FLAGS });
   try {
     const p = await b.newPage('about:blank', 'bench');
+    await localCdn(p);
     await p.goto(URL);
     for (let i = 0; i < 180 && (await p.eval('return document.title')) !== 'bench-ready'; i++) await sleep(500);
     if ((await p.eval('return document.title')) !== 'bench-ready') throw new Error('banc non pret : ' + JSON.stringify(p.errors()));
@@ -61,12 +64,14 @@ const STATES = [
       fs.writeFileSync(path.join(ROOT, outDir, name + '.png'), Buffer.from(r.png.split(',')[1], 'base64'));
     }
     fs.writeFileSync(path.join(ROOT, outDir, 'zones.json'), JSON.stringify(zones));
-    await p.eval('__bench.time(20)');                                  // chauffe
     const ms = [];
-    for (let i = 0; i < 5; i++) ms.push(await p.eval('return __bench.time(60)'));
-    ms.sort((x, y) => x - y);
+    if (!NO_TIME) {
+      await p.eval('__bench.time(20)');                                // chauffe
+      for (let i = 0; i < 5; i++) ms.push(await p.eval('return __bench.time(60)'));
+      ms.sort((x, y) => x - y);
+    }
     const stats = { glb, bytes: info.charBytes, parseMs: +info.charParseMs.toFixed(1), triangles: info.triangles,
-      drawCalls: calls, frameMs: +ms[2].toFixed(2), frameMsAll: ms.map((x) => +x.toFixed(2)),
+      drawCalls: calls, frameMs: ms.length ? +ms[2].toFixed(2) : null, frameMsAll: ms.map((x) => +x.toFixed(2)),
       hair: HAIR, hairBytes: info.bytes, gpu, errors: p.errors() };
     fs.writeFileSync(path.join(ROOT, outDir, 'stats.json'), JSON.stringify(stats, null, 1));
     console.log(JSON.stringify(stats));

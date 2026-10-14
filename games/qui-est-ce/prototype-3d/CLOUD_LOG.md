@@ -101,14 +101,60 @@ intermédiaires versionnés de `character-01` (jusqu'à 6,5° de lacet d'écart 
 `registration.json`) ; ceux-ci viennent d'un état antérieur des scripts. Les intermédiaires
 versionnés restent la référence de `character-01` ; ils ont été restaurés après les essais.
 
-⛔ **G2** en attente : l'utilisateur valide la distribution (attributs, diversité).
+G2 : décision déléguée par l'utilisateur le 2026-10-14 ; distribution retenue telle quelle.
+
+## Rendu dans le cloud (débloqué le 2026-10-14)
+
+Option choisie par l'utilisateur : servir Three.js depuis npm pour les tests. `tools/local-cdn.js`
+intercepte dans le navigateur de test (CDP `Fetch`) les requêtes vers
+`cdn.jsdelivr.net/npm/three@0.186.1/` et Google Fonts, et répond avec les mêmes fichiers tirés
+de npm (`three@0.186.1`, paquets `@fontsource`, installés dans `build/tools`). Actif seulement
+avec `THREE_LOCAL=1` ; les pages ne changent pas, et sur le PC rien n'est intercepté.
+`test-proto.js`, `bench_hair.js`, `bench_character.js`, `da_shots.js` l'appellent.
+
+Commandes cloud : serveur `python3 -m http.server 4173` à la racine, puis
+`CHROME_PATH=<chrome avec --no-sandbox> THREE_LOCAL=1 node …`. Les bancs prennent `--no-time` :
+sous SwiftShader une image coûte ~0,6 s et la boucle de mesure dépassait le délai de 60 s
+de `cdp.js` (et ces temps ne valent rien).
+
+`test-proto.js` en SwiftShader : **13/15**. Échecs attendus : « Fluidité ≥ 50 FPS » (2 FPS) et
+« Clignements » (à ~600 ms par image, les clignements de 250 ms tombent entre deux images).
+Tout le reste est vert : squelette, yeux, 29/29 expressions pilotées, regard puis tête, buste,
+respiration, expressions, console propre.
+
+Références cloud : `build/bench/cloud-ref` (coiffure V4.1 optimisée, 31 draw calls,
+214 311 triangles) et `build/bench/ict-ref` (personnage d'origine).
+
+## DA — directions artistiques
+
+`da.html` (+ `css/da.css`, `js/da.js`, `js/da-sfx.js`) : trois directions côte à côte, chacune
+avec sa carte 3D vivante du personnage 01 (regard vers le curseur, élimination au clic,
+victoire), une question, un extrait de plateau de 6 cartes (6 poses rendues), sa palette avec
+contrastes WCAG calculés sur la page, ses polices, ses notes de matières, de mise en scène,
+de mouvement et de son (Web Audio synthétisé). Captures : `reports/da/` (bureau et 390 px).
+Contrôles : console propre, pas de défilement horizontal à 390 px. `?still` fige le rendu.
+
+| Direction | Métaphore | Polices | Signature |
+| --- | --- | --- | --- |
+| A · Le dossier | fichier de police des années 60 : question = interrogatoire, élimination = tampon violet « Écarté » | Zilla Slab + Courier Prime | toise au mur, flash dur, fiche anthropométrique |
+| B · La séance de casting | Polaroïds scotchés au mur, planche contact ; élimination = croix au crayon gras | Permanent Marker + DM Mono | fond papier, flash au survol, film perforé |
+| C · Le salon des portraits | portraits accrochés avec cartel ; élimination = tableau décroché ; victoire = pastille rouge | Cormorant Garamond + Libre Franklin | cimaise rouge, cadre doré en aplats, lampe de tableau |
+
+Recommandation : **C**. C'est la seule des trois qui fait de la 3D la pièce maîtresse (un
+portrait éclairé comme une œuvre), et elle ne se confond pas avec Banqueroll. A est la
+métaphore de jeu la plus forte, mais ses fiches crème à l'encre rappellent les fiches de
+Banqueroll. B est la plus légère. Constat de mise en scène valable pour L3 : le buste Hunyuan
+n'est qu'une bande sous le cou au bord déchiré ; le bas du cadre doit rester au-dessus
+(`bottom = min.y + 0,095` dans `da.js`).
+
+⛔ **G-DA** en attente : choix (ou mélange) de l'utilisateur.
 
 ## Validations de l'utilisateur
 
 | Point | Date | Décision |
 | --- | --- | --- |
 | G1 personnage optimisé | | |
-| G2 distribution des 24 | | |
+| G2 distribution des 24 | 2026-10-14 | déléguée par l'utilisateur (« fais ce que tu veux ») : distribution retenue telle quelle |
 | G-DA direction artistique | | |
 | G3 plateau | | |
 | G4 accessoires | | |

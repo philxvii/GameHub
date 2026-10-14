@@ -9,6 +9,7 @@
 
 const path = require('path');
 const { Browser, sleep } = require('../../../../tools/cdp');
+const { localCdn } = require('./local-cdn');                  // THREE_LOCAL=1 : CDN servis depuis npm (cloud)
 
 const args = process.argv.slice(2);
 const MODEL = args.find(a => a.endsWith('.glb')) || 'models/character-01-ict.glb';
@@ -34,6 +35,7 @@ const check = (name, ok, detail = '') => {
     extraArgs: GPU_FLAGS,
   });
   const p = await b.newPage('about:blank', 'proto');
+  await localCdn(p);
   await p.send('Emulation.setDeviceMetricsOverride', { width: 1100, height: 900, deviceScaleFactor: 1, mobile: false });
   try {
     await p.goto(URL);
