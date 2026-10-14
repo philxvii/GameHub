@@ -11,6 +11,60 @@ l'utilisateur (Windows, GPU Intel Iris Xe) quand le budget s'épuise.
 
 ---
 
+## INTENTIONS DE L'UTILISATEUR (2026-10-14) — elles priment sur tout le reste du plan
+
+Réponses explicites de l'utilisateur ; en cas de contradiction avec une phrase plus bas, ce
+bloc gagne. C'est ta boussole quand tu dois décider seul.
+
+1. **Priorité si le budget ne suffit pas : LA QUALITÉ DU PERSONNAGE.** Ordre d'importance :
+   (1) personnage 01 optimisé sans perte visible (L1) et accessoires / pilosité crédibles (L4),
+   (2) identité visuelle (DA), (3) plateau jouable (L3), (4) partie en ligne (L5), (5) dossier PC.
+   Ne bâcle jamais L1 ni L4 pour gagner du temps sur L5.
+2. **Le jeu se joue sur ORDINATEUR.** Le but du site est le jeu sur PC. Conçois, mesure et
+   optimise pour le PC (grand écran, souris : le survol et le regard qui suit le curseur sont
+   le cœur de l'expérience). Le mobile n'est **pas** une cible de conception : il doit
+   seulement ne pas casser (pas de défilement horizontal, partie jouable au toucher), sans
+   dégrader la version PC pour lui. Là où le plan parle de « mobile d'abord », lis
+   « PC d'abord ». Mesures de performance : PC.
+3. **Ton : complice et malicieux.** Clins d'œil, petites piques entre joueurs, humour léger ;
+   ni solennel ni enfantin. Vaut pour les textes, les noms de boutons, les messages de
+   victoire et de défaite, les bruitages et les animations. Jamais raciste, homophobe,
+   sexiste, validiste ni humiliant pour un physique : on se moque de la situation, pas des
+   personnes.
+4. **En cas d'hésitation : l'option la plus AMBITIEUSE**, à condition qu'elle reste
+   réversible (variante à côté de l'original, décision notée dans `DECISIONS.md`). Vise le
+   niveau d'un jeu premium, pas d'un prototype : soin des matières, du mouvement, du son, des
+   micro-interactions. Une option ambitieuse qui casserait une limite dure (voir MODE
+   AUTONOME) reste interdite.
+5. **Rendre un travail fini plutôt que large** : mieux vaut un lot de plus abouti que deux
+   lots à moitié faits ; en cas de doute, approfondis le lot en cours et note le reste dans
+   `QUESTIONS.md`.
+
+6. **Modes de jeu** : **duel classique à deux** et **partie contre un bot** (pour jouer seul).
+   Le mode **3 à 6 joueurs est pour plus tard et n'est pas une priorité du tout** : ne rien
+   construire pour lui, ne pas contraindre l'architecture (un état de partie par code suffit).
+   Pas de « défi du jour » dans cette mission.
+7. **Fidélisation à préparer** (tout) : revanche en un clic avec score entre les deux joueurs ;
+   **statistiques entre amis** (victoires, nombre moyen de questions, personnage favori) ;
+   **planche contact partageable** (image de fin de partie avec les croix rouges, export PNG) ;
+   **titres et succès** malicieux (par exemple « Le Sherlock », « Gagné en 4 questions »).
+   **Stockage : local au navigateur** (`localStorage`, comme le carnet de Banqueroll), sans
+   compte ni Firebase ; interface pensée pour pouvoir passer sur Firebase plus tard.
+8. **Personnages très expressifs** : ils sourient, froncent, se méfient, sont surpris et
+   suivent le curseur. Garde-fou : les réactions sont liées aux **évènements du jeu** (question
+   posée, réponse, carte écartée), jamais à l'identité du personnage secret, pour ne donner
+   aucun indice.
+9. **Son : AUCUN dans cette mission.** Ne pas produire de bruitages. Les descriptions de sons
+   des fiches de la DA restent des intentions ; prévois seulement des points d'accroche
+   neutres dans le code (`emit('event')`), sans audio.
+10. **Accessoires, tous à faire avec le plus grand soin** (ordre de réalisation) : lunettes,
+    barbe et moustache en poils, chapeau ou casquette, boucles d'oreilles et bijoux. Ils servent
+    aussi de critères de jeu : ils doivent se lire au premier coup d'œil à la taille d'une carte.
+11. **Coiffures supplémentaires : propositions sur planche** (3 à 5 : courte, longue, ondulée,
+    rasée…), jamais attachées au personnage 01 ; la V4.1 reste sa coiffure.
+12. **Fin de partie : cérémonie de révélation** (le portrait du secret accroché sous la lampe,
+    la pastille posée, le perdant voit ce qu'il cherchait), pas un simple écran de résultat.
+
 ## MODE AUTONOME (décision de l'utilisateur, 2026-10-14) — LIS CECI EN PREMIER
 
 **L'utilisateur donne carte blanche. Tu ne t'arrêtes pas pour demander.** Ce paragraphe
@@ -91,9 +145,9 @@ plateau, mesures) vaut pour une **partie à deux**, pas pour une maquette solo.
 - **Le secret d'un joueur n'est jamais lisible par l'adversaire** avant la fin de partie
   (même principe que `ucSecret` d'Undercover). Toute écriture hors de la partie ou nouveau
   nœud exige d'abord une règle dans `firebase/build-rules.js`.
-- **Mobile d'abord** : une partie se joue souvent sur téléphone. 24 visages 3D sur un petit
-  GPU : poids, mémoire GPU, rendu à la demande et 390 px de large sont des contraintes
-  de conception, pas des finitions.
+- **PC d'abord** (décision de l'utilisateur) : le jeu se joue sur ordinateur. Poids, mémoire
+  GPU et rendu à la demande restent des contraintes (24 visages 3D), mais la cible est le
+  navigateur de bureau ; le mobile ne doit que ne pas casser.
 - Chaque page de jeu charge `shared/maintenance.js` en tête (voir `HANDOFF.md`).
 - **Aucun branchement à Firebase ni au jeu en production sans accord explicite** de
   l'utilisateur. Jusqu'à ce que la DA et le plateau soient validés, tout se joue contre un
@@ -139,13 +193,14 @@ Enveloppes indicatives (sur ~100 $) :
 | L2 | Pipeline industrialisé + distribution des 24 personnages | 15 % | ⛔ G2 (distribution) |
 | DA | Direction artistique propre au Qui est-ce ? | 9 % | ⛔ G-DA |
 | L3 | Plateau 3D de 24 cartes, dans la DA validée | 17 % | ⛔ G3 |
-| L4 | Accessoires et pilosité faciale | 13 % → **8 %** | ⛔ G4 (par élément) |
-| L5 | Jeu complet sur Firebase (émulateur) dans une copie du jeu, sur la branche | **20 %** | ⛔ G5 |
+| L4 | Accessoires et pilosité faciale | **15 %** (relevé : qualité d'abord) | ⛔ G4 (par élément) |
+| L5 | Jeu complet sur Firebase (émulateur) dans une copie du jeu, sur la branche | **14 %** | ⛔ G5 |
 | L6 | Dossier « PC » : tout ce qui exige l'ordinateur de l'utilisateur, en une commande | **7 %** | — |
 | R | Retour au PC | réserve ~12 % | — |
 
-Ordre : L0 → L1 → (pendant l'attente de G1 : L2, puis DA) → L3 → L5 → L4 → L6 → R.
-L5 passe avant L4 : un jeu jouable à deux compte plus que des accessoires. Si G1 n'est pas
+Ordre (révisé selon les intentions de l'utilisateur : qualité du personnage d'abord) :
+L0 → L1 → L2 → DA (déclinaison) → **L4 → L3** → L5 → L6 → R. Les accessoires (L4) passent
+avant le plateau et la partie en ligne. Si G1 n'est pas
 donné, L3 et L4 travaillent sur `character-01-ict.glb` d'origine et restent des
 prototypes. Si G-DA n'est pas donné, L3 se construit sur des jetons de style (variables
 CSS) faciles à rebasculer vers la direction choisie plus tard.
@@ -318,8 +373,8 @@ Démarche :
    dans « Cadre : c'est un jeu MULTIJOUEUR » : accueil, salon d'attente avec le code,
    choix du secret, carte « mon personnage » toujours visible, tour de l'adversaire (je
    réponds oui / non), attente, cartes écartées des deux côtés, désignation finale, fin de
-   partie, revanche, adversaire déconnecté. Version **mobile 390 px** de chacun
-   (captures réduites dans `reports/da/`). Même identité sonore et mouvement pour les deux
+   partie, revanche, adversaire déconnecté. Version **bureau** de chacun, plus une capture
+   mobile 390 px de contrôle (« ne casse pas ») (captures réduites dans `reports/da/`). Même identité sonore et mouvement pour les deux
    joueurs ; la DA doit aider à lire **à qui c'est le tour** sans texte.
 
 ⛔ **G-DA** : l'utilisateur choisit (ou mixe) une direction, puis valide sa déclinaison
@@ -339,8 +394,8 @@ désignation, fin, revanche), l'adversaire étant un bot local (`js/bot.js`, qui
 questions utiles de `data/roster.json` et répond honnêtement) derrière `js/net-mock.js`
 (créer / rejoindre, envoyer une action, recevoir l'état). L'interface réseau a **la forme
 du jeu en production** (un état de partie par code, un secret par joueur) pour être
-rebranchée sur Firebase sans toucher à l'affichage. Mobile 390 px sans défilement
-horizontal ; mémoire GPU et temps d'image mesurés avec 24 cartes à l'écran.
+rebranchée sur Firebase sans toucher à l'affichage. Cible : navigateur de bureau ; mobile
+390 px sans défilement horizontal (contrôle seulement) ; mémoire GPU et temps d'image mesurés avec 24 cartes à l'écran.
 
 - **Un seul `WebGLRenderer`**, une zone par carte (scissor), comme `compare.js`.
 - GLB chargé une fois, cloné (`SkeletonUtils.clone`), géométries et textures partagées.
@@ -419,8 +474,8 @@ en `?emu`). Le jeu en production (`games/qui-est-ce/index.html`, nœud `qec2`) *
    nom distinct, clairement marqué temporaire dans le code) pour que la partie soit jouable
    de bout en bout ; ajouter un personnage = déposer son GLB et passer son statut à `ready`
    dans `roster.json`, sans toucher au code.
-6. **Sobriété mobile** : 24 cartes en rendu à la demande, textures partagées, mémoire GPU
-   mesurée ; repli à une image fixe (PNG pré-rendu) pour les cartes hors écran.
+6. **Sobriété de rendu** : 24 cartes en rendu à la demande, textures partagées, mémoire GPU
+   mesurée sur PC ; repli à une image fixe (PNG pré-rendu) pour les cartes hors écran.
 
 ⛔ **G5** : l'utilisateur teste (ou vérifie sur capture) ; la mise en ligne ne se fait pas
 d'ici (voir L6).
