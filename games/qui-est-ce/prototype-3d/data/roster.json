@@ -1,0 +1,664 @@
+{
+ "version": 1,
+ "note": "24 humains fictifs pour le Qui est-ce ? 3D. Les attributs sont les questions du jeu ; 'apparence' sert aux consignes photo (data/prompts/). Lunettes, chapeau et boucles d'oreilles sont des accessoires 3D : jamais sur les photos.",
+ "attributs": {
+  "genre": {
+   "type": "choix",
+   "valeurs": [
+    "femme",
+    "homme"
+   ],
+   "question": "Est-ce une femme ?"
+  },
+  "age": {
+   "type": "choix",
+   "valeurs": [
+    "jeune",
+    "adulte",
+    "senior"
+   ],
+   "question": "Ton personnage est-il {valeur} ?",
+   "tranches": {
+    "jeune": "18-30",
+    "adulte": "31-55",
+    "senior": "56 et plus"
+   }
+  },
+  "cheveux": {
+   "type": "choix",
+   "valeurs": [
+    "noir",
+    "brun",
+    "blond",
+    "roux",
+    "gris"
+   ],
+   "question": "A-t-il les cheveux {valeur}s ?",
+   "vide": "chauve"
+  },
+  "coupe": {
+   "type": "choix",
+   "valeurs": [
+    "chauve",
+    "court",
+    "mi-long",
+    "long"
+   ],
+   "question": "A-t-il les cheveux {valeur}s ?"
+  },
+  "cheveux_boucles": {
+   "type": "oui-non",
+   "question": "A-t-il les cheveux bouclés ?"
+  },
+  "yeux": {
+   "type": "choix",
+   "valeurs": [
+    "marron",
+    "bleu",
+    "vert"
+   ],
+   "question": "A-t-il les yeux {valeur}s ?"
+  },
+  "lunettes": {
+   "type": "oui-non",
+   "question": "Porte-t-il des lunettes ?",
+   "accessoire": true
+  },
+  "chapeau": {
+   "type": "oui-non",
+   "question": "Porte-t-il un chapeau ?",
+   "accessoire": true
+  },
+  "barbe": {
+   "type": "oui-non",
+   "question": "A-t-il une barbe ?"
+  },
+  "moustache": {
+   "type": "oui-non",
+   "question": "A-t-il une moustache ?"
+  },
+  "boucles_oreilles": {
+   "type": "oui-non",
+   "question": "Porte-t-il des boucles d'oreilles ?",
+   "accessoire": true
+  }
+ },
+ "personnages": [
+  {
+   "id": "character-01",
+   "prenom": "Raphaël",
+   "age": 36,
+   "statut": "modelise",
+   "apparence": {
+    "visage": "teint clair méditerranéen, visage allongé, mâchoire marquée, quelques taches de rousseur sur le nez",
+    "coiffure": "cheveux brun foncé courts, volume bouclé sur le dessus",
+    "pilosite": "barbe courte bien taillée et moustache"
+   },
+   "attributs": {
+    "genre": "homme",
+    "age": "adulte",
+    "cheveux": "brun",
+    "coupe": "court",
+    "cheveux_boucles": true,
+    "yeux": "vert",
+    "lunettes": false,
+    "chapeau": false,
+    "barbe": true,
+    "moustache": true,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-02",
+   "prenom": "Agathe",
+   "age": 24,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau très claire, taches de rousseur sur les joues et le nez, visage ovale",
+    "coiffure": "longs cheveux roux cuivré bouclés, raie au milieu",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "femme",
+    "age": "jeune",
+    "cheveux": "roux",
+    "coupe": "long",
+    "cheveux_boucles": true,
+    "yeux": "vert",
+    "lunettes": false,
+    "chapeau": false,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": true
+   }
+  },
+  {
+   "id": "character-03",
+   "prenom": "Bérénice",
+   "age": 68,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau claire, rides d'expression marquées, pommettes hautes",
+    "coiffure": "cheveux gris argent coupés courts, coiffés sur le côté",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "femme",
+    "age": "senior",
+    "cheveux": "gris",
+    "coupe": "court",
+    "cheveux_boucles": false,
+    "yeux": "bleu",
+    "lunettes": true,
+    "chapeau": false,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-04",
+   "prenom": "Clémence",
+   "age": 41,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau brun foncé, visage rond, traits fins",
+    "coiffure": "cheveux noirs naturellement bouclés jusqu'aux épaules",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "femme",
+    "age": "adulte",
+    "cheveux": "noir",
+    "coupe": "mi-long",
+    "cheveux_boucles": true,
+    "yeux": "marron",
+    "lunettes": false,
+    "chapeau": true,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-05",
+   "prenom": "Diane",
+   "age": 22,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau très claire, visage fin, nez droit",
+    "coiffure": "longs cheveux blond doré raides",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "femme",
+    "age": "jeune",
+    "cheveux": "blond",
+    "coupe": "long",
+    "cheveux_boucles": false,
+    "yeux": "bleu",
+    "lunettes": false,
+    "chapeau": false,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": true
+   }
+  },
+  {
+   "id": "character-06",
+   "prenom": "Élise",
+   "age": 38,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau mate d'Asie du Sud, grands yeux en amande, sourcils épais",
+    "coiffure": "carré court brun foncé, raide",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "femme",
+    "age": "adulte",
+    "cheveux": "brun",
+    "coupe": "court",
+    "cheveux_boucles": false,
+    "yeux": "marron",
+    "lunettes": true,
+    "chapeau": false,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": true
+   }
+  },
+  {
+   "id": "character-07",
+   "prenom": "Fatou",
+   "age": 27,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau noire, visage ovale, pommettes hautes",
+    "coiffure": "cheveux noirs crépus coupés très courts",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "femme",
+    "age": "jeune",
+    "cheveux": "noir",
+    "coupe": "court",
+    "cheveux_boucles": true,
+    "yeux": "marron",
+    "lunettes": false,
+    "chapeau": false,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": true
+   }
+  },
+  {
+   "id": "character-08",
+   "prenom": "Hélène",
+   "age": 71,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau claire, rides fines, visage carré",
+    "coiffure": "cheveux gris ondulés mi-longs",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "femme",
+    "age": "senior",
+    "cheveux": "gris",
+    "coupe": "mi-long",
+    "cheveux_boucles": true,
+    "yeux": "vert",
+    "lunettes": false,
+    "chapeau": true,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-09",
+   "prenom": "Inès",
+   "age": 33,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau mate ibérique, visage en cœur, sourcils arqués",
+    "coiffure": "longs cheveux châtain foncé raides",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "femme",
+    "age": "adulte",
+    "cheveux": "brun",
+    "coupe": "long",
+    "cheveux_boucles": false,
+    "yeux": "marron",
+    "lunettes": true,
+    "chapeau": false,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-10",
+   "prenom": "Jade",
+   "age": 25,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau claire d'Asie de l'Est, yeux bridés, visage ovale",
+    "coiffure": "longs cheveux noirs raides et lisses",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "femme",
+    "age": "jeune",
+    "cheveux": "noir",
+    "coupe": "long",
+    "cheveux_boucles": false,
+    "yeux": "marron",
+    "lunettes": false,
+    "chapeau": true,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": true
+   }
+  },
+  {
+   "id": "character-11",
+   "prenom": "Louise",
+   "age": 45,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau claire, visage rond, légères pattes d'oie",
+    "coiffure": "cheveux blond cendré mi-longs, raides",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "femme",
+    "age": "adulte",
+    "cheveux": "blond",
+    "coupe": "mi-long",
+    "cheveux_boucles": false,
+    "yeux": "vert",
+    "lunettes": false,
+    "chapeau": false,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-12",
+   "prenom": "Mireille",
+   "age": 63,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau claire, rides souriantes, visage ovale",
+    "coiffure": "cheveux blond platine courts et gonflés",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "femme",
+    "age": "senior",
+    "cheveux": "blond",
+    "coupe": "court",
+    "cheveux_boucles": false,
+    "yeux": "bleu",
+    "lunettes": true,
+    "chapeau": false,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": true
+   }
+  },
+  {
+   "id": "character-13",
+   "prenom": "Nadia",
+   "age": 39,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau claire d'Europe de l'Est, nez fin, visage triangulaire",
+    "coiffure": "cheveux roux auburn bouclés mi-longs",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "femme",
+    "age": "adulte",
+    "cheveux": "roux",
+    "coupe": "mi-long",
+    "cheveux_boucles": true,
+    "yeux": "marron",
+    "lunettes": false,
+    "chapeau": false,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-14",
+   "prenom": "Arthur",
+   "age": 21,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau claire, visage juvénile, menton rond",
+    "coiffure": "cheveux blond clair courts, raie sur le côté",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "homme",
+    "age": "jeune",
+    "cheveux": "blond",
+    "coupe": "court",
+    "cheveux_boucles": false,
+    "yeux": "bleu",
+    "lunettes": false,
+    "chapeau": false,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-15",
+   "prenom": "Bastien",
+   "age": 44,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau claire, visage large, nez fort",
+    "coiffure": "cheveux châtain courts, raides",
+    "pilosite": "barbe fournie et moustache"
+   },
+   "attributs": {
+    "genre": "homme",
+    "age": "adulte",
+    "cheveux": "brun",
+    "coupe": "court",
+    "cheveux_boucles": false,
+    "yeux": "marron",
+    "lunettes": false,
+    "chapeau": false,
+    "barbe": true,
+    "moustache": true,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-16",
+   "prenom": "Cyril",
+   "age": 66,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau claire, crâne rasé lisse, rides du front",
+    "coiffure": "crâne entièrement chauve",
+    "pilosite": "moustache grise épaisse, sans barbe"
+   },
+   "attributs": {
+    "genre": "homme",
+    "age": "senior",
+    "cheveux": null,
+    "coupe": "chauve",
+    "cheveux_boucles": false,
+    "yeux": "bleu",
+    "lunettes": true,
+    "chapeau": false,
+    "barbe": false,
+    "moustache": true,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-17",
+   "prenom": "Damien",
+   "age": 35,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau métisse caramel, visage ovale, lèvres pleines",
+    "coiffure": "cheveux noirs bouclés courts",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "homme",
+    "age": "adulte",
+    "cheveux": "noir",
+    "coupe": "court",
+    "cheveux_boucles": true,
+    "yeux": "marron",
+    "lunettes": false,
+    "chapeau": true,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-18",
+   "prenom": "Étienne",
+   "age": 72,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau claire, rides profondes, sourcils broussailleux",
+    "coiffure": "cheveux blancs courts, dégarnis sur les tempes",
+    "pilosite": "barbe blanche courte et moustache"
+   },
+   "attributs": {
+    "genre": "homme",
+    "age": "senior",
+    "cheveux": "gris",
+    "coupe": "court",
+    "cheveux_boucles": false,
+    "yeux": "marron",
+    "lunettes": true,
+    "chapeau": false,
+    "barbe": true,
+    "moustache": true,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-19",
+   "prenom": "Farid",
+   "age": 42,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau mate maghrébine, visage anguleux, nez aquilin",
+    "coiffure": "cheveux noirs courts, coupe nette",
+    "pilosite": "moustache noire épaisse, joues rasées"
+   },
+   "attributs": {
+    "genre": "homme",
+    "age": "adulte",
+    "cheveux": "noir",
+    "coupe": "court",
+    "cheveux_boucles": false,
+    "yeux": "marron",
+    "lunettes": false,
+    "chapeau": false,
+    "barbe": false,
+    "moustache": true,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-20",
+   "prenom": "Gaspard",
+   "age": 26,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau très claire, taches de rousseur, visage allongé",
+    "coiffure": "cheveux roux bouclés mi-longs",
+    "pilosite": "barbe rousse courte, sans moustache marquée"
+   },
+   "attributs": {
+    "genre": "homme",
+    "age": "jeune",
+    "cheveux": "roux",
+    "coupe": "mi-long",
+    "cheveux_boucles": true,
+    "yeux": "vert",
+    "lunettes": false,
+    "chapeau": false,
+    "barbe": true,
+    "moustache": false,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-21",
+   "prenom": "Hugo",
+   "age": 23,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau claire, visage fin, pommettes saillantes",
+    "coiffure": "cheveux châtain mi-longs, raides, derrière les oreilles",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "homme",
+    "age": "jeune",
+    "cheveux": "brun",
+    "coupe": "mi-long",
+    "cheveux_boucles": false,
+    "yeux": "vert",
+    "lunettes": false,
+    "chapeau": false,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": true
+   }
+  },
+  {
+   "id": "character-22",
+   "prenom": "Kenji",
+   "age": 47,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau claire d'Asie de l'Est, visage carré",
+    "coiffure": "cheveux noirs courts, raides, quelques fils gris",
+    "pilosite": null
+   },
+   "attributs": {
+    "genre": "homme",
+    "age": "adulte",
+    "cheveux": "noir",
+    "coupe": "court",
+    "cheveux_boucles": false,
+    "yeux": "marron",
+    "lunettes": true,
+    "chapeau": false,
+    "barbe": false,
+    "moustache": false,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-23",
+   "prenom": "Lucien",
+   "age": 69,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau noire, rides marquées, visage rond",
+    "coiffure": "crâne chauve",
+    "pilosite": "barbe grise courte, sans moustache marquée"
+   },
+   "attributs": {
+    "genre": "homme",
+    "age": "senior",
+    "cheveux": null,
+    "coupe": "chauve",
+    "cheveux_boucles": false,
+    "yeux": "marron",
+    "lunettes": false,
+    "chapeau": true,
+    "barbe": true,
+    "moustache": false,
+    "boucles_oreilles": false
+   }
+  },
+  {
+   "id": "character-24",
+   "prenom": "Malik",
+   "age": 28,
+   "statut": "a-photographier",
+   "apparence": {
+    "visage": "peau brun clair, visage ovale, mâchoire fine",
+    "coiffure": "crâne rasé de près",
+    "pilosite": "barbe noire courte et nette, sans moustache marquée"
+   },
+   "attributs": {
+    "genre": "homme",
+    "age": "jeune",
+    "cheveux": null,
+    "coupe": "chauve",
+    "cheveux_boucles": false,
+    "yeux": "vert",
+    "lunettes": false,
+    "chapeau": false,
+    "barbe": true,
+    "moustache": false,
+    "boucles_oreilles": false
+   }
+  }
+ ]
+}
