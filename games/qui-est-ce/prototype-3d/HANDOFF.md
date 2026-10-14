@@ -40,7 +40,11 @@ temps réel** (Three.js, navigateur, gratuit, sans build) :
 - **attributs de jeu lisibles** : couleur et longueur des cheveux, lunettes, chapeau,
   barbe, moustache, boucles d'oreilles, etc., via une **bibliothèque d'accessoires 3D**
   et de coiffures en cartes de cheveux ;
-- poids et performance compatibles avec le Web (24 personnages à l'écran).
+- poids et performance compatibles avec le Web (24 personnages à l'écran) ;
+- **une direction artistique propre au jeu**, aussi forte que celle de Banqueroll et
+  meilleure : sur GameHub, **chaque jeu a sa propre identité** (métaphore physique,
+  palette, typographie, matières, mouvement, son). Démarche détaillée dans
+  [CLOUD_PLAN.md](CLOUD_PLAN.md), lot DA ; à valider avant de construire le plateau.
 
 ## Ce qui est VALIDÉ (ne pas remplacer)
 

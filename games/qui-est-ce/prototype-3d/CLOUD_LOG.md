@@ -29,6 +29,7 @@ et de la coiffure, résultat de `test-proto.js`.
 | --- | --- | --- |
 | G1 personnage optimisé | | |
 | G2 distribution des 24 | | |
+| G-DA direction artistique | | |
 | G3 plateau | | |
 | G4 accessoires | | |
 

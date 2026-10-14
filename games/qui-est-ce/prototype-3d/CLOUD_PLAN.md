@@ -66,13 +66,16 @@ Enveloppes indicatives (sur ~100 $) :
 | --- | --- | --- | --- |
 | L0 | Environnement et mesures de référence | 4 % | — |
 | L1 | Optimisation du personnage ICT | 30 % | ⛔ G1 |
-| L2 | Pipeline industrialisé + distribution des 24 personnages | 18 % | ⛔ G2 (distribution) |
-| L3 | Plateau 3D de 24 cartes (architecture du jeu) | 20 % | ⛔ G3 |
-| L4 | Accessoires et pilosité faciale | 16 % | ⛔ G4 (par élément) |
+| L2 | Pipeline industrialisé + distribution des 24 personnages | 15 % | ⛔ G2 (distribution) |
+| DA | Direction artistique propre au Qui est-ce ? | 9 % | ⛔ G-DA |
+| L3 | Plateau 3D de 24 cartes, dans la DA validée | 17 % | ⛔ G3 |
+| L4 | Accessoires et pilosité faciale | 13 % | ⛔ G4 (par élément) |
 | R | Retour au PC | réserve ~12 % | — |
 
-Ordre : L0 → L1 → (pendant l'attente de G1 : L2) → L3 → L4 → R. Si G1 n'est pas donné,
-L3 et L4 travaillent sur `character-01-ict.glb` d'origine et restent des prototypes.
+Ordre : L0 → L1 → (pendant l'attente de G1 : L2, puis DA) → L3 → L4 → R. Si G1 n'est pas
+donné, L3 et L4 travaillent sur `character-01-ict.glb` d'origine et restent des
+prototypes. Si G-DA n'est pas donné, L3 se construit sur des jetons de style (variables
+CSS) faciles à rebasculer vers la direction choisie plus tard.
 
 ---
 
@@ -154,7 +157,7 @@ personnages côte à côte.
 ⛔ **G1** : l'utilisateur valide le personnage optimisé sur la planche. Pas de bascule sans
 son accord (il pourra aussi juger en direct sur son PC au retour).
 
-## L2 — Pipeline industrialisé et distribution des 24 personnages (≈ 18 %) ⛔ G2
+## L2 — Pipeline industrialisé et distribution des 24 personnages (≈ 15 %) ⛔ G2
 
 Aucun personnage n'est généré ici : on prépare tout pour que, de retour sur le PC, produire
 un personnage soit une suite de commandes.
@@ -181,12 +184,55 @@ un personnage soit une suite de commandes.
 
 ⛔ **G2** : l'utilisateur valide la distribution des 24 (attributs, diversité) avant tout usage.
 
-## L3 — Plateau 3D de 24 cartes (≈ 20 %) ⛔ G3
+## DA — Direction artistique propre au Qui est-ce ? (≈ 9 %) ⛔ G-DA
+
+**Exigence de l'utilisateur : le jeu doit avoir sa propre identité visuelle, forte et
+cohérente, au niveau de Banqueroll — et mieux.** Le but final de GameHub : **chaque jeu a sa
+propre identité** ; on doit reconnaître le Qui est-ce ? au premier coup d'œil, sans le
+confondre avec un autre jeu du site. Ce n'est pas un habillage générique ni un thème
+sombre par défaut : c'est un univers.
+
+Référence de niveau, **à ne pas copier** : la DA de Banqueroll (2026-10-07) est « un jeu de
+société sur une table de banque » — feutre vert, fiches en carton crème avec grain, encre
+`#1B2420`, laiton pour ce qui compte, polices Gloock (titres, montants) et Schibsted
+Grotesk, boutons à contour d'encre et arête pleine, jetons de casino, rosace guillochée
+générée en SVG. Ce qui la rend forte : **une métaphore physique unique** d'où découlent
+matières, couleurs, typographie, formes des boutons et motifs. Le Qui est-ce ? doit avoir
+la sienne, aussi tenue, et aller plus loin (mouvement, son, la 3D comme pièce maîtresse).
+
+Démarche :
+
+1. **Trois directions contrastées**, chacune avec sa métaphore. Pistes à explorer ou à
+   dépasser : salle d'interrogatoire / enquête de police rétro (dossiers, polaroïds,
+   tampons, lampe) ; studio de casting photo (planche contact, fond papier, flash) ;
+   galerie de portraits / musée (cadres, cartels, vernissage) ; trombinoscope d'école
+   des années 70. Le jeu original (plateau à volets qui se rabattent) est un ancrage
+   possible, pas une obligation.
+2. Pour chaque direction : métaphore en une phrase, palette (jetons nommés, contrastes
+   AA vérifiés), 2 polices Google Fonts gratuites (titres + texte), matières et motifs
+   (générés en CSS / SVG / canvas, pas d'images payantes ni copiées), forme des boutons,
+   des cartes et des badges, **mise en scène 3D** (fond, lumière, cadre de carte — sans
+   toucher au visage ni à la coiffure validés), mouvement (rabat de carte, survol,
+   victoire), et sons possibles (Web Audio, comme `sfx.js` de Banqueroll).
+3. Une page **`da.html`** dans le prototype : les trois directions côte à côte, chacune
+   avec une vraie carte personnage (le rendu 3D du personnage 01), un extrait de plateau,
+   un bouton, une question du jeu. Captures réduites dans `reports/da/`.
+4. Interdits hérités du site : halos lumineux, dégradés décoratifs, badges en pilule,
+   bordures colorées sur un seul côté, majuscules très espacées. Pas d'esthétique
+   « tableau de bord » ni de gabarit d'IA générique.
+5. Une fois une direction choisie : `css/tokens.css` (palette, typographie, espacements,
+   rayons, ombres, durées), et une proposition de couverture pour la carte du hub
+   (`reports/da/cover.jpg`, **sans toucher** à `games/qui-est-ce/cover.webp` sur `main`).
+
+⛔ **G-DA** : l'utilisateur choisit (ou mixe) une direction. Le plateau L3 l'applique.
+
+## L3 — Plateau 3D de 24 cartes (≈ 17 %) ⛔ G3
 
 Prototype de l'architecture du jeu, **dans le dossier du prototype** (`board.html`,
 `js/board.js`, `css/board.css`), sans toucher au jeu en production. Personnage 01 placé
 24 fois en attendant les autres, avec les noms et attributs de `data/roster.json` si L2 est
-fait.
+fait. **Entièrement dans la DA validée** (`css/tokens.css`) : le plateau doit déjà avoir
+l'allure du jeu final, pas d'une maquette technique.
 
 - **Un seul `WebGLRenderer`**, une zone par carte (scissor), comme `compare.js`.
 - GLB chargé une fois, cloné (`SkeletonUtils.clone`), géométries et textures partagées.
@@ -203,7 +249,7 @@ fait.
 
 ⛔ **G3** : capture du plateau dans `reports/board/`, avis de l'utilisateur.
 
-## L4 — Accessoires et pilosité faciale (≈ 16 %) ⛔ G4
+## L4 — Accessoires et pilosité faciale (≈ 13 %) ⛔ G4
 
 Bibliothèque d'éléments attachés à l'os `Head`, au même niveau de réalisme que la V4.1,
 chacun optimisé (meshopt) et mesuré :
