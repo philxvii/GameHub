@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qui est-ce ? — plateau 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,500;1,600&family=Libre+Franklin:wght@400;600&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/board.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<header class="top">
+  <div class="title">
+    <h1>Qui est-ce ?</h1>
+    <p class="room">Salle 1 · vingt-quatre portraits</p>
+  </div>
+  <p class="count" aria-live="polite"><span id="left">24</span> portraits accrochés</p>
+</header>
+
+<section class="ask" aria-label="Question">
+  <label for="question">Votre question</label>
+  <select id="question"></select>
+  <button class="plaque" id="ask">Poser la question</button>
+  <p class="answer" id="answer" aria-live="polite"></p>
+  <button class="plaque plaque-quiet" id="reset">Raccrocher tout</button>
+</section>
+
+<main class="board-wrap">
+  <div class="board" id="board" role="group" aria-label="Plateau de 24 portraits"></div>
+  <canvas id="gl" aria-hidden="true"></canvas>
+</main>
+
+<p class="note" id="note"></p>
+<script type="module" src="js/board.js"></script>
+</body>
+</html>

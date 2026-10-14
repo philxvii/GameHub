@@ -85,6 +85,37 @@ vaut ~0,3 mm : l'erreur de position est ~60 fois plus petite. Les normales 8 bit
 encore être jugées au rendu (reflets de la peau). **Aucune étape n'est retenue avant le banc
 d'images** (yeux, bouche, 6 états).
 
+### Étapes mesurées au banc d'images (cloud, SwiftShader, 2026-10-14)
+
+Référence `build/bench/ict-ref` (personnage d'origine + V4.1 optimisée). Rendu déterministe :
+deux bancs de la référence sont identiques au pixel. Zones yeux et bouche recalées sur les
+yeux et la bouche (le premier calage centrait la « bouche » sur le nez). Écarts : pixels
+changés de plus de 8 niveaux (p8) et SSIM ; « pire » = zone ou gros plan le plus touché.
+
+| Étape (cumulée) | Poids | 6 états p8 / SSIM | Yeux (pire) | Bouche (pire) | Gros plans (pire) | Décision |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1. coques retirées | 15 054 836 o | 0 % / 1,0000 | identique | identique | identique | gardée |
+| 2. positions + expressions 16 bits | 11 466 532 o | 0,01 % / 0,9998 | 0,9992 | 0,9986 | 0,9986 | gardée |
+| 3. + normales 8 bits, UV 16 bits | 11 119 804 o | 0,01 % / 0,9997 | 0,9991 | 0,9985 | 0,9987 | gardée |
+| 4. + textures buste ½ et crâne ½ (JPEG 85) | 10 360 156 o | 0,02 % / 0,9997 | 0,9991 | 0,9985 | 0,9971 (0,4 % px, bouche surprise) | crâne écarté : il couvre aussi le cou |
+| **4c. + texture du buste seule ½ (jamais affichée : pull uni)** | — | — | — | — | — | **gardée** |
+| **5. + meshopt (`-cc`) = candidat** | **2 849 336 o** | **0,01 % / 0,9996** | **0,9987 (0,09 % px)** | **0,9986** | **0,9984** | **candidat G1** |
+| 5 avec crâne ½ | 2 682 308 o | 0,02 % / 0,9996 | 0,9987 | 0,9986 | 0,9978 (0,15 % px) | écartée (−167 Ko seulement) |
+| 3b. variante 14 bits | 10 565 404 o (non compressé) | 0,03 % / 0,9995 | 0,9983 | 0,9972 | 0,9974 | écartée (écart double pour un gain faible) |
+| 6. variante sans 23 expressions non pilotées | 2 159 268 o | 0,02 % / 0,9996 | 0,9986 | 0,9987 | 0,9978 | **non retenue sans accord** (−0,69 Mo) |
+
+Candidat : `models/character-01-ict-opt.glb` (md5 `1c165146ebb553b7b6557c13e38eee2e`), **−82,7 %**,
+reproductible :
+`python tools/character-ict/optimize_character.py models/character-01-ict.glb models/character-01-ict-opt.glb --drop-shells --tex body=jpeg:85@0.5 --pack "-vp 16 -vt 16 -cc"`.
+Mêmes 214 311 triangles et 31 draw calls par carte (les coques étaient déjà masquées), analyse
+du GLB plus rapide en cloud (~155 ms contre ~280 ms). `test-proto.js` sur le candidat : 13/15,
+mêmes deux échecs SwiftShader que l'original, 29/29 expressions pilotées. Critères du plan
+tenus (≤ 0,35 % et SSIM ≥ 0,995 partout). Planche : `reports/ict-opt/planche.jpg` (original,
+optimisé, écart ×4). Comparaison en direct : `compare.html?set=ict-opt`. L'orchestrateur
+utilise cette recette.
+
+⛔ **G1** en attente : l'utilisateur juge la planche (et en direct sur le PC). Aucune bascule.
+
 ## L2 — pipeline et distribution des 24
 
 | Livrable | État |
@@ -96,7 +127,47 @@ d'images** (yeux, bouche, 6 états).
 | Non-régression | sans `--id` : `register` + `bake` + `fit` donnent les mêmes 20 fichiers (md5) qu'avant la modification ; `build_ict.py` → `a66f9c28…` (identique au modèle versionné) ; `gen_cards.py hair-curly-v41` → source V4.1 inchangée |
 | `tools/pipeline/build_character.py` + `README.md` | testé de bout en bout avec un personnage jetable (photos et forme de `character-01` copiées sous `character-02`, puis supprimées) : arrêts propres aux photos, à Hunyuan et à la coiffure ; `register` → `build_ict` → `gen_cards` → `optimize` passent (3 min 20) |
 
-Constat : `register.py`, `bake.py`, `fit.py` sont déterministes mais ne redonnent pas les
+### Écart de 6,5° de register / bake / fit : cause (2026-10-14)
+
+**Ce n'est pas du hasard, et il n'y a pas de graine à fixer.** Aucun appel aléatoire dans
+les trois scripts ; le k-means interne de `cv2.grabCut` utilise le générateur d'OpenCV à
+graine fixe ; deux exécutions cloud donnent les mêmes 20 fichiers à l'octet près.
+
+**C'est l'environnement, amplifié par une recherche mal conditionnée :**
+
+1. Le maillage est identique PC / cloud : les 44 893 sommets du buste de `textured.npz`
+   versionné (PC) et cloud coïncident à 0,0 près (remaillage voxel, marching cubes,
+   simplification : mêmes résultats). Le décodage JPEG aussi (cv2 / PIL : 0 pixel différent).
+2. L'écart naît dans l'analyse des photos : masque `grabCut` (OpenCV) pour la silhouette, et
+   repères MediaPipe (XNNPACK) pour les trois-quarts, que `bake.py` recale sur ±35°. Ces deux
+   calculs en virgule flottante varient d'une machine à l'autre (jeu d'instructions, build).
+   Indice du même ordre : xatlas donne 49 251 sommets d'UV sur le PC, 49 321 dans le cloud,
+   pour le même maillage.
+3. L'objectif du recalage est plat : avec le masque cloud, ±2° de lacet sur la vue de face
+   ne changent l'IoU que de 0,03 % à 0,4 %, et les paramètres du PC y obtiennent même une IoU
+   un peu meilleure (0,968) que l'optimum trouvé par la descente cloud (0,964). La descente
+   par coordonnées s'arrête donc là où la pousse un écart infime en amont : plusieurs degrés.
+
+Conséquences : `character-01` garde ses intermédiaires versionnés (rien ne change). Pour les
+autres personnages, **produire toute la chaîne register → bake → fit → build_ict sur une seule
+machine (le PC) et versionner ses intermédiaires**, comme pour `character-01` ; ne jamais
+mélanger des étapes faites sur deux machines. Piste d'amélioration (non faite) : rendre le
+recalage moins sensible (grille globale fine en lacet avant la descente, ou recalage par
+repères sur toutes les vues).
+
+Contrôle à faire sur le PC (localise la première étape qui diverge) : relancer
+`register.py` puis comparer à ces empreintes cloud.
+
+| Fichier | md5 cloud |
+| --- | --- |
+| `build/mesh.npz` | `099b145fcc03351bb3fe27449b9da65a` |
+| `build/masks/front.png` | `b1d1c02250f11d58f87d19e49e6f581f` |
+| `build/masks/three-quarter-left.png` | `846c1604e928dc78dbc8e65840e9a909` |
+| `build/masks/three-quarter-right.png` | `9e33e219cf800ce8a79652b433e95700` |
+| `build/masks/profile-left.png` | `df9b47bdf1cca73f268ae08204a4b068` |
+| `build/masks/profile-right.png` | `6b03faab488b70a37226e1e0d149cd8a` |
+
+Constat initial : `register.py`, `bake.py`, `fit.py` sont déterministes mais ne redonnent pas les
 intermédiaires versionnés de `character-01` (jusqu'à 6,5° de lacet d'écart dans
 `registration.json`) ; ceux-ci viennent d'un état antérieur des scripts. Les intermédiaires
 versionnés restent la référence de `character-01` ; ils ont été restaurés après les essais.
@@ -148,6 +219,25 @@ n'est qu'une bande sous le cou au bord déchiré ; le bas du cadre doit rester a
 (`bottom = min.y + 0,095` dans `da.js`).
 
 ⛔ **G-DA** en attente : choix (ou mélange) de l'utilisateur.
+
+## L3 — plateau (en cours, avant la déclinaison multijoueur)
+
+Première version solo, à transformer en partie à deux contre un bot (`net-mock.js`,
+`bot.js`) une fois la déclinaison multijoueur de la DA validée : `board.html`, `js/board.js`,
+`css/board.css`, `css/tokens.css` (jetons encore ceux du salon, à passer au casting),
+`js/staging.js` (mise en scène partagée avec `da.html`), `tools/test-board.js`.
+Architecture : un seul `WebGLRenderer` sur un canevas posé sur le plateau (il défile avec la
+page), une scène partagée (un mur, une carte d'ombre 1024², seul le personnage peint est
+visible), pixels conservés (`preserveDrawingBuffer`) : seules les cartes qui changent sont
+repeintes (survol à chaque image, repos ~1 fois par seconde, plein régime pendant un
+clignement ou un changement d'expression). Carte écartée : sa dernière image devient une
+`<img>` animée en CSS. Cadrage commun calculé sur le personnage habillé (V4.1) sans les
+coques : même cadre pour l'original et l'optimisé.
+Cloud (SwiftShader) : 24 cartes peintes en 3,2 s ; `test-board.js` 7/8 : chargement,
+24 cartes, survol (yeux puis tête), poses de repos, clic, clavier, question du bot ; la
+mesure de repeinte dépasse le délai de 60 s de `cdp.js` en rendu logiciel (à refaire sur le PC).
+Mémoire GPU : 28 géométries, 235 textures (dont surtout les textures d'os des 24 squelettes),
+23 programmes.
 
 ## Validations de l'utilisateur
 

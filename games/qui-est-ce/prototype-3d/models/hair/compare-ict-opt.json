@@ -1,0 +1,4 @@
+[
+ {"id": "ict", "name": "Personnage d'origine", "note": "16,5 Mo", "file": "models/hair/hair-curly-v41-opt.glb", "char": "models/character-01-ict.glb"},
+ {"id": "ict-opt", "name": "Personnage optimisé", "note": "2,85 Mo", "file": "models/hair/hair-curly-v41-opt.glb", "char": "models/character-01-ict-opt.glb"}
+]

@@ -266,12 +266,12 @@ function setupBench(c) {
     const q = c.model.getObjectByName('Head').getWorldQuaternion(new THREE.Quaternion());
     const iod = eL.distanceTo(eR), mid = eL.clone().add(eR).multiplyScalar(0.5);
     const mouth = mid.clone()
-      .addScaledVector(v3().set(0, -1, 0).applyQuaternion(q), 1.05 * iod)
-      .addScaledVector(v3().set(0, 0, 1).applyQuaternion(q), 0.25 * iod);
+      .addScaledVector(v3().set(0, -1, 0).applyQuaternion(q), 1.35 * iod)
+      .addScaledVector(v3().set(0, 0, 1).applyQuaternion(q), 0.35 * iod);
     const a = toPx(eL), b = toPx(eR), m = toPx(mid), mo = toPx(mouth);
     const d = Math.hypot(a.x - b.x, a.y - b.y);
     const rect = (p, w, h) => [p.x - w / 2, p.y - h / 2, p.x + w / 2, p.y + h / 2].map(Math.round);
-    return { d, eyes: rect(m, 2.3 * d, 0.95 * d), mouth: rect(mo, 1.5 * d, 1.0 * d), eyesC: m, mouthC: mo };
+    return { d, eyes: rect(m, 2.3 * d, 0.95 * d), mouth: rect(mo, 1.4 * d, 0.8 * d), eyesC: m, mouthC: mo };
   }
   window.__bench = {
     info() {
@@ -289,7 +289,7 @@ function setupBench(c) {
       for (let i = 0; i < 300; i++) { simT += 1 / 60; c.rig.update(1 / 60, simT, looks[look]); }
       const z = faceZones();
       if (opts.zoom) {
-        const w = (opts.zoom === 'eyes' ? 2.6 : 1.9) * z.d, h = w * BH / BW;
+        const w = (opts.zoom === 'eyes' ? 1.7 : 1.5) * z.d, h = w * BH / BW;
         const ctr = opts.zoom === 'eyes' ? z.eyesC : z.mouthC;
         c.stage.camera.setViewOffset(BW, BH, ctr.x - w / 2, ctr.y - h / 2, w, h);
       }

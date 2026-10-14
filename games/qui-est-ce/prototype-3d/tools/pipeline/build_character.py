@@ -28,7 +28,7 @@ from paths import DEFAULT, paths                                     # noqa: E40
 VIEWS = ['front', 'three-quarter-left', 'three-quarter-right', 'profile-left', 'profile-right']
 PY = sys.executable
 # Recette d'optimisation candidate (lot L1, en attente de la validation G1 de l'utilisateur).
-OPT = ['--drop-shells', '--tex', 'body=jpeg:85@0.5,scalp=jpeg:85@0.5', '--pack', '-vp 16 -vt 16 -cc']
+OPT = ['--drop-shells', '--tex', 'body=jpeg:85@0.5', '--pack', '-vp 16 -vt 16 -cc']
 
 
 def run(cmd):
