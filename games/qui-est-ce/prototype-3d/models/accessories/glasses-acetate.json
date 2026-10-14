@@ -1,0 +1,30 @@
+{
+ "style": "acetate",
+ "nom": "Acétate écaille",
+ "triangles": 24760,
+ "degagement_cm": {
+  "neutre": {
+   "dedans": 0,
+   "min_cm": 0.055
+  },
+  "sourcils leves": {
+   "dedans": 0,
+   "min_cm": 0.058
+  },
+  "sourire": {
+   "dedans": 0,
+   "min_cm": 0.06
+  },
+  "surprise": {
+   "dedans": 0,
+   "min_cm": 0.052
+  },
+  "yeux fermes": {
+   "dedans": 0,
+   "min_cm": 0.06
+  },
+  "cils (distance mini)": 0.339
+ },
+ "largeur_face_cm": 17.07,
+ "octets": 158588
+}

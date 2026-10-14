@@ -11,6 +11,8 @@ Une entrée par étape terminée, poussée avec son commit.
 | Date | Moment | Solde annoncé | Remarque |
 | --- | --- | --- | --- |
 | 2026-10-14 | démarrage (L0) | 100 $ | `/cost` indisponible dans la session web |
+| 2026-10-14 | après DA (choix B) | 84 $ | |
+| 2026-10-14 | mode autonome, avant L4 | 78 $ | enveloppes restantes : L4 ≈ 15 $, L3 ≈ 17 $, L5 ≈ 14 $, L6 ≈ 7 $, R ≈ 12 $ |
 
 ## Environnement cloud (L0)
 
@@ -261,6 +263,30 @@ Cloud (SwiftShader) : 24 cartes peintes en 3,2 s ; `test-board.js` 7/8 : chargem
 mesure de repeinte dépasse le délai de 60 s de `cdp.js` en rendu logiciel (à refaire sur le PC).
 Mémoire GPU : 28 géométries, 235 textures (dont surtout les textures d'os des 24 squelettes),
 23 programmes.
+
+## L4 — accessoires et pilosité (en cours)
+
+Outils : `tools/accessories/head.py` (peau skin + scalp, 53 expressions de la peau, yeux,
+nez, arête du nez par lancer de rayon, oreilles ; test intérieur / extérieur par parité de
+rayons sur 3 directions, vote majoritaire — la distance signée au sommet le plus proche est
+fausse près des structures fines comme l'helix), `common.py` (balayage de profil, triangles
+réorientés selon leurs normales, GLB PBR + extensions, gltfpack `-vp 16 -vt 14 -cc`),
+`sheet.py` (planche sans / avec + rangée « carte 120 px »). `compare.js` : `?acc=a.glb,b.glb`
+(rattachés à l'os Head comme la coiffure, avant la création du rig) ; banc :
+`bench_character.js … --acc`.
+
+| Élément | Fichier | Poids | Triangles | Dégagement (5 expressions extrêmes) | Décision |
+| --- | --- | --- | --- | --- | --- |
+| Lunettes acétate écaille | `models/accessories/glasses-acetate.glb` | 158 588 o | 24 760 | 0 sommet dans la tête ; ≥ 0,52 mm de la peau ; ≥ 3,4 mm des cils | auto-validé |
+| Lunettes métal fin noir mat | `models/accessories/glasses-metal.glb` | 62 092 o | 14 696 | 0 sommet dans la tête ; ≥ 0,34 mm ; ≥ 2,7 mm des cils | auto-validé |
+
+Ajustement au visage : verres à ~1,2 cm de la cornée, monture cambrée (galbe) et inclinée
+(pantoscopique 8-9°), pont posé sur l'arête du nez, découpe nasale (le nez de ce personnage
+penche de 3,5 mm à droite), branches à 4 mm de la tempe, par-dessus l'helix puis derrière
+l'oreille. Verres antireflet (alpha 0,035, IOR 1,5). Corrections faites en route : branches
+qui traversaient l'oreille, coin nasal dans le nez, verres laiteux, monture dorée illisible à
+120 px (remplacée par du noir mat), pont vu de l'intérieur (enroulement des triangles).
+Planche : `reports/accessories/lunettes.jpg` (sans / acétate / métal, 10 états, taille carte).
 
 ## Validations de l'utilisateur
 

@@ -3,7 +3,7 @@
 // par personnage.
 //
 //   python -m http.server 4173                                   # racine du depot
-//   node games/qui-est-ce/prototype-3d/tools/character-ict/bench_character.js models/character-01-ict.glb build/bench/ict-ref [--no-time]
+//   node games/qui-est-ce/prototype-3d/tools/character-ict/bench_character.js models/character-01-ict.glb build/bench/ict-ref [--no-time] [--acc a.glb,b.glb]
 //
 // Ecrit <dossier>/<etat>.png, <dossier>/zones.json (yeux et bouche, en pixels, par etat) et
 // <dossier>/stats.json : poids, temps d'analyse du GLB, triangles, draw calls, cout d'une
@@ -16,6 +16,7 @@ const { localCdn } = require('../local-cdn');                  // THREE_LOCAL=1 
 
 const [glb, outDir, ...rest] = process.argv.slice(2);
 const NO_TIME = rest.includes('--no-time');           // machine sans GPU : les temps ne valent rien
+const ACC = rest.includes('--acc') ? rest[rest.indexOf('--acc') + 1] : '';   // accessoires (liste separee par des virgules)
 if (!glb || !outDir) { console.error('usage : bench_character.js <personnage.glb> <dossier>'); process.exit(2); }
 const HAIR = 'models/hair/hair-curly-v41-opt.glb';
 const ROOT = path.join(__dirname, '..', '..');
@@ -25,7 +26,7 @@ const ORIGIN = process.env.PROTO_ORIGIN || 'http://localhost:4173';
 const GPU_FLAGS = process.platform === 'win32'
   ? ['--ignore-gpu-blocklist', '--enable-gpu', '--use-angle=d3d11']
   : ['--ignore-gpu-blocklist', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
-const URL = `${ORIGIN}/games/qui-est-ce/prototype-3d/compare.html?bench=${HAIR}&char=${glb}`;
+const URL = `${ORIGIN}/games/qui-est-ce/prototype-3d/compare.html?bench=${HAIR}&char=${glb}${ACC ? '&acc=' + ACC : ''}`;
 // [nom, expression, regard, options] : les 6 etats de jeu (memes noms que bench_hair.js),
 // puis yeux fermes et gros plans. L'ordre est fixe : le temps simule avance d'un etat a l'autre.
 const STATES = [
@@ -72,7 +73,7 @@ const STATES = [
     }
     const stats = { glb, bytes: info.charBytes, parseMs: +info.charParseMs.toFixed(1), triangles: info.triangles,
       drawCalls: calls, frameMs: ms.length ? +ms[2].toFixed(2) : null, frameMsAll: ms.map((x) => +x.toFixed(2)),
-      hair: HAIR, hairBytes: info.bytes, gpu, errors: p.errors() };
+      hair: HAIR, hairBytes: info.bytes, acc: info.acc, gpu, errors: p.errors() };
     fs.writeFileSync(path.join(ROOT, outDir, 'stats.json'), JSON.stringify(stats, null, 1));
     console.log(JSON.stringify(stats));
   } finally {

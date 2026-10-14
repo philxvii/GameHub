@@ -18,6 +18,9 @@ const Q = new URLSearchParams(location.search);
 // d'un jeu peut aussi porter son propre personnage ("char" dans le JSON). Le cadrage est
 // toujours calcule sur BASE : un personnage allege (coquilles retirees) garde la meme camera.
 const CHAR = Q.get('char') || BASE;
+// ?acc=models/accessories/a.glb,b.glb : accessoires rattaches a l'os Head (comme la coiffure),
+// pour toutes les cartes ; une version d'un jeu peut porter sa propre liste ("acc" dans le JSON).
+const ACC = (Q.get('acc') || '').split(',').filter(Boolean);
 // Par defaut : V4.1 originale contre V4.1 optimisee (coiffure validee). Les autres
 // jeux (?set=...) lisent models/hair/compare-<set>.json.
 const SET = Q.get('set') || 'opt';
@@ -216,11 +219,20 @@ async function main() {
         o.material.shadowSide = THREE.DoubleSide;
       });
     }
-    const rig = new CharacterRig(model);
+    const accs = v.acc || ACC;
+    let accBytes = 0;
+    for (const url of accs) {
+      const { gltf: ag, bytes: ab } = await loadGlb(url);
+      accBytes += ab; bytes += ab;
+      model.add(ag.scene); model.updateMatrixWorld(true);
+      model.getObjectByName('Head').attach(ag.scene);          // l'accessoire suit la tete
+      ag.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    }
+    const rig = new CharacterRig(model);                       // apres les accessoires : barbe a expressions comprise
     rig.setExpression(state.expr);
     $('.loading', el).hidden = true;
     const card = { el, frameEl: $('.frame', el), stage, model, rig, ms: 0, hair: hairInfo,
-      char: { url: charUrl, bytes: ch.bytes, parseMs: ch.parseMs } };
+      char: { url: charUrl, bytes: ch.bytes, parseMs: ch.parseMs }, acc: { urls: accs, bytes: accBytes } };
     $('.w', el).textContent = `${(bytes / 1048576).toFixed(1)} Mo`;
     $('.t', el).textContent = countTriangles(model).toLocaleString('fr-FR');
     cards.push(card);
@@ -278,7 +290,7 @@ function setupBench(c) {
       const g = hairMesh.geometry;
       return { bytes: c.hair.bytes, parseMs: c.hair.parseMs, hairTriangles: g.index.count / 3,
         vertices: g.attributes.position.count, triangles: countTriangles(c.model),
-        char: c.char.url, charBytes: c.char.bytes, charParseMs: c.char.parseMs };
+        char: c.char.url, charBytes: c.char.bytes, charParseMs: c.char.parseMs, acc: c.acc };
     },
     // Pose stabilisee (5 s simulees a 60 Hz) puis une image ; renvoie l'image en PNG.
     // opts.closed : yeux fermes ; opts.zoom : 'eyes' | 'mouth', gros plan (meme camera,
