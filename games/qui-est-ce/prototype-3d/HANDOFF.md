@@ -5,7 +5,7 @@ Passation du prototype 3D du futur « Qui est-ce ? » de GameHub (roulia.me).
 qui n'a pas l'historique de la conversation d'origine.
 
 Branche : `proto/qui-est-ce-3d` (jamais `main` : pousser sur `main` déploie roulia.me).
-Dernière mise à jour : 2026-10-14. Le travail en cloud suit [CLOUD_PLAN.md](CLOUD_PLAN.md)
+Dernière mise à jour : 2026-10-14 (fin de la mission cloud). Le travail en cloud suit [CLOUD_PLAN.md](CLOUD_PLAN.md)
 et note son avancement dans [CLOUD_LOG.md](CLOUD_LOG.md).
 
 ---
@@ -18,10 +18,27 @@ et note son avancement dans [CLOUD_LOG.md](CLOUD_LOG.md).
   l'utilisateur (2026-10-08).
 - **Coiffure : V4.1 « volume bouclé » validée**, puis **optimisée** de 16,4 Mo à 1,83 Mo
   sans différence visible (2026-10-08). C'est la coiffure de référence.
-- **Prochaine étape décidée : optimiser le GLB du personnage** (15,7 Mio), avec la même
-  méthode que pour les cheveux. Rien n'a encore été fait sur ce point.
-- Le jeu en production (`games/qui-est-ce/index.html`) **n'utilise pas encore** ce prototype.
-  Ne pas le modifier tant que l'intégration n'est pas décidée.
+- **Personnage optimisé** (session cloud du 2026-10-14) : `models/character-01-ict-opt.glb`,
+  **2,85 Mo** au lieu de 16,5 Mo, sans différence mesurable (SSIM 0,9996, yeux et bouche
+  ≥ 0,998). G1 auto-validé en mode autonome : à confirmer à l'œil (`reports/ict-opt/planche.jpg`).
+- **Pipeline des 24** (`tools/pipeline/`, `data/roster.json`, `data/prompts/`) : prêt ; seuls
+  les gestes du PC manquent (photos Gemini, Hunyuan). Les 23 autres n'existent pas encore.
+- **DA retenue** : « casting » + révélation du salon + revanche en un clic, déclinée sur tous
+  les écrans (`partie.html`, `reports/da/`).
+- **Accessoires** (lot L4, `models/accessories/`) : lunettes acétate et métal noir, barbe,
+  moustache, barbe complète (avec expressions), casquette (+ coiffure sous casquette),
+  créoles, perles, variante rasée. Planches dans `reports/accessories/`.
+- **Jeu jouable** : `board.html` (prototype) et **`games/qui-est-ce/v3d/`** (entrée du jeu,
+  générée depuis `board.html`) : partie complète contre un bot, révélation, statistiques
+  locales, titres, planche contact PNG, revanche ; 24 cartes vivantes peintes par un seul
+  `WebGLRenderer`. En ligne : règles `qec3` et `js/game/net-firebase.js` testés sur
+  l'émulateur (342/342), **jamais déployés** ; la partie à deux navigateurs reste à faire sur
+  le PC. Les 23 personnages manquants sont des **substituts** (le 01 habillé selon ses
+  attributs), marqués temporaires.
+- **Tout ce qui reste à faire sur le PC** : [PC_RUNBOOK.md](PC_RUNBOOK.md). Résumé de la
+  mission cloud : [FIN_DE_MISSION.md](FIN_DE_MISSION.md).
+- Le jeu en production (`games/qui-est-ce/index.html`, nœud `qec2`) **n'utilise pas** ce
+  prototype et n'a pas été modifié.
 - Toute la chaîne se **reproduit à l'octet près** depuis la branche (vérifié le 2026-10-14) :
   `build_ict.py` → `character-01-ict.glb`, `gen_cards.py hair-curly-v41` → `hair-curly-v41.glb`,
   `optimize_hair.py` + `meshopt_pack.mjs` → `hair-curly-v41-opt.glb`.
@@ -61,6 +78,10 @@ temps réel** (Three.js, navigateur, gratuit, sans build) :
 | Coiffure V4.1 « volume bouclé » (cartes procédurales) | `models/hair/hair-curly-v41.glb` (source) | mate, boucles variées, mèches groupées et rebelles |
 | **Coiffure V4.1 optimisée** | `models/hair/hair-curly-v41-opt.glb` | **à utiliser** ; 1,83 Mo |
 | Rendu : Three.js r186 (CDN jsdelivr), ACES, RoomEnvironment, ombre PCF | `js/compare.js` | un seul `WebGLRenderer` découpé en cartes (scissor) |
+| Distribution des 24 (G2) | `data/roster.json` | déléguée par l'utilisateur |
+| DA « casting » + révélation du salon + revanche | `css/tokens.css`, `partie.html`, `js/staging.js` | choisie par l'utilisateur ; déclinaison multijoueur auto-validée |
+| Personnage optimisé (G1, auto-validé) | `models/character-01-ict-opt.glb` | à confirmer à l'œil |
+| Accessoires, plateau, jeu en ligne (G3, G4, G5 auto-validés) | voir `DECISIONS.md` | à confirmer |
 
 Planches de référence : [reports/hair-v41/](reports/hair-v41/) (`a-contre-b-v41.jpg` :
 ancienne #4 contre V4.1 ; `originale-contre-optimisee.jpg` : les 6 états).
@@ -98,6 +119,13 @@ Tous les chemins sont relatifs à `games/qui-est-ce/prototype-3d/`.
 | Personnage validé | `models/character-01-ict.glb` |
 | Coiffure validée (à utiliser) | `models/hair/hair-curly-v41-opt.glb` |
 | Coiffure source (entrée de l'optimiseur) | `models/hair/hair-curly-v41.glb` |
+| Personnage optimisé (par défaut dans le jeu) | `models/character-01-ict-opt.glb` (recette : `tools/character-ict/optimize_character.py`) |
+| Jeu 3D : plateau, réseau, bot, statistiques | `board.html`, `js/game/*.js`, `css/board.css` ; entrée `../v3d/index.html` (`tools/make_v3d.py`) |
+| Règles et tests en ligne | `../../../firebase/build-rules.js` (`qec3`), `../../../firebase/tests/qec3.test.js` |
+| Accessoires (générateurs et modèles) | `tools/accessories/*.py`, `models/accessories/` |
+| Pipeline des personnages | `tools/pipeline/` (README), `data/roster.json`, `data/prompts/` |
+| Tests et mesures | `tools/test-board.js`, `tools/test-game-logic.mjs`, `tools/measure_pc.js` |
+| Journal, décisions, questions, dossier PC | `CLOUD_LOG.md`, `DECISIONS.md`, `QUESTIONS.md`, `PC_RUNBOOK.md` |
 | Jeu de comparaison par défaut (V4.1 originale / optimisée) | `models/hair/compare-opt.json` |
 | Maillage Hunyuan (entrée du buste) | `models/hunyuan2mv-3views-shape.glb` |
 | Photos de référence haute définition | `refs/front.jpg`, `refs/three-quarter-{left,right}.jpg`, `refs/profile-{left,right}.jpg` |
@@ -182,7 +210,25 @@ Machine de référence : portable Windows 11, **Intel Iris Xe** (ANGLE D3D11), *
   textures PNG 0,31, couleurs 0,18. Tête ICT 26 719 sommets + buste 6 179. Aucune
   extension glTF (ni quantification, ni compression). 13 matériaux, 7 images.
 
+## Mesures cloud (2026-10-14, SwiftShader : poids et comptes valables, temps sans valeur)
+
+| Mesure | Valeur |
+| --- | --- |
+| `character-01-ict-opt.glb` | 2,85 Mo (16,5 Mo à l'origine), mêmes nœuds, articulations, 53 expressions, matériaux |
+| GLB chargés par le plateau (24 cartes, tous les accessoires) | 14,1 Mo |
+| Plateau : géométries / textures / programmes | 42 / 256 / 27 |
+| Accessoires | lunettes 159 et 62 Ko, barbe 2,23 Mo, moustache 0,72 Mo, barbe complète 2,87 Mo, casquette 91 Ko (+ coiffure dessous 390 Ko), créoles 14 Ko, perles 5 Ko |
+
+**À mesurer sur le PC** (FPS au survol, repeinte des 24, mémoire GPU, chargement) :
+`node games/qui-est-ce/prototype-3d/tools/measure_pc.js` → `reports/pc/résumé.md`.
+
 ## Prochaine étape
+
+Suivre [PC_RUNBOOK.md](PC_RUNBOOK.md) : mesures GPU, partie en ligne à deux navigateurs,
+photos des 23 personnages, fabrication (`build_character.py --all-ready`), puis brancher le
+chargement par fiche dans `js/game/board3d.js` dès le deuxième personnage.
+
+### Historique : lot « optimisation ICT » (fait dans le cloud, voir CLOUD_LOG.md)
 
 **Lot « optimisation ICT »** : réduire `character-01-ict.glb` sans dégrader les yeux, les
 paupières, les cils, la bouche, les dents, les gencives, la langue, les expressions, la

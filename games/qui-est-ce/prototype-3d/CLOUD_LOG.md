@@ -13,6 +13,7 @@ Une entrée par étape terminée, poussée avec son commit.
 | 2026-10-14 | démarrage (L0) | 100 $ | `/cost` indisponible dans la session web |
 | 2026-10-14 | après DA (choix B) | 84 $ | |
 | 2026-10-14 | mode autonome, avant L4 | 78 $ | enveloppes restantes : L4 ≈ 15 $, L3 ≈ 17 $, L5 ≈ 14 $, L6 ≈ 7 $, R ≈ 12 $ |
+| 2026-10-14 | fin de L5 | 53 $ | L6 et R seulement ; rien d'autre n'est entrepris |
 
 ## Environnement cloud (L0)
 
@@ -285,17 +286,81 @@ le PC** : FPS au survol, temps de repeinte des 24 cartes, mémoire GPU.
 Captures : `reports/board/` (accueil, choix du secret, mon tour, répondre, cartes écartées,
 révélation, adversaire parti, mobile, planche contact).
 
+## L5 — jeu en ligne (Firebase, émulateur seulement)
+
+**Règles** (`firebase/build-rules.js`, régénérées, **non déployées**) : nouveau nœud
+`qec3/<code>` (le jeu en production garde `qec2`, intact) et `qec3Secret/<code>/<uid>` (le
+secret : lisible et modifiable par son seul propriétaire, figé à la fin de la manche). Écritures
+permises : créer un salon (en s'asseyant en `p1`), prendre la place libre, sa propre fiche, les
+coups du tour **à son tour seulement**, la réponse **par l'autre joueur seulement** (celui qui
+pose la question ne peut pas se répondre), le verdict d'une désignation par la cible, la
+publication de son secret à la fin, la revanche ; l'hôte seul supprime le salon. Les règles
+de transition (`database.rules.transition.json`) contiennent aussi `qec3`.
+
+**Réseau** : `js/game/net-firebase.js`, même interface que `net-mock.js`
+(`create / join / subscribe / send`). Sans serveur de confiance, chaque client honnête juge
+la désignation adverse avec son propre secret, publie son secret à la fin, et l'hôte relance
+la manche quand les deux veulent la revanche. Limite connue : un client modifié peut mentir
+sur son propre secret (dire « raté » à une bonne désignation) ; il ne peut ni lire le secret
+adverse ni jouer à la place de l'autre. Une vraie garantie demanderait une Cloud Function
+(hors périmètre, notée dans QUESTIONS.md).
+
+**Tests contre l'émulateur** (`firebase/tests/qec3.test.js`, 3 tests : partie complète avec
+revanche, mauvaise désignation, intrus) : **342/342** avec le reste de la suite. Dans le cloud,
+`firebase emulators:exec` échoue (« request blocked » au chargement des règles, proxy) : le
+jar de l'émulateur est lancé directement
+(`java -jar ~/.cache/firebase/emulators/firebase-database-emulator-*.jar --port 9000`) et
+les tests le visent. Sur le PC, la commande habituelle suffit.
+
+**Entrée du jeu** : `games/qui-est-ce/v3d/index.html`, **générée** par
+`tools/make_v3d.py` à partir de `board.html` (une seule source de balisage) : `<base href>`
+vers `prototype-3d/`, `shared/maintenance.js` en tête, `window.QE_ONLINE = true`. Le bloc
+« en ligne » de l'accueil (nom, créer un salon, rejoindre avec un code `ABCD-12`) charge
+`shared/firebase.js` (compte anonyme) et le SDK à la demande ; la partie contre le bot reste
+sur `net-mock.js`. `tools/check-links.js` comprend maintenant `<base href>` (comme un
+navigateur) : **13/13**. Partie complète contre le bot sur `v3d/` :
+`QE_PAGE=v3d node tools/test-board.js` **12/12** (l'interrupteur de maintenance de production
+est injoignable depuis le cloud ; l'erreur réseau correspondante est filtrée).
+
+**À faire sur le PC** (gstatic est refusé par le réseau du cloud) : la partie en ligne dans
+deux navigateurs (deux profils Chrome, car un navigateur = un compte anonyme partagé entre
+ses onglets), contre l'émulateur (`?emu`) ; tentatives de triche depuis la console. Voir
+`PC_RUNBOOK.md`.
+
+**Roster dynamique** : chaque fiche de `data/roster.json` qui n'a pas encore son GLB est un
+substitut (personnage 01 habillé, rasé, cheveux teintés selon ses attributs), marqué
+TEMPORAIRE dans `js/game/board3d.js`. Ajouter un personnage = déposer son GLB et passer son
+`statut` à `modelise` (le chargement par fiche sera branché avec le deuxième personnage).
+
 ## Validations de l'utilisateur
 
 | Point | Date | Décision |
 | --- | --- | --- |
-| G1 personnage optimisé | | |
+| G1 personnage optimisé | 2026-10-14 | auto-validé en mode autonome (DECISIONS.md), à confirmer à l'œil |
 | G2 distribution des 24 | 2026-10-14 | déléguée par l'utilisateur (« fais ce que tu veux ») : distribution retenue telle quelle |
 | G-DA direction artistique | 2026-10-14 | B « casting » + révélation finale de C + revanche en un clic ; déclinaison multijoueur à valider |
-| G3 plateau | | |
-| G4 accessoires | | |
+| G3 plateau | 2026-10-14 | auto-validé (12/12) |
+| G4 accessoires | 2026-10-14 | auto-validés (planches `reports/accessories/`) |
+| G5 jeu en ligne | 2026-10-14 | auto-validé côté cloud (342/342) ; partie à deux navigateurs au PC |
 
 ## État au retour
 
-À remplir par le lot R : branche, dernier commit, lots terminés, validations en attente,
-mesures à refaire sur le PC (GPU), commandes de reprise.
+- **Branche** : `proto/qui-est-ce-3d` ; dernier commit : `feat(qui-est-ce): passation du
+  travail cloud` (hash : `git log -1`). Rien sur `main`, rien de déployé.
+- **Lots terminés** : L0, L1, L2, DA (déclinaison), L4, L3, L5, L6. Les 23 autres personnages
+  ne sont pas fabriqués (photos et Hunyuan : PC).
+- **Validations** : G2 et G-DA par l'utilisateur ; G1, déclinaison multijoueur, G3, G4, G5
+  auto-validés (à confirmer, `DECISIONS.md`) ; questions ouvertes dans `QUESTIONS.md`.
+- **À mesurer sur le PC** : FPS au repos et au survol du plateau, repeinte des 24 cartes,
+  mémoire GPU, chargement, image du personnage optimisé (Iris Xe, sur secteur) ; partie en
+  ligne à deux navigateurs.
+- **Reprendre** :
+
+```bash
+git fetch && git switch proto/qui-est-ce-3d && git pull
+python -m http.server 4173                                         # racine du dépôt
+node games/qui-est-ce/prototype-3d/tools/measure_pc.js             # -> reports/pc/résumé.md
+```
+
+  puis la suite de [PC_RUNBOOK.md](PC_RUNBOOK.md), et le résumé de
+  [FIN_DE_MISSION.md](FIN_DE_MISSION.md).
