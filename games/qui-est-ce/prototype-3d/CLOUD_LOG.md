@@ -85,6 +85,24 @@ vaut ~0,3 mm : l'erreur de position est ~60 fois plus petite. Les normales 8 bit
 encore être jugées au rendu (reflets de la peau). **Aucune étape n'est retenue avant le banc
 d'images** (yeux, bouche, 6 états).
 
+## L2 — pipeline et distribution des 24
+
+| Livrable | État |
+| --- | --- |
+| `data/roster.json` | 24 personnages fictifs : 12 femmes, 12 hommes ; 8 jeunes, 10 adultes, 6 seniors ; origines variées (dans `apparence`, jamais une question de jeu). `character-01` = Raphaël |
+| `tools/pipeline/check_roster.py` | OK : chaque réponse concerne 3 à 12 personnages (min. 3 : roux, gris, chauve ; max. 12 : yeux marron, genre) ; aucune paire indiscernable ; **4,67 questions en moyenne** avec la meilleure question à chaque tour (minimum théorique 4,58), 5,38 au hasard parmi les questions utiles. Seule paire proche : Farid / Kenji (2 réponses d'écart) |
+| `data/prompts/<id>.md` (24) | générés par `make_prompts.py` : 5 consignes Gemini par personnage sur le modèle de `refs/` (fond gris clair, lumière douce, pull anthracite, bouche fermée, sans accessoire) ; « gauche » = visage tourné vers la gauche de l'image, comme `refs/` |
+| `--id` sur `register.py`, `bake.py`, `fit.py`, `build_ict.py`, `gen_cards.py` | via `tools/pipeline/paths.py` ; `characters/<id>/refs/`, `build/<id>/`, `models/<id>/` |
+| Non-régression | sans `--id` : `register` + `bake` + `fit` donnent les mêmes 20 fichiers (md5) qu'avant la modification ; `build_ict.py` → `a66f9c28…` (identique au modèle versionné) ; `gen_cards.py hair-curly-v41` → source V4.1 inchangée |
+| `tools/pipeline/build_character.py` + `README.md` | testé de bout en bout avec un personnage jetable (photos et forme de `character-01` copiées sous `character-02`, puis supprimées) : arrêts propres aux photos, à Hunyuan et à la coiffure ; `register` → `build_ict` → `gen_cards` → `optimize` passent (3 min 20) |
+
+Constat : `register.py`, `bake.py`, `fit.py` sont déterministes mais ne redonnent pas les
+intermédiaires versionnés de `character-01` (jusqu'à 6,5° de lacet d'écart dans
+`registration.json`) ; ceux-ci viennent d'un état antérieur des scripts. Les intermédiaires
+versionnés restent la référence de `character-01` ; ils ont été restaurés après les essais.
+
+⛔ **G2** en attente : l'utilisateur valide la distribution (attributs, diversité).
+
 ## Validations de l'utilisateur
 
 | Point | Date | Décision |

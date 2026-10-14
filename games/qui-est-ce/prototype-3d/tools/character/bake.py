@@ -15,7 +15,11 @@ from mediapipe.tasks.python import vision, BaseOptions
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROTO = os.path.normpath(os.path.join(HERE, '..', '..'))
-BUILD = os.path.join(PROTO, 'build')
+import sys                                                           # noqa: E402
+sys.path.insert(0, os.path.join(PROTO, 'tools', 'pipeline'))
+from paths import take_id, paths                                     # noqa: E402
+CH = paths(take_id())                                                # --id <personnage> (defaut character-01)
+BUILD = CH.build
 TEX = 2048
 VIEW_BIAS = {'front': 1.7, 'three-quarter-left': 1.0, 'three-quarter-right': 1.0,
              'profile-left': 0.8, 'profile-right': 0.8}
@@ -40,7 +44,7 @@ def depth_map(v, f, r, size):
 
 def original_view(name):
     """Photo source pleine resolution et passage des coordonnees du carre 1024."""
-    img = cv2.imread(os.path.join(PROTO, 'refs', name + '.jpg'))
+    img = cv2.imread(os.path.join(CH.refs, name + '.jpg'))
     H, W = img.shape[:2]
     x0 = (W - H) / 2
     return img, (lambda u, v: ((x0 + u * H / 1024).astype(np.float32), (v * H / 1024).astype(np.float32)))
@@ -100,7 +104,7 @@ def main():
     opt = vision.FaceLandmarkerOptions(base_options=BaseOptions(
         model_asset_path=os.path.join(PROTO, 'tools', 'models', 'face_landmarker.task')), num_faces=1)
     det = vision.FaceLandmarker.create_from_options(opt)
-    res = det.detect(mp.Image.create_from_file(os.path.join(PROTO, 'refs', 'mv', 'front.jpg')))
+    res = det.detect(mp.Image.create_from_file(os.path.join(CH.refs_mv, 'front.jpg')))
     lm = np.array([[q.x, q.y] for q in res.face_landmarks[0]]) * 1024
     r = reg['front']
     dm = depth_map(mesh.vertices, mesh.faces, r, r['size'])
@@ -116,7 +120,7 @@ def main():
     # 3D (issus de la vue de face) retombent sur les reperes detectes dans la photo.
     KEYS = [1, 4, 6, 33, 133, 263, 362, 61, 291, 13, 14, 152, 168, 70, 300, 105, 334, 50, 280, 49, 279]
     for name in ('three-quarter-left', 'three-quarter-right'):
-        res = det.detect(mp.Image.create_from_file(os.path.join(PROTO, 'refs', 'mv', name + '.jpg')))
+        res = det.detect(mp.Image.create_from_file(os.path.join(CH.refs_mv, name + '.jpg')))
         if not res.face_landmarks: continue
         tgt = np.array([[q.x, q.y] for q in res.face_landmarks[0]])[KEYS] * 1024
         r = reg[name]; best = None

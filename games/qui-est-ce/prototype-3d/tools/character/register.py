@@ -15,10 +15,14 @@ from skimage import measure
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROTO = os.path.normpath(os.path.join(HERE, '..', '..'))
-BUILD = os.path.join(PROTO, 'build')
+import sys                                                           # noqa: E402
+sys.path.insert(0, os.path.join(PROTO, 'tools', 'pipeline'))
+from paths import take_id, paths                                     # noqa: E402
+CH = paths(take_id())                                                # --id <personnage> (defaut character-01)
+BUILD = CH.build
 os.makedirs(os.path.join(BUILD, 'masks'), exist_ok=True)
 
-SRC_MESH = os.path.join(PROTO, 'models', 'hunyuan2mv-3views-shape.glb')
+SRC_MESH = CH.hunyuan
 # Lacet initial : le nez pointe vers la gauche de l'image pour les vues « left ».
 VIEWS = {'front': 0, 'three-quarter-left': -48, 'three-quarter-right': 48,
          'profile-left': -90, 'profile-right': 90}
@@ -103,7 +107,7 @@ def main():
     sv, sf = fast_simplification.simplify(lite.vertices.astype(np.float32), lite.faces.astype(np.int32), target_reduction=0.8)
     reg = {}
     for name, phi0 in VIEWS.items():
-        img = cv2.imread(os.path.join(PROTO, 'refs', 'mv', name + '.jpg'))
+        img = cv2.imread(os.path.join(CH.refs_mv, name + '.jpg'))
         size = img.shape[0]
         m = mask_of(img)
         cv2.imwrite(os.path.join(BUILD, 'masks', name + '.png'), m)

@@ -76,7 +76,8 @@ def page(c):
         '1. Ouvrir une **nouvelle conversation** Gemini (génération d\'images, gratuite).',
         '2. Coller la consigne 1 (face). Recommencer jusqu\'à un visage crédible, neutre, bouche fermée.',
         '3. Dans la **même conversation**, coller les consignes 2 à 5 une par une : la même personne doit être reconnaissable.',
-        f"4. Enregistrer en JPEG 1024 × 1024 dans `characters/{c['id']}/refs/` sous les noms indiqués.",
+        f"4. Enregistrer chaque image en JPEG, pleine résolution, dans `characters/{c['id']}/refs/` sous les noms indiqués"
+        " (le pipeline en tire un carré central de 1024 px : la tête doit y tenir entière).",
         f"5. Lancer `python tools/pipeline/build_character.py {c['id']}`.",
         '',
         'Refuser une image si : sourire ou bouche ouverte, accessoire, cheveux coupés par le cadre, fond non uni,',

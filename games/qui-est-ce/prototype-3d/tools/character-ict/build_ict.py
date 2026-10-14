@@ -17,8 +17,12 @@ from mediapipe.tasks.python import vision, BaseOptions
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROTO = os.path.normpath(os.path.join(HERE, '..', '..'))
-BUILD, ICT = os.path.join(PROTO, 'build'), os.path.join(PROTO, 'build-ict')
-OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(PROTO, 'models', 'character-01-ict.glb')
+import sys                                                           # noqa: E402
+sys.path.insert(0, os.path.join(PROTO, 'tools', 'pipeline'))
+from paths import take_id, paths                                     # noqa: E402
+CH = paths(take_id())                                                # --id <personnage> (defaut character-01)
+BUILD, ICT = CH.build, CH.fit                                      # ICT : fit.npz et textures de controle
+OUT = sys.argv[1] if len(sys.argv) > 1 else CH.glb
 TEX = 2048
 sys.path.insert(0, HERE)
 from fit import ICT68, MP68                                        # noqa: E402
@@ -54,7 +58,7 @@ def umeyama(src, dst):
 
 
 # ───────────────────────────────────────────── donnees
-d = np.load(os.path.join(ICT, 'ict.npz'))
+d = np.load(os.path.join(CH.ict, 'ict.npz'))
 fit = np.load(os.path.join(ICT, 'fit.npz'))
 fv, ft, fm, UVt = d['fv'], d['ft'], d['fm'], d['uv']
 mats = list(d['mats']); expr_names = list(d['expr_names'])
@@ -91,11 +95,11 @@ EYE_L = [263, 249, 390, 373, 374, 380, 381, 382, 362, 398, 384, 385, 386, 387, 3
 LIPS_IN = [78, 95, 88, 178, 87, 14, 317, 402, 318, 324, 308, 415, 310, 311, 312, 13, 82, 81, 80, 191]
 photos, holes = {}, {}
 for name in reg:
-    img = cv2.imread(os.path.join(PROTO, 'refs', name + '.jpg'))
+    img = cv2.imread(os.path.join(CH.refs, name + '.jpg'))
     Hh, Ww = img.shape[:2]; x0 = (Ww - Hh) / 2; k = Hh / 1024
     photos[name] = (img, x0, k)
     hole = np.zeros(img.shape[:2], np.uint8)
-    res_ = det.detect(mp.Image.create_from_file(os.path.join(PROTO, 'refs', 'mv', name + '.jpg')))
+    res_ = det.detect(mp.Image.create_from_file(os.path.join(CH.refs_mv, name + '.jpg')))
     if res_.face_landmarks and 'profile' not in name:
         lm = np.array([[q.x, q.y] for q in res_.face_landmarks[0]]) * 1024
         for poly in (EYE_L, EYE_R, LIPS_IN):
@@ -248,7 +252,7 @@ cv2.imwrite(os.path.join(ICT, 'tex_face.jpg'), tex_face); cv2.imwrite(os.path.jo
 # par l'angle 3D a l'axe du regard ; motif de l'iris preleve en polaire sur la photo.
 IRIS_C = {'Left': 473, 'Right': 468}
 EYE_POLY = {'Left': EYE_L, 'Right': EYE_R}
-res_front = det.detect(mp.Image.create_from_file(os.path.join(PROTO, 'refs', 'mv', 'front.jpg')))
+res_front = det.detect(mp.Image.create_from_file(os.path.join(CH.refs_mv, 'front.jpg')))
 LMF = np.array([[q.x, q.y] for q in res_front.face_landmarks[0]]) * 1024
 
 
@@ -528,5 +532,6 @@ ibm = np.stack([np.linalg.inv(np.array([[1, 0, 0, J[n][0]], [0, 1, 0, J[n][1]], 
 gltf.skins.append(G.Skin(name='rig', joints=[jidx[n] for n in JOINTS], skeleton=jidx['Hips'], inverseBindMatrices=acc(ibm, G.FLOAT, G.MAT4)))
 gltf.scenes.append(G.Scene(name='Scene', nodes=[0]))
 gltf.buffers.append(G.Buffer(byteLength=len(buf)))
+os.makedirs(os.path.dirname(os.path.abspath(OUT)), exist_ok=True)
 gltf.set_binary_blob(bytes(buf)); gltf.save_binary(OUT)
 print(f'GLB : {OUT} ({os.path.getsize(OUT) / 1e6:.2f} Mo), tete ICT {len(V)} sommets + buste {len(BV)}, {len(canon)} expressions')

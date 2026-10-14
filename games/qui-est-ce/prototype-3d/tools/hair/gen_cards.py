@@ -16,8 +16,12 @@ import pygltflib as G
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROTO = os.path.normpath(os.path.join(HERE, '..', '..'))
-OUT = os.path.join(PROTO, 'models', 'hair'); os.makedirs(OUT, exist_ok=True)
-CHARACTER = os.path.join(PROTO, 'models', 'character-01-ict.glb')
+import sys                                                           # noqa: E402
+sys.path.insert(0, os.path.join(PROTO, 'tools', 'pipeline'))
+from paths import take_id, paths                                     # noqa: E402
+CH = paths(take_id())                                                # --id <personnage> (defaut character-01)
+OUT = CH.hair; os.makedirs(OUT, exist_ok=True)
+CHARACTER = CH.glb
 ROOT_RGB = np.array([58, 42, 30]) / 255           # racines (sRGB)
 TIP_RGB = np.array([128, 97, 70]) / 255            # pointes, un peu plus claires
 
@@ -321,7 +325,7 @@ def main(only=None):
         path = os.path.join(OUT, sid + '.glb')
         write_glb(path, P, Nm, Tg, UV, C, Fq, tex, st)
         print(f'{sid:11s} {len(pts)} cartes, {len(Fq)} triangles, longueur {np.median(L) / cm:.1f} cm, {os.path.getsize(path) / 1024:.0f} Ko')
-        out.append({'id': sid, 'name': st['name'], 'note': st['note'], 'file': f'models/hair/{sid}.glb'})
+        out.append({'id': sid, 'name': st['name'], 'note': st['note'], 'file': f'{CH.hair_url}{sid}.glb'})
     if not only:
         json.dump(out, open(os.path.join(OUT, 'hairs.json'), 'w', encoding='utf8'), ensure_ascii=False, indent=1)
 

@@ -15,7 +15,11 @@ from mediapipe.tasks.python import vision, BaseOptions
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROTO = os.path.normpath(os.path.join(HERE, '..', '..'))
-OUT = os.path.join(PROTO, 'build-ict')
+import sys                                                           # noqa: E402
+sys.path.insert(0, os.path.join(PROTO, 'tools', 'pipeline'))
+from paths import take_id, paths                                     # noqa: E402
+CH = paths(take_id())                                                # --id <personnage> (defaut character-01)
+OUT = CH.fit                                                         # fit.npz, fit-*.jpg
 N_ID = 60
 
 # Reperes Multi-PIE 68 : indices ICT (README ICT-FaceKit) et indices MediaPipe equivalents
@@ -38,7 +42,7 @@ def rot_y(deg):
 
 
 def detect(name, det):
-    res = det.detect(mp.Image.create_from_file(os.path.join(PROTO, 'refs', 'mv', name + '.jpg')))
+    res = det.detect(mp.Image.create_from_file(os.path.join(CH.refs_mv, name + '.jpg')))
     lm = np.array([[q.x, q.y] for q in res.face_landmarks[0]]) * 1024
     return np.stack([lm[MP68, 0], -lm[MP68, 1]], 1)          # y vers le haut
 
@@ -58,7 +62,8 @@ def solve_pose(X, y, w):
 
 
 def main():
-    d = np.load(os.path.join(OUT, 'ict.npz'))
+    os.makedirs(OUT, exist_ok=True)
+    d = np.load(os.path.join(CH.ict, 'ict.npz'))
     neutral, ids = d['neutral'].astype(np.float64), d['ids'][:N_ID].astype(np.float64)
     mu = neutral[ICT68]; B = ids[:, ICT68, :]                   # (60,68,3)
     det = vision.FaceLandmarker.create_from_options(vision.FaceLandmarkerOptions(
@@ -94,7 +99,7 @@ def main():
         yaw = np.degrees(np.arctan2(R[0, 2], R[2, 2]))
         report[n] = (round(float(inner), 2), round(float(yaw), 1))
         # controle : reperes du modele (rouge) sur la photo (vert)
-        img = cv2.imread(os.path.join(PROTO, 'refs', 'mv', n + '.jpg'))
+        img = cv2.imread(os.path.join(CH.refs_mv, n + '.jpg'))
         P = s * (full @ R[:2].T) + t
         for p in P[::7]: cv2.circle(img, (int(p[0]), int(-p[1])), 1, (200, 200, 200), -1)
         for p, q in zip(proj, obs[n]):
