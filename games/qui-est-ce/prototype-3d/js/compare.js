@@ -14,6 +14,10 @@ import { CharacterRig } from './rig.js';
 const BASE = 'models/character-01-ict.glb';
 // ?set=v41 : compare uniquement les versions listees dans models/hair/compare-v41.json
 const Q = new URLSearchParams(location.search);
+// ?char=models/x.glb : personnage charge (defaut : BASE), aussi avec ?bench=. Une version
+// d'un jeu peut aussi porter son propre personnage ("char" dans le JSON). Le cadrage est
+// toujours calcule sur BASE : un personnage allege (coquilles retirees) garde la meme camera.
+const CHAR = Q.get('char') || BASE;
 // Par defaut : V4.1 originale contre V4.1 optimisee (coiffure validee). Les autres
 // jeux (?set=...) lisent models/hair/compare-<set>.json.
 const SET = Q.get('set') || 'opt';
@@ -140,10 +144,16 @@ function pointerFor(card) {
 const cards = [];
 
 async function main() {
-  const [{ gltf: base, bytes: baseBytes }, hairs] = await Promise.all([
-    loadGlb(BASE),
+  const baseLoad = loadGlb(BASE);
+  const [{ gltf: base }, hairs] = await Promise.all([
+    baseLoad,
     fetch(HAIRS).then((r) => (r.ok ? r.json() : [])).catch(() => []),
   ]);
+  const chars = new Map([[BASE, baseLoad]]);                 // un chargement par personnage
+  const charFor = (url) => {
+    if (!chars.has(url)) chars.set(url, loadGlb(url));
+    return chars.get(url);
+  };
   const versions = BENCH ? [{ id: 'bench', name: BENCH, note: '', file: BENCH }]
     : SET ? hairs : [{ id: 'ict', name: 'ICT — cheveux actuels', note: 'texture + coquilles', file: null }, ...hairs.slice(0, 3)];
   if (versions.length === 2) cardsEl.classList.add('two');
@@ -177,7 +187,9 @@ async function main() {
     $('h2', el).textContent = v.name + (v.note ? ` (${v.note})` : '');
     cardsEl.append(el);
     const stage = makeStage(frame);
-    const model = SkeletonUtils.clone(base.scene);
+    const charUrl = v.char || CHAR;
+    const ch = await charFor(charUrl);
+    const model = SkeletonUtils.clone(ch.gltf.scene);
     model.scale.setScalar(s); model.position.copy(probe.position);
     stage.scene.add(model);
     model.updateMatrixWorld(true);
@@ -188,7 +200,7 @@ async function main() {
       o.material = o.material.clone(); o.material.map = null;
       o.material.color.set('#2c2d30'); o.material.roughness = 0.92;
     });
-    let bytes = baseBytes, hairInfo = null;
+    let bytes = ch.bytes, hairInfo = null;
     if (v.file) {
       const { gltf: hg, bytes: hb, parseMs } = await loadGlb(v.file);
       bytes += hb; hairInfo = { bytes: hb, parseMs, root: hg.scene };
@@ -207,7 +219,8 @@ async function main() {
     const rig = new CharacterRig(model);
     rig.setExpression(state.expr);
     $('.loading', el).hidden = true;
-    const card = { el, frameEl: $('.frame', el), stage, model, rig, ms: 0, hair: hairInfo };
+    const card = { el, frameEl: $('.frame', el), stage, model, rig, ms: 0, hair: hairInfo,
+      char: { url: charUrl, bytes: ch.bytes, parseMs: ch.parseMs } };
     $('.w', el).textContent = `${(bytes / 1048576).toFixed(1)} Mo`;
     $('.t', el).textContent = countTriangles(model).toLocaleString('fr-FR');
     cards.push(card);
@@ -221,6 +234,9 @@ async function main() {
 // avec un pas fixe : seule la coiffure differe d'une image a l'autre.
 function setupBench(c) {
   c.rig._startBlink = () => {};
+  let closed = false;                                        // yeux fermes force (banc du personnage)
+  const updateBlink = c.rig._updateBlink.bind(c.rig);
+  c.rig._updateBlink = (t) => { updateBlink(t); if (closed) c.rig.blink.value = 1; };
   const looks = {
     front: { x: 0, y: 0.05, active: true }, left: { x: -0.9, y: 0.05, active: true },
     right: { x: 0.9, y: 0.05, active: true }, up: { x: 0, y: 0.95, active: true },
@@ -238,18 +254,49 @@ function setupBench(c) {
   };
   let hairMesh = null;
   c.hair?.root.traverse((o) => { if (o.isMesh) hairMesh = o; });
+  // Zones du visage en pixels de l'image du banc, deduites des seuls noeuds des yeux et de
+  // l'os de la tete (identiques d'un fichier a l'autre) : memes zones pour chaque version.
+  const v3 = () => new THREE.Vector3();
+  const toPx = (p) => { const n = p.clone().project(c.stage.camera); return { x: (n.x + 1) / 2 * BW, y: (1 - n.y) / 2 * BH }; };
+  function faceZones() {
+    c.stage.camera.aspect = BW / BH; c.stage.camera.clearViewOffset();
+    c.model.updateMatrixWorld(true);
+    const eL = c.model.getObjectByName('eyeLeft').getWorldPosition(v3());
+    const eR = c.model.getObjectByName('eyeRight').getWorldPosition(v3());
+    const q = c.model.getObjectByName('Head').getWorldQuaternion(new THREE.Quaternion());
+    const iod = eL.distanceTo(eR), mid = eL.clone().add(eR).multiplyScalar(0.5);
+    const mouth = mid.clone()
+      .addScaledVector(v3().set(0, -1, 0).applyQuaternion(q), 1.05 * iod)
+      .addScaledVector(v3().set(0, 0, 1).applyQuaternion(q), 0.25 * iod);
+    const a = toPx(eL), b = toPx(eR), m = toPx(mid), mo = toPx(mouth);
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
+    const rect = (p, w, h) => [p.x - w / 2, p.y - h / 2, p.x + w / 2, p.y + h / 2].map(Math.round);
+    return { d, eyes: rect(m, 2.3 * d, 0.95 * d), mouth: rect(mo, 1.5 * d, 1.0 * d), eyesC: m, mouthC: mo };
+  }
   window.__bench = {
     info() {
       const g = hairMesh.geometry;
       return { bytes: c.hair.bytes, parseMs: c.hair.parseMs, hairTriangles: g.index.count / 3,
-        vertices: g.attributes.position.count, triangles: countTriangles(c.model) };
+        vertices: g.attributes.position.count, triangles: countTriangles(c.model),
+        char: c.char.url, charBytes: c.char.bytes, charParseMs: c.char.parseMs };
     },
     // Pose stabilisee (5 s simulees a 60 Hz) puis une image ; renvoie l'image en PNG.
-    pose(expr, look) {
+    // opts.closed : yeux fermes ; opts.zoom : 'eyes' | 'mouth', gros plan (meme camera,
+    // image recadree par setViewOffset, meme resolution de sortie).
+    pose(expr, look, opts = {}) {
       c.rig.setExpression(expr);
+      closed = !!opts.closed;
       for (let i = 0; i < 300; i++) { simT += 1 / 60; c.rig.update(1 / 60, simT, looks[look]); }
+      const z = faceZones();
+      if (opts.zoom) {
+        const w = (opts.zoom === 'eyes' ? 2.6 : 1.9) * z.d, h = w * BH / BW;
+        const ctr = opts.zoom === 'eyes' ? z.eyesC : z.mouthC;
+        c.stage.camera.setViewOffset(BW, BH, ctr.x - w / 2, ctr.y - h / 2, w, h);
+      }
       const calls = draw();
-      return { calls, png: canvas.toDataURL('image/png') };
+      const png = canvas.toDataURL('image/png');
+      c.stage.camera.clearViewOffset();
+      return { calls, png, zones: { eyes: z.eyes, mouth: z.mouth } };
     },
     // Controle hors etats de jeu : personnage tourne de deg degres (profil, dos).
     orbit(deg) {
