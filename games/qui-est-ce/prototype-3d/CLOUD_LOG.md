@@ -155,7 +155,7 @@ n'est qu'une bande sous le cou au bord déchiré ; le bas du cadre doit rester a
 | --- | --- | --- |
 | G1 personnage optimisé | | |
 | G2 distribution des 24 | 2026-10-14 | déléguée par l'utilisateur (« fais ce que tu veux ») : distribution retenue telle quelle |
-| G-DA direction artistique | | |
+| G-DA direction artistique | 2026-10-14 | B « casting » + révélation finale de C + revanche en un clic ; déclinaison multijoueur à valider |
 | G3 plateau | | |
 | G4 accessoires | | |
 

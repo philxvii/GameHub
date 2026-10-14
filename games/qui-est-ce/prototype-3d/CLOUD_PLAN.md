@@ -215,6 +215,20 @@ un personnage soit une suite de commandes.
 
 ## DA — Direction artistique propre au Qui est-ce ? (≈ 9 %) ⛔ G-DA
 
+> **G-DA : DIRECTION CHOISIE par l'utilisateur (2026-10-14) — B « La séance de casting »,
+> avec la cérémonie de révélation finale du salon (C).** Ne plus proposer d'alternatives.
+>
+> - Base : B (Polaroïd scotché, planche contact, crayon gras, Permanent Marker + DM Mono,
+>   palette `reports/da/casting.jpg`). La réponse au tour de l'adversaire et l'élimination
+>   gardent le crayon gras (croix rouge, crissement) et le flash.
+> - Emprunt à C : **la révélation de fin de partie** : le portrait du secret est « accroché »
+>   (cadre, lampe qui s'allume, pastille rouge sur le cartel) pour les deux joueurs.
+> - **Revanche en un clic** depuis l'écran de fin, sans repasser par le salon.
+> - Pensé pour **l'envie de rejouer** : parties courtes (3 à 5 min), gestes d'élimination
+>   très gratifiants (son, mouvement), capture de fin de partie partageable (planche
+>   contact avec les croix), score entre les deux joueurs sur les revanches successives.
+> - Reste à valider : la déclinaison multijoueur (point 6 ci-dessous), puis G3.
+
 **Exigence de l'utilisateur : le jeu doit avoir sa propre identité visuelle, forte et
 cohérente, au niveau de Banqueroll — et mieux.** Le but final de GameHub : **chaque jeu a sa
 propre identité** ; on doit reconnaître le Qui est-ce ? au premier coup d'œil, sans le
