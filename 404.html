@@ -1,43 +1,35 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Game Hub · page introuvable</title>
+<meta name="robots" content="noindex">
+<title>Roulia — maintenance</title>
 <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/icons/favicon.ico" sizes="48x48">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<meta name="theme-color" content="#07090f">
-<meta name="robots" content="noindex">
-<!--
-  GitHub Pages sert cette page pour toute adresse inconnue. Elle remplace les anciennes
-  pages relais : roulia.me/<jeu>.html et le raccourci roulia.me/banqueroll/ renvoient
-  vers /games/<jeu>/ en gardant ?query (codes de partie) et #hash.
-  Chemins absolus : la page peut etre servie a n'importe quelle profondeur.
--->
-<script>
-  (function () {
-    var GAMES = ['banqueroll', 'bataille-navale', 'mini-golf', 'puissance4', 'qui-est-ce', 'roulette', 'undercover', 'uno', 'wikirace'];
-    var m = location.pathname.toLowerCase().match(/^\/([a-z0-9-]+)(?:\.html|\/|\/index\.html)?$/);
-    if (m && GAMES.indexOf(m[1]) !== -1) location.replace('/games/' + m[1] + '/' + location.search + location.hash);
-  })();
-</script>
 <style>
-  :root{--bg:#07090f;--surface:#0e1118;--border:rgba(255,255,255,0.14);--text:#eef0f6;--muted:#6b7280;--accent:#e8d5a3;}
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{min-height:100vh;display:grid;place-items:center;padding:16px;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;text-align:center;}
-  .box{max-width:360px;}
-  .code{font-size:64px;font-weight:800;letter-spacing:-2px;color:var(--accent);line-height:1;}
-  p{margin:12px 0 24px;color:var(--muted);line-height:1.6;}
-  a{display:inline-block;padding:12px 22px;border-radius:16px;background:var(--accent);color:var(--bg);font-weight:700;text-decoration:none;}
-  a:hover{filter:brightness(1.08);}
+  :root{--bg:#14432f;--card:#f4ecd8;--ink:#1b2420;--muted:#5a6159;--brass:#b08a3e;}
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%}
+  body{display:grid;place-items:center;padding:16px;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  main{max-width:440px;width:100%;padding:2.2rem 1.8rem;text-align:center;background:var(--card);
+    border:2px solid var(--ink);border-radius:14px;box-shadow:0 6px 0 var(--ink);}
+  img{width:56px;height:56px;margin-bottom:1rem}
+  h1{font-family:Georgia,"Times New Roman",serif;font-size:1.7rem;line-height:1.2;margin-bottom:.8rem}
+  p{line-height:1.5;color:var(--muted)}
+  p+p{margin-top:.6rem}
+  hr{border:0;border-top:2px solid var(--brass);width:48px;margin:1.2rem auto}
 </style>
 </head>
 <body>
-<main class="box">
-  <div class="code">404</div>
-  <p>Cette page n’existe pas (ou plus).</p>
-  <a href="/">Retour aux jeux</a>
+<main>
+  <img src="/icons/favicon.svg" alt="">
+  <h1>Site en maintenance</h1>
+  <p>Roulia est momentanément indisponible le temps d'une opération de maintenance.</p>
+  <hr>
+  <p>Les jeux reviennent très vite. Merci de votre patience !</p>
 </main>
 </body>
 </html>
