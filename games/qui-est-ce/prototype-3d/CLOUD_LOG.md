@@ -202,7 +202,7 @@ Références cloud : `build/bench/cloud-ref` (coiffure V4.1 optimisée, 31 draw 
 avec sa carte 3D vivante du personnage 01 (regard vers le curseur, élimination au clic,
 victoire), une question, un extrait de plateau de 6 cartes (6 poses rendues), sa palette avec
 contrastes WCAG calculés sur la page, ses polices, ses notes de matières, de mise en scène,
-de mouvement et de son (Web Audio synthétisé). Captures : `reports/da/` (bureau et 390 px).
+de mouvement (les sons ne sont que des intentions : aucun son dans cette mission). Captures : `reports/da/` (bureau et 390 px).
 Contrôles : console propre, pas de défilement horizontal à 390 px. `?still` fige le rendu.
 
 | Direction | Métaphore | Polices | Signature |

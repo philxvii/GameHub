@@ -12,7 +12,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CharacterRig } from './rig.js';
 import { LOOKS, loadGlb, seedRandom, computeFrame, buildSet, makeCamera, dressedClone } from './staging.js';
-import { sfx } from './da-sfx.js';
+import { emit } from './events.js';
 
 const Q = new URLSearchParams(location.search);
 const CHAR = Q.get('char') || 'models/character-01-ict.glb';
@@ -102,7 +102,7 @@ function board(stage, roster) {
 }
 
 const SOUNDS = { dossier: { out: 'stamp', ask: 'type', win: 'drawer' }, casting: { out: 'marker', ask: 'shutter', win: 'flash' }, salon: { out: 'thunk', ask: 'step', win: 'bell' } };
-function play(look, what) { if (!STILL) sfx(SOUNDS[look][what]); }
+function play(look, what) { emit(SOUNDS[look][what], { look, what }); }   // aucun son : un evenement seulement
 
 // Contraste WCAG des paires de la palette, calcule sur les jetons de la section.
 function contrast(section) {
@@ -149,7 +149,7 @@ function wire(st) {
     st.pointer = { x: THREE.MathUtils.clamp((e.clientX - r.left) / r.width * 2 - 1, -1, 1) * 0.9,
       y: THREE.MathUtils.clamp(-((e.clientY - r.top) / r.height * 2 - 0.8), -1, 1) * 0.8, active: true };
   });
-  card.addEventListener('pointerenter', () => { st.hovering = true; if (L === 'casting') { st.flash = 1; card.classList.remove('flash'); void card.offsetWidth; card.classList.add('flash'); sfx('flash'); } });
+  card.addEventListener('pointerenter', () => { st.hovering = true; if (L === 'casting') { st.flash = 1; card.classList.remove('flash'); void card.offsetWidth; card.classList.add('flash'); emit('flash'); } });
   card.addEventListener('pointerleave', () => { st.hovering = false; st.pointer = { ...st.pointer, active: false }; });
   const eliminate = () => {
     const out = card.classList.toggle('out');
@@ -172,7 +172,7 @@ function wire(st) {
     st.rig.setExpression(card.classList.contains('won') ? 'smile' : 'neutral'); play(L, 'win');
   });
   actions.append(win);
-  for (const b of $$('[data-sfx]', st.section)) if (!b.closest('.q-actions')) b.addEventListener('click', () => sfx(b.dataset.sfx));
+  for (const b of $$('[data-sfx]', st.section)) if (!b.closest('.q-actions')) b.addEventListener('click', () => emit(b.dataset.sfx));
 }
 
 function renderLoop(stages, timer) {

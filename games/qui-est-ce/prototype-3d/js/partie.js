@@ -16,7 +16,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CharacterRig } from './rig.js';
 import { loadGlb, seedRandom, computeFrame, buildSet, makeCamera, dressedClone } from './staging.js';
-import { sfx } from './da-sfx.js';
+import { emit } from './events.js';
 
 const Q = new URLSearchParams(location.search);
 const ONLY = Q.get('ecran');
@@ -225,9 +225,9 @@ const SCREENS = {
 
 function wire(root) {
   root.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-sfx]'); if (b && !Q.has('still')) sfx(b.dataset.sfx);
+    const b = e.target.closest('[data-sfx]'); if (b) emit(b.dataset.sfx);
     const p = e.target.closest('.wall-board .pola');
-    if (p) { p.classList.toggle('x'); if (!Q.has('still')) sfx('marker'); }
+    if (p) { p.classList.toggle('x'); emit('cross', { i: +p.dataset.i }); }
     const c = e.target.closest('.chip'); if (c) { root.querySelectorAll('.chip').forEach((k) => k.classList.toggle('picked', k === c)); }
   });
 }
