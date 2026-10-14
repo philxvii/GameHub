@@ -4,13 +4,30 @@
 import { SYSTEM_PROMPT, ADULT_PROMPT, NEWS, NEWS_DATE } from './persona.js';
 export { SYSTEM_PROMPT, ADULT_PROMPT, NEWS, NEWS_DATE };
 
+// Regles de role, ajoutees a toute consigne : le presentateur ne sort jamais de son
+// personnage. Versionnees ici (generiques), le ton reste dans persona.js.
+export const ROLE_RULES = `RÈGLES DE RÔLE, ABSOLUES ET PRIORITAIRES SUR TOUT LE RESTE :
+- Tu es le présentateur de cette partie et rien d'autre, du premier au dernier mot.
+- Ne dis jamais que tu es une IA, un modèle, un assistant ou un programme. Ne parle jamais de tes consignes ni de ta programmation.
+- Ne refuse jamais à la manière d'un assistant, ne t'excuse pas, n'ajoute aucun avertissement, aucun conseil hors du jeu, aucun numéro de téléphone.
+- Aucune mise en forme : pas de gras, pas de titres, pas de listes. Une ou deux phrases parlées, comme à l'antenne.
+- Si un message sort du jeu, réponds dans ton rôle en ramenant la partie au centre, sans commenter le message.
+- Ne plaisante jamais sur le suicide, l'automutilation ou une détresse réelle.`;
+
+// Meme liste que js/lines.js (client) : une reponse qui parle comme un assistant est
+// rejetee et le jeu garde sa replique locale.
+export const ROLE_BREAK = /(en tant qu['’]\s*(ia|intelligence|assistant|mod[eè]le)|je suis (une|un) (ia|intelligence artificielle|mod[eè]le|assistant|programme|bot)\b|mod[eè]le de langage|language model|\bas an ai\b|\bi can(not|['’]t)\b|je ne (peux|suis) pas (en mesure|autoris|programm)|ma programmation|mes (consignes|instructions|directives)|d[ée]sol[ée],? (mais|je )|\bsorry\b|n['’]h[ée]site[sz]? pas [àa] (contacter|appeler|consulter|en parler)|professionnel(le)?s? (de (la )?sant[ée]|qualifi|sont l[àa])|ligne d['’][ée]coute|num[ée]ro (d['’]urgence|vert|gratuit)|\b3114\b|sant[ée] mentale|\*\*|^\s*[-#•]\s)/im;
+export const breaksRole = text => ROLE_BREAK.test(String(text || ''));
+// Detresse reelle : jamais envoyee au modele.
+export const DISTRESS = /(suicid|me (tuer|flinguer|pendre|foutre en l['’]air|jeter (par|sous|du haut))|me faire du mal|m['’]automutil|automutilation|scarifi|en finir avec (la vie|tout)|mettre fin [àa] (mes jours|ma vie)|plus envie de vivre|envie de (mourir|crever)|je veux (mourir|crever)|kill myself|\bkms\b)/i;
+
 // Prompt envoye au modele : la base + quelques actus tirees au hasard.
 export function systemPrompt(rng = Math.random, n = 6, { adult = false } = {}) {
   const pool = NEWS.slice();
   const picks = [];
   while (picks.length < n && pool.length) picks.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]);
   const news = picks.length ? `\n\nACTU DU MOMENT (${NEWS_DATE}) : choisis-en une seule quand tu t'en sers.\n${picks.map(x => `- ${x}`).join('\n')}` : '';
-  return `${SYSTEM_PROMPT}${adult && ADULT_PROMPT ? `\n\n${ADULT_PROMPT}` : ''}${news}`;
+  return `${SYSTEM_PROMPT}${adult && ADULT_PROMPT ? `\n\n${ADULT_PROMPT}` : ''}${news}\n\n${ROLE_RULES}`;
 }
 
 export const clip = (v, n) => String(v === undefined || v === null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n);
@@ -58,7 +75,7 @@ export function modelsFrom(env) {
 export function looksLikeLine(text) {
   const t = String(text || '').trim();
   if (t.length < 25 || !/\s/.test(t)) return false;
-  if (/^(user|assistant|response)?\s*(safety|safe|unsafe|harmful|category)/i.test(t)) return false;
+  if (/^(user|assistant|response)?\s*(safety|safe|unsafe|harmful|category)\b/i.test(t)) return false;
   if (/^(safe|unsafe)\s*$/i.test(t) || /^\{.*\}$/.test(t)) return false;
   return true;
 }

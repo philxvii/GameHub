@@ -4,7 +4,7 @@
 // le jeu garde alors sa replique locale (dernier maillon de la chaine).
 
 import { PROVIDERS, ProviderError } from './providers.js';
-import { cleanReply, looksLikeLine } from './prompt.js';
+import { cleanReply, looksLikeLine, breaksRole } from './prompt.js';
 
 export const ORDER = ['gemini', 'openrouter', 'workersai'];
 // Les modeles gratuits d'OpenRouter montent a 10-18 s aux heures chargees. La replique
@@ -39,6 +39,8 @@ export async function orchestrate({ system, user, env, now = () => Date.now() })
       const out = await provider.call({ system, user, env, signal: ctrl.signal });
       const text = cleanReply(out.text);
       if (!text || !looksLikeLine(text)) { tried.push({ id, reason: 'not_a_line' }); continue; }
+      // Le presentateur ne sort jamais de son role : une reponse d'assistant est jetee.
+      if (breaksRole(text)) { tried.push({ id, reason: 'out_of_role' }); continue; }
       return { ok: true, text, provider: id, model: out.model, tried };
     } catch (e) {
       tried.push({ id, reason: e instanceof ProviderError ? e.reason : 'error', status: e && e.status, detail: e && e.detail || undefined });

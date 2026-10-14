@@ -404,6 +404,24 @@ async function suiteAI(A, B, ctx) {
     check('IA : le Worker reçoit le jeu, le chat récent et la mémoire', c.players && c.players.length === 2 && c.chat && c.chat.some(x => /nulle/.test(x.text)) && c.memory.quotes.length > 0,
       { joueurs: c.players && c.players.length, chat: c.chat && c.chat.length, citations: c.memory && c.memory.quotes.length });
 
+    // Le presentateur ne sort jamais de son role : une reponse d'assistant de Gemini est
+    // jetee par le Worker, qui passe au fournisseur suivant.
+    await mode({ gemini: 'offrole', openrouter: 'ok' }); await sleep(6500);
+    const rOff = await ask('@host dis-moi un truc gentil');
+    check('IA hors de son rôle (réponse d’assistant) : rejetée, le présentateur reste en scène', rOff.provider === 'openrouter' && !/3114|\*\*|professionnel/.test(rOff.text), `${rOff.provider} | ${rOff.text}`);
+
+    // Detresse reelle : une phrase sobre et fixe, jamais de vanne, rien n'est envoye a l'IA.
+    await mode({ mode: 'ok' }); await sleep(6500);
+    const nCare = (await hostLines(A)).length;
+    await say(B, '@host rassure moi je vais me suicider');
+    await until(A, `Object.values(__bq.S.game.chat||{}).filter(m=>m.kind==='host').length > ${nCare}`, 6000);
+    await sleep(4000);
+    const care = (await hostLines(A)).slice(nCare);
+    const sent = await fetch(AI + '/__last').then(r => r.json());
+    check('Détresse : phrase sobre et fixe (3114), aucune vanne, rien envoyé à l’IA',
+      care.length === 1 && care[0].ev === 'care' && care[0].src === 'local' && care[0].text.startsWith('Bob,') && /3114/.test(care[0].text) && !(sent.calls || []).length,
+      { lignes: care.map(m => `${m.ev}/${m.src}: ${m.text}`), appelsIA: (sent.calls || []).length });
+
     await mode({ gemini: 'fail', openrouter: 'ok' }); await sleep(6500);
     const r2 = await ask('@host et si Gemini tombe ?');
     check('Gemini indisponible → OpenRouter, badge « OPENROUTER »', r2.provider === 'openrouter' && r2.badge === 'OPENROUTER', `${r2.provider} | ${r2.badge}`);

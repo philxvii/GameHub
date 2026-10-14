@@ -12,7 +12,7 @@ import { MINIGAMES } from './minigames.js';
 import { rivalryCount, topRivalry } from './stats.js';
 import { BOARD, GROUP_LABELS, GROUPS, de } from './board.js';
 import { netWorth, ranking, ownedBy, ownsFullGroup, rentFor, playerById, currentPlayer } from './rules.js';
-import { pickLine } from './lines.js';
+import { pickLine, breaksRole, DISTRESS, careLine } from './lines.js';
 import { S, pushChat, patchChat, commit } from './net.js';
 
 export const HOST_NAME = 'Bankroll Host';
@@ -46,6 +46,7 @@ let lastAi = 0;
 let failStreak = 0;
 let aiPausedUntil = 0;
 let mem = null;
+const careAt = new Map();   // derniere phrase de soutien par joueur
 let memTimer = null;
 let prevLeader = null;
 
@@ -359,6 +360,12 @@ function ingestChat(game, msg) {
   const pid = msg.pid || (game.players.find(p => p.name === msg.author) || {}).id;
   if (!pid) return;
   stat(pid).chat++;
+  if (DISTRESS.test(text)) {
+    // Jamais de vanne ni d'IA sur ce message, et il n'entre pas dans la memoire du chat.
+    if (game.phase === 'lobby' || Date.now() - (careAt.get(pid) || 0) < 120000) return;
+    careAt.set(pid, Date.now());
+    return enqueue({ type:'care', intensity:5, urgent:true, local:true, fixed: careLine(msg.author), ctx: baseCtx(game, { p: pid }) });
+  }
   const mentionsPlayer = game.players.some(p => p.id !== pid && text.toLowerCase().includes(String(p.name).toLowerCase()));
   if (TAUNT.test(text) || mentionsPlayer) {
     mem.quotes.push({ pid, who: msg.author, text: text.slice(0, 140), r: game.round || 1, ts: msg.ts || Date.now(), ...(BOAST.test(text) ? { boast: true } : {}) });   // Firebase refuse undefined
@@ -407,7 +414,7 @@ function flush() {
 }
 
 async function speak(item) {
-  const line = pickLine(item.type, item.ctx, mem.used);
+  const line = item.fixed ? { id: 'care', text: item.fixed } : pickLine(item.type, item.ctx, mem.used);
   if (!line) return;
   if (!item.quiet) lastSpeak = Date.now();
   mem.used.push(line.id); mem.used = mem.used.slice(-30);
@@ -446,7 +453,9 @@ export async function requestAI(payload) {
     // Le modele imite parfois les pseudos du chat (« @Alice Je... ») : on retire ce prefixe.
     const text = String((data && data.text) || '').replace(/\s+/g, ' ').trim().replace(/^(@\S+[\s,:]*)+/, '').slice(0, 280);
     // Defense en profondeur : une etiquette de classifieur ne remplace jamais une vraie replique.
-    if (!text || text.length < 25 || /^(user|assistant)?\s*(safety|safe|unsafe)/i.test(text)) { aiFailed(); return null; }
+    if (!text || text.length < 25 || /^(user|assistant)?\s*(safety|safe|unsafe)\b/i.test(text)) { aiFailed(); return null; }
+    // Le presentateur ne sort jamais de son role : reponse d'assistant -> replique locale.
+    if (breaksRole(text)) return null;
     failStreak = 0;
     // Seuls Gemini, OpenRouter et Workers AI existent : toute autre valeur est refusee (replique locale).
     const provider = String((data && data.provider) || '').toLowerCase();
@@ -498,7 +507,8 @@ export function aiPayload(item, localLine) {
   const game = S.game;
   const ranks = ranking(game);
   const round = game.round || 1;
-  const chat = entries(game.chat).slice(-14).map(c => ({ who: c.kind === 'host' ? HOST_NAME : c.author, text: c.text }));
+  // Les messages de detresse (et la phrase du presentateur qui y repond) ne partent jamais au modele.
+  const chat = entries(game.chat).filter(c => !DISTRESS.test(c.text || '') && !(c.kind === 'host' && c.ev === 'care')).slice(-14).map(c => ({ who: c.kind === 'host' ? HOST_NAME : c.author, text: c.text }));
   return {
     code: game.code, mode: item.mode === 'chat' ? 'chat' : 'event', intensity: item.intensity,
     ...(adultHost(game) ? { adult: true } : {}),
@@ -514,7 +524,7 @@ export function aiPayload(item, localLine) {
     recentEvents: entries(game.history).slice(-8).map(h => h.text),
     chat,
     memory: {
-      quotes: mem.quotes.slice(-6).map(x => ({ who: x.who, text: x.text, roundsAgo: round - (x.r || round), ...(x.boast ? { boast: true } : {}) })),
+      quotes: mem.quotes.filter(x => !DISTRESS.test(x.text || '')).slice(-6).map(x => ({ who: x.who, text: x.text, roundsAgo: round - (x.r || round), ...(x.boast ? { boast: true } : {}) })),
       gags: gags(game), facts: mem.facts.slice(-8),
     },
     localLine,

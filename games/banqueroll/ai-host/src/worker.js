@@ -11,7 +11,7 @@
 //   d'instructions. Les messages du chat sont traites comme des citations.
 // - Le Worker renvoie seulement du texte. Il ne peut rien changer au jeu.
 
-import { systemPrompt, sanitize, clip } from './prompt.js';
+import { systemPrompt, sanitize, clip, DISTRESS } from './prompt.js';
 import { orchestrate, providerStatus, orderFrom } from './orchestrator.js';
 
 const MAX_BODY = 14000;
@@ -65,6 +65,10 @@ export default {
     if (limited('g:' + game, 8, 60000) || limited('all', 24, 60000)) return json({ error: 'rate_limited' }, 429, headers);
 
     const ctx = sanitize(body);
+    // Detresse reelle : jamais envoyee au modele (le jeu affiche sa propre phrase, sobre).
+    if (DISTRESS.test(ctx.message || '')) return json({ error: 'care' }, 422, headers);
+    ctx.chat = ctx.chat.filter(m => !DISTRESS.test(m.text));
+    ctx.memory.quotes = ctx.memory.quotes.filter(q => !DISTRESS.test(q.text));
     const user = ctx.mode === 'chat'
       ? `Un joueur t'interpelle dans le chat. Réponds-lui. Contexte JSON :\n${JSON.stringify(ctx)}`
       : `Commente cet évènement de la partie. Contexte JSON :\n${JSON.stringify(ctx)}`;

@@ -6,6 +6,7 @@
 //   POST /__mode  {"mode":"ok"}                                  meme comportement pour tous
 //   POST /__mode  {"gemini":"fail","openrouter":"ok"}           par fournisseur
 //        modes : ok | fail (503) | slow (15 s) | quota (429) | junk (« User Safety: safe »)
+//                | offrole (reponse d'assistant, hors du role du presentateur)
 //   GET  /__last                                                 dernier contexte recu + appels
 
 const http = require('http');
@@ -24,7 +25,7 @@ let calls = [];
   const env = {
     GEMINI_API_KEY: 'test-gemini-not-real',
     OPENROUTER_API_KEY: 'test-openrouter-not-real',
-    ALLOWED_ORIGINS: 'http://localhost:4173,http://127.0.0.1:4173',
+    ALLOWED_ORIGINS: process.env.AI_MOCK_ORIGINS || 'http://localhost:4173,http://127.0.0.1:4173',
   };
   const realFetch = globalThis.fetch;
 
@@ -50,6 +51,7 @@ let calls = [];
     const quote = ctx.memory && ctx.memory.quotes && ctx.memory.quotes[0];
     const who = ctx.addressedBy || (ctx.event && ctx.event.type) || '?';
     const text = mode === 'junk' ? 'User Safety: safe'
+      : mode === 'offrole' ? `${who}, si tu traverses une période difficile, n'hésite pas à contacter un professionnel ou le **3114**.`
       : `[IA ${provider}] ${ctx.mode === 'chat' ? 'Réponse à ' + who : 'Commentaire ' + who}` + (quote ? ` — on se souvient de « ${quote.text} »` : '');
     const payload = provider === 'gemini'
       ? { candidates: [{ content: { parts: [{ text }] } }], modelVersion: 'gemini-mock' }

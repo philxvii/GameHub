@@ -209,6 +209,8 @@ const workerFiles = ['worker.js', 'prompt.js'].map(f => path.join(ROOT, 'ai-host
 
   const O = await import(pathToFileURL(path.join(ROOT, 'ai-host', 'src', 'orchestrator.js')).href);
   const realFetch = globalThis.fetch;
+  // Reponse reellement recue en partie : le modele etait sorti de son role.
+  const CRISIS = "Mathis, si tu traverses une période difficile, n'hésite pas à contacter un professionnel ou à appeler le **3114**, c'est gratuit et confidentiel.";
   const scenario = async (modes, env) => {
     globalThis.fetch = async url => {
       const host = new URL(String(url)).hostname;
@@ -217,7 +219,7 @@ const workerFiles = ['worker.js', 'prompt.js'].map(f => path.join(ROOT, 'ai-host
       const m = (model && modes[model]) || modes[id] || 'ok';
       if (m === 'fail') return new Response('{}', { status: 503 });
       if (m === 'quota') return new Response('{}', { status: 429 });
-      const text = m === 'junk' ? 'User Safety: safe' : `Réplique de test venue de ${id}, assez longue.`;
+      const text = m === 'junk' ? 'User Safety: safe' : m === 'offrole' ? CRISIS : `Réplique de test venue de ${id}, assez longue.`;
       return new Response(JSON.stringify(id === 'gemini' ? { candidates: [{ content: { parts: [{ text }] } }] } : { choices: [{ message: { content: text } }] }), { status: 200 });
     };
     try { return await O.orchestrate({ system: 's', user: 'u\n{}', env }); } finally { globalThis.fetch = realFetch; }
@@ -240,6 +242,20 @@ const workerFiles = ['worker.js', 'prompt.js'].map(f => path.join(ROOT, 'ai-host
       && r1.provider === 'gemini' && r2.provider === 'openrouter' && r3.provider === 'openrouter' && r4.provider === 'openrouter'
       && !r5.ok && r6.provider === 'openrouter' && r6.tried[0].reason === 'missing_key' && r7.provider === 'gemini' && r8.provider === 'workersai' && !r9.ok && r9.tried[2].reason === 'quota',
     [r1.provider, r2.provider, r3.provider, r4.provider, r5.ok ? 'ok' : 'local', r6.provider, r7.provider + ' (2e modèle)', r8.provider, r9.ok ? 'ok' : 'local'].join(' / '));
+
+  // Le presentateur ne sort jamais de son role : reponse d'assistant rejetee (client et Worker),
+  // detresse jamais envoyee au modele, regles de role dans chaque consigne.
+  const r10 = await scenario({ gemini: 'offrole' }, all);
+  const inRole = ['Bob, tu paies 120 $ et tu souris : courage, la banque adore ta générosité.', "Ah, Mathis veut de la tendresse ? Lance ce dé, la seule chose qui t'attend ici, c'est le loyer."];
+  const offRole = [CRISIS, "En tant qu'IA, je ne peux pas répondre à ça.", 'Désolé, mais je ne peux pas.', '- point un', "Je suis une intelligence artificielle, pas un humain."];
+  const distress = ['@host rassure moi je vais me suicider', "j'ai envie de mourir", 'je veux en finir avec la vie'];
+  const care = L.careLine('Mathis');
+  check("11e. Présentateur toujours dans son rôle : réponse d'assistant rejetée, détresse jamais envoyée à l'IA",
+    L.ROLE_BREAK.source === P.ROLE_BREAK.source && L.DISTRESS.source === P.DISTRESS.source
+      && offRole.every(P.breaksRole) && !inRole.some(P.breaksRole) && distress.every(t => P.DISTRESS.test(t)) && !P.DISTRESS.test('je vais te tuer au loyer')
+      && sp.endsWith(P.ROLE_RULES) && r10.provider === 'openrouter' && r10.tried[0].reason === 'out_of_role'
+      && care.startsWith('Mathis') && !care.includes('**') && /3114/.test(care),
+    [offRole.filter(t => !P.breaksRole(t)).join(' | '), inRole.filter(P.breaksRole).join(' | '), r10.provider].filter(Boolean).join(' / '));
 
   const passed = results.filter(Boolean).length;
   console.log(`\n===== STATIQUE : ${passed}/${results.length} =====`);

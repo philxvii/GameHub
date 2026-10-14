@@ -331,3 +331,16 @@ export function pickLine(type, ctx, recent = [], rng = Math.random) {
   const finalPool = quotes.length && rng() < 0.8 ? quotes : (quotes.length || gags.length) && rng() < 0.75 ? (gags.length ? gags : quotes) : pool;
   return finalPool[Math.floor(rng() * finalPool.length)];
 }
+
+// ================================================================ garde-fous du role
+// Le presentateur ne sort jamais de son personnage. Une reponse d'IA qui parle comme un
+// assistant (se dit IA, refuse, conseille, met en forme) est jetee : la replique
+// locale reste affichee. Meme liste cote Worker (ai-host/src/prompt.js).
+export const ROLE_BREAK = /(en tant qu['’]\s*(ia|intelligence|assistant|mod[eè]le)|je suis (une|un) (ia|intelligence artificielle|mod[eè]le|assistant|programme|bot)\b|mod[eè]le de langage|language model|\bas an ai\b|\bi can(not|['’]t)\b|je ne (peux|suis) pas (en mesure|autoris|programm)|ma programmation|mes (consignes|instructions|directives)|d[ée]sol[ée],? (mais|je )|\bsorry\b|n['’]h[ée]site[sz]? pas [àa] (contacter|appeler|consulter|en parler)|professionnel(le)?s? (de (la )?sant[ée]|qualifi|sont l[àa])|ligne d['’][ée]coute|num[ée]ro (d['’]urgence|vert|gratuit)|\b3114\b|sant[ée] mentale|\*\*|^\s*[-#•]\s)/im;
+export const breaksRole = text => ROLE_BREAK.test(String(text || ''));
+
+// Detresse reelle (suicide, automutilation) : jamais de vanne, jamais d'IA, jamais
+// cite dans le contexte envoye au modele. Le presentateur pose le micro une phrase,
+// dans sa voix, puis la partie reprend.
+export const DISTRESS = /(suicid|me (tuer|flinguer|pendre|foutre en l['’]air|jeter (par|sous|du haut))|me faire du mal|m['’]automutil|automutilation|scarifi|en finir avec (la vie|tout)|mettre fin [àa] (mes jours|ma vie)|plus envie de vivre|envie de (mourir|crever)|je veux (mourir|crever)|kill myself|\bkms\b)/i;
+export const careLine = name => `${name}, je pose le micro une seconde. Si c'est sérieux, appelle le 3114 : gratuit, anonyme, jour et nuit. La partie t'attend quand tu veux.`;
