@@ -244,6 +244,42 @@ async function undercover(browser, mw = false) {
     await undercover(browser, true);
     for (const g of GAMES) await simpleGame(browser, g);
 
+    // Admin : un compte Google inscrit dans admins/ (l'émulateur accepte une identité Google
+    // fictive) agit depuis le hub et Undercover ; un compte Google ordinaire est refusé.
+    for (const isAdmin of [true, false]) {
+      const who = isAdmin ? 'admin' : 'compte Google ordinaire';
+      const H = await player(browser, `${SITE}/?emu`, 'Admin');
+      const uid = await H.eval(`const { auth } = await import('/shared/firebase.js');
+        const { GoogleAuthProvider, signInWithCredential } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        const c = GoogleAuthProvider.credential(JSON.stringify({ sub: '${isAdmin ? 'g-admin' : 'g-user'}', email: '${isAdmin ? 'admin' : 'user'}@example.com', email_verified: true }));
+        return (await signInWithCredential(auth, c)).user.uid;`);
+      if (isAdmin) await fetch(`${EMU}/admins/${uid}.json?${NS}`, { method: 'PUT', headers: { Authorization: 'Bearer owner' }, body: 'true' });
+      await fetch(`${EMU}/hub.json?${NS}`, { method: 'PATCH', headers: { Authorization: 'Bearer owner' }, body: JSON.stringify({ hidden: { uno: false }, settings: { ageGate: true } }) });
+      await fetch(`${EMU}/p4/ADMN-11.json?${NS}`, { method: 'PUT', headers: { Authorization: 'Bearer owner' },
+        body: JSON.stringify({ code: 'ADMN-11', phase: 'lobby', hostUid: 'quelquun', members: { quelquun: true }, players: [{ name: 'Zoe' }] }) });
+      const act = expr => H.eval(`try { await ${expr}; return 'ok'; } catch (e) { return 'refusé'; }`);
+      const hide = await act(`toggleGame('uno', false)`);
+      const gate = await act(`toggleAgeGate(false)`);
+      await H.eval(`window.confirm = () => true; return 1;`);
+      const del = await act(`adminDeleteParty('p4', 'ADMN-11')`);
+      const listed = await H.eval(`await loadParties(); return document.getElementById('parties-list').textContent;`).catch(() => '');
+      const state = { hidden: await admin('hub/hidden/uno'), gate: await admin('hub/settings/ageGate'), game: await admin('p4/ADMN-11') };
+      if (isAdmin) {
+        check(`Admin : le hub masque un jeu, change la porte d'âge, supprime une partie`, hide === 'ok' && gate === 'ok' && del === 'ok' && state.hidden === true && state.gate === false && state.game === null, JSON.stringify({ hide, gate, del, ...state }));
+        check('Admin : le hub liste les parties', !/Chargement/.test(listed), listed.slice(0, 60));
+      } else {
+        check(`Admin : un ${who} ne masque rien, ne change rien, ne supprime rien`, hide === 'refusé' && gate === 'refusé' && state.hidden === false && state.gate === true && state.game !== null, JSON.stringify({ hide, gate, del, ...state }));
+      }
+      const U = await player(browser, url('undercover'), 'AdminUC');
+      await U.eval(`const { auth } = await import('/shared/firebase.js');
+        const { GoogleAuthProvider, signInWithCredential } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        await signInWithCredential(auth, GoogleAuthProvider.credential(JSON.stringify({ sub: '${isAdmin ? 'g-admin' : 'g-user'}', email: '${isAdmin ? 'admin' : 'user'}@example.com', email_verified: true }))); return 1;`);
+      const ucList = await U.eval(`try { await adminLoadGames(); return 'ok'; } catch (e) { return 'refusé'; }`);
+      check(`Admin : la liste des parties d'Undercover ${isAdmin ? 'est lisible' : 'est refusée'} (${who})`, isAdmin ? ucList === 'ok' : ucList === 'refusé', ucList);
+      await admin('p4/ADMN-11', 'DELETE');
+      await dispose(H); await dispose(U);
+    }
+
     // Hub : présence, compteur, réglages ; le visiteur n'a pas besoin de compte.
     const visits = (await admin('hub/stats/visits')) || 0;
     const H = await player(browser, `${SITE}/?emu`, 'Hub');
