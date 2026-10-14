@@ -308,6 +308,18 @@ expressions copiées par sommet dominent (positions en 12 bits, 0,03 mm) ; mémo
 cibles ≈ 20 Mo pour barbe + moustache, chargée une fois et partagée par toutes les cartes qui la
 portent. Planche : `reports/accessories/barbe-moustache.jpg`.
 
+Casquette (`tools/accessories/hat.py`) : six panneaux en coton rouge brique (coutures et
+surpiqûres dans la texture, reflet de tissu `KHR_materials_sheen`), bandeau roulé, visière
+galbée au dessous vert-gris, bouton. Premier essai écarté : une calotte qui suivait
+l'enveloppe des boucles donnait un sac bosselé. Retenu : un dôme lisse ajusté au crâne +
+1,1 cm de cheveux tassés, et une **coiffure « sous casquette »** dérivée de la V4.1 par la
+même chaîne d'optimisation (`optimize_hair.py --keep-mask`, option ajoutée ; sans elle la
+V4.1 optimisée reste identique à l'octet, vérifié) : 1 265 cartes sur 8 000 gardées sous le
+bandeau, aucune ne traverse la calotte. 0 sommet de la casquette dans la tête pour les
+5 expressions. `models/accessories/cap.glb` 90 872 o (12 860 triangles),
+`models/accessories/cap-hair-curly-v41.glb` 390 112 o. Banc : `bench_character.js --hair`.
+Planche : `reports/accessories/casquette.jpg`.
+
 ## Validations de l'utilisateur
 
 | Point | Date | Décision |

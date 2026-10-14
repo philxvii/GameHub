@@ -3,7 +3,7 @@
 // par personnage.
 //
 //   python -m http.server 4173                                   # racine du depot
-//   node games/qui-est-ce/prototype-3d/tools/character-ict/bench_character.js models/character-01-ict.glb build/bench/ict-ref [--no-time] [--acc a.glb,b.glb]
+//   node games/qui-est-ce/prototype-3d/tools/character-ict/bench_character.js models/character-01-ict.glb build/bench/ict-ref [--no-time] [--acc a.glb,b.glb] [--hair coiffure.glb]
 //
 // Ecrit <dossier>/<etat>.png, <dossier>/zones.json (yeux et bouche, en pixels, par etat) et
 // <dossier>/stats.json : poids, temps d'analyse du GLB, triangles, draw calls, cout d'une
@@ -18,7 +18,7 @@ const [glb, outDir, ...rest] = process.argv.slice(2);
 const NO_TIME = rest.includes('--no-time');           // machine sans GPU : les temps ne valent rien
 const ACC = rest.includes('--acc') ? rest[rest.indexOf('--acc') + 1] : '';   // accessoires (liste separee par des virgules)
 if (!glb || !outDir) { console.error('usage : bench_character.js <personnage.glb> <dossier>'); process.exit(2); }
-const HAIR = 'models/hair/hair-curly-v41-opt.glb';
+const HAIR = process.argv.includes('--hair') ? process.argv[process.argv.indexOf('--hair') + 1] : 'models/hair/hair-curly-v41-opt.glb';   // --hair : variante (ex. sous une casquette)
 const ROOT = path.join(__dirname, '..', '..');
 // Drapeaux GPU : D3D11 sous Windows ; ailleurs (machine cloud sans GPU), rendu logiciel
 // SwiftShader (deterministe, mais les temps de rendu ne valent pas ceux d'un vrai GPU).

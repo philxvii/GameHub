@@ -1,0 +1,17 @@
+{
+ "nom": "Casquette coton rouge brique",
+ "triangles": 12860,
+ "dans_la_tete": {
+  "neutre": 0,
+  "sourcils leves": 0,
+  "sourire": 0,
+  "surprise": 0,
+  "yeux fermes": 0
+ },
+ "cheveux_qui_traversent": 78428,
+ "cartes_gardees_sous_casquette": "1265/8000",
+ "cartes_qui_traversent_apres_tri": 0,
+ "coiffure_sous_casquette": "models/accessories/cap-hair-curly-v41.glb",
+ "coiffure_octets": 390112,
+ "octets": 90872
+}

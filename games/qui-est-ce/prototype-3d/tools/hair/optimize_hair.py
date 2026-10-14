@@ -14,6 +14,7 @@ memes meches, memes couleurs, seule la facon de les stocker change.
                            normale et UV comprises) : moins de sommets, meme trace
   --tex-scale S            texture redimensionnee (0.5 = 256 x 512)
   --tex-format png|png-la|webp|webp-lossless
+  --keep-mask M.npy        ne garde que les cartes marquees (coiffure sous une casquette)
   --quantize               KHR_mesh_quantization : positions 16 bits (--pos-bits N), normales 8 bits,
                            UV 16 bits (--uv8 : 8 bits), couleurs 8 bits (--color16 : 16 bits)
 
@@ -213,6 +214,7 @@ def main():
     ap.add_argument('--keep-tex', action='store_true', help='octets de la texture source repris tels quels')
     ap.add_argument('--quantize', action='store_true'); ap.add_argument('--color16', action='store_true')
     ap.add_argument('--pos-bits', type=int, default=16); ap.add_argument('--uv8', action='store_true')
+    ap.add_argument('--keep-mask', help='.npy : booleen par carte (coiffure sous un chapeau, tools/accessories/hat.py)')
     a = ap.parse_args()
 
     d = load(a.src)
@@ -230,6 +232,8 @@ def main():
         cam = np.array(v['cam'])[sel].sum(0)
         order = np.argsort(cam + np.where(keep, 0, -1e9))
         keep[order[:int(round(a.cull_least * n0))]] = False
+    if a.keep_mask:
+        keep &= np.load(a.keep_mask).astype(bool)
     if a.cull_random:
         rng = np.random.default_rng(7)
         keep[rng.choice(n0, int(round(a.cull_random * n0)), replace=False)] = False
