@@ -180,7 +180,7 @@
       <button class="icon-btn card" id="btn-mute" aria-label="Couper le son (M)" title="Son (M)"><svg><use href="#i-sound"/></svg></button>
     </div>
     <div class="mp-bar card" id="mp-bar" hidden></div>
-    <div class="opp card" id="opp" hidden><canvas id="opp-canvas" aria-label="Réseau de l'adversaire (lecture seule)"></canvas><div class="opp-cap"><span id="opp-name">Adversaire</span><strong id="opp-score">0</strong></div></div>
+    <div class="opp card" id="opp" hidden><canvas id="opp-canvas" aria-label="Réseau de l'adversaire (lecture seule)"></canvas><div class="opp-cap"><span><small>Réseau adverse · lecture seule</small><span id="opp-name">Adversaire</span></span><strong id="opp-score">0</strong></div></div>
     <div class="creative-bar card" id="creative-bar" hidden>
       <div class="seg" role="radiogroup" aria-label="Outil">
         <button class="chip on" data-tool="build" role="radio" aria-checked="true">Lignes</button>
@@ -239,7 +239,7 @@
     <div class="modal-card over">
       <p class="eyebrow" id="ov-eyebrow">Fin de service</p>
       <h2 id="t-ov">Station saturée</h2>
-      <div class="ov-score"><strong id="ov-score">0</strong><span>voyageurs livrés</span></div>
+      <div class="ov-score"><strong id="ov-score">0</strong><span id="ov-unit">voyageurs livrés</span></div>
       <p class="ov-cause" id="ov-cause"></p>
       <div class="ov-badges" id="ov-badges"></div>
       <div class="ov-actions">

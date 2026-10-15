@@ -81,8 +81,9 @@ export class Game {
     this.renderer.now = now;
     this.renderer.onEvents(st, evs);
     this.sound(st, evs);
+    this.dt = dt;
     if (this.autoCam) this.fit(false);
-    else if (this.focus) { const c = this.renderer.cam, k = this.reduced ? 1 : 0.08; c.x += (this.focus.x - c.x) * k; c.y += (this.focus.y - c.y) * k; c.z += (this.focus.z - c.z) * k; }
+    else if (this.focus) { const c = this.renderer.cam, k = this.reduced ? 1 : 1 - Math.exp(-dt / 220); c.x += (this.focus.x - c.x) * k; c.y += (this.focus.y - c.y) * k; c.z += (this.focus.z - c.z) * k; }
     this.renderer.frame(st, f, this.input.ui, now);
     const other = this.session.other();
     if (other) { drainEvents(other); this.drawOpponent(other, now); }
@@ -144,15 +145,16 @@ export class Game {
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const s of st.stations) { x0 = Math.min(x0, s.x); y0 = Math.min(y0, s.y); x1 = Math.max(x1, s.x); y1 = Math.max(y1, s.y); }
     // marge : rayon de station, anneau, file d'attente (jusqu'à 6 glyphes à côté)
-    const pad = 70;
-    const w = cfgOf(st).world;
-    x0 = Math.max(-20, x0 - pad - 30); y0 = Math.max(-20, y0 - pad); x1 = Math.min(w.w + 20, x1 + pad + 40); y1 = Math.min(w.h + 20, y1 + pad);
+    const kk = R.k, w = cfgOf(st).world;
+    const px = 60 + 95 * kk, py = 50 + 45 * kk;
+    x0 = Math.max(-20, x0 - px); y0 = Math.max(-20, y0 - py); x1 = Math.min(w.w + 20, x1 + px); y1 = Math.min(w.h + 20, y1 + py);
     const mobile = R.W < 720;
     const sf = R.safe;
     const t = R.fitBox(x0, y0, x1, y1, { t: sf.t + 10, r: sf.r + 16, b: sf.b + 10, l: sf.l + 16 });
     t.z = Math.min(t.z, mobile ? 1.15 : 1.5);
     const c = R.cam;
-    const k = snap || this.reduced ? 1 : 0.1;
+    // lissage en temps réel (indépendant du nombre d'images par seconde)
+    const k = snap || this.reduced ? 1 : 1 - Math.exp(-Math.min(this.dt || 16, 200) / 160);
     c.x += (t.x - c.x) * k; c.y += (t.y - c.y) * k; c.z += (t.z - c.z) * k;
   }
   userCamera() { this.autoCam = false; }
@@ -211,11 +213,16 @@ export class Game {
     if (sat.length) {
       const worst = Math.max(...sat.map(s => s.o));
       al.classList.toggle('crit', crit > 0);
-      al.innerHTML = `<i style="--p:${Math.round(worst * 100)}"></i>${crit ? `${crit} station${crit > 1 ? 's' : ''} critique${crit > 1 ? 's' : ''}` : `${sat.length} station${sat.length > 1 ? 's' : ''} saturée${sat.length > 1 ? 's' : ''}`}`;
+      al.innerHTML = `<i style="--p:${Math.round(worst * 100)}"></i>${crit ? `${crit} critique${crit > 1 ? 's' : ''}` : `${sat.length} saturée${sat.length > 1 ? 's' : ''}`}`;
+      al.title = `${sat.length} station(s) au-delà de leur capacité, dont ${crit} en phase critique`;
     }
-    this.measureSafe();
     const sub = `<span class="ss-map">${esc(MAP_BY_ID[st.map].name)} · ${MODES[st.mode].name}${waiting ? ' · ' : ''}</span>${waiting ? `${waiting} en attente` : ''}`;
     if (this.lastSub !== sub) { $('#score-sub').innerHTML = sub; this.lastSub = sub; }
+    // colonne vitesse/menu toujours sous la carte d'état (dont la hauteur varie)
+    const hr = document.querySelector('.hud-right');
+    if (R_W(this) >= 720) hr.style.top = Math.round($('#score-card').getBoundingClientRect().bottom + 10) + 'px';
+    else hr.style.top = '';
+    this.measureSafe();
     if (MODES[st.mode].efficiency) {
       const e = $('#eff-fill');
       e.style.width = `${Math.round(st.eff * 100)}%`;
@@ -634,6 +641,7 @@ export class Game {
     $('#ov-eyebrow').textContent = eyebrow;
     $('#t-ov').textContent = title;
     $('#ov-score').textContent = st.score;
+    $('#ov-unit').textContent = st.score > 1 ? 'voyageurs livrés' : 'voyageur livré';
     $('#ov-cause').textContent = cause;
     const badges = [];
     if (out && out.best) badges.push('Nouveau record');
@@ -654,6 +662,7 @@ export class Game {
     $('#ov-again').disabled = this.session.kind !== 'solo' && !this.session.host;
     $('#ov-again').onclick = () => { $('#m-over').hidden = true; this.onRestart(); };
     $('#ov-menu').onclick = () => { $('#m-over').hidden = true; this.quit(); };
+    $('#m-over').classList.toggle('center', !!res.versus || !s);
     $('#m-over').hidden = false;
     $('#ov-again').focus();
   }
@@ -727,5 +736,6 @@ export class Game {
   }
 }
 
+const R_W = g => g.renderer.W;
 function fmtDur(ms) { const s = Math.round(ms / 1000); return `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, '0')} s`; }
 void lineSegments;

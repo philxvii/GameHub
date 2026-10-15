@@ -88,6 +88,7 @@ function startAttract() {
   if (attract) return;
   const cv = $('#attract');
   const R = new Renderer(cv);
+  R.frameless = true;
   R.setOptions({ theme: document.documentElement.dataset.theme, palette: S.palette, reduced: reducedMotion() });
   const map = MAPS[Math.floor(Math.random() * 3)].id;
   const st = createGame({ map, mode: 'infinite', seed: (Math.random() * 2 ** 32) >>> 0 });
@@ -402,7 +403,8 @@ function renderLobby(info) {
   $('#lobby-code').textContent = info.code;
   $('#lobby-cfg').textContent = `${MAP_BY_ID[info.map].name} · ${MODES[info.mode].name}`;
   const cols = MAP_BY_ID[info.map].palette.lines;
-  $('#lobby-players').innerHTML = info.players.map((p, i) => `<li><span class="dot" style="background:${cols[i % cols.length]}"></span><span class="pname">${esc(p.name)}${p.uid === info.me ? ' (vous)' : ''}</span><span class="pstate ${!p.online ? 'off' : p.ready || p.host ? 'ready' : ''}">${!p.online ? 'hors ligne' : p.host ? 'hôte' : p.ready ? 'prêt' : 'en attente'}</span></li>`).join('');
+  void cols;
+  $('#lobby-players').innerHTML = info.players.map((p, i) => `<li><span class="pnum">J${i + 1}</span><span class="pname">${esc(p.name)}${p.uid === info.me ? ' (vous)' : ''}</span><span class="pstate ${!p.online ? 'off' : p.host ? 'host' : p.ready ? 'ready' : ''}">${!p.online ? 'hors ligne' : p.host ? 'hôte' : p.ready ? 'prêt' : 'en attente'}</span></li>`).join('');
   const max = info.kind === 'versus' ? 2 : 4;
   const others = info.players.filter(p => !p.host);
   const allReady = others.length >= 1 && others.every(p => p.ready && p.online);

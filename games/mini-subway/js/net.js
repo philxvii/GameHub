@@ -358,7 +358,7 @@ export class NetSession {
       const why = st => (st.over.reason === 'forfeit' ? 'abandon' : 'saturation');
       const text = me.over && op.over
         ? `Saturation au même instant : ${me.score} contre ${op.score} voyageurs${outcome === 'draw' ? ', match nul.' : '.'}`
-        : me.over ? `Votre réseau a cédé le premier (${why(me)}). Score : ${me.score} contre ${op.score}.` : `Le réseau adverse a cédé le premier (${why(op)}). Score : ${me.score} contre ${op.score}.`;
+        : me.over ? `Votre réseau a cédé le premier (${why(me)}). Vous ${me.score} · adversaire ${op.score}.` : `Le réseau adverse a cédé le premier (${why(op)}). Vous ${me.score} · adversaire ${op.score}.`;
       this.ended = { versus: true, outcome, text, tick: this.tick };
     }
     if (this.ended && this.host) {
@@ -401,7 +401,7 @@ export class NetSession {
     const html = Object.keys(this.seats).sort((a, b) => this.seats[a] - this.seats[b]).map(uid => {
       const on = pres[uid] != null && !this.left.has(uid);
       const tag = uid === this.me ? ' (vous)' : uid === this.hostUid() ? ' · hôte' : '';
-      return `<div class="mpp"><span class="dot" style="background:${['#E0412F', '#2A6FD6', '#1E9E62', '#F2A516'][this.seats[uid]]}"></span><span>${escapeHtml(this.nameOf(uid))}${tag}</span>${on ? '' : `<span class="off">${this.left.has(uid) ? 'parti' : 'hors ligne'}</span>`}</div>`;
+      return `<div class="mpp"><span class="pnum">J${this.seats[uid] + 1}</span><span>${escapeHtml(this.nameOf(uid))}${tag}</span>${on ? '' : `<span class="off">${this.left.has(uid) ? 'parti' : 'hors ligne'}</span>`}</div>`;
     }).join('') + (stalled ? '<div class="off">En attente de l’hôte…</div>' : '') + (this.kind === 'coop' && this.autoPaused ? '<div class="off">Pause : joueur déconnecté</div>' : '');
     if (bar.dataset.html !== html) { bar.innerHTML = html; bar.dataset.html = html; }
     bar.hidden = false;

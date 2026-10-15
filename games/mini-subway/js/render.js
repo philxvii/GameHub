@@ -82,6 +82,7 @@ export class Renderer {
     ctx.setTransform(this.dpr * c.z, 0, 0, this.dpr * c.z, this.dpr * (this.W / 2 - c.x * c.z), this.dpr * (this.H / 2 - c.y * c.z));
     this.drawGeo(cfg, T);
     const off = this.lineOffsets(st);
+    this.drawHalos(st, T);
     this.drawLines(st, T, off, ui);
     if (ui && ui.pendingPv) { this.ctx.globalAlpha = 0.5; this.drawPreview(st, T, ui.pendingPv); this.ctx.globalAlpha = 1; }
     if (ui && ui.preview) this.drawPreview(st, T, ui.preview);
@@ -98,13 +99,12 @@ export class Renderer {
     const night = this.theme === 'night';
     const W = cfg.world;
     // cadre du monde : feuille de papier posée sur un fond plus sombre, bord encré
-    ctx.fillStyle = T.shade;
-    ctx.fillRect(4, 6, W.w, W.h);
+    if (this.frameless) { ctx.fillStyle = night ? shade(cfg.palette.landNight, 0.035) : shade(cfg.palette.landDay, 0.025); ctx.fillRect(-4000, -4000, W.w + 8000, W.h + 8000); }
+    else { ctx.fillStyle = T.shade; ctx.fillRect(4, 6, W.w, W.h); }
     ctx.fillStyle = night ? shade(cfg.palette.landNight, 0.035) : shade(cfg.palette.landDay, 0.025);
     ctx.fillRect(0, 0, W.w, W.h);
     ctx.save();
     ctx.beginPath(); ctx.rect(0, 0, W.w, W.h); ctx.clip();
-    ctx.globalAlpha = night ? 0.6 : 1;
     ctx.fillStyle = this.pattern('grain'); ctx.fillRect(0, 0, W.w, W.h);
     ctx.globalAlpha = 1;
     ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
@@ -134,6 +134,7 @@ export class Renderer {
       ctx.globalAlpha = night ? 0.6 : 1; ctx.fillStyle = this.pattern('grain'); ctx.fill(); ctx.globalAlpha = 1;
     }
     ctx.restore();
+    if (this.frameless) return;
     ctx.strokeStyle = night ? 'rgba(233,228,216,0.28)' : 'rgba(30,35,43,0.35)'; ctx.lineWidth = 1.5;
     ctx.strokeRect(0, 0, W.w, W.h);
   }
@@ -148,7 +149,7 @@ export class Renderer {
       let s = 7;
       const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
       for (let i = 0; i < 900; i++) {
-        g.fillStyle = night ? `rgba(255,255,255,${0.015 + rnd() * 0.025})` : `rgba(60,50,30,${0.015 + rnd() * 0.03})`;
+        g.fillStyle = night ? `rgba(255,255,255,${0.03 + rnd() * 0.04})` : `rgba(60,50,30,${0.015 + rnd() * 0.03})`;
         g.fillRect(rnd() * 128, rnd() * 128, 1 + rnd(), 1 + rnd());
       }
     } else if (kind === 'hatch') {
@@ -307,10 +308,18 @@ export class Renderer {
     const col = pv.color;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     const seq = pv.seq.filter(id => stationById(st, id));
-    ctx.globalAlpha = pv.ghost ? 0.45 : 0.9;
-    ctx.strokeStyle = col; ctx.lineWidth = LINE_W * k;
-    for (let i = 1; i < seq.length; i++) { path(ctx, segment(st, seq[i - 1], seq[i]).pts, false); ctx.stroke(); }
-    if (pv.loop && seq.length > 2) { path(ctx, segment(st, seq[seq.length - 1], seq[0]).pts, false); ctx.stroke(); }
+    const segs = [];
+    for (let i = 1; i < seq.length; i++) segs.push(segment(st, seq[i - 1], seq[i]).pts);
+    if (pv.loop && seq.length > 2) segs.push(segment(st, seq[seq.length - 1], seq[0]).pts);
+    // tracé en cours : halo papier, trait estompé et âme pointillée (≠ ligne posée)
+    ctx.globalAlpha = pv.ghost ? 0.4 : 1;
+    for (const pts of segs) { path(ctx, pts, false); ctx.strokeStyle = T.paper; ctx.lineWidth = (LINE_W + 6) * k; ctx.stroke(); }
+    ctx.globalAlpha = pv.ghost ? 0.35 : 0.62;
+    for (const pts of segs) { path(ctx, pts, false); ctx.strokeStyle = col; ctx.lineWidth = LINE_W * k; ctx.stroke(); }
+    ctx.globalAlpha = pv.ghost ? 0.5 : 0.95;
+    ctx.setLineDash([6 * k, 6 * k]);
+    for (const pts of segs) { path(ctx, pts, false); ctx.strokeStyle = T.paper; ctx.lineWidth = 2.4 * k; ctx.stroke(); }
+    ctx.setLineDash([]);
     if (pv.insert) { // tronçon tiré vers une nouvelle station
       ctx.setLineDash([2, 14 * k]);
       path(ctx, [pv.insert.ax, pv.insert.ay, pv.cursor.x, pv.cursor.y, pv.insert.bx, pv.insert.by], false); ctx.stroke();
@@ -320,11 +329,15 @@ export class Renderer {
     if (pv.cursor && pv.from) {
       const s = stationById(st, pv.from);
       if (s) {
-        ctx.setLineDash([1, 13 * k]);
-        ctx.lineWidth = LINE_W * k;
+        ctx.globalAlpha = 0.8;
+        ctx.lineWidth = 4 * k;
         ctx.strokeStyle = pv.bad ? T.alert : col;
+        if (pv.bad) ctx.setLineDash([5 * k, 5 * k]);
         ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(pv.cursor.x, pv.cursor.y); ctx.stroke();
         ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = T.paper; ctx.lineWidth = 3.5 * k;
+        ctx.beginPath(); ctx.arc(pv.cursor.x, pv.cursor.y, 8 * k, 0, 7); ctx.fill(); ctx.stroke();
       }
     }
     ctx.globalAlpha = 1;
@@ -337,7 +350,8 @@ export class Renderer {
       // à quai : posé sur le tracé, juste avant la station, orienté vers l'arrêt suivant
       if (t.nx != null && stationById(st, t.nx)) {
         const pts = this.segPts(st, off, t.l, t.b, t.nx);
-        const p = pointAt(pts, 0);
+        const L = polyLen(pts);
+        const p = pointAt(pts, Math.min(L * 0.45, (ST_R + 17) * this.k));
         return { x: p.x, y: p.y, dx: p.dx, dy: p.dy };
       }
       return { x: s.x, y: s.y, dx: 1, dy: 0 };
@@ -387,6 +401,20 @@ export class Renderer {
       });
       ctx.restore();
     }
+  }
+
+  // Halo d'alerte des stations critiques, sous les lignes (ne teinte pas leur couleur).
+  drawHalos(st, T) {
+    const { ctx } = this;
+    const k = this.k, warn = cfgOf(st).overload.warnAt;
+    for (const s of st.stations) {
+      if (s.o < warn) continue;
+      const pulse = this.reduced ? 1 : 1 + 0.07 * Math.sin(this.now / 130);
+      const r = (s.hub ? ST_R * 1.45 : ST_R) * k;
+      ctx.fillStyle = T.alert; ctx.globalAlpha = 0.2 + (this.reduced ? 0 : 0.08 * Math.sin(this.now / 130));
+      ctx.beginPath(); ctx.arc(s.x, s.y, (r + 19 * k) * pulse, 0, 7); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
   }
 
   // Numéros de ligne (palette daltonienne, grands repères) : au bout de chaque ligne,
@@ -442,7 +470,6 @@ export class Renderer {
       if (s.o > 0) {
         const pulse = crit && !this.reduced ? 1 + 0.07 * Math.sin(this.now / 130) : 1;
         const R = r + 10 * k;
-        if (crit) { ctx.fillStyle = T.alert; ctx.globalAlpha = 0.16 + (this.reduced ? 0 : 0.08 * Math.sin(this.now / 130)); ctx.beginPath(); ctx.arc(s.x, s.y, (R + 9 * k) * pulse, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
         ctx.lineCap = 'butt';
         ctx.lineWidth = 9 * k; ctx.strokeStyle = T.paper; ctx.beginPath(); ctx.arc(s.x, s.y, R, 0, Math.PI * 2); ctx.stroke();
         ctx.lineWidth = 6 * k; ctx.strokeStyle = T.shade; ctx.beginPath(); ctx.arc(s.x, s.y, R, 0, Math.PI * 2); ctx.stroke();
@@ -486,13 +513,14 @@ export class Renderer {
   drawQueue(st, s, r, T, side) {
     if (!s.q.length) return;
     const { ctx } = this;
-    const k = this.k * (this.labels === 'large' ? 1.22 : 1) * (this.contrast ? 1.1 : 1);
+    let k = this.k * (this.labels === 'large' ? 1.22 : 1) * (this.contrast ? 1.1 : 1);
+    k = Math.max(k, 7 / (PAX * this.cam.z)); // lisible même très dézoomé (mobile)
     const cap = stationCapacity(st, s);
     const per = 6, size = PAX * k, gap = size * 1.45;
     const shown = Math.min(s.q.length, per * 2);
     const rows = Math.ceil(shown / per), colsN = Math.min(per, shown);
     const more = s.q.length - shown;
-    const w = colsN * gap + (more ? 26 * k : 0), h = rows * gap;
+    const w = colsN * gap, h = rows * gap;
     const pad = 3 * k;
     let x0, y0;
     if (side === 'left') { x0 = s.x - r - 9 * this.k - w; y0 = s.y - h / 2; }
@@ -514,7 +542,8 @@ export class Renderer {
     if (more) {
       ctx.fillStyle = s.q.length > cap ? T.alert : T.ink;
       ctx.font = `600 ${10.5 * k}px "IBM Plex Mono", monospace`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-      ctx.fillText('+' + more, x0 + colsN * gap + 2 * k, y0 + h - gap / 2);
+      if (side === 'left') { ctx.textAlign = 'right'; ctx.fillText('+' + more, x0 - 3 * k, y0 + h - gap / 2); }
+      else ctx.fillText('+' + more, x0 + colsN * gap + 2 * k, y0 + h - gap / 2);
     }
   }
 
@@ -526,7 +555,7 @@ export class Renderer {
       if (s.o <= 0.05) continue;
       const p = this.toScreen(s.x, s.y);
       const x0 = sf.l + 22, x1 = this.W - sf.r - 22, y0 = sf.t + 22, y1 = this.H - sf.b - 22;
-      if (p.x > x0 && p.x < x1 && p.y > y0 && p.y < y1) continue;
+      if (p.x > 4 && p.x < this.W - 4 && p.y > 4 && p.y < this.H - 4) continue; // visible : pas de repère
       const x = Math.max(x0, Math.min(x1, p.x)), y = Math.max(y0, Math.min(y1, p.y));
       const ang = Math.atan2(p.y - y, p.x - x);
       ctx.save(); ctx.translate(x, y);

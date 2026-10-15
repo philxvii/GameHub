@@ -370,3 +370,11 @@ input:focus, select:focus { outline: none; border-color: var(--ink); }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 :root[data-motion="reduced"] *, :root[data-motion="reduced"] *::before, :root[data-motion="reduced"] *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+
+/* joueurs : badges numérotés à l'encre (jamais une couleur de ligne) */
+.pnum { flex: none; min-width: 26px; height: 22px; padding: 0 5px; border-radius: 6px; background: var(--ink); color: var(--paper); font: 600 11.5px/22px var(--mono); text-align: center; }
+.mp-bar .pnum { min-width: 22px; height: 18px; line-height: 18px; font-size: 10.5px; }
+.opp-cap small { display: block; font: 600 9.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+.alert-chip { max-width: 100%; white-space: nowrap; }
+.players .pstate.host { color: var(--ink); background: color-mix(in srgb, var(--signal) 40%, transparent); padding: 2px 7px; border-radius: 6px; }
+#m-over.center { place-items: center; padding: 16px; }
