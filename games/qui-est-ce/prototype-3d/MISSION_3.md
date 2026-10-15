@@ -610,3 +610,76 @@ Ne committe pas, ne pousse pas, ne déploie pas et ne supprime pas le worktree. 
 Indique l'URL locale exacte, les fichiers modifiés, les tests exécutés, les résultats réellement observés et les limites restantes.
 
 **Ne déclare pas le jeu terminé parce qu'il fonctionne. Il doit aussi atteindre une vraie qualité visuelle. Le but est d'avoir un Qui est-ce ? à la hauteur du reste de GameHub, avec sa propre DA et sa propre personnalité.**
+
+---
+
+# PRÉCISIONS DE L'UTILISATEUR (2026-10-15, après lecture du préambule) — ELLES PRIMENT
+
+Le plan d'adaptation est accepté, avec ces précisions. En cas de contradiction avec le préambule
+ci-dessus, **cette section gagne**.
+
+## 1. Démarrage sûr
+Vérifie le dépôt, la branche, le worktree et les modifications locales avant toute synchronisation ;
+récupère `origin/proto/qui-est-ce-3d` sans écraser de travail ; lis tout `MISSION_3.md`. Cette mission
+remplace la mission 2 ; le rejet de la direction artistique actuelle annule les choix visuels
+antérieurs incompatibles. Travail **exclusivement** sur `proto/qui-est-ce-3d`.
+
+## 2. Priorité immédiate
+Commence par le bug de survol du portrait **et son test automatisé**. Le test compare des captures
+dans des conditions reproductibles et détecte un vrai défaut visuel : il ne doit pas être conçu pour
+passer artificiellement (prouve qu'il échoue sur le code fautif). Vérifie ensuite le correctif dans un
+navigateur, sans régression. Puis audit → direction artistique → interface → personnages.
+
+## 3. Sous-agents et reviewer indépendant
+Utilise les sous-agents **réellement disponibles** pour séparer les compétences : direction
+artistique, personnages / 3D, UI/UX et game design, animation / game feel, QA et revue visuelle.
+Le **reviewer visuel** examine les captures réelles en résolution suffisante, **indépendamment du
+rapport de l'implémenteur**, et peut **refuser** le résultat (visages, cheveux, matériaux,
+éclairage, typographie, composition, animations médiocres). **Deux passes de revue indépendantes au
+minimum** : (1) sur les personnages pilotes, **avant** d'étendre la production au casting ;
+(2) sur le jeu intégré. Si des sous-agents indépendants ne sont pas disponibles, **dis-le** et
+utilise ce qui l'est réellement ; ne prétends jamais avoir fait une revue indépendante si ce n'est
+pas le cas. Les comptes rendus du reviewer vont dans `reports/premium/revue-*.md` avec les captures.
+
+## 4. BUDGET : 50 $ AU TOTAL, RÉSERVE COMPRISE (corrige le tableau du préambule)
+
+Le tableau du préambule (4 + 4 + 8 + 12 + 12 + 5 + 5 = 50 $, plus 8 $ de réserve) dépassait le
+plafond. **Nouveau tableau, somme = 50 $ :**
+
+| Poste | Budget |
+| --- | --- |
+| Bug du portrait + test d'image | 4 $ |
+| Audit + note de DA | 3 $ |
+| Direction artistique (3 pistes comparées, système de design) | 7 $ |
+| Interface principale (écran de jeu, grille, panneaux, états, responsive) | 10 $ |
+| Personnages : pilotes d'abord (3 à 4), puis casting | 11 $ |
+| Game feel (retours, révélation, sons synthétisés) | 3 $ |
+| Reviewer indépendant (2 passes) | 4 $ |
+| Tests, captures desktop / mobile | 3 $ |
+| Réserve (fin de mission, passation, imprévus) | 5 $ |
+| **Total** | **50 $** |
+
+Protège en priorité : direction artistique, interface, validation du modèle pilote, reviewer.
+**Ne génère pas les 24 personnages avant d'avoir validé** (passe 1 du reviewer) **la qualité et la
+reproductibilité de la méthode** sur quelques pilotes. Si le budget devient insuffisant : termine
+proprement le bug, une direction artistique solide, l'interface principale et **un casting pilote
+convaincant**, et **ne prétends pas que les 24 sont finalisés** s'ils ne le sont pas (dis
+précisément ce qui reste). Demande le solde réel à l'utilisateur à la fin de chaque poste.
+
+## 5. Synchronisation, sauvegardes, checkpoints
+Tu peux commiter et pousser des checkpoints, **exclusivement sur `proto/qui-est-ce-3d`**. Avant
+chaque push : vérifie le diff et le contenu indexé ; exclus secrets, fichiers temporaires et
+captures inutiles ; relance les tests pertinents ; vérifie que le push est une **avance rapide** qui
+n'écrase aucun travail distant (sinon fetch + rebase de tes commits locaux seulement, jamais de
+`--force`). Décisions dans `DECISIONS.md`, questions **réellement bloquantes** seulement dans
+`QUESTIONS.md`, captures des revues dans `reports/premium/`. Ne supprime pas d'assets validés sans
+vérifier leurs dépendances. Ne touche ni à Firebase (hors `qec3` déjà fait), ni au Worker IA, ni aux
+autres jeux, ni aux secrets.
+
+## 6. Critère de fin
+Pas seulement un jeu qui fonctionne ou un modèle 3D techniquement correct : **une amélioration
+visuelle manifeste par rapport à la capture actuelle**, confirmée par le reviewer (défauts majeurs
+corrigés) et vérifiable dans les captures et les tests. À la fin, donne : le **SHA** de la branche,
+les fichiers modifiés, les résultats des tests, les captures desktop / mobile, le bilan du reviewer,
+le budget consommé, et **précisément ce qui reste** si la mission s'arrête avant d'être achevée.
+Tu peux commencer et décider sans me demander de valider chaque lot.
