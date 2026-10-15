@@ -105,6 +105,90 @@ const rules = {
 
 for (const [prefix, opts] of Object.entries(GAMES)) rules[prefix] = gameRules(prefix, opts);
 
+// Mini Subway (ms/<code>) : modèle propre, plus strict que celui des autres jeux. Les
+// membres n'écrivent pas la partie entière : chacun écrit sa fiche, sa présence et ses
+// demandes de commande ; seul l'hôte (horloge de la partie) écrit la configuration, la
+// phase et le journal ordonné des commandes, à écriture unique. Une commande du journal
+// porte l'auteur de la demande d'origine ; en Versus, elle ne vise que le réseau de son
+// auteur (siège attribué par l'hôte au lancement).
+function msRules() {
+  const R = "root.child('ms').child($code)";
+  const AUTH = `auth != null && ${OPEN}`;
+  const MEMBER = `${R}.child('members').child(auth.uid).exists()`;
+  const HOST = `${R}.child('hostUid').val() === auth.uid`;
+  const NUM = 'newData.isNumber()';
+  const room = {
+    '.read': `auth != null && ((${OPEN} && data.child('members').child(auth.uid).exists()) || ${ADMIN})`,
+    '.write': [
+      `auth != null && ((${OPEN} && (`,
+      `(!data.exists() && $code.matches(${CODE}) && newData.child('hostUid').val() === auth.uid && newData.child('members').child(auth.uid).val() === true && newData.child('phase').val() === 'lobby')`,
+      "|| (data.exists() && !newData.exists() && data.child('hostUid').val() === auth.uid)))",
+      `|| (${ADMIN}))`,
+    ].join(' '),
+    '.validate': "newData.hasChildren(['phase', 'hostUid']) && newData.child('members').child(newData.child('hostUid').val()).val() === true",
+    hostUid: { '.validate': 'newData.isString() && (!data.exists() || newData.val() === data.val())' },
+    members: {
+      $uid: {
+        '.write': `auth != null && auth.uid === $uid && !data.exists() && ${OPEN} && ${R}.child('phase').val() === 'lobby'`,
+        '.validate': `newData.val() === true && ($uid === auth.uid || data.exists() || (${ADMIN}))`,
+      },
+    },
+    phase: { '.read': `auth != null && ${OPEN}`, '.write': `${AUTH} && ${HOST}`, '.validate': "newData.isString() && newData.val().matches(/^(lobby|playing|ended)$/)" },
+    cfg: {
+      '.write': `${AUTH} && ${HOST}`,
+      '.validate': "newData.hasChildren(['kind', 'map', 'mode', 'seed', 'round', 'v'])",
+      kind: { '.validate': "newData.isString() && newData.val().matches(/^(coop|versus)$/)" },
+      map: { '.validate': "newData.isString() && newData.val().matches(/^[a-z-]{1,32}$/)" },
+      mode: { '.validate': "newData.isString() && newData.val().matches(/^(classic|infinite|extreme)$/)" },
+      seed: { '.validate': NUM }, round: { '.validate': NUM }, v: { '.validate': NUM },
+      seats: { $uid: { '.validate': 'newData.isNumber() && newData.val() >= 0 && newData.val() <= 3' } },
+      handicaps: { v: { '.validate': NUM }, $other: { '.validate': false } },
+      $other: { '.validate': false },
+    },
+    players: {
+      $uid: {
+        '.write': `${AUTH} && auth.uid === $uid && ${MEMBER}`,
+        '.validate': "newData.hasChildren(['name'])",
+        name: { '.validate': NAME }, ready: { '.validate': 'newData.isBoolean()' }, t: { '.validate': NUM },
+        $other: { '.validate': false },
+      },
+    },
+    presence: { $uid: { '.write': `${AUTH} && auth.uid === $uid && ${MEMBER}`, '.validate': NUM } },
+    // Demande de commande : créée par son auteur, retirée par l'hôte une fois journalisée.
+    req: {
+      $id: {
+        '.write': `${AUTH} && ${MEMBER} && ((!data.exists() && newData.child('by').val() === auth.uid) || (data.exists() && !newData.exists() && ${HOST}))`,
+        '.validate': "$id.matches(/^[A-Za-z0-9_-]{6,40}$/) && newData.hasChildren(['by', 'c', 'net'])",
+        by: { '.validate': 'newData.isString()' }, c: { '.validate': 'newData.isString() && newData.val().length <= 2000' }, net: { '.validate': NUM },
+        $other: { '.validate': false },
+      },
+    },
+    // Journal ordonné : l'hôte seul, chaque entrée écrite une fois ; vidé en bloc à la revanche.
+    cmds: {
+      '.write': `${AUTH} && ${HOST} && !newData.exists()`,
+      $seq: {
+        '.write': `${AUTH} && ${HOST} && !data.exists()`,
+        '.validate': "$seq.matches(/^c[0-9]{6}$/) && newData.hasChildren(['id', 'by', 'tick', 'c', 'net'])",
+        id: { '.validate': 'newData.isString() && newData.val().length <= 40' },
+        by: {
+          '.validate': `newData.isString() && (newData.val() === auth.uid || ${R}.child('req').child(newData.parent().child('id').val()).child('by').val() === newData.val())`
+            + ` && (${R}.child('cfg').child('kind').val() !== 'versus' || newData.parent().child('net').val() === ${R}.child('cfg').child('seats').child(newData.val()).val() || (newData.val() === auth.uid && newData.parent().child('net').val() === -1))`,
+        },
+        tick: { '.validate': NUM }, net: { '.validate': NUM },
+        c: { '.validate': 'newData.isString() && newData.val().length <= 2000' },
+        $other: { '.validate': false },
+      },
+    },
+    head: { '.write': `${AUTH} && ${HOST}`, '.validate': "newData.hasChildren(['tick', 'n'])", tick: { '.validate': NUM }, n: { '.validate': NUM }, $other: { '.validate': false } },
+    hash: { '.write': `${AUTH} && ${HOST}`, tick: { '.validate': NUM }, h: { '.validate': NUM }, $other: { '.validate': false } },
+    snap: { '.write': `${AUTH} && ${HOST}`, tick: { '.validate': NUM }, s: { '.validate': 'newData.isString() && newData.val().length <= 400000' }, $other: { '.validate': false } },
+    result: { '.write': `${AUTH} && ${HOST}`, '.validate': "newData.hasChildren(['outcome'])", outcome: { '.validate': "newData.isString() && newData.val().length <= 64" }, tick: { '.validate': NUM }, $other: { '.validate': false } },
+    $other: { '.validate': false },
+  };
+  return { '.read': ADMIN, '.write': `${ADMIN} && !newData.exists()`, $code: room };
+}
+rules.ms = msRules();
+
 // Undercover : les secrets ne sont jamais dans games/<code>.
 const room = rules.games.$code;
 room.civilWord = { '.validate': false };

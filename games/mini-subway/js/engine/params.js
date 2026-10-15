@@ -32,21 +32,21 @@ export const DEFAULTS = {
     warnAt: 0.4,              // seuil d'alerte sonore / visuelle renforcée
   },
   trains: {
-    speed: 2.5, accelRatio: 0.18, minDwellTicks: 8, boardTicks: 4, hubBoardTicks: 2,
+    speed: 3.4, accelRatio: 0.18, minDwellTicks: 8, boardTicks: 3, hubBoardTicks: 2,
     transferTicks: 40, hubTransferTicks: 10, waitCost: 50, stopCost: 14,
   },
   // Classes de matériel : multiplicateur de vitesse et places en plus de la rame de base.
   vehicles: { standard: { speed: 1, cap: 0 }, express: { speed: 1.6, cap: 0 }, tram: { speed: 0.75, cap: 2 } },
   growth: {
     enabled: true,
-    firstStationTicks: 420, intervalStartTicks: 620, intervalMinTicks: 200, intervalDropPerWeek: 75,
+    firstStationTicks: 420, intervalStartTicks: 760, intervalMinTicks: 240, intervalDropPerWeek: 70,
     jitter: 0.3, maxStations: 56, minSpacing: 92, lineClearance: 24, edgeMargin: 46,
     startHalf: [360, 230], growHalfPerWeek: [130, 85],
     rareFromWeek: 2, rareChance: 0.12, maxPerRare: 1, rareShapes: ['star', 'diamond', 'pentagon', 'cross'],
     attempts: 40,
   },
   shapes: { weights: { circle: 6, triangle: 3.3, square: 2.1 } },
-  passengers: { intervalTicks: 210, intervalJitter: 0.45, firstDelayTicks: 70, growthPerWeek: 0.24, rareDestWeight: 1.1 },
+  passengers: { intervalTicks: 270, intervalJitter: 0.45, firstDelayTicks: 70, growthPerWeek: 0.18, rareDestWeight: 1.1 },
   rewards: {
     locosPerWeek: 1, locoChoice: null, choices: 2,
     available: ['line', 'carriage', 'crossings', 'hub'],

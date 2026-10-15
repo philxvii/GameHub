@@ -11,7 +11,7 @@ const BASE_MAPS = MAPS.filter(m => !m.unlock).map(m => m.id);
 
 export const CHALLENGE_MODS = {
   fewCrossings: { name: 'Ponts rares', desc: 'Un seul pont au départ, un par récompense.', patch: { limits: { startingCrossings: 1 }, rewards: { crossingsPerReward: 1 } } },
-  fastGrowth: { name: 'Ville pressée', desc: 'Les stations apparaissent plus vite.', patch: { growth: { intervalStartTicks: 480, intervalMinTicks: 150 } } },
+  fastGrowth: { name: 'Ville pressée', desc: 'Les stations apparaissent plus vite.', patch: { growth: { intervalStartTicks: 560, intervalMinTicks: 180 } } },
   smallTrains: { name: 'Rames courtes', desc: 'Quatre places par locomotive.', patch: { capacity: { train: 4 } } },
   fourLines: { name: 'Quatre lignes', desc: 'Pas plus de quatre lignes sur la carte.', patch: { limits: { maxLines: 4 } } },
   squares: { name: 'Quartiers carrés', desc: 'Les carrés deviennent fréquents.', patch: { shapes: { weights: { square: 3.6 } } } },

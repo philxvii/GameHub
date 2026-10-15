@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style id="mx-guard">html{visibility:hidden!important}</style><script src="../../shared/maintenance.js" onerror="window.stop();document.documentElement.innerHTML='&lt;body style=&quot;font:16px sans-serif;padding:2rem&quot;&gt;Site momentanément indisponible. Réessayez plus tard.&lt;/body&gt;'"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F1EDE3">
+<title>Mini Subway</title>
+<meta name="description" content="Mini Subway : dessinez le métro d'une ville qui grandit. Seul, en coopération ou en duel.">
+<link rel="icon" href="../../icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../../icons/favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="../../icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-loco" viewBox="0 0 24 24"><rect x="3" y="7" width="15" height="10" rx="2.5" fill="currentColor"/><path d="M18 9h1.5a2.5 2.5 0 0 1 2.5 2.5V15a2 2 0 0 1-2 2h-2z" fill="currentColor" opacity=".55"/><circle cx="7" cy="19.5" r="1.6" fill="currentColor"/><circle cx="14" cy="19.5" r="1.6" fill="currentColor"/></symbol>
+    <symbol id="i-express" viewBox="0 0 24 24"><path d="M2 8h12c4 0 8 3 8 6v1a2 2 0 0 1-2 2H2z" fill="currentColor"/><path d="M4 11h8" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><circle cx="6" cy="19.5" r="1.6" fill="currentColor"/><circle cx="15" cy="19.5" r="1.6" fill="currentColor"/></symbol>
+    <symbol id="i-car" viewBox="0 0 24 24"><rect x="2" y="8" width="9" height="8" rx="2" fill="currentColor" opacity=".45"/><rect x="13" y="8" width="9" height="8" rx="2" fill="currentColor"/><path d="M11 12h2" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-bridge" viewBox="0 0 24 24"><path d="M2 15c3-5 6-7 10-7s7 2 10 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M2 15h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M2 20c2 0 2-1.4 4-1.4S8 20 10 20s2-1.4 4-1.4 2 1.4 4 1.4 2-1.4 4-1.4" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".5"/></symbol>
+    <symbol id="i-hub" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="4.6" fill="currentColor"/></symbol>
+    <symbol id="i-line" viewBox="0 0 24 24"><path d="M3 18h6l6-12h6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.2" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1.2" fill="currentColor"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" fill="currentColor"/></symbol>
+    <symbol id="i-fast" viewBox="0 0 24 24"><path d="M3 6l9 6-9 6zM12 6l9 6-9 6z" fill="currentColor"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></symbol>
+    <symbol id="i-pax" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.4" fill="currentColor"/><path d="M5.5 20c.6-4.6 3.2-7 6.5-7s5.9 2.4 6.5 7z" fill="currentColor"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 0 1 0 10h-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 7l5 5-5 5M20 12H9a5 5 0 0 0 0 10h2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M14 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.2"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  </defs>
+</svg>
+
+<div id="app">
+
+  <!-- ═════════════ Accueil ═════════════ -->
+  <section id="menu" class="screen active" aria-label="Accueil">
+    <canvas id="attract" aria-hidden="true"></canvas>
+    <div class="menu-veil"></div>
+    <div class="menu-shell">
+      <header class="brand">
+        <svg class="brand-mark" viewBox="0 0 120 44" aria-hidden="true">
+          <path d="M14 30h28l14-14h34l14 14" fill="none" stroke="#E0412F" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="14" cy="30" r="7.5" fill="#FFFDF8" stroke="#1E232B" stroke-width="3.4"/>
+          <path d="M73 6.5l9.6 15.6H63.4z" fill="#FFFDF8" stroke="#1E232B" stroke-width="3.4" stroke-linejoin="round"/>
+          <rect x="97.5" y="23.5" width="13" height="13" fill="#FFFDF8" stroke="#1E232B" stroke-width="3.4"/>
+        </svg>
+        <h1 class="wordmark">Mini<span>Subway</span></h1>
+        <p class="tagline">Dessinez le métro d’une ville qui ne cesse de grandir.</p>
+      </header>
+      <nav class="menu-main" aria-label="Menu principal">
+        <button class="btn primary big" data-open="play"><span>Jouer</span><small id="menu-last">Classique · Val-d’Orme</small></button>
+        <button class="btn" data-open="challenges"><span>Défis</span><small id="menu-daily">Défi du jour</small></button>
+        <button class="btn" data-open="multi"><span>Multijoueur</span><small>Coopération · Versus</small></button>
+        <div class="menu-row">
+          <button class="btn ghost" data-open="records">Records &amp; succès</button>
+          <button class="btn ghost" data-open="settings">Réglages</button>
+          <button class="btn ghost" data-open="help">Aide</button>
+        </div>
+        <a class="hub-link" href="../../index.html"><svg width="16" height="16"><use href="#i-back"/></svg>GameHub</a>
+      </nav>
+    </div>
+
+    <!-- Panneaux de l'accueil -->
+    <div class="sheet" id="p-play" role="dialog" aria-modal="true" aria-labelledby="t-play" hidden>
+      <div class="sheet-head"><button class="icon-btn" data-close aria-label="Retour"><svg><use href="#i-back"/></svg></button><h2 id="t-play">Nouvelle partie</h2></div>
+      <div class="sheet-body">
+        <h3 class="label">Ville</h3>
+        <div class="maps" id="map-list" role="radiogroup" aria-label="Carte"></div>
+        <h3 class="label">Mode</h3>
+        <div class="modes" id="mode-list" role="radiogroup" aria-label="Mode"></div>
+        <p class="mode-desc" id="mode-desc"></p>
+        <label class="seed-row"><span>Graine (facultatif)</span><input id="seed-input" maxlength="12" autocomplete="off" spellcheck="false" placeholder="aléatoire"></label>
+      </div>
+      <div class="sheet-foot"><button class="btn primary big" id="start-solo">Ouvrir la ligne</button></div>
+    </div>
+
+    <div class="sheet" id="p-challenges" role="dialog" aria-modal="true" aria-labelledby="t-ch" hidden>
+      <div class="sheet-head"><button class="icon-btn" data-close aria-label="Retour"><svg><use href="#i-back"/></svg></button><h2 id="t-ch">Défis</h2></div>
+      <div class="sheet-body" id="challenge-list"></div>
+    </div>
+
+    <div class="sheet" id="p-multi" role="dialog" aria-modal="true" aria-labelledby="t-mu" hidden>
+      <div class="sheet-head"><button class="icon-btn" data-close aria-label="Retour"><svg><use href="#i-back"/></svg></button><h2 id="t-mu">Multijoueur</h2></div>
+      <div class="sheet-body">
+        <label class="field"><span>Votre nom</span><input id="mp-name" maxlength="20" autocomplete="nickname" placeholder="Conducteur·rice"></label>
+        <div class="mp-cards">
+          <article class="mp-card">
+            <h3>Coopération <small>2 à 4</small></h3>
+            <p>Un seul réseau, un inventaire et un score communs. On gagne ensemble, on perd ensemble.</p>
+          </article>
+          <article class="mp-card">
+            <h3>Versus <small>2</small></h3>
+            <p>Même ville, mêmes apparitions, deux réseaux. Le premier réseau saturé perd le duel.</p>
+          </article>
+        </div>
+        <h3 class="label">Créer un salon</h3>
+        <div class="modes" id="mp-kind" role="radiogroup" aria-label="Type de partie">
+          <button class="chip on" role="radio" aria-checked="true" data-kind="coop">Coopération</button>
+          <button class="chip" role="radio" aria-checked="false" data-kind="versus">Versus</button>
+        </div>
+        <div class="row2">
+          <label class="field"><span>Ville</span><select id="mp-map"></select></label>
+          <label class="field" id="mp-mode-wrap"><span>Mode</span><select id="mp-mode"><option value="classic">Classique</option><option value="infinite">Infini</option><option value="extreme">Extrême</option></select></label>
+        </div>
+        <button class="btn primary" id="mp-create">Créer le salon</button>
+        <h3 class="label">Rejoindre</h3>
+        <div class="join-row"><input id="mp-code" maxlength="8" placeholder="CODE-12" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Code du salon"><button class="btn" id="mp-join">Rejoindre</button></div>
+        <p class="note" id="mp-status" role="status" aria-live="polite"></p>
+      </div>
+    </div>
+
+    <div class="sheet" id="p-records" role="dialog" aria-modal="true" aria-labelledby="t-re" hidden>
+      <div class="sheet-head"><button class="icon-btn" data-close aria-label="Retour"><svg><use href="#i-back"/></svg></button><h2 id="t-re">Records &amp; succès</h2></div>
+      <div class="sheet-body" id="records-body"></div>
+    </div>
+
+    <div class="sheet" id="p-settings" role="dialog" aria-modal="true" aria-labelledby="t-se" hidden>
+      <div class="sheet-head"><button class="icon-btn" data-close aria-label="Retour"><svg><use href="#i-back"/></svg></button><h2 id="t-se">Réglages</h2></div>
+      <div class="sheet-body settings" id="settings-body"></div>
+    </div>
+
+    <div class="sheet" id="p-help" role="dialog" aria-modal="true" aria-labelledby="t-he" hidden>
+      <div class="sheet-head"><button class="icon-btn" data-close aria-label="Retour"><svg><use href="#i-back"/></svg></button><h2 id="t-he">Comment jouer</h2></div>
+      <div class="sheet-body help" id="help-body"></div>
+    </div>
+  </section>
+
+  <!-- ═════════════ Salon ═════════════ -->
+  <section id="lobby" class="screen" aria-label="Salon multijoueur">
+    <div class="lobby-card">
+      <div class="lobby-top">
+        <button class="icon-btn" id="lobby-leave" aria-label="Quitter le salon"><svg><use href="#i-back"/></svg></button>
+        <div><p class="eyebrow" id="lobby-kind">Coopération</p><h2 id="lobby-title">Salon</h2></div>
+      </div>
+      <div class="code-plate"><span class="eyebrow">Code d’invitation</span><strong id="lobby-code">----</strong><button class="btn ghost small" id="lobby-copy">Copier le lien</button></div>
+      <p class="lobby-cfg" id="lobby-cfg"></p>
+      <ul class="players" id="lobby-players" aria-live="polite"></ul>
+      <p class="note" id="lobby-status" role="status" aria-live="polite"></p>
+      <div class="lobby-actions">
+        <button class="btn" id="lobby-ready">Je suis prêt</button>
+        <button class="btn primary" id="lobby-start" hidden>Lancer la partie</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════ Partie ═════════════ -->
+  <section id="game" class="screen" aria-label="Partie">
+    <canvas id="map" aria-label="Carte du réseau"></canvas>
+    <div class="hud-top">
+      <div class="clock card" id="clock" aria-live="off">
+        <svg class="dial" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" class="dial-track"/><circle cx="20" cy="20" r="16" class="dial-week" id="dial-week" pathLength="100"/><g id="dial-days"></g><circle cx="20" cy="20" r="3.2" class="dial-hub"/><line x1="20" y1="20" x2="20" y2="8" class="dial-hand" id="dial-hand"/></svg>
+        <div class="clock-txt"><strong id="clock-day">Lundi</strong><span id="clock-week">Semaine 1</span></div>
+      </div>
+      <div class="toasts" id="toasts" aria-live="polite"></div>
+      <div class="score card" id="score-card">
+        <div class="score-main"><svg aria-hidden="true"><use href="#i-pax"/></svg><strong id="score">0</strong></div>
+        <div class="score-sub" id="score-sub"></div>
+        <div class="eff" id="eff" hidden><span>Efficacité</span><div class="eff-bar"><i id="eff-fill"></i></div></div>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="speed card" role="group" aria-label="Vitesse">
+        <button class="sp" data-speed="0" aria-label="Pause (Espace)" title="Pause (Espace)"><svg><use href="#i-pause"/></svg></button>
+        <button class="sp" data-speed="1" aria-label="Vitesse normale (1)" title="Vitesse normale (1)"><svg><use href="#i-play"/></svg></button>
+        <button class="sp" data-speed="2" aria-label="Vitesse rapide (2)" title="Vitesse rapide (2)"><svg><use href="#i-fast"/></svg></button>
+      </div>
+      <button class="icon-btn card" id="btn-menu" aria-label="Menu (Échap)" title="Menu (Échap)"><svg><use href="#i-menu"/></svg></button>
+      <button class="icon-btn card" id="btn-fit" aria-label="Recentrer la carte (F)" title="Recentrer (F)"><svg><use href="#i-target"/></svg></button>
+      <button class="icon-btn card" id="btn-mute" aria-label="Couper le son (M)" title="Son (M)"><svg><use href="#i-sound"/></svg></button>
+    </div>
+    <div class="mp-bar card" id="mp-bar" hidden></div>
+    <div class="opp card" id="opp" hidden><canvas id="opp-canvas" aria-label="Réseau de l'adversaire (lecture seule)"></canvas><div class="opp-cap"><span id="opp-name">Adversaire</span><strong id="opp-score">0</strong></div></div>
+    <div class="creative-bar card" id="creative-bar" hidden>
+      <div class="seg" role="radiogroup" aria-label="Outil">
+        <button class="chip on" data-tool="build" role="radio" aria-checked="true">Lignes</button>
+        <button class="chip" data-tool="add" role="radio" aria-checked="false">Ajouter</button>
+        <button class="chip" data-tool="move" role="radio" aria-checked="false">Déplacer</button>
+        <button class="chip" data-tool="erase" role="radio" aria-checked="false">Effacer</button>
+      </div>
+      <div class="shapes" id="cr-shapes" role="radiogroup" aria-label="Forme de la station"></div>
+      <div class="seg">
+        <button class="chip" id="cr-traffic" aria-pressed="true">Voyageurs</button>
+        <button class="chip" id="cr-growth" aria-pressed="false">Croissance</button>
+        <button class="icon-btn" id="cr-undo" aria-label="Annuler (Ctrl+Z)"><svg><use href="#i-undo"/></svg></button>
+        <button class="icon-btn" id="cr-redo" aria-label="Rétablir (Ctrl+Y)"><svg><use href="#i-redo"/></svg></button>
+      </div>
+    </div>
+    <div class="dock card" id="dock" aria-label="Ressources">
+      <div class="dock-lines" id="dock-lines" role="group" aria-label="Lignes"></div>
+      <div class="dock-sep"></div>
+      <div class="dock-res" id="dock-res" role="group" aria-label="Inventaire"></div>
+    </div>
+    <div class="panel card" id="panel" role="dialog" aria-modal="false" hidden></div>
+    <div class="drag-ghost" id="ghost" hidden></div>
+    <div class="hint card" id="hint" hidden></div>
+  </section>
+
+  <!-- ═════════════ Fenêtres ═════════════ -->
+  <div class="modal" id="m-reward" role="dialog" aria-modal="true" aria-labelledby="t-rw" hidden>
+    <div class="modal-card reward">
+      <p class="eyebrow" id="rw-week">Fin de semaine</p>
+      <h2 id="t-rw">Nouveau budget</h2>
+      <p class="rw-granted" id="rw-granted"></p>
+      <div class="rw-loco" id="rw-loco"></div>
+      <div class="rw-opts" id="rw-opts"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="m-pause" role="dialog" aria-modal="true" aria-labelledby="t-pa" hidden>
+    <div class="modal-card">
+      <p class="eyebrow" id="pa-sub">Partie en pause</p>
+      <h2 id="t-pa">Menu</h2>
+      <div class="pause-actions">
+        <button class="btn primary" data-act="resume">Reprendre</button>
+        <button class="btn" data-act="settings">Réglages</button>
+        <button class="btn" data-act="help">Aide &amp; commandes</button>
+        <button class="btn" data-act="photo"><svg width="18" height="18"><use href="#i-camera"/></svg>Exporter la carte</button>
+        <button class="btn" data-act="restart">Recommencer</button>
+        <button class="btn danger" data-act="quit">Quitter la partie</button>
+      </div>
+      <p class="seed-line" id="pa-seed"></p>
+    </div>
+  </div>
+
+  <div class="modal" id="m-over" role="dialog" aria-modal="true" aria-labelledby="t-ov" hidden>
+    <div class="modal-card over">
+      <p class="eyebrow" id="ov-eyebrow">Fin de service</p>
+      <h2 id="t-ov">Station saturée</h2>
+      <div class="ov-score"><strong id="ov-score">0</strong><span>voyageurs livrés</span></div>
+      <p class="ov-cause" id="ov-cause"></p>
+      <div class="ov-badges" id="ov-badges"></div>
+      <div class="ov-actions">
+        <button class="btn primary big" id="ov-again">Rejouer</button>
+        <button class="btn" id="ov-menu">Accueil</button>
+      </div>
+      <details class="ov-stats"><summary>Statistiques détaillées</summary><dl id="ov-stats"></dl></details>
+    </div>
+  </div>
+
+  <div class="modal" id="m-confirm" role="alertdialog" aria-modal="true" aria-labelledby="t-cf" hidden>
+    <div class="modal-card small">
+      <h2 id="t-cf">Confirmer</h2>
+      <p id="cf-text"></p>
+      <div class="ov-actions"><button class="btn danger" id="cf-yes">Confirmer</button><button class="btn" id="cf-no">Annuler</button></div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

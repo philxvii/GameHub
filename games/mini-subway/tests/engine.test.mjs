@@ -11,13 +11,14 @@ import { MAPS, buildConfig, inWater, inPark } from '../js/engine/maps.js';
 import { COMMON_SHAPES, RARE_SHAPES, MODES } from '../js/engine/params.js';
 import { dailyChallenge, weeklyChallenge, newProfile, recordRun, isUnlocked, migrateProfile } from '../js/engine/progress.js';
 import { segPath, polyLen } from '../js/engine/geom.js';
-import { botTurn } from './bot.mjs';
+import { botTurn } from '../js/engine/autoplay.js';
 
 const run = (st, n) => { for (let i = 0; i < n; i++) step(st); };
 // Partie contrôlée : ni croissance ni trafic automatiques, stations posées à la main.
 function lab({ map = 'haut-plateau', mode = 'classic', stations = null, seed = 7, patch = null } = {}) {
   const st = createGame({ map, mode, seed, patch });
   st.growthOn = false; st.traffic = false;
+  st.nextWeek = Infinity; // pas de récompense hebdomadaire (elle suspend le temps en solo)
   if (stations) {
     st.stations = stations.map(([x, y, shape], i) => ({ id: i + 1, x, y, shape, q: [], o: 0, hub: false, born: 0, np: 0, h: [], pk: 0 }));
     st.nextId = stations.length + 1;
@@ -213,7 +214,7 @@ describe('voyageurs et routage', () => {
   test('choix parmi plusieurs stations de la bonne forme : la plus proche', () => {
     const st = lab({ stations: [[100, 200, 'triangle'], [400, 200, 'circle'], [1300, 200, 'triangle']] });
     ok(apply(st, { type: 'line', l: 0, s: [1, 2, 3] }));
-    st.trains[0].a = st.trains[0].b = 3; // le train part de l'extrémité lointaine
+    Object.assign(st.trains[0], { a: 3, b: 3, dir: -1, nx: 2 }); // le train part de l'extrémité lointaine
     const p = addPass(st, 2, 'triangle');
     const rt = routes(st);
     assert.ok(Number.isFinite(rt.D.triangle[rt.idx.get(2)]));

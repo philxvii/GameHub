@@ -59,7 +59,7 @@ export const MAPS = [
     palette: { landDay: '#F3EEE6', parkDay: '#D7E4C9', lines: ['#DB3B3B', '#2B66C9', '#25996A', '#F0A020', '#8F4CC9', '#E0599A', '#3F4A5A'] },
     limits: { startingLines: 2, maxLines: 6, startingCrossings: 0 },
     capacity: { station: 5 },
-    growth: { intervalStartTicks: 540, intervalMinTicks: 170 },
+    growth: { intervalStartTicks: 660, intervalMinTicks: 200 },
     rewards: { available: ['line', 'carriage', 'hub'] },
   },
   {

@@ -268,9 +268,10 @@ function spawnPassenger(st, s) {
 
 // ── routage ──
 // Graphe : un nœud « quai » par station, un nœud (station, ligne) par arrêt desservi.
-// quai → arrêt : attente (waitCost) ; arrêt → quai : correspondance (gratuite à
-// destination) ; arrêt → arrêt suivant : temps de trajet + arrêt. Dijkstra inverse
-// depuis les stations de chaque forme cible. Recalculé seulement quand le réseau change.
+// quai → arrêt : attente moyenne de la ligne (demi-intervalle entre deux trains) ;
+// arrêt → quai : correspondance (gratuite à destination) ; arrêt → arrêt suivant : temps
+// de trajet + arrêt. Dijkstra inverse depuis les stations de chaque forme cible.
+// Recalculé seulement quand le réseau (lignes, trains, stations) change.
 export function routes(st) {
   const d = der(st);
   if (d.rtVer === st.netVer && d.rt) return d.rt;
@@ -283,9 +284,10 @@ export function routes(st) {
   for (const l of lines) for (const sid of l.s) node.set(l.id + ':' + sid, N++);
   const pred = Array.from({ length: N }, () => []); // pred[v] = [[u, w, kind]]
   for (const l of lines) {
+    const wait = lineWait(st, l);
     for (const sid of l.s) {
       const v = node.get(l.id + ':' + sid), p = idx.get(sid);
-      pred[v].push([p, T.waitCost, 0]);   // quai → arrêt
+      pred[v].push([p, wait, 0]);         // quai → arrêt
       pred[p].push([v, 0, 1]);            // arrêt → quai (poids selon la cible)
     }
     const dirs = loopDirs(st, l);
@@ -320,6 +322,16 @@ export function routes(st) {
   return d.rt;
 }
 
+// Attente moyenne à un arrêt : demi-intervalle entre deux passages (Infinity sans train).
+export function lineWait(st, l) {
+  const n = st.trains.filter(t => t.l === l.id).length;
+  if (!n) return Infinity;
+  let round = 0;
+  for (const [a, b] of lineSegments(l)) round += segWeight(st, a, b);
+  if (!l.loop) round *= 2;
+  return Math.max(cfgOf(st).trains.waitCost * 0.2, round / n / 2);
+}
+
 // Sens de circulation possibles : ligne ouverte = les deux ; boucle = sens des trains.
 function loopDirs(st, l) {
   if (!l.loop) return { fwd: true, back: true };
@@ -341,10 +353,12 @@ function viaCost(st, rt, p, lineId, sid, nx) {
   const v = rt.node.get(lineId + ':' + nx);
   return v === undefined ? Infinity : segWeight(st, sid, nx) + D[v];
 }
+// Monter maintenant si ce train fait au moins aussi bien que l'optimum attendu à quai
+// (qui inclut l'attente du meilleur train) : on ne laisse pas filer un bon train.
 function wantsBoard(st, rt, p, s, lineId, nx) {
   const D = rt.D[p.d];
   if (!D) return false;
-  const best = D[rt.idx.get(s.id)] - cfgOf(st).trains.waitCost;
+  const best = D[rt.idx.get(s.id)];
   const c = viaCost(st, rt, p, lineId, s.id, nx);
   return Number.isFinite(c) && c <= best + EPS;
 }
