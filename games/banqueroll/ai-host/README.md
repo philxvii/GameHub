@@ -45,34 +45,8 @@ classifieurs de sécurité et des modèles de code.
 
 ## Clés
 
-Depuis ce dossier, colle chaque clé **quand wrangler la demande**, jamais dans la
-commande elle-même :
-
-```bash
-npx wrangler secret put GEMINI_API_KEY        # gratuit : https://aistudio.google.com/apikey
-npx wrangler secret put OPENROUTER_API_KEY    # gratuit : https://openrouter.ai/keys
-npx wrangler deploy
-```
-
-Vérifie ensuite :
-
-```bash
-curl https://banqueroll-host.banqueroll-host.workers.dev/health
-```
-
-`providers[].configured` indique quels fournisseurs ont une clé.
-
-## Quotas gratuits
-
-- **Gemini AI Studio** : quotas journaliers et par minute selon le modèle (console Google).
-- **OpenRouter** : 20 requêtes par minute, 50 par jour sans crédit acheté.
-
-Le jeu économise de lui-même :
-
-- l'IA est appelée pour les évènements d'intensité ≥ 2 et quand on interpelle `@host` ;
-- au plus un appel toutes les 8 s pour les évènements, toutes les 6 s pour le chat ;
-- 150 appels au maximum par partie ;
-- après trois échecs de suite, une pause de 45 s.
+Les clés des fournisseurs sont des secrets du Worker (`wrangler secret`), jamais
+dans le dépôt ni dans le navigateur.
 
 ## Confidentialité
 

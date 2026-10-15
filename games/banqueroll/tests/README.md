@@ -120,16 +120,9 @@ jamais une page en cours de suite (l'autre joueur serait repris). Change l'URL a
 
 ## Nettoyage
 
-Les suites créent de vraies parties Firebase et les suppriment à la fin. Si un
-run s'interrompt, liste les résidus et efface :
-
-```bash
-curl -s "https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app/banqueroll.json?shallow=true"
-curl -X DELETE "https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app/banqueroll/CODE.json"
-```
-
-Chaque lancement utilise un profil Chrome temporaire distinct, supprimé à la
-fermeture : une instance restée ouverte ne bloque pas le run suivant.
+Les suites suppriment les parties qu'elles créent. Chaque lancement utilise un
+profil Chrome temporaire distinct, supprimé à la fermeture : une instance restée
+ouverte ne bloque pas le run suivant.
 
 ## Pourquoi un pilote CDP maison
 
