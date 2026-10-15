@@ -1,6 +1,6 @@
 # Reprise du chantier Mini Subway
 
-État au 2026-10-16 : jeu livré sur `feature/mini-subway`, pas encore fusionné dans `main`, rien déployé. Détail : `ETAT.md`, `TRACABILITE.md`, `QUESTIONS.md`, `DECISIONS.md`, revues dans `revue/`.
+État au 2026-10-16 (soir) : jeu **fusionné dans `main` et en ligne sur roulia.me** (928bf8d), règles Firebase `ms/` déployées. La branche `feature/mini-subway` = `main` + notes de reprise. Voir `../SESSION_SUIVANTE.md` pour la suite. Détail : `ETAT.md`, `TRACABILITE.md`, `QUESTIONS.md`, `DECISIONS.md`, revues dans `revue/`.
 
 ## Reprendre sur une autre machine
 
@@ -29,4 +29,4 @@ Tests navigateur et multijoueur : `tests/README.md` (Chrome installé ; multijou
 1. Défauts mineurs de `revue/gate3.md` ; revoir les repères de bord (modifiés après la dernière revue).
 2. Équilibrage sur de vraies parties (`QUESTIONS.md`).
 3. Relancer `cd firebase && npm test` en entier (phase1 et transition n'ont pas été relancés dans le cloud).
-4. Rebaser ou fusionner `main` dans la branche (elle a avancé de 1 commit), revue, puis mise en ligne.
+4. (fait) fusion dans `main`, mise en ligne, règles `ms/` déployées.
