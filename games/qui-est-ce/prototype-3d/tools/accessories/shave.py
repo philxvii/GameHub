@@ -1,4 +1,4 @@
-"""Variante « rasee de pres » du personnage 01 : la barbe peinte dans la texture du visage est
+"""Variantes « rasee de pres » et « chauve » du personnage 01 : la barbe peinte dans la texture du visage est
 remplacee par la peau voisine, avec une legere ombre de rasage.
 
     python tools/accessories/shave.py
@@ -137,6 +137,28 @@ def main():
     subprocess.run([sys.executable, os.path.join(PROTO, 'tools', 'character-ict', 'optimize_character.py'), SRC, dst,
                     '--drop-shells', '--tex-file', f'skin={tmp}', '--tex', 'body=jpeg:85@0.5', '--pack', '-vp 16 -vt 16 -cc'], check=True)
     print(dst, os.path.getsize(dst))
+    # Variante CHAUVE (rasee aussi) : le haut du crane vu de face est dans la texture du visage
+    # (cheveux peints de la photo) ; au-dessus du front, la peau du front + son grain ; la texture
+    # du crane (arriere) devient la meme peau.
+    bald_v = ss(3.9, 5.6, R[:, 1])
+    bm = np.zeros((H, W), np.float32)
+    for f in Fi:
+        v = bald_v[f].mean()
+        if v > 0.01: cv2.fillConvexPoly(bm, np.round(uvp[f] * 4).astype(np.int32), float(v), shift=2)
+    bm = cv2.GaussianBlur(bm, (0, 0), 6)[..., None]
+    fore = np.median(tex[pf[:, 1], pf[:, 0]].astype(np.float32), axis=0)
+    bald = out * (1 - bm) + (fore * 0.97 + grain * 0.8) * bm
+    tmp_b = os.path.join(PROTO, 'build', 'opt', 'skin-bald.jpg'); cv2.imwrite(tmp_b, np.clip(bald, 0, 255).astype(np.uint8), [cv2.IMWRITE_JPEG_QUALITY, 92])
+    smat = g.materials[mats.index('scalp')]
+    bvs = g.bufferViews[g.images[g.textures[smat.pbrMetallicRoughness.baseColorTexture.index].source].bufferView]
+    sh, sw = cv2.imdecode(np.frombuffer(blob, np.uint8, bvs.byteLength, bvs.byteOffset), cv2.IMREAD_COLOR).shape[:2]
+    gs = np.tile(patch, (sh // patch.shape[0] + 1, sw // patch.shape[1] + 1, 1))[:sh, :sw]
+    scalp = np.clip(fore * 0.95 + gs * 0.8, 0, 255).astype(np.uint8)
+    tmp_s = os.path.join(PROTO, 'build', 'opt', 'scalp-bald.jpg'); cv2.imwrite(tmp_s, scalp, [cv2.IMWRITE_JPEG_QUALITY, 90])
+    dst_b = os.path.join(PROTO, 'models', 'character-01-ict-opt-bald.glb')
+    subprocess.run([sys.executable, os.path.join(PROTO, 'tools', 'character-ict', 'optimize_character.py'), SRC, dst_b,
+                    '--drop-shells', '--tex-file', f'skin={tmp_b},scalp={tmp_s}', '--tex', 'body=jpeg:85@0.5', '--pack', '-vp 16 -vt 16 -cc'], check=True)
+    print(dst_b, os.path.getsize(dst_b))
 
 
 if __name__ == '__main__':

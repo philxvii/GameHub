@@ -12,6 +12,16 @@ et note son avancement dans [CLOUD_LOG.md](CLOUD_LOG.md).
 
 ## État actuel
 
+> **Mission 3 (2026-10-15, cloud) : refonte « premium ».** Lire d'abord
+> [FIN_DE_MISSION_3.md](FIN_DE_MISSION_3.md). En bref : nouvelle direction « studio de suspects »
+> (`css/game.css`), nouvel écran de jeu (`board.html`, `js/game/app.js`), 24 **portraits
+> pré-rendus** (`portraits/`, `tools/bake_portraits.js`) et **une** carte vivante en 3D
+> (`js/game/live.js`, studio commun `js/game/cast.js`) ; `board3d.js` et les prototypes de l'ancienne
+> DA « casting » sont supprimés. Visages : Raphaël (validé), Kenji, Damien, Farid (provisoires,
+> `tools/casting/`, `data/casting/`), 20 substituts signalés à l'écran. Tests :
+> `tools/test-board-pixels.js` (image), `tools/test-board.js` (partie), `tools/test-game-logic.mjs`.
+
+
 - **Un seul personnage existe : `character-01`.** Humain fictif, tête ICT-FaceKit ajustée à
   5 photos de référence générées (Gemini), buste issu de Hunyuan3D-2mv, rig et 53 expressions.
 - **Visage, yeux, paupières, bouche, expressions et comportement : validés** par

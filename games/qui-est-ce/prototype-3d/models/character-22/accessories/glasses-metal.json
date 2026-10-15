@@ -1,0 +1,30 @@
+{
+ "style": "metal",
+ "nom": "Métal fin noir mat",
+ "triangles": 14696,
+ "degagement_cm": {
+  "neutre": {
+   "dedans": 0,
+   "min_cm": 0.108
+  },
+  "sourcils leves": {
+   "dedans": 0,
+   "min_cm": 0.103
+  },
+  "sourire": {
+   "dedans": 0,
+   "min_cm": 0.137
+  },
+  "surprise": {
+   "dedans": 0,
+   "min_cm": 0.067
+  },
+  "yeux fermes": {
+   "dedans": 0,
+   "min_cm": 0.107
+  },
+  "cils (distance mini)": 0.431
+ },
+ "largeur_face_cm": 16.15,
+ "octets": 62012
+}

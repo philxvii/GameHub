@@ -1,0 +1,34 @@
+{
+ "style": "moustache",
+ "nom": "Moustache",
+ "parties": {
+  "moustache": {
+   "cartes": 2600,
+   "triangles": 20800,
+   "expressions": 12,
+   "degagement": {
+    "neutre": {
+     "proches": 0,
+     "dedans_echantillon": "0/0"
+    },
+    "sourcils leves": {
+     "proches": 0,
+     "dedans_echantillon": "0/0"
+    },
+    "sourire": {
+     "proches": 0,
+     "dedans_echantillon": "0/0"
+    },
+    "surprise": {
+     "proches": 2,
+     "dedans_echantillon": "0/2"
+    },
+    "yeux fermes": {
+     "proches": 0,
+     "dedans_echantillon": "0/0"
+    }
+   }
+  }
+ },
+ "octets": 709132
+}

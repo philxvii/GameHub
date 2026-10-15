@@ -71,7 +71,7 @@ export function createLive({ host, cast, reduced = false }) {
   }
 
   return {
-    canvas,
+    canvas, renderer,
     // Active la carte i (sa photo : `shot`) ; le canevas ne se montre qu'une fois la 1re image peinte.
     async show(i, shot, ptr) {
       if (ptr) pointer = ptr;

@@ -1,0 +1,231 @@
+{
+ "portraits": {
+  "character-01": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 300740
+  },
+  "character-05": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 335088
+  },
+  "character-02": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 308514
+  },
+  "character-03": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 335252
+  },
+  "character-04": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 79652
+  },
+  "character-06": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 291298
+  },
+  "character-07": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 264604
+  },
+  "character-08": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 80256
+  },
+  "character-09": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 293422
+  },
+  "character-10": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 79662
+  },
+  "character-11": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 332164
+  },
+  "character-12": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 338802
+  },
+  "character-13": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 308714
+  },
+  "character-14": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 332164
+  },
+  "character-15": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 323738
+  },
+  "character-16": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 71282
+  },
+  "character-17": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 81938
+  },
+  "character-18": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 367640
+  },
+  "character-19": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 155374
+  },
+  "character-20": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 338826
+  },
+  "character-21": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 287096
+  },
+  "character-22": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 158348
+  },
+  "character-23": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 103542
+  },
+  "character-24": {
+   "exprs": [
+    "neutral",
+    "smile",
+    "surprised",
+    "suspicious"
+   ],
+   "bytes": 89578
+  }
+ },
+ "size": [
+  480,
+  600
+ ],
+ "exprs": [
+  "neutral",
+  "smile",
+  "surprised",
+  "suspicious"
+ ],
+ "baked": "2026-10-15"
+}

@@ -39,9 +39,18 @@ const BG = [0, 3, 1, 4, 2, 5, 4, 1, 5, 2, 0, 3, 2, 5, 3, 0, 4, 1, 5, 0, 4, 1, 3,
 const bgOf = (i) => BG[i % 24];
 const other = (s) => (s === 'p1' ? 'p2' : 'p1');
 
+// Ligne courte sous le nom : ce que le portrait provisoire ne montre pas toujours (genre, age,
+// cheveux). Les accessoires, eux, se voient. Le detail complet est dans la fiche.
+function traits(p) {
+  const a = p.attributs, hair = a.coupe === 'chauve' ? 'chauve' : `${a.cheveux} ${a.coupe}`;
+  return `${a.genre === 'femme' ? '♀' : '♂'} ${a.age} · ${hair}`;
+}
+
 function attrs(p) {
   const a = p.attributs;
-  return [a.genre, a.age, a.coupe === 'chauve' ? 'chauve' : `cheveux ${a.cheveux} ${a.coupe}${a.cheveux_boucles ? ', bouclés' : ''}`, `yeux ${a.yeux}`,
+  const pl = { noir: 'noirs', brun: 'bruns', blond: 'blonds', court: 'courts', long: 'longs', 'mi-long': 'mi-longs', bleu: 'bleus', vert: 'verts' };
+  const P = (w) => pl[w] || w;
+  return [a.genre, a.age, a.coupe === 'chauve' ? 'chauve' : `cheveux ${P(a.cheveux)} ${P(a.coupe)}${a.cheveux_boucles ? ', bouclés' : ''}`, `yeux ${P(a.yeux)}`,
     a.lunettes && 'lunettes', a.chapeau && 'casquette', a.barbe && 'barbe', a.moustache && 'moustache', a.boucles_oreilles && "boucles d'oreilles"].filter(Boolean);
 }
 
@@ -49,7 +58,7 @@ function attrs(p) {
 function buildLineup() {
   $('#lineup').innerHTML = people.map((p, i) => `<button class="suspect" data-i="${i}" data-bg="${bgOf(i)}" aria-label="${esc(p.prenom)} : ${esc(attrs(p).join(', '))}">
       <span class="shot"><img class="still" alt="" src="${portrait(i)}" width="480" height="600" decoding="async"><img class="still alt" alt="" width="480" height="600" decoding="async"></span>
-      <span class="name">${esc(p.prenom)}</span><span class="out" aria-hidden="true"></span></button>`).join('');
+      <span class="name">${esc(p.prenom)}</span><span class="traits" aria-hidden="true" title="${esc(attrs(p).join(', '))}">${esc(traits(p))}</span><span class="out" aria-hidden="true"></span></button>`).join('');
 }
 const cardOf = (i) => $(`.suspect[data-i="${i}"]`);
 
@@ -109,7 +118,10 @@ function status(v, opp) {
   if (v.ask && v.ask.by !== seat && v.ask.answer === null) return `${oppName} te pose une question`;
   if (v.turn === seat) {
     if (v.ask && v.ask.answer === null) return `${oppName} répond…`;
-    if (v.ask) return `Réponse : ${v.ask.answer ? 'oui' : 'non'}. Écarte les suspects`;
+    if (v.ask) {
+      const q = byId[v.ask.q], left = people.some((p, i) => !crossed.has(i) && q.test(p.attributs) !== v.ask.answer);
+      return `Réponse : ${v.ask.answer ? 'oui' : 'non'}. ${left ? 'Écarte les suspects' : 'Termine ton tour'}`;
+    }
     return guessMode ? 'Désigne le suspect de ton adversaire' : 'À toi : pose une question';
   }
   return `${oppName} prépare sa question…`;
@@ -147,10 +159,10 @@ function reactions(prev, v) {
   const liveIs = people.map((_, i) => i).filter((i) => !crossed.has(i));
   const key = v.ask ? `${v.round}:${v.log.length}:${v.ask.by}:${v.ask.q}` : '';
   if (v.ask && v.ask.answer === null && key !== lastAskKey) {
-    lastAskKey = key; express(liveIs, 'suspicious', 1.8); emit('question', { by: v.ask.by, q: v.ask.q, mine: v.ask.by === seat });
+    lastAskKey = key; express(liveIs, 'suspicious', 1.6); emit('question', { by: v.ask.by, q: v.ask.q, mine: v.ask.by === seat });
   }
   if (v.ask && v.ask.by === seat && v.ask.answer !== null && prev?.ask?.answer === null) {
-    express(liveIs, v.ask.answer ? 'smile' : 'surprised', 1.4); emit('answer', { yes: v.ask.answer });
+    express(liveIs, v.ask.answer ? 'smile' : 'suspicious', 1.2); emit('answer', { yes: v.ask.answer });   // « surpris » grimacait (revue n° 2)
   }
   if (v.phase === 'play' && prev?.phase === 'choose') emit('start');
 }
@@ -185,7 +197,7 @@ function actions(v) {
     html = `<h2>Qui est-ce ?</h2><p class="hint">Clique le suspect que tu accuses. Si tu te trompes, ${esc(oppName)} gagne la manche.</p>
       <div class="row"><button class="btn danger" data-do="guess"${picked === null ? ' disabled' : ''}>${picked === null ? 'Choisis un visage' : `Accuser ${esc(people[picked].prenom)}`}</button><button class="btn ghost" data-do="cancel">Annuler</button></div>`;
   } else if (myTurn) {
-    html = `<h2>Ta question</h2><p class="hint">${left} suspects en jeu. Le chiffre : combien répondraient oui.</p>
+    html = `<h2>Ta question</h2><p class="hint">${left} en jeu · le chiffre : combien diraient oui</p>
       <div class="questions">${GROUPS.map(([g, ids]) => `<fieldset><legend>${g}</legend>${ids.map((id) => { const q = byId[id], n = questionCount(q);
         return `<button class="chip${chosenQ === id ? ' on' : ''}" data-q="${id}" aria-pressed="${chosenQ === id}"${n === 0 || n === left ? ' data-useless' : ''}>${esc(q.short.replace(/ \?$/, ''))}<span>${n}</span></button>`; }).join('')}</fieldset>`).join('')}</div>
       <div class="row sticky"><button class="btn primary" data-do="ask"${chosenQ ? '' : ' disabled'}>${chosenQ ? `Demander : ${esc(byId[chosenQ].short)}` : 'Choisis une question'}</button>
@@ -199,6 +211,9 @@ function actions(v) {
     c.classList.toggle('picked', picked === i && (v.phase === 'choose' || guessMode));
     c.classList.toggle('x', crossed.has(i));
     c.classList.toggle('mine', v.mySecret === i);
+    // apres une reponse a ma question : les suspects qui ne collent pas sont pre-marques
+    const q = myTurn && v.ask && v.ask.answer !== null ? byId[v.ask.q] : null;
+    c.classList.toggle('nope', !!q && !crossed.has(i) && q.test(people[i].attributs) !== v.ask.answer);
   }
 }
 const thinking = (label = '') => `<p class="thinking" role="status">${label ? `<span>${label}</span>` : ''}<i></i><i></i><i></i></p>`;
@@ -207,7 +222,7 @@ async function send(a) { try { await net.send(code, seat, a); } catch (e) { toas
 
 function cross(i, on) {
   if (on === crossed.has(i)) return;
-  if (on) { crossed.add(i); express([i], 'surprised', 0.6); emit('cross', { i }); }
+  if (on) { crossed.add(i); emit('cross', { i }); }
   else { crossed.delete(i); emit('uncross', { i }); }
   live?.hide(i);
   render(view);
@@ -235,13 +250,13 @@ function reveal(v) {
   $('#reveal-pair').innerHTML = [[theirs, `Le suspect de ${oppName}`, won ? 'smile' : 'suspicious'], [mine, 'Ton suspect', won ? 'surprised' : 'smile']]
     .map(([id, who, e], k) => ` <figure class="unveil" data-bg="${bgOf(id)}" style="--d:${k * 0.35}s"><span class="shot"><img alt="${esc(people[id].prenom)}" src="${portrait(id, e)}"></span>
       <figcaption><span>${esc(who)}</span><b>${esc(people[id].prenom)}</b></figcaption></figure>`).join('');
-  $('#reveal-score').innerHTML = `<span>Toi <b>${v.scores[seat]}</b></span><span><b>${v.scores[oppSeat]}</b> ${esc(oppName)}</span>`;
+  $('#reveal-score').innerHTML = `<span>Toi <b>${v.scores[seat]}</b></span><span aria-hidden="true">–</span><span><b>${v.scores[oppSeat]}</b> ${esc(oppName)}</span>`;
   if (recorded !== v.round) {
     recorded = v.round;
     const titles = recordGame({ opponent: oppName, won, questions: myQs, ms, mySecret: mine, guessRight: !!(g.by === seat && g.right), guessedByMe: g.by === seat, candidatesLeft: 24 - crossed.size });
     const st = loadStats().byOpponent[oppName];
     const t = titles[0];
-    $('#reveal-note').innerHTML = (t ? `<b>${esc(t.name)}</b> ${esc(t.hint)}. ` : '') + (st ? `Contre ${esc(oppName)} : ${st.won} sur ${st.played}.` : '');
+    $('#reveal-note').innerHTML = (t ? `<b>${esc(t.name)}</b> — ${esc(t.hint.charAt(0).toLowerCase() + t.hint.slice(1))}. ` : '') + (st ? `Contre ${esc(oppName)} : ${st.won} sur ${st.played}.` : '');
     emit(won ? 'win' : 'lose'); emit('reveal');
   }
   $('#rematch').textContent = v.rematch[seat] ? `${oppName} doit accepter…` : 'Revanche';
@@ -278,10 +293,16 @@ function toast(text, warn = false) {
 function observe(i) {
   focusI = i;
   const f = $('#fiche');
-  if (i === null) { f.dataset.on = '0'; return; }
+  if (i === null) { f.dataset.on = '0'; $('#fiche b').textContent = 'Visages provisoires'; $('#fiche span').textContent = provisional(); return; }
   f.dataset.on = '1';
   $('#fiche b').textContent = people[i].prenom;
   $('#fiche span').textContent = attrs(people[i]).join(' · ');
+}
+
+// Honnetete : la plupart des visages sont provisoires (le 01 grime) ; on le dit, et on renvoie a la legende.
+function provisional() {
+  const own = people.filter((p) => p.glb || p.statut === 'modelise').map((p) => p.prenom);
+  return `seuls ${own.join(', ')} ont leur propre visage ; les autres portent celui de Raphaël, grimé. Fie-toi à la ligne sous chaque nom.`;
 }
 
 function activate(c, e) {
@@ -350,7 +371,7 @@ function wireUi() {
     if (focusI !== +c.dataset.i) observe(+c.dataset.i);
     activate(c, e);
   });
-  lineup.addEventListener('pointerleave', () => live?.hide());
+  lineup.addEventListener('pointerleave', () => { live?.hide(); observe(null); });
   lineup.addEventListener('focusin', (e) => { const c = e.target.closest('.suspect'); if (c) { observe(+c.dataset.i); if (c.matches(':focus-visible')) activate(c); } });
   lineup.addEventListener('focusout', (e) => { const c = e.target.closest('.suspect'); if (c && !c.contains(e.relatedTarget)) live?.hide(+c.dataset.i); });
   addEventListener('resize', () => live?.reposition());
@@ -390,6 +411,8 @@ async function main() {
   net = createNet();
   buildLineup();
   wireUi();
+  observe(null);
+  $('.home .provisional').innerHTML = `<b>Visages provisoires.</b> ${esc(provisional())}`;
   $('#sound').setAttribute('aria-pressed', String(sfx.on)); $('#sound span').textContent = sfx.on ? 'Son activé' : 'Son coupé';
   await Promise.all($$('#lineup img.still:not(.alt)').map((im) => im.decode().catch(() => {})));
   $$('.home-cast img').forEach((im, k) => { im.src = portrait([4, 0, 9, 14, 21][k], ['smile', 'suspicious', 'neutral', 'surprised', 'neutral'][k]); });

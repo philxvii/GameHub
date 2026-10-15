@@ -432,3 +432,66 @@ pré-rendus** (`portraits/<id>-<expression>.webp`, 4 expressions, fond transpare
 que la 3D), et **une seule** carte prend vie en 3D (survol, focus, toucher) dans un canevas posé
 exactement sur sa photo (`js/game/live.js`) ; 4 personnages gardés en mémoire au plus, les
 autres libérés.
+
+## Direction artistique et interface (lots B, C)
+
+Trois pistes réellement différentes, comparées sur l'écran de jeu réel en 1440 × 900 (même partie
+contre le bot, `tools/premium_shots.js --da a,b,c`) : A « studio de suspects », B « plateau
+télé », C « éditorial clair ». **A retenue** (voir `DECISIONS.md`, captures `reports/premium/da/`).
+Polices sous licence OFL (Google Fonts) : Fraunces, Instrument Sans, JetBrains Mono.
+
+Écran de jeu refait (`board.html`, `css/game.css`, `js/game/app.js`) : barre (identité, état du tour
+en couleur, score et manche, code copiable, son), grille 6 × 4 qui remplit la hauteur, carnet
+(mon suspect, action du moment, questions de la manche, jauge de l'adversaire), fiche du visage
+observé, questions groupées avec le nombre de suspects qui répondraient oui, écartés grisés et
+barrés, révélation des deux suspects, revanche. Mobile 390 px : 4 colonnes, action fixée en bas
+de l'écran. Textes du joueur et de Firebase **échappés** (`esc()`). Défauts trouvés en regardant
+les captures et corrigés : marges de la barre, couleurs de fond en colonnes, carnet qui
+débordait, canevas vivant qui élargissait la page mobile (600 px), répliques du bot sur le titre
+de la révélation, accents.
+
+Commit `4fb7103` : un `git add` a échoué (chemin déjà supprimé) et le commit poussé ne contenait
+que les suppressions des anciens prototypes ; réparé par le commit suivant (`df71541`), sans
+réécrire l'historique.
+
+## Personnages (lot D)
+
+**Architecture** : portraits pré-rendus (`tools/bake_portraits.js`, 480 × 600, 4 expressions,
+fond transparent, ~70 Ko) ; la carte survolée / focalisée prend vie en 3D (`js/game/live.js`,
+un canevas, 4 personnages en mémoire au plus, mémoire GPU libérée au-delà) ; même studio pour les
+deux (`js/game/cast.js`) ; cadre « tête et cou » (le bord du buste ne se voit plus).
+
+**Casting sans photos** (`tools/casting/`) : `build_ict.py --identity` déplace la géométrie du 01
+selon les modes d'identité ICT APRÈS la projection de la texture (le grain suit par les UV) ;
+`make_character.py` ajoute teint (Lab), iris, rasage, coiffure, accessoires refaits sur la
+nouvelle tête (`QE_HEAD`, `QE_ACC_OUT`). Rasage (`shave.py`) refait 5 fois en regardant le
+résultat : lèvres préservées (ellipse sur le maillage), zone lissée sur le maillage (plus de
+couture UV), teinte accordée à la bande nez-joues, grain du front.
+
+**Revue indépendante n° 1** (sous-agent, `reports/premium/revue-1-pilotes.md`) : Diane (cheveux
+longs cassés, crâne visible) et Fatou (se lit comme un homme) refusées, Étienne refusé (cheveux pas
+gris, barbe en aiguilles), Kenji accepté avec réserves ; méthode limitée aux hommes jeunes ou
+adultes à cheveux courts avec un signe fort. Appliqué : Diane, Fatou, Étienne retirés ; Damien
+(casquette) et Farid (moustache) ajoutés. **Visages distincts du 01 : 3 (Kenji, Damien, Farid) ;
+20 restent des substituts provisoires.**
+
+## Revue indépendante n° 2 : le jeu intégré (`reports/premium/revue-2-jeu.md`)
+
+Verdict : **refusé en l'état** ; interface et DA en net progrès, mais 5 bloquants.
+
+| Bloquant | Correction |
+| --- | --- |
+| B1 visages qui contredisent leurs attributs (femmes = visage du 01, pas de cheveux longs, blonds et gris lus bruns, chauves avec cheveux) | **en partie seulement** : vraie variante chauve (`character-01-ict-opt-bald.glb`, `shave.py`), teintes blond et gris recalculées (la V4.1 est en niveaux de gris), ligne d'attributs sous chaque nom, avertissement « Visages provisoires » sur l'accueil et sous la grille. **Non corrigé** : un visage féminin et des cheveux longs crédibles sans photos (hors de portée de la méthode, voir la revue n° 1) |
+| B2 fond blanc sous la page en mobile | fond aussi sur `html` |
+| B3 grimaces sur le plateau (réaction « surpris ») | réactions limitées à « méfiant » et « sourire » ; plus de réaction sur une croix |
+| B4 questions cachées sous le bouton (1440 × 900) | puces resserrées, consigne sur une ligne, journal réduit à son contenu |
+| B5 bouton Son étiré sur l'accueil | grille de la barre propre à l'accueil |
+
+Secondaires corrigés : sélection en anneau crème (plus de corail sur corail), suspects qui ne
+collent pas pré-marqués en pointillés, « Termine ton tour » quand tout est écarté, fiche remise à
+zéro, ponctuation et accords (« yeux bleus »), survol visible, séparateur du score, grille 8 × 3
+sur grand écran, répliques du bot au-dessus du carnet. Restent : vignette du secret dans la barre
+en mobile, hauteur de la feuille « Ta question » en mobile, légendes encore tronquées en mobile.
+
+Un défaut trouvé par le test d'image après la revue : une fiche longue élargissait la colonne de
+la grille et décalait tout le plateau ; la fiche ne compte plus dans la largeur.

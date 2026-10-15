@@ -472,7 +472,7 @@
    "id": "character-17",
    "prenom": "Damien",
    "age": 35,
-   "statut": "a-photographier",
+   "statut": "pilote",
    "apparence": {
     "visage": "peau métisse caramel, visage ovale, lèvres pleines",
     "coiffure": "cheveux noirs bouclés courts",
@@ -490,7 +490,11 @@
     "barbe": false,
     "moustache": false,
     "boucles_oreilles": false
-   }
+   },
+   "glb": "models/character-17/character-17-ict-opt.glb",
+   "coiffure": "models/hair/hair-curly-v41-opt.glb",
+   "teinte": "noir",
+   "accessoires": []
   },
   {
    "id": "character-18",
@@ -520,7 +524,7 @@
    "id": "character-19",
    "prenom": "Farid",
    "age": 42,
-   "statut": "a-photographier",
+   "statut": "pilote",
    "apparence": {
     "visage": "peau mate maghrébine, visage anguleux, nez aquilin",
     "coiffure": "cheveux noirs courts, coupe nette",
@@ -538,7 +542,13 @@
     "barbe": false,
     "moustache": true,
     "boucles_oreilles": false
-   }
+   },
+   "glb": "models/character-19/character-19-ict-opt.glb",
+   "coiffure": "models/hair/prop-short-grey-opt.glb",
+   "teinte": "noir",
+   "accessoires": [
+    "models/character-19/accessories/moustache.glb"
+   ]
   },
   {
    "id": "character-20",
@@ -592,7 +602,7 @@
    "id": "character-22",
    "prenom": "Kenji",
    "age": 47,
-   "statut": "a-photographier",
+   "statut": "pilote",
    "apparence": {
     "visage": "peau claire d'Asie de l'Est, visage carré",
     "coiffure": "cheveux noirs courts, raides, quelques fils gris",
@@ -610,7 +620,13 @@
     "barbe": false,
     "moustache": false,
     "boucles_oreilles": false
-   }
+   },
+   "glb": "models/character-22/character-22-ict-opt.glb",
+   "coiffure": "models/hair/prop-short-grey-opt.glb",
+   "teinte": "noir",
+   "accessoires": [
+    "models/character-22/accessories/glasses-metal.glb"
+   ]
   },
   {
    "id": "character-23",

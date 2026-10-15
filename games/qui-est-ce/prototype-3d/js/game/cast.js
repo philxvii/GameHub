@@ -19,14 +19,16 @@ export const ASPECT = 4 / 5;                       // portrait : largeur / haute
 export const EXPRESSIONS = ['neutral', 'smile', 'surprised', 'suspicious'];
 const M = 'models/';
 const FILES = {
-  base: M + 'character-01-ict-opt.glb', shaved: M + 'character-01-ict-opt-shaved.glb',
+  base: M + 'character-01-ict-opt.glb', shaved: M + 'character-01-ict-opt-shaved.glb', bald: M + 'character-01-ict-opt-bald.glb',
   hair: M + 'hair/hair-curly-v41-opt.glb', capHair: M + 'accessories/cap-hair-curly-v41.glb',
   cap: M + 'accessories/cap.glb', acetate: M + 'accessories/glasses-acetate.glb', metal: M + 'accessories/glasses-metal.glb',
   hoops: M + 'accessories/earrings-hoops.glb', pearls: M + 'accessories/earrings-pearls.glb',
   beard: M + 'accessories/beard.glb', moustache: M + 'accessories/moustache.glb', full: M + 'accessories/full.glb',
 };
 // Teinte de la coiffure V4.1 (brune) par couleur du roster : facteur lineaire du materiau.
-const HAIR_TINT = { noir: [0.42, 0.42, 0.45], brun: [1, 1, 1], blond: [2.5, 2.05, 1.4], roux: [2.0, 0.92, 0.5], gris: [2.0, 2.05, 2.2] };
+// (la V4.1 est en niveaux de gris x couleur du materiau : une teinte claire demande un fort facteur ;
+// blond et gris etaient lus « bruns » par la revue n° 2)
+const HAIR_TINT = { noir: [0.42, 0.42, 0.45], brun: [1, 1, 1], blond: [8.2, 7.2, 4.4], roux: [3.0, 1.15, 0.45], gris: [9.0, 9.0, 9.6] };
 // Pull : une couleur par personnage, sobre, accordee aux fonds de studio.
 const SWEATERS = ['#2C2D30', '#3B4A5C', '#5A3E36', '#2F4A43', '#6B6157', '#40354F', '#7A6A4F', '#23303B'];
 
@@ -36,7 +38,8 @@ export function costume(person, i) {
   const real = person.statut === 'modelise';
   return {
     own,
-    base: own ? null : real || facial === 'full' ? 'base' : 'shaved',   // barbe peinte gardee seulement avec barbe + moustache
+    // barbe peinte gardee seulement avec barbe + moustache ; chauve : crane sans cheveux peints (barbe en cartes)
+    base: own ? null : a.coupe === 'chauve' ? 'bald' : real || facial === 'full' ? 'base' : 'shaved',
     hair: a.coupe === 'chauve' ? null : a.chapeau ? 'capHair' : 'hair',
     // personnage propre : sa teinte (fiche) ; substitut : la couleur du roster
     tint: own ? HAIR_TINT[person.teinte] || null : real ? null : HAIR_TINT[a.cheveux] || null,

@@ -3,7 +3,7 @@
 //   node games/qui-est-ce/prototype-3d/tools/measure_pc.js
 //
 // Lance (si besoin) le serveur local, puis : test-proto.js, le banc du personnage optimise,
-// le plateau 24 cartes (chargement, images par seconde au repos et au survol, repeinte des 24,
+// le plateau (chargement, images par seconde au repos et au survol, allumage d'une carte vivante,
 // memoire), et une partie complete contre le bot (test-board.js). Ecrit
 // reports/pc/résumé.md avec les seuils attendus. Les journaux bruts vont dans build/pc/.
 // Dans le cloud (sans GPU), les temps ne valent rien : le script le dit et s'arrete.
@@ -24,7 +24,7 @@ const GPU_FLAGS = ['--ignore-gpu-blocklist', '--enable-gpu', ...(WIN ? ['--use-a
 const ONLY_BOARD = process.argv.includes('--plateau');            // le plateau seul (essai rapide)
 const HEADLESS = process.env.PC_HEADLESS === '1';                // navigateur visible par defaut (vrai GPU, vraie fenetre)
 // Seuils : ce que le jeu doit tenir sur l'ordinateur de l'utilisateur (Iris Xe, ecran 60 Hz).
-const SEUILS = { fpsSurvol: 50, fpsRepos: 55, repeinte24Ms: 33, chargementMs: 10000, imagePersoMs: 8, glbMo: 15 };
+const SEUILS = { fpsSurvol: 50, fpsRepos: 55, chargementMs: 6000, allumageMs: 1500, allumageCacheMs: 120, imagePersoMs: 8 };
 
 async function up() { try { return (await fetch(ORIGIN + '/index.html')).ok; } catch (_) { return false; } }
 function node(script, args, log) {
@@ -52,29 +52,34 @@ async function board() {
   try {
     const t0 = Date.now();
     await p.goto(`${ORIGIN}/games/qui-est-ce/prototype-3d/board.html?autostart`);
-    const ready = await until(p, '__game.view() && __game.view().phase === "choose"', 120000);
+    const ready = await until(p, '__game.view() && __game.view().phase === "choose" && [...document.querySelectorAll("#lineup img.still:not(.alt)")].every((i) => i.complete)', 120000);
     const chargementMs = Date.now() - t0;
     if (!ready) throw new Error('plateau non charge en 2 min');
-    await sleep(3000);
-    const gpu = await ev(p, `const gl = __game.board.renderer.getContext(), x = gl.getExtension('WEBGL_debug_renderer_info');
-      return x ? gl.getParameter(x.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)`);
+    await sleep(2000);
     const repos = await ev(p, FPS_JS(5000));
-    // survol : la souris balaie les cartes pendant la mesure
-    const pts = await ev(p, `return __game.board.cards.map((c) => { const r = c.slot.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height * .4]; })`);
+    // allumage d'une carte (le personnage prend vie) : premiere fois (chargement du GLB) puis en memoire
+    const centre = (i) => ev(p, `const r = document.querySelector('.suspect[data-i="${i}"] .shot').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height * .4]`);
+    const allume = async (i) => {
+      await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 2, y: 2 }); await sleep(400);
+      const [x, y] = await centre(i); const t = Date.now();
+      await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
+      await until(p, `document.querySelector('.live.on') && __game.live().stats().active === ${i}`, 60000);
+      return Date.now() - t;
+    };
+    const allumage1 = await allume(4), allumage2 = await allume(9), allumageCache = await allume(4);
+    const gpu = await ev(p, `const gl = __game.live().renderer.getContext(), x = gl.getExtension('WEBGL_debug_renderer_info');
+      return x ? gl.getParameter(x.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)`);
+    // survol : la souris balaie les cartes pendant la mesure (une carte vivante a la fois)
+    const pts = []; for (let i = 0; i < 24; i++) pts.push(await centre(i));
     let sweeping = true;
     const sweep = (async () => { for (let k = 0; sweeping; k++) { const [x, y] = pts[k % pts.length];
       for (let j = 0; j < 6 && sweeping; j++) { await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: x - 30 + j * 12, y }).catch(() => {}); await sleep(40); } } })();
     const survol = await ev(p, FPS_JS(8000));
     sweeping = false; await sweep;
-    const repeinte = []; for (let k = 0; k < 5; k++) repeinte.push(await ev(p, 'return __game.board.paintMs(24)'));
-    repeinte.sort((a, b) => a - b);
-    // memoire : textures (estimation), tas JS ; la memoire GPU reelle se lit dans le Gestionnaire des taches
-    const mem = await ev(p, `const seen = new Set(); let px = 0;
-      for (const c of __game.board.cards) c.model.traverse((o) => { if (!o.isMesh) return; for (const m of [].concat(o.material)) for (const k in m) {
-        const t = m[k]; if (t && t.isTexture && !seen.has(t.uuid) && t.image) { seen.add(t.uuid); px += (t.image.width || 0) * (t.image.height || 0); } } });
-      return { texturesMo: +(px * 4 * 1.33 / 1048576).toFixed(1), tasJsMo: performance.memory ? +(performance.memory.usedJSHeapSize / 1048576).toFixed(1) : null, ...__game.board.stats() }`);
+    const mem = await ev(p, `const res = performance.getEntriesByType('resource'), sum = (re) => res.filter((r) => re.test(r.name)).reduce((s, r) => s + (r.encodedBodySize || r.transferSize || 0), 0);
+      return { portraitsMo: +(sum(/\.webp/) / 1048576).toFixed(1), glbMo: +(sum(/\.glb/) / 1048576).toFixed(1), tasJsMo: performance.memory ? +(performance.memory.usedJSHeapSize / 1048576).toFixed(1) : null, ...__game.live().stats() }`);
     const errs = p.errors();
-    return { gpu, chargementMs, repos, survol, repeinte24Ms: +repeinte[2].toFixed(1), mem, errs };
+    return { gpu, chargementMs, repos, survol, allumage1, allumage2, allumageCache, mem, errs };
   } finally { await b.close(); }
 }
 
@@ -95,16 +100,17 @@ async function board() {
     if (/swiftshader|llvmpipe|software/i.test(B.gpu)) console.log(`ATTENTION : rendu logiciel (${B.gpu}) : temps sans valeur`);
     console.log('4/4 partie contre le bot'); R.partie = node('games/qui-est-ce/prototype-3d/tools/test-board.js', [], 'partie.log');
 
-    const glbMo = +(B.mem.bytes / 1048576).toFixed(1);
-    const imagePersoMs = perso.frameMs ?? perso.imageMs ?? perso.ms ?? null;
+    const imagePersoMs = perso.frameMs ?? null;
     const lignes = [
-      ['Chargement du plateau (24 cartes prêtes)', `${(B.chargementMs / 1000).toFixed(1)} s`, `≤ ${SEUILS.chargementMs / 1000} s`, B.chargementMs <= SEUILS.chargementMs],
+      ['Chargement (24 portraits prêts, partie lancée)', `${(B.chargementMs / 1000).toFixed(1)} s`, `≤ ${SEUILS.chargementMs / 1000} s`, B.chargementMs <= SEUILS.chargementMs],
       ['Images par seconde au repos', `${B.repos.fps} (p95 ${B.repos.p95Ms} ms)`, `≥ ${SEUILS.fpsRepos}`, B.repos.fps >= SEUILS.fpsRepos],
-      ['Images par seconde au survol', `${B.survol.fps} (p95 ${B.survol.p95Ms} ms)`, `≥ ${SEUILS.fpsSurvol}`, B.survol.fps >= SEUILS.fpsSurvol],
-      ['Repeinte des 24 cartes (médiane de 5)', `${B.repeinte24Ms} ms`, `≤ ${SEUILS.repeinte24Ms} ms`, B.repeinte24Ms <= SEUILS.repeinte24Ms],
+      ['Images par seconde au survol (une carte vivante)', `${B.survol.fps} (p95 ${B.survol.p95Ms} ms)`, `≥ ${SEUILS.fpsSurvol}`, B.survol.fps >= SEUILS.fpsSurvol],
+      ['Allumage d’une carte : 1er personnage (chargement)', `${B.allumage1} ms`, `≤ ${SEUILS.allumageMs} ms`, B.allumage1 <= SEUILS.allumageMs],
+      ['Allumage d’une carte : autre personnage', `${B.allumage2} ms`, `≤ ${SEUILS.allumageMs} ms`, B.allumage2 <= SEUILS.allumageMs],
+      ['Allumage d’une carte déjà vue', `${B.allumageCache} ms`, `≤ ${SEUILS.allumageCacheMs} ms`, B.allumageCache <= SEUILS.allumageCacheMs],
       ['Image du personnage seul (banc)', imagePersoMs === null ? 'voir build/pc/banc/stats.json' : `${imagePersoMs} ms`, `≤ ${SEUILS.imagePersoMs} ms`, imagePersoMs === null ? null : imagePersoMs <= SEUILS.imagePersoMs],
-      ['GLB chargés par le plateau', `${glbMo} Mo`, `≤ ${SEUILS.glbMo} Mo`, glbMo <= SEUILS.glbMo],
-      ['Textures en mémoire (estimation)', `${B.mem.texturesMo} Mo`, '—', null],
+      ['Portraits téléchargés', `${B.mem.portraitsMo} Mo`, '—', null],
+      ['GLB chargés pendant la mesure', `${B.mem.glbMo} Mo`, '—', null],
       ['Tas JavaScript', B.mem.tasJsMo === null ? '—' : `${B.mem.tasJsMo} Mo`, '—', null],
     ];
     const etat = (ok) => (ok === null ? '' : ok ? 'OK' : '**À revoir**');
@@ -126,7 +132,7 @@ ${new Date().toISOString().slice(0, 16).replace('T', ' ')} · GPU : ${B.gpu} · 
 | --- | --- | --- | --- |
 ${lignes.map((l) => `| ${l[0]} | ${l[1]} | ${l[2]} | ${etat(l[3])} |`).join('\n')}
 
-Géométries ${B.mem.memory.geometries}, textures ${B.mem.memory.textures}, programmes ${B.mem.programs}, canevas ${B.mem.canvas.join(' × ')} px.
+Personnages 3D en mémoire : ${B.mem.loaded} ; géométries ${B.mem.memory.geometries}, textures ${B.mem.memory.textures}, programmes ${B.mem.programs}.
 Mémoire GPU réelle : Gestionnaire des tâches → Performances → GPU (dédiée + partagée) pendant la mesure.
 ${B.errs.length ? `\nConsole : ${B.errs.length} erreur(s) : ${B.errs.slice(0, 3).join(' · ')}\n` : '\nConsole sans erreur.\n'}`;
     fs.writeFileSync(REPORT, md);

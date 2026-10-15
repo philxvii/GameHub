@@ -20,6 +20,7 @@
 }
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; }
+html { background: var(--room-lo); }
 body {
   min-height: 100dvh; color: var(--on-room); font: 400 15px/1.45 var(--font-text);
   background: radial-gradient(120% 70% at 50% -10%, var(--room-hi), var(--room) 60%, var(--room-lo)); background-attachment: fixed;
@@ -31,6 +32,7 @@ button { font: inherit; color: inherit; }
 h1, h2, h3 { font-family: var(--font-title); font-weight: var(--title-w); margin: 0; letter-spacing: -.01em; }
 
 /* ── Barre ── */
+body[data-screen="home"] .bar { grid-template-columns: 1fr auto; }
 .bar { position: sticky; top: 0; z-index: 5; display: grid; grid-template-columns: auto 1fr auto auto auto; align-items: center; gap: 18px;
   padding: 10px 24px; background: color-mix(in srgb, var(--room-lo) 82%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid color-mix(in srgb, var(--on-room) 10%, transparent); }
 .brand, .match, .status { margin: 0; }
@@ -59,10 +61,10 @@ body[data-phase="choose"] .status { background: color-mix(in srgb, var(--me) 22%
 .sound-btn svg, .code-btn svg { width: 16px; height: 16px; }
 
 /* ── Écran de jeu ── */
-.game { --panel: clamp(330px, 27vw, 420px); --cols: 6; --rows: 4; --gap: 14px; --label: 26px; --bar-h: 57px; --fiche-h: 34px;
+.game { --panel: clamp(330px, 27vw, 420px); --cols: 6; --rows: 4; --gap: 14px; --label: 42px; --bar-h: 57px; --fiche-h: 34px;
   /* carte la plus grande qui tient en hauteur ET en largeur */
   --cw: min(calc((100dvh - var(--bar-h) - 46px - var(--fiche-h) - var(--rows) * var(--label) - (var(--rows) - 1) * var(--gap)) / var(--rows) * .8),
-            calc((100vw - var(--panel) - 48px - 28px - (var(--cols) - 1) * var(--gap)) / var(--cols)));
+            calc((100vw - var(--panel) - 48px - 28px - 32px - (var(--cols) - 1) * var(--gap)) / var(--cols)));
   position: relative; display: grid; grid-template-columns: auto var(--panel); gap: 28px; justify-content: center; align-items: start; padding: 16px 24px 20px; }
 body:not([data-screen="game"]) .game, body:not([data-screen="game"]) .bar .status, body:not([data-screen="game"]) .bar .match,
 body:not([data-screen="game"]) .bar .code-btn { display: none; }
@@ -77,12 +79,15 @@ body:not([data-screen="game"]) .bar .code-btn { display: none; }
 .still { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 160ms linear; }
 .still.alt { opacity: 0; }
 .suspect.flip .still:not(.alt) { opacity: 0; } .suspect.flip .still.alt { opacity: 1; }
-.name { display: block; height: var(--label); padding-top: 6px; font-weight: 600; font-size: 14px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.suspect:hover .shot { transform: translateY(-3px); }
+.name { display: block; padding-top: 6px; font-weight: 600; font-size: 14px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.traits { display: block; margin-top: -4px; font-size: 11.5px; letter-spacing: -.01em; line-height: 1.3; color: var(--on-room-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.suspect.x .traits { opacity: .6; }
+.suspect:hover .shot { transform: translateY(-3px); box-shadow: 0 0 0 2px var(--paper), 0 14px 26px -12px rgba(0,0,0,.7); }
+.suspect.nope .shot { outline: 2px dashed var(--no); outline-offset: 3px; }
 .suspect:focus-visible { outline-offset: 4px; }
 /* sélection (secret, désignation) : anneau de l'état « à toi » */
-.suspect.picked .shot { box-shadow: 0 0 0 3px var(--me), 0 14px 30px -10px rgba(0,0,0,.7); transform: translateY(-4px); }
-.suspect.picked .name { color: var(--me); }
+.suspect.picked .shot { box-shadow: 0 0 0 3px var(--room-lo), 0 0 0 6px var(--paper), 0 14px 30px -10px rgba(0,0,0,.7); transform: translateY(-4px); }
+.suspect.picked .name { color: var(--paper); text-decoration: underline 2px var(--me); text-underline-offset: 3px; }
 /* mon suspect (rappel discret) */
 .suspect.mine .name::after { content: ' · le tien'; color: var(--on-room-2); font-weight: 400; }
 /* écarté : photo éteinte, voile, trait net ; nom barré */
@@ -107,7 +112,7 @@ body[data-turn="them"] .lineup, body[data-phase="end"] .lineup { filter: saturat
 .secret .s-note { margin: 0; font-size: 13px; color: var(--ink-2); }
 .secret[data-state="none"] .shot { background: var(--paper-soft); }
 .notebook > .act { display: flex; flex-direction: column; gap: 10px; flex: 0 1 auto; min-height: 0; overflow: auto; }
-.notebook > .journal { flex: 1 1 auto; min-height: 96px; display: flex; flex-direction: column; }
+.notebook > .journal { flex: 1 1 auto; min-height: 64px; display: flex; flex-direction: column; }
 .act h2 { font-size: 22px; line-height: 1.15; }
 .act .from { margin: 0; font-size: 13px; font-weight: 600; color: var(--ink-2); }
 .act .question { font-size: 24px; }
@@ -128,11 +133,11 @@ body[data-turn="them"] .lineup, body[data-phase="end"] .lineup { filter: saturat
 .yesno { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .btn.yes { background: var(--yes); border-color: var(--yes); color: #fff; font-size: 18px; min-height: 56px; }
 .btn.no { background: var(--no); border-color: var(--no); color: #fff; font-size: 18px; min-height: 56px; }
-.questions { display: flex; flex-direction: column; gap: 10px; }
+.questions { display: flex; flex-direction: column; gap: 6px; }
 .questions fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.questions legend { padding: 0 0 4px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
-.chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper-soft);
-  cursor: pointer; font-size: 14px; transition: background var(--t-fast), color var(--t-fast); }
+.questions legend { padding: 0 0 2px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper-soft);
+  cursor: pointer; font-size: 13.5px; transition: background var(--t-fast), color var(--t-fast); }
 .chip span { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ink-2); }
 .chip:hover { border-color: var(--ink-2); }
 .chip.on { background: var(--ink); color: var(--paper); border-color: var(--ink); } .chip.on span { color: inherit; opacity: .75; }
@@ -156,9 +161,12 @@ body[data-turn="them"] .lineup, body[data-phase="end"] .lineup { filter: saturat
 .rival strong { font: var(--title-w) 20px/1 var(--font-title); color: var(--ink); }
 .rival .bar24 { height: 6px; margin: 8px 0 0; border-radius: 4px; background: var(--paper-soft); overflow: hidden; }
 .rival .bar24::before { content: ''; display: block; height: 100%; width: calc(var(--left, 1) * 100%); background: var(--them); border-radius: 4px; transition: width var(--t) var(--ease); }
-.fiche { height: var(--fiche-h); margin: 8px 0 0; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--on-room-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fiche { width: 0; min-width: 100%; height: var(--fiche-h);   /* jamais plus large que la grille : un texte long la decalait */ margin: 8px 0 0; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--on-room-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fiche b { color: var(--on-room); font-weight: 700; }
-.fiche[data-on="0"] { opacity: .65; }
+.fiche[data-on="0"] { opacity: .8; }
+.fiche[data-on="0"] b { color: var(--answer); }
+.home .provisional { margin: 22px 0 0; max-width: 46ch; font-size: 14px; color: var(--on-room-2); }
+.home .provisional b { color: var(--answer); font-weight: 600; }
 
 /* ── Accueil ── */
 .home { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 48px; align-items: center; max-width: 1240px; margin: 0 auto; padding: 56px 32px; min-height: calc(100dvh - 60px); }
@@ -202,7 +210,7 @@ body:not([data-screen="home"]) .home { display: none; }
 .reveal .btn.primary { background: var(--me); border-color: var(--me); color: var(--me-ink); flex: 0 1 auto; min-width: 200px; min-height: 52px; font-size: 18px; }
 .away { position: fixed; inset: 0; z-index: 21; display: grid; place-content: center; gap: 14px; text-align: center; padding: 24px; background: color-mix(in srgb, var(--room-lo) 90%, transparent); }
 .away .btn { border-color: var(--on-room); color: var(--on-room); justify-self: center; }
-.toast { position: fixed; left: 50%; top: calc(var(--bar-h, 57px) + 12px); z-index: 30; transform: translateX(-50%); max-width: min(520px, calc(100vw - 32px)); padding: 12px 18px; border-radius: var(--r-sm);
+.toast { position: fixed; left: 50%; top: calc(var(--bar-h, 57px) + 12px);   /* en jeu (bureau) : au-dessus du carnet, pas sur les cartes */ z-index: 30; transform: translateX(-50%); max-width: min(520px, calc(100vw - 32px)); padding: 12px 18px; border-radius: var(--r-sm);
   background: var(--paper); color: var(--ink); box-shadow: 0 16px 40px -16px rgba(0,0,0,.7); font-weight: 600; animation: rise var(--t) var(--ease) both; }
 .toast.warn { background: var(--no); color: #fff; }
 .debug { position: fixed; left: 12px; bottom: 12px; z-index: 30; }
@@ -222,8 +230,8 @@ body:not([data-screen="home"]) .home { display: none; }
   .status { grid-column: 1 / -1; grid-row: 2; justify-self: stretch; justify-content: center; font-size: 15px; padding: 7px 12px; }
   .match em { font-size: 22px; } .round { display: none; }
   .sound-btn span { display: none; }
-  .game { --cols: 4; --gap: 8px; --label: 22px; --cw: calc((100vw - 28px - 3 * var(--gap)) / 4); grid-template-columns: 1fr; gap: 14px; padding: 12px 14px 0; }
-  .name { font-size: 12.5px; padding-top: 4px; }
+  .game { --cols: 4; --gap: 8px; --label: 36px; --cw: calc((100vw - 28px - 3 * var(--gap)) / 4); grid-template-columns: 1fr; gap: 14px; padding: 12px 14px 0; }
+  .name { font-size: 12.5px; padding-top: 4px; } .traits { font-size: 10.5px; margin-top: -3px; }
   .notebook { position: static; height: auto; margin: 0 -14px; gap: 0; z-index: 4; }
   .fiche { white-space: normal; height: auto; min-height: var(--fiche-h); font-size: 13px; }
   .notebook > section { border-radius: 0; box-shadow: none; }
@@ -241,6 +249,9 @@ body:not([data-screen="home"]) .home { display: none; }
   .pair { gap: 12px; }
   .code-btn { padding: 6px 8px; } .code-btn code { font-size: 12px; }
 }
+body[data-screen="game"] .toast { left: auto; right: 24px; transform: none; width: clamp(330px, 27vw, 420px); animation-name: fade; }
+/* grand ecran large : 8 x 3, cartes plus grandes (la hauteur limitait le 6 x 4) */
+@media (min-width: 1700px) and (min-aspect-ratio: 16/10) { .game { --cols: 8; --rows: 3; } }
 @media (hover: none) { .suspect:hover .shot { transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
@@ -250,3 +261,5 @@ body:not([data-screen="home"]) .home { display: none; }
 }
 /* pendant la révélation, les répliques passent en bas : le titre reste lisible */
 body:has(.reveal:not([hidden])) .toast { top: auto; bottom: 20px; }
+@media (max-width: 1000px) { body[data-screen="game"] .toast { left: 50%; right: auto; transform: translateX(-50%); width: auto; } }
+@media (max-width: 1000px) { .journal ol { flex: none; max-height: 220px; } }

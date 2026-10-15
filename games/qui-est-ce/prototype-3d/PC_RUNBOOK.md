@@ -6,13 +6,15 @@ sur la branche `proto/qui-est-ce-3d`. Rien ici n'est déjà fait. Mis à jour à
 | # | À faire | Par qui | Commande ou geste | Durée |
 | --- | --- | --- | --- | --- |
 | 1 | Récupérer le travail du cloud | session locale | `git fetch && git switch proto/qui-est-ce-3d && git pull` | 1 min |
-| 2 | Lire le résumé | toi | `games/qui-est-ce/prototype-3d/FIN_DE_MISSION.md` (5 min), puis `DECISIONS.md` et `QUESTIONS.md` | 15 min |
+| 2 | Lire le résumé | toi | `games/qui-est-ce/prototype-3d/FIN_DE_MISSION_3.md` (mission 3, 5 min), puis `DECISIONS.md` et `QUESTIONS.md` | 15 min |
 | 3 | Mesures GPU (Iris Xe) | session locale | `node games/qui-est-ce/prototype-3d/tools/measure_pc.js` → `reports/pc/résumé.md` | 15 min |
-| 4 | Regarder le jeu en vrai | toi | `python -m http.server 4173`, puis http://localhost:4173/games/qui-est-ce/v3d/ → « Défier le bot » | 10 min |
+| 4 | Regarder le jeu en vrai | toi | `python -m http.server 4173` (racine du dépôt), puis **http://localhost:4173/games/qui-est-ce/v3d/** (jeu, mode en ligne) ou **http://localhost:4173/games/qui-est-ce/prototype-3d/board.html** (même jeu, bot seulement) → « Jouer contre le bot » ; survole les visages : la carte prend vie | 10 min |
 | 5 | Partie en ligne à deux, contre l'émulateur | toi + session locale | § « Jeu en ligne » ci-dessous | 20 min |
 | 6 | Photos des 23 personnages | toi | § « Photos Gemini » ; contrôle : `python tools/pipeline/check_refs.py <id>` | ~10 min par personnage |
 | 7 | Fabriquer les personnages prêts | session locale | `python tools/pipeline/build_character.py --all-ready --bench` (depuis `prototype-3d/`) | ~20 min par personnage + Hunyuan |
 | 8 | Mise en ligne | toi, quand tout est validé | § « Mise en ligne » (jamais depuis le cloud) | 1 h |
+| 9 | Après tout changement de personnage, coiffure, accessoire ou studio | session locale | `node games/qui-est-ce/prototype-3d/tools/bake_portraits.js [ids…]` (portraits du plateau, 4 expressions) | 1 min par personnage (GPU) |
+| 10 | Tests d'image et de partie | session locale | `node games/qui-est-ce/prototype-3d/tools/test-board-pixels.js` puis `tools/test-board.js` (même dossier) | 5 min |
 
 ## 1. Mesures GPU
 
@@ -21,17 +23,17 @@ python -m http.server 4173          # racine du dépôt, dans un autre terminal 
 node games/qui-est-ce/prototype-3d/tools/measure_pc.js
 ```
 
-Enchaîne `test-proto.js`, le banc du personnage optimisé (`build/pc/banc/`), le plateau
-24 cartes dans une **fenêtre visible** (chargement, images par seconde au repos et pendant que
-la souris balaie les cartes, repeinte des 24, mémoire) et une partie complète contre le bot.
-Écrit `reports/pc/résumé.md` avec les seuils : survol ≥ 50 images/s, repos ≥ 55, repeinte des
-24 ≤ 33 ms, chargement ≤ 10 s, image du personnage seul ≤ 8 ms, GLB ≤ 15 Mo. Pendant la
-mesure, garder le Gestionnaire des tâches → Performances → GPU ouvert (mémoire GPU réelle :
-le navigateur ne la donne pas). Essai rapide du plateau seul : `… measure_pc.js --plateau`.
+Enchaîne `test-proto.js`, le banc du personnage optimisé (`build/pc/banc/`), le plateau dans
+une **fenêtre visible** (chargement des 24 portraits, images par seconde au repos et pendant que
+la souris balaie les cartes, temps d'allumage d'une carte vivante : premier personnage, autre
+personnage, personnage déjà vu) et une partie complète contre le bot. Écrit
+`reports/pc/résumé.md` avec les seuils : survol ≥ 50 images/s, repos ≥ 55, chargement ≤ 6 s,
+allumage ≤ 1,5 s (≤ 120 ms déjà vu), image du personnage seul ≤ 8 ms. Garder le Gestionnaire des
+tâches → Performances → GPU ouvert (mémoire GPU réelle). Essai rapide : `… measure_pc.js --plateau`.
 
-Si une mesure est « À revoir » : `?idle=2` (moins de repeintes de repos) et
-`IDLE_PER_FRAME` dans `js/game/board3d.js` sont les premiers leviers ; ensuite la taille de
-la carte d'ombre (1024) et `setPixelRatio` (plafonné à 2).
+Si une mesure est « À revoir » : `setPixelRatio` de la carte vivante (`js/game/live.js`, ×2 pour
+égaler les portraits), la taille de la carte d'ombre du studio (1024, `js/game/cast.js`), puis le
+nombre de personnages gardés en mémoire (`KEEP = 4`).
 
 ## 2. Jeu en ligne (émulateur, deux navigateurs)
 
@@ -48,7 +50,7 @@ curl -X PUT -H "Authorization: Bearer owner" --data-binary @database.rules.phase
   "http://127.0.0.1:9000/.settings/rules.json?ns=undercover-game-b0d2a-default-rtdb"
 ```
 
-1. Chrome, profil A : http://localhost:4174/games/qui-est-ce/v3d/?emu → nom → « Créer un salon en ligne » → note le code.
+1. Chrome, profil A : **http://localhost:4174/games/qui-est-ce/v3d/?emu** → nom → « Créer un salon en ligne » → le code s'affiche dans le carnet (bouton « Copier le code » dans la barre).
 2. Chrome, **profil B** (ou fenêtre Invités : un même profil partage un seul compte anonyme
    entre ses onglets) : même adresse avec `?emu` → nom → code → « Rejoindre ».
 3. Jouer une manche entière, puis « Revanche » des deux côtés, puis fermer un des onglets.
@@ -104,9 +106,9 @@ L'orchestrateur s'arrête proprement (code 3) aux deux gestes manuels :
 
 À la fin, l'étape `roster` passe le personnage à `statut: "modelise"` avec son `glb` (et sa
 `coiffure`) dans `data/roster.json` ; la planche de validation est dans
-`reports/characters/<id>.jpg`. Le plateau prend encore le substitut tant que le chargement
-par fiche n'est pas branché dans `js/game/board3d.js` (`FILES.base` → `person.glb`) : c'est la
-première tâche de code au deuxième personnage.
+`reports/characters/<id>.jpg`. Le jeu prend le `glb` de la fiche dès qu'il existe
+(`js/game/cast.js`) ; refaire alors ses portraits : `node tools/bake_portraits.js <id>`. Un
+personnage réel remplace aussi un visage provisoire de `data/casting/` (enlever ce fichier).
 
 ## 5. Mise en ligne (procédure, non exécutée)
 
