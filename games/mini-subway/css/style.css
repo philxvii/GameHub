@@ -340,7 +340,8 @@ input:focus, select:focus { outline: none; border-color: var(--ink); }
   .hud-right { top: auto; bottom: calc(80px + var(--safe-b)); right: 8px; }
   .speed { flex-direction: row; }
   .hud-right { flex-direction: row-reverse; align-items: center; }
-  .dock { bottom: calc(8px + var(--safe-b)); padding: 5px 6px; }
+  .dock { bottom: calc(8px + var(--safe-b)); padding: 5px 5px; gap: 2px; }
+  .dock-lines, .dock-res { gap: 2px; }
   .lchip { width: 30px; height: 40px; }
   .lchip i { width: 20px; height: 20px; }
   .dock-sep { margin: 4px 3px; }
@@ -358,6 +359,12 @@ input:focus, select:focus { outline: none; border-color: var(--ink); }
   .modal-card { padding: 20px 18px; }
   .ov-score strong { font-size: 52px; }
   .toasts { position: absolute; top: 58px; left: 0; right: 0; }
+}
+@media (max-width: 380px) {
+  .lchip { width: 26px; }
+  .res { min-width: 38px; padding: 0 2px; }
+  .res svg { width: 19px; height: 19px; }
+  .dock-sep { margin: 4px 1px; }
 }
 @media (max-height: 560px) and (min-width: 721px) { .menu-shell { gap: 18px; } .wordmark { font-size: 54px; } }
 
