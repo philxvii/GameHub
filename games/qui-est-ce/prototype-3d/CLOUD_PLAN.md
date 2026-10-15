@@ -123,8 +123,9 @@ l'emporte sur tout ce qui suit qui dirait « attends sa réponse », « pose la 
    `git log -1 --format='%an <%ae>%n%B'` avant chaque push.
 4. **Ne pas remplacer** le visage ICT, ni la coiffure V4.1 optimisée, ni changer la direction
    artistique. Ne jamais écraser un modèle validé : écrire les variantes à côté (`-opt`, `-vN`).
-5. **Ne pas générer les 23 autres personnages.** De toute façon impossible ici : les photos
-   de référence se génèrent avec Gemini dans le navigateur de l'utilisateur.
+5. **Pas de personnages issus de photos ici** (les photos viennent de Gemini sur le PC de
+   l'utilisateur). Exception décidée le 2026-10-15 : des **visages provisoires** fabriqués par
+   mélange des identités ICT, voir `MISSION_2.md`.
 6. Ne toucher à aucun autre jeu, ni à `games/qui-est-ce/index.html` (jeu en production), ni
    à Firebase, ni à Cloudflare. Aucun secret dans git. IA gratuite uniquement.
 7. **Points de validation** (marqués ⛔) : en mode autonome (voir plus haut), ils ne
