@@ -75,3 +75,36 @@ Aucun nom d'un autre jeu commercial n'est visible.
 - Alerte de surcharge : anneau encre, intérieur teinté, halo sous les lignes, pastille HUD.
 - Multijoueur : salon très identitaire (cartouche du code), badges J1 à J4 à l'encre, encart adverse libellé, fin de duel centrée et chiffrée.
 - Menu desktop et mobile : propre, sans artefact.
+
+## 6. Contre-vérification G3-01
+
+Captures lues une fois chacune, à taille native : `gate3b-mobile-menu.png`, `gate3b-mobile-game.png`, `gate3b-tablet-game.png`. Les mesures sur mobile ont été faites sur un agrandissement ×4 (plus proche voisin).
+
+**G3-01 : corrigé.**
+
+Preuves sur `gate3b-mobile-game` (390×844) :
+
+- **Tailles.** Stations d'environ 22–24 px de diamètre (pôle en (186,330)). Voyageurs d'environ 7 px (■ ■ en (180–190,302) ; ▲ en (272,478)). Traits d'environ 5 px. Trains d'environ 24×14 px, avec glyphes à bord lisibles (287,325). Les destinations se lisent et une station de cette taille se vise au doigt.
+- **Bord de feuille.** La carte occupe tout l'écran, entre le HUD et les commandes. Plus de bord de feuille ni de bande hors carte.
+- **Stations hors champ.** Elles sont signalées par de petites formes au bord : cercles en (18,401) et (18,436), triangle en (372,429).
+- **Menu mobile.** `gate3b-mobile-menu` est inchangé et propre.
+- **Tablette.** `gate3b-tablet-game` n'a pas régressé : réseau entier visible, échelle confortable.
+
+Le pincement pour zoomer et le défilement au doigt ne peuvent pas être jugés sur une image fixe.
+
+### Nouveaux défauts
+
+| id | Écran / capture | Emplacement précis | Gravité | Impact | Correction conseillée |
+|---|---|---|---|---|---|
+| G3-03 | gate3b-mobile-game | Repères de bord : cercles creux gris (18,401) et (18,436), triangle (372,429) | mineur | Ces repères sont des formes creuses au trait fin, sans direction. Ils ressemblent à de petites stations ; celui en (18,436) semble même posé sur la rivière. La station coupée en (0,400) a son repère juste à côté d'elle, ce qui fait doublon. | Dans `drawOffscreen`, poser la forme sur une pastille papier avec un liseré encre de 1,5 px et une pointe orientée vers la station, comme le repère d'alerte mais en encre. Ne pas afficher de repère tant que plus de 40 % du rayon de la station est visible. |
+| G3-04 | gate3b-mobile-game | Zone basse vide (y = 520–710) alors que des stations sont hors champ à gauche et à droite | mineur | Rien n'indique que la carte se parcourt au doigt, et la place libre en bas n'est pas utilisée. | Sur petit écran, afficher une fois un indice « Faites glisser la carte à deux doigts, pincez pour zoomer ». Ajuster la marge basse de `fit()` à la hauteur réelle du dock et des commandes (zone sûre déjà mesurée), pour que la caméra centrée sur les stations chargées descende d'autant. |
+
+G3-02 (bord du monde visible en jeu et sur tablette, en (10,222)–(768,817)) reste ouvert en mineur, sans changement.
+
+### Note Mobile révisée : **7/10**
+
+Plan pour atteindre 8 : repères de bord sans ambiguïté (G3-03), indication du geste de défilement et marge basse exacte (G3-04), cibles tactiles de 44 px sur les pastilles de ligne du dock, à vérifier en test tactile.
+
+### Verdict final du gate 3 : **ACCEPTÉ**
+
+Il ne reste aucun défaut bloquant ni majeur. Les défauts ouverts sont 11 mineurs, détaillés en section 2 et ci-dessus : G1-07, G1-09, G2-01, G2-03, G2-05, G2-07, G2-08, G2-11, G3-02, G3-03, G3-04. La réserve de G1-03 sur la taille des glyphes est levée (environ 7 px sur mobile). Ils restent à traiter avant publication, sans bloquer le gate.

@@ -557,9 +557,13 @@ export class Renderer {
       const p = this.toScreen(s.x, s.y);
       if (p.x > 4 && p.x < this.W - 4 && p.y > 4 && p.y < this.H - 4) continue;
       const x = Math.max(sf.l + 10, Math.min(this.W - sf.r - 10, p.x)), y = Math.max(sf.t + 10, Math.min(this.H - sf.b - 10, p.y));
-      ctx.globalAlpha = 0.75;
-      shapePath(ctx, s.shape, x, y, 5.5); ctx.fillStyle = T.paper; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = T.ink; ctx.stroke();
-      ctx.globalAlpha = 1;
+      // pastille encre + pointe vers la station : un repère, pas une station
+      const ang = Math.atan2(p.y - y, p.x - x);
+      ctx.save(); ctx.translate(x, y); ctx.globalAlpha = 0.85;
+      ctx.fillStyle = T.ink; ctx.beginPath(); ctx.arc(0, 0, 8.5, 0, 7); ctx.fill();
+      ctx.rotate(ang); ctx.beginPath(); ctx.moveTo(14, 0); ctx.lineTo(8, -4.5); ctx.lineTo(8, 4.5); ctx.closePath(); ctx.fill();
+      ctx.rotate(-ang); shapePath(ctx, s.shape, 0, 0, 4.2); ctx.fillStyle = T.paper; ctx.fill();
+      ctx.restore();
     }
     for (const s of st.stations) {
       if (s.o <= 0.05) continue;
