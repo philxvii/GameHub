@@ -551,6 +551,16 @@ export class Renderer {
   drawOffscreen(st, T) {
     const { ctx } = this;
     const sf = this.safe || { t: 70, r: 20, b: 90, l: 20 };
+    // stations calmes hors champ : petite forme au bord, sans anneau
+    for (const s of st.stations) {
+      if (s.o > 0.05) continue;
+      const p = this.toScreen(s.x, s.y);
+      if (p.x > 4 && p.x < this.W - 4 && p.y > 4 && p.y < this.H - 4) continue;
+      const x = Math.max(sf.l + 10, Math.min(this.W - sf.r - 10, p.x)), y = Math.max(sf.t + 10, Math.min(this.H - sf.b - 10, p.y));
+      ctx.globalAlpha = 0.75;
+      shapePath(ctx, s.shape, x, y, 5.5); ctx.fillStyle = T.paper; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = T.ink; ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
     for (const s of st.stations) {
       if (s.o <= 0.05) continue;
       const p = this.toScreen(s.x, s.y);
@@ -577,7 +587,7 @@ export class Renderer {
     }
   }
   ring(st, sid, kind) {
-    if (this.reduced && kind !== 'shape') return;
+    if (this.reduced && kind !== 'shape' && kind !== 'peer') return;
     const s = stationById(st, sid);
     if (!s) return;
     if (this.fx.length > 80) this.fx.shift();
@@ -594,7 +604,7 @@ export class Renderer {
         ctx.globalAlpha = (1 - u) * 0.5; ctx.strokeStyle = T.ink; ctx.lineWidth = 1.5 * k;
         ctx.beginPath(); ctx.arc(fx.x, fx.y, (ST_R + 4 + u * 12) * k, 0, 7); ctx.stroke();
       } else {
-        ctx.globalAlpha = (1 - u) * 0.8; ctx.strokeStyle = fx.kind === 'shape' ? '#F2A516' : T.ink; ctx.lineWidth = 2.2 * k;
+        ctx.globalAlpha = (1 - u) * 0.8; ctx.strokeStyle = fx.kind === 'shape' || fx.kind === 'peer' ? '#F2A516' : T.ink; ctx.lineWidth = (fx.kind === 'peer' ? 3.5 : 2.2) * k;
         ctx.beginPath(); ctx.arc(fx.x, fx.y, (ST_R + 6 + u * 34) * k, 0, 7); ctx.stroke();
       }
       ctx.globalAlpha = 1;

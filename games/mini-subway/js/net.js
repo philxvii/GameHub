@@ -261,6 +261,7 @@ export class NetSession {
       const msg = c.type === 'line' ? (c.s.length ? `${who} modifie la ligne ${c.l + 1}.` : `${who} supprime la ligne ${c.l + 1}.`)
         : c.type === 'reward' ? `${who} a choisi la récompense.` : c.type === 'train' ? `${who} pose une locomotive.` : c.type === 'hub' ? `${who} ouvre un pôle d’échange.` : null;
       if (msg) this.game.toast(msg);
+      this.game.peer?.(c);
     }
   }
   applyLeave(who) {

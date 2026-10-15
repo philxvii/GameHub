@@ -42,6 +42,7 @@ export class Game {
     this.session = session; this.audio = audio; this.settings = settings; this.meta = meta;
     this.onEnd = onEnd; this.onQuit = onQuit; this.onRestart = onRestart;
     this.renderer = new Renderer($('#map'));
+    this.renderer.frameless = this.renderer.W < 720; // petit écran : pas de bord de feuille visible
     this.applySettings(settings);
     this.input = new Input(this);
     this.autoCam = true;
@@ -152,12 +153,33 @@ export class Game {
     const sf = R.safe;
     const t = R.fitBox(x0, y0, x1, y1, { t: sf.t + 10, r: sf.r + 16, b: sf.b + 10, l: sf.l + 16 });
     t.z = Math.min(t.z, mobile ? 1.15 : 1.5);
+    // Petit écran : zoom plancher (stations ≥ 12 px, voyageurs ≥ 8 px à l'écran). Si le
+    // réseau ne tient plus, on centre sur les stations les plus chargées ; les autres
+    // sont signalées au bord de l'écran et la carte se parcourt au doigt.
+    const floor = mobile ? 0.58 : 0.3;
+    if (t.z < floor) {
+      t.z = floor;
+      let wx = 0, wy = 0, ws = 0;
+      for (const s of st.stations) { const w = 1 + s.q.length + 10 * s.o; wx += s.x * w; wy += s.y * w; ws += w; }
+      const vw = (R.W - sf.l - sf.r) / floor / 2, vh = (R.H - sf.t - sf.b) / floor / 2;
+      const ox = (sf.l - sf.r) / 2 / floor, oy = (sf.t - sf.b) / 2 / floor;
+      t.x = Math.max(x0 + vw, Math.min(x1 - vw, wx / ws)) - ox;
+      t.y = Math.max(y0 + vh, Math.min(y1 - vh, wy / ws)) - oy;
+      if (x1 - x0 < vw * 2) t.x = (x0 + x1) / 2 - ox;
+      if (y1 - y0 < vh * 2) t.y = (y0 + y1) / 2 - oy;
+    }
     const c = R.cam;
     // lissage en temps réel (indépendant du nombre d'images par seconde)
     const k = snap || this.reduced ? 1 : 1 - Math.exp(-Math.min(this.dt || 16, 200) / 160);
     c.x += (t.x - c.x) * k; c.y += (t.y - c.y) * k; c.z += (t.z - c.z) * k;
   }
   userCamera() { this.autoCam = false; }
+  // Coopération : l'action d'un coéquipier s'éclaire sur la carte.
+  peer(c) {
+    const st = this.view();
+    const ids = c.type === 'line' ? c.s : c.type === 'hub' ? [c.s] : c.type === 'train' ? st.lines[c.l]?.s || [] : [];
+    for (const id of ids) this.renderer.ring(st, id, 'peer');
+  }
 
   // ───────── HUD ─────────
   wire() {
