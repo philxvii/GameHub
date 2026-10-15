@@ -122,11 +122,10 @@
   .game-card{position:relative;min-width:0;flex:0 0 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));display:flex;flex-direction:column;container-type:inline-size;transition:opacity var(--d-3) var(--e-out);}
   .game-card.hidden-game{display:none;}
   .game-card.coming-soon{opacity:.45;pointer-events:none;}
-  .abandoned{margin:48px auto 0;max-width:var(--maxw,1100px);}
-  .abandoned summary{cursor:pointer;color:var(--muted);font-size:14px;text-align:center;list-style:none;padding:10px;}
-  .abandoned summary::-webkit-details-marker{display:none;}
-  .abandoned[open] summary{margin-bottom:18px;}
-  .abandoned .game-card{opacity:.8;}
+  .ghost{height:36px;padding:0 8px;border:none;background:transparent;font-size:12px;color:var(--muted);opacity:.45;cursor:pointer;}
+  .ghost:hover,.ghost[aria-expanded="true"]{opacity:.9;}
+  .abandoned{margin:36px auto 0;}
+  .abandoned .game-card{opacity:.75;}
   .media{position:relative;aspect-ratio:3/4;perspective:1400px;}
   .shade{position:absolute;left:10%;right:10%;bottom:0;height:30%;border-radius:50%;background:rgba(10,12,18,.5);filter:blur(var(--sb,16px));
     transform:translateY(var(--sy,4px)) scale(var(--ss,.9));opacity:var(--so,.55);transition:transform .4s var(--e-out),filter .4s var(--e-out),opacity .4s;}
@@ -409,6 +408,7 @@
           <button class="chip" type="button" data-filter="bluff" aria-pressed="false">Bluff</button>
           <button class="chip" type="button" data-filter="strategie" aria-pressed="false">Stratégie</button>
           <button class="chip" type="button" data-filter="chance" aria-pressed="false">Hasard</button>
+          <button class="ghost" type="button" id="aband-toggle" aria-expanded="false" aria-controls="abandoned" hidden>Abandonnés</button>
         </div>
         <button class="surprise" id="surprise" type="button" aria-label="Surprends-moi : tirer un jeu au hasard">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="8.5" cy="8.5" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.7" fill="currentColor"/></svg>
@@ -448,14 +448,13 @@
         </a>
       </div>
     </div>
-    <details class="abandoned">
-      <summary>Jeux abandonnés</summary>
+    <section class="abandoned" id="abandoned" aria-label="Jeux abandonnés" hidden>
       <div class="cards">
         <a class="game-card" href="games/wikirace/" id="card-wikirace" data-game="wikirace" data-tags="solo" style="--c:#5F6FE8">
           <span class="media"><span class="shade" aria-hidden="true"></span><span class="c3d"><span class="face front"><img src="games/wikirace/cover.webp" width="720" height="960" alt="" decoding="async"><span class="cap"><span class="name">WikiRace</span><span class="players">Solo</span></span></span><span class="face back" aria-hidden="true"></span></span></span>
         </a>
       </div>
-    </details>
+    </section>
     <p class="sr-only" id="announce" aria-live="polite"></p>
   </main>
 
@@ -717,6 +716,7 @@ const GAMES = [
   {id:'banqueroll', name:'Banqueroll',      emoji:'💼', db:'banqueroll'},
   {id:'uno',        name:'UNO',             emoji:'🃏', db:'uno'},
   {id:'wikirace',   name:'WikiRace',        emoji:'🌍', db:'wr'},
+  {id:'minisubway', name:'Mini Subway',     emoji:'🚇'},
 ];
 
 // ── Presence ──
@@ -746,6 +746,22 @@ onValue(ref(db, 'hub/stats/visits'), snap => {
   if(el && snap.exists()) el.textContent = snap.val();
 });
 
+// ── Jeux abandonnés : le bouton n'existe que si un de ses jeux reste coché dans l'admin ──
+function syncAbandoned(){
+  const sec = document.getElementById('abandoned'), btn = document.getElementById('aband-toggle');
+  if(!sec || !btn) return;
+  const any = !!sec.querySelector('.game-card:not(.hidden-game)');
+  btn.hidden = !any;
+  if(!any){ sec.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
+}
+document.getElementById('aband-toggle')?.addEventListener('click', e => {
+  const sec = document.getElementById('abandoned');
+  const open = sec.hidden;
+  sec.hidden = !open;
+  e.currentTarget.setAttribute('aria-expanded', String(open));
+  if(open) sec.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest'});
+});
+
 // ── Game visibility ──
 // Chaque jeu apparait deux fois (affiche + carte de la main) : on suit data-game.
 onValue(ref(db, 'hub/hidden'), snap => {
@@ -754,6 +770,7 @@ onValue(ref(db, 'hub/hidden'), snap => {
     document.querySelectorAll(`[data-game="${g.id}"]`).forEach(el => el.classList.toggle('hidden-game', !!hidden[g.id]));
   });
   window.hubRefresh?.();
+  syncAbandoned();
 });
 
 // ── Age gate setting ──
