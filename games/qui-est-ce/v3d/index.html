@@ -7,13 +7,11 @@
 <script src="../../../shared/maintenance.js"></script>
 <script>window.QE_ONLINE = true;</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Qui est-ce ? 3D — le casting</title>
+<title>Qui est-ce ?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=DM+Mono:wght@400;500&family=Cormorant+Garamond:ital,wght@0,600;1,500;1,600&display=swap">
-<link rel="stylesheet" href="css/tokens.css">
-<link rel="stylesheet" href="css/partie.css">
-<link rel="stylesheet" href="css/board.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Instrument+Sans:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="css/game.css">
 <script type="importmap">
 {
   "imports": {
@@ -24,72 +22,82 @@
 </script>
 </head>
 <body data-screen="home" data-phase="none" data-turn="none">
+<header class="bar">
+  <p class="brand">Qui est-ce&nbsp;?</p>
+  <p class="status" role="status"><span class="dot" aria-hidden="true"></span><span id="status-text"></span></p>
+  <p class="match" aria-label="Score">
+    <span class="who me"><b>Toi</b><em id="me-score">0</em></span><span class="vs" aria-hidden="true">–</span>
+    <span class="who them"><em id="them-score">0</em><b id="them-name"></b></span><span class="round" id="round"></span>
+  </p>
+  <button class="code-btn" data-do="copy" title="Copier le code du salon"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="5" width="9" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><code id="code">····</code></button>
+  <button class="sound-btn" id="sound" data-do="sound" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3v10L5 10H2z" fill="currentColor"/><path d="M11.5 5.5a3.5 3.5 0 0 1 0 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Son coupé</span></button>
+</header>
+
 <!-- Accueil -->
-<section class="home ecran" id="home" aria-label="Accueil">
-  <div class="home-wall" aria-hidden="true">
-    <figure class="pola" style="--tilt:-7deg"><img alt=""><figcaption>Diane</figcaption></figure>
-    <figure class="pola" style="--tilt:4deg"><img alt=""><figcaption>Raphaël</figcaption></figure>
-    <figure class="pola" style="--tilt:-2deg"><img alt=""><figcaption>Jade</figcaption></figure>
-  </div>
-  <div class="home-text">
-    <h1>Qui est-ce ?</h1>
-    <p class="home-sub">Le casting à deux. Trouve son personnage avant qu'il trouve le tien.</p>
-    <div class="home-actions">
-      <button class="tape-btn film" data-do="play-bot">Défier le bot</button>
-      <button class="tape-btn" data-do="create">Créer un salon</button>
+<section class="home" aria-labelledby="home-title">
+  <div>
+    <h1 id="home-title">Qui est-ce&nbsp;?</h1>
+    <p class="lede">Vingt-quatre suspects, deux enquêteurs. Trouve le sien avant qu’il trouve le tien.</p>
+    <div class="go">
+      <button class="btn primary" data-do="play-bot">Jouer contre le bot</button>
+      <button class="btn" data-do="create">Créer un salon</button>
     </div>
     <div class="online" id="online" hidden>
-      <p><label for="my-name">Ton nom</label> <input id="my-name" maxlength="20" autocomplete="nickname"></p>
-      <p><button class="tape-btn film" data-do="online-create">Créer un salon en ligne</button></p>
-      <form class="join" onsubmit="return false"><label for="join-code">Code</label><input id="join-code" maxlength="7" placeholder="ABCD-12" autocomplete="off" spellcheck="false">
-        <button class="tape-btn" data-do="online-join">Rejoindre</button></form>
+      <label for="my-name">Ton nom</label><input id="my-name" maxlength="20" autocomplete="nickname">
+      <button class="btn primary" data-do="online-create">Créer un salon en ligne</button>
+      <label for="join-code">Rejoindre avec un code</label>
+      <div class="pair"><input id="join-code" maxlength="7" placeholder="ABCD-12" autocomplete="off" spellcheck="false"><button class="btn" data-do="online-join">Rejoindre</button></div>
     </div>
-    <p class="rules">Chacun choisit un personnage secret. À tour de rôle, une question oui / non ; on raye au crayon gras
-      ceux qui ne collent pas. Le premier qui désigne le bon gagne la manche. Contre le bot, ou en ligne : crée un salon
-      et envoie le code à un ami.</p>
+    <ol class="steps">
+      <li>Chacun choisit un suspect secret parmi les 24.</li>
+      <li>À tour de rôle, une question oui ou non. On écarte ceux qui ne collent pas.</li>
+      <li>Le premier qui désigne le bon gagne la manche.</li>
+    </ol>
+  </div>
+  <div class="home-cast" aria-hidden="true">
+    <span class="shot" data-bg="0"><img alt=""></span><span class="shot" data-bg="3"><img alt=""></span><span class="shot" data-bg="2"><img alt=""></span><span class="shot" data-bg="1"><img alt=""></span><span class="shot" data-bg="4"><img alt=""></span>
   </div>
 </section>
 
 <!-- Partie -->
-<div class="ecran game" id="game">
-  <header class="studio-bar"><p class="logo">Qui est-ce ?</p><p class="code" id="code" title="Code du salon">····</p>
-    <p class="score" id="score"></p><div class="players" id="players"></div></header>
-  <section class="play">
-    <div class="main">
-      <main class="board-wrap"><div class="wall-board" id="board" role="group" aria-label="Ton plateau : 24 personnages"></div><canvas id="gl" aria-hidden="true"></canvas></main>
-      <ol class="log" id="log" aria-label="Questions de la manche"></ol>
-    </div>
-    <div class="side">
-      <figure class="mine pola" id="mine" hidden><p class="mine-label">Mon personnage</p><img alt=""><figcaption></figcaption><span class="tape" aria-hidden="true"></span></figure>
-      <div class="action" id="action" aria-live="polite"></div>
-      <div class="sheet" id="their-sheet"></div>
-      <p class="bubble" id="bubble" hidden aria-live="polite"></p>
-      <p id="debug" hidden><button class="tape-btn" data-do="leave-sim">Simuler le départ de l'adversaire</button></p>
-    </div>
-  </section>
-</div>
+<main class="game" id="game">
+  <div class="board">
+    <div class="lineup" id="lineup" aria-label="Les 24 suspects"></div>
+    <p class="fiche" id="fiche" data-on="0" aria-live="polite"><b>Observe un visage</b><span>survol, clavier ou toucher : ses traits s’affichent ici</span></p>
+  </div>
+  <aside class="notebook" aria-label="Ton carnet">
+    <section class="secret" id="secret" data-state="none">
+      <span class="shot"><img alt=""></span>
+      <p class="s-label">Ton suspect</p><p class="s-name"></p><p class="s-note"></p>
+    </section>
+    <section class="act" id="act" aria-live="polite"></section>
+    <section class="journal"><h3>Questions de la manche</h3><ol id="log"></ol></section>
+    <section class="rival"><p><span id="rival-name"></span> : <strong id="rival-count">24</strong> suspects encore en jeu <span id="rival-note"></span></p><div class="bar24" id="rival-bar"></div></section>
+  </aside>
+</main>
 
-<!-- Revelation (fin de manche) -->
-<section class="reveal-overlay" id="reveal" hidden aria-live="polite" aria-label="Fin de la manche">
-  <div class="reveal">
+<!-- Révélation (fin de manche) -->
+<section class="reveal" id="reveal" hidden aria-live="polite" aria-labelledby="reveal-title">
+  <div class="reveal-card">
     <h2 id="reveal-title"></h2>
-    <p class="reveal-sub" id="reveal-sub"></p>
-    <div class="hang" id="hang"></div>
-    <p class="final-score" id="final-score"></p>
-    <ul class="titles" id="titles"></ul>
-    <p class="reveal-actions"><button class="tape-btn film big" id="rematch" data-do="rematch">Revanche</button>
-      <button class="tape-btn" data-do="share">Partager la planche</button><button class="quit" data-do="home">Quitter</button></p>
+    <p class="sub" id="reveal-sub"></p>
+    <div class="pair" id="reveal-pair"></div>
+    <p class="score" id="reveal-score"></p>
+    <p class="note" id="reveal-note"></p>
+    <p class="go"><button class="btn primary" id="rematch" data-do="rematch">Revanche</button>
+      <button class="btn" data-do="share">Enregistrer la planche</button><button class="btn ghost" data-do="home">Quitter</button></p>
   </div>
 </section>
 
 <!-- Adversaire parti -->
-<section class="away-overlay" id="away" hidden aria-live="polite">
-  <div class="gone"><span class="empty-photo" aria-hidden="true"></span><p class="gone-note">Ton adversaire a quitté le studio</p></div>
-  <p class="hint">Il reviendra peut-être. Ou pas : il paraît qu'il avait peur de perdre.</p>
-  <p><button class="tape-btn film" data-do="home">Retour à l'accueil</button></p>
+<section class="away" id="away" hidden aria-live="polite">
+  <h2>Ton adversaire a quitté la partie</h2>
+  <p class="hint">Il reviendra peut-être. Le salon reste ouvert tant que tu ne le quittes pas.</p>
+  <button class="btn" data-do="home">Retour à l’accueil</button>
 </section>
 
-<p class="note" id="note"></p>
+<p class="toast" id="toast" hidden role="status"></p>
+<p class="debug" id="debug" hidden><button class="btn" data-do="leave-sim">Simuler le départ de l’adversaire</button></p>
 <script type="module" src="js/game/app.js"></script>
 </body>
 </html>

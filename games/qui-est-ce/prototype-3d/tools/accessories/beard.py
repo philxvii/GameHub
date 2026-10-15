@@ -233,7 +233,7 @@ def build(style):
         tris = glb.mesh(part, mesh, mat, targets=targets, target_names=names, colors=C)
         stats['parties'][part] = {'cartes': len(P0), 'triangles': tris, 'expressions': len(names),
                                   'degagement': clearance(h, P, names, targets, pts.shape[1])}
-    out = os.path.join(PROTO, 'models', 'accessories', f'{style}.glb')
+    out = os.path.join((os.environ.get('QE_ACC_OUT') or os.path.join(PROTO, 'models', 'accessories')), f'{style}.glb')
     stats['octets'] = glb.save(out, extras={'accessory': 'facial-hair', 'style': style, 'attach': 'Head'}, vp=12)   # 12 bits : 0,03 mm sur la zone
     json.dump(stats, open(out.replace('.glb', '.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print(json.dumps(stats, ensure_ascii=False))

@@ -238,7 +238,7 @@ def build(style):
     lashes = Head(materials=('lashes',), landmarks=False).V
     stats = {'style': style, 'nom': st['name'], 'triangles': tris, 'degagement_cm': clearance(h, allP, lashes),
              'largeur_face_cm': round(float(np.ptp(allP[:, 0]) / h.cm), 2)}
-    out = os.path.join(PROTO, 'models', 'accessories', f'glasses-{style}.glb')
+    out = os.path.join((os.environ.get('QE_ACC_OUT') or os.path.join(PROTO, 'models', 'accessories')), f'glasses-{style}.glb')
     stats['octets'] = glb.save(out, extras={'accessory': 'glasses', 'style': style, 'attach': 'Head'})
     json.dump(stats, open(out.replace('.glb', '.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print(json.dumps(stats, ensure_ascii=False))

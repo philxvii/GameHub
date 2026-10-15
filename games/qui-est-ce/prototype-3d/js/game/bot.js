@@ -7,12 +7,12 @@
 import { QUESTIONS, byId } from './questions.js';
 
 const LINES = {
-  ask: ['Bon. Question piege :', 'Je sens que ça va faire mal :', 'Simple curiosité :', 'Allez, avoue :'],
-  yes: ['Je le savais.', 'Intéressant…', 'Noté. Au crayon gras.'],
+  ask: ['Bon. Question piège :', 'Je sens que ça va faire mal :', 'Simple curiosité :', 'Allez, avoue :'],
+  yes: ['Je le savais.', 'Intéressant…', 'Noté. Je raye.'],
   no: ['Ah. Je reformule mes soupçons.', 'Pas grave, j’avais un plan B.', 'Hmm. Inattendu.'],
   win: ['Élémentaire.', 'C’était écrit sur son visage.', 'Je prends la pose pour la photo ?'],
-  lose: ['Je demande à revoir la planche contact.', 'Coup de chance. Revanche ?', 'Bien joué… pour cette fois.'],
-  rematch: ['Revanche acceptée. Je m’échauffe les crayons.'],
+  lose: ['Je demande à revoir les visages.', 'Coup de chance. Revanche ?', 'Bien joué… pour cette fois.'],
+  rematch: ['Revanche acceptée. Je m’échauffe.'],
 };
 const pick = (rng, arr) => arr[Math.floor(rng() * arr.length)];
 

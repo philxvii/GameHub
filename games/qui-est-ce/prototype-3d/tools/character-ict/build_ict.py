@@ -22,6 +22,12 @@ sys.path.insert(0, os.path.join(PROTO, 'tools', 'pipeline'))
 from paths import take_id, paths                                     # noqa: E402
 CH = paths(take_id())                                                # --id <personnage> (defaut character-01)
 BUILD, ICT = CH.build, CH.fit                                      # ICT : fit.npz et textures de controle
+# --identity variante.json : un AUTRE visage, construit sur le personnage 01 (voir tools/casting/).
+# Les coefficients d'identite ICT (`modes` : {indice: ecart}) deplacent la geometrie APRES la
+# projection de la texture photo : la texture suit le visage par ses UV (grain de peau conserve).
+IDENT = None
+if '--identity' in sys.argv:
+    k = sys.argv.index('--identity'); IDENT = json.load(open(sys.argv[k + 1], encoding='utf-8')); del sys.argv[k:k + 2]
 OUT = sys.argv[1] if len(sys.argv) > 1 else CH.glb
 TEX = 2048
 sys.path.insert(0, HERE)
@@ -338,6 +344,22 @@ def lash_texture(w=512, h=64):
     rgba = np.zeros((h, w, 4), np.uint8); rgba[..., :3] = (18, 20, 24); rgba[..., 3] = np.clip(a * 255, 0, 255)
     return rgba
 
+
+# ───────────────────────────────────────────── 4 bis. autre visage (--identity)
+if IDENT:
+    modes = {int(k): float(v) for k, v in IDENT['modes'].items()}
+    D = sum(v * d['ids'][k].astype(np.float64) for k, v in modes.items())        # ecart d'identite, repere ICT (cm)
+    D = (s_al * (R_al @ D.T)).T
+    y = V[:, 1]
+    # plein effet sur le visage ; s'efface vers le sommet du crane (la coiffure V4.1 est ajustee
+    # au crane du 01) et sous le menton (raccord du cou sur le buste)
+    top = smoothstep(brow_y + 7.0 * cm, brow_y + 3.0 * cm, y)
+    bottom = smoothstep(L3[152][1] - 5.5 * cm, L3[152][1] - 1.0 * cm, y)
+    w = top * bottom
+    back = np.zeros(len(V), bool); back[rng(R_HEAD)] = True
+    w[back] *= 0.35                                                            # arriere du crane : sous les cheveux
+    V += D * w[:, None]
+    print(f"identite : {len(modes)} modes, ecart max {np.abs(D * w[:, None]).max() / cm:.2f} cm")
 
 # ───────────────────────────────────────────── 5. squelette, poids
 chin = L3[152]

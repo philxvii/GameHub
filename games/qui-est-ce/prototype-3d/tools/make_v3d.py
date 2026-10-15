@@ -13,7 +13,7 @@ head = ('<meta charset="utf-8">\n'
         '<script src="../../../shared/maintenance.js"></script>\n'
         '<script>window.QE_ONLINE = true;</script>')
 assert src.count('<meta charset="utf-8">') == 1
-out = src.replace('<meta charset="utf-8">', head).replace('<title>Qui est-ce ? — le casting</title>', '<title>Qui est-ce ? 3D — le casting</title>')
+out = src.replace('<meta charset="utf-8">', head)
 dst = os.path.normpath(os.path.join(PROTO, '..', 'v3d', 'index.html')); os.makedirs(os.path.dirname(dst), exist_ok=True)
 open(dst, 'w', encoding='utf-8', newline='\n').write(out)
 print(os.path.relpath(dst, PROTO))

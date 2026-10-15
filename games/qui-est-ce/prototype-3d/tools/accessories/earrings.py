@@ -81,7 +81,7 @@ def build(style):
     for ex, w in EXPRESSIONS.items():
         V = h.posed(w); d, _ = cKDTree(V).query(P); cand = (d < 0.3 * h.cm) & away
         deg[ex] = int(h.inside(P[cand], V).sum()) if cand.any() else 0
-    out = os.path.join(PROTO, 'models', 'accessories', f'earrings-{style}.glb')
+    out = os.path.join((os.environ.get('QE_ACC_OUT') or os.path.join(PROTO, 'models', 'accessories')), f'earrings-{style}.glb')
     stats = {'style': style, 'triangles': tris, 'dans_la_tete_hors_percage': deg}
     stats['octets'] = glb.save(out, extras={'accessory': 'earrings', 'style': style, 'attach': 'Head'})
     json.dump(stats, open(out.replace('.glb', '.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)

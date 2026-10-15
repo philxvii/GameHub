@@ -13,7 +13,7 @@ from scipy.spatial import cKDTree
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROTO = os.path.normpath(os.path.join(HERE, '..', '..'))
-CHARACTER = os.path.join(PROTO, 'models', 'character-01-ict.glb')
+CHARACTER = os.environ.get('QE_HEAD') or os.path.join(PROTO, 'models', 'character-01-ict.glb')   # QE_HEAD : une autre tete (casting)
 DT = {5120: np.int8, 5121: np.uint8, 5122: np.int16, 5123: np.uint16, 5125: np.uint32, 5126: np.float32}
 K = {'SCALAR': 1, 'VEC2': 2, 'VEC3': 3, 'VEC4': 4}
 

@@ -4,9 +4,9 @@
 //   node games/qui-est-ce/prototype-3d/tools/test-board.js
 //
 // Joue : choix du secret, questions utiles, reponses honnetes aux questions du bot, croix,
-// designation ; verifie la revelation (deux secrets, pastille), les statistiques locales, la
-// planche contact PNG, la revanche en un clic, l'adversaire qui s'en va, le survol (regard),
-// la console, et le 390 px. Captures dans build/board/ ; mesures dans build/board/stats.json.
+// designation ; verifie la revelation (les deux secrets), les statistiques locales, la planche
+// contact PNG, la revanche en un clic, l'adversaire qui s'en va, le survol (la carte prend vie,
+// le regard suit), la console, et le 390 px. Captures dans build/board/ ; mesures dans build/board/stats.json.
 
 const fs = require('fs');
 const path = require('path');
@@ -19,7 +19,7 @@ const GPU_FLAGS = WIN ? ['--ignore-gpu-blocklist', '--enable-gpu', '--use-angle=
   : ['--ignore-gpu-blocklist', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
 // QE_PAGE=v3d : la meme partie sur l'entree du jeu (games/qui-est-ce/v3d/, maintenance + mode en ligne)
 const PAGE = process.env.QE_PAGE === 'v3d' ? 'v3d/index.html' : 'prototype-3d/board.html';
-const URL = (q) => `${ORIGIN}/games/qui-est-ce/${PAGE}?seed&fast${WIN ? '' : '&idle=30'}${q ? '&' + q : ''}`;
+const URL = (q) => `${ORIGIN}/games/qui-est-ce/${PAGE}?seed&fast${q ? '&' + q : ''}`;
 const OUT = path.join(__dirname, '..', 'build', 'board');
 const results = [];
 const check = (name, ok, d = '') => { results.push(!!ok); console.log(`${ok ? 'OK   ' : 'ECHEC'}  ${name}${d !== '' ? ' | ' + (typeof d === 'string' ? d : JSON.stringify(d)) : ''}`); };
@@ -39,26 +39,26 @@ async function shot(p, name) {
   const t0 = Date.now();
   try {
     await p.goto(URL(''));
-    check('Accueil charge (24 personnages 3D prets)', await until(p, 'document.documentElement.dataset.ready === "1"', 180000), `${Date.now() - t0} ms`);
+    check('Accueil charge (24 portraits prets)', await until(p, 'document.documentElement.dataset.ready === "1" && [...document.querySelectorAll("#lineup img.still:not(.alt)")].every((i) => i.complete && i.naturalWidth > 0)', 180000), `${Date.now() - t0} ms`);
     await ev(p, 'localStorage.clear()');
     await shot(p, 'accueil');
     await ev(p, 'document.querySelector("[data-do=play-bot]").click()');
     check('Partie contre le bot : choix du secret', await until(p, '__game.view() && __game.view().phase === "choose"'));
-    // survol : regard vers le curseur
-    const box = await ev(p, `const r = __game.board.cards[7].slot.getBoundingClientRect(); return { l: r.left, r: r.right, y: r.top + r.height * .35 }`);
+    // survol : la carte prend vie en 3D (un seul personnage vivant), regard vers le curseur
+    const box = await ev(p, `const r = document.querySelector('.suspect[data-i="7"] .shot').getBoundingClientRect(); return { l: r.left, r: r.right, y: r.top + r.height * .35 }`);
     const move = async (x) => { for (let i = 0; i < 4; i++) { await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y: box.y }).catch(() => {}); await sleep(40); } };
-    await move(box.l + 3); await sleep(4000); const left = await ev(p, 'return __game.board.cards[7].rig.state.eye.yaw');
-    await move(box.r - 3); await sleep(4000); const right = await ev(p, 'return __game.board.cards[7].rig.state.eye.yaw');
-    const target = await ev(p, 'const c = __game.board.cards[7]; return { hovering: c.hovering, x: c.pointer.x, active: c.pointer.active }');
-    // la cible du regard suit le curseur ; le mouvement des yeux, lui, depend du nombre d'images (SwiftShader : ~4 s par carte)
-    check('Survol : le personnage vise le curseur', target.hovering && target.active && target.x > 0.5 && (WIN ? left < -0.05 && right > 0.05 : true),
-      { cibleX: +target.x.toFixed(2), yeuxGauche: +left.toFixed(3), yeuxDroite: +right.toFixed(3) });
+    await move(box.l + 4);
+    const lit = await until(p, 'document.querySelector(".live.on")', 90000);
+    await sleep(2500); const left = await ev(p, 'return __game.live().stats().yaw');
+    await move(box.r - 4); await sleep(2500); const right = await ev(p, 'return __game.live().stats().yaw');
+    const fiche = await ev(p, 'return document.querySelector("#fiche b").textContent === __game.people[7].prenom');
+    check('Survol : le personnage prend vie et suit le curseur ; sa fiche s\'affiche', lit && fiche && right > left, { yeuxGauche: +left.toFixed(3), yeuxDroite: +right.toFixed(3) });
     await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 }).catch(() => {});
     await ev(p, '__game.pick(0)');
     await shot(p, 'choix-secret');
     await ev(p, 'document.querySelector("[data-do=secret]").click()');
     check('Les deux secrets choisis : la manche commence', await until(p, '__game.view().phase === "play"'));
-    const leak = await ev(p, `const v = __game.view(); return v.reveal !== null || JSON.stringify(v).includes('secrets')`);
+    const leak = await ev(p, `const v = __game.view(); return v.reveal !== null || JSON.stringify(v).includes('secrets') || document.body.innerHTML.includes('opp-secret')`);
     check("Le secret de l'adversaire n'est pas dans la vue", !leak);
     // boucle de jeu : je pose la meilleure question, je raye, le bot joue ; je reponds honnetement
     let turns = 0; const shots = { tour: false, repondre: false };
@@ -72,7 +72,7 @@ async function shot(p, name) {
           document.querySelector(q.test(__game.people[v.mySecret].attributs) ? '[data-do=yes]' : '[data-do=no]')?.click();`);
       } else if (v.turn === v.me && !v.ask) {
         const left = await ev(p, `return __game.people.map((_, i) => i).filter((i) => !__game.crossed().includes(i))`);
-        if (left.length === 1) await ev(p, `__game.guessMode(true); __game.pick(${left[0]}); document.querySelector('[data-do=guess]').click()`);
+        if (left.length === 1) { await ev(p, `__game.guessMode(true); __game.pick(${left[0]})`); await sleep(200); await ev(p, `document.querySelector('[data-do=guess]').click()`); }
         else {
           if (!shots.tour) { await shot(p, 'mon-tour'); shots.tour = true; }
           await ev(p, `const m = await import(new URL('js/game/questions.js', document.baseURI)); const q = m.bestQuestion(${JSON.stringify(left)}, __game.people);
@@ -89,9 +89,10 @@ async function shot(p, name) {
     check('Partie terminee (designation)', await until(p, '__game.view().phase === "end"', 90000), { mesQuestions: turns });
     await sleep(2500);
     const end = await ev(p, `const v = __game.view(); return { winner: v.winner, me: v.me, shown: !document.getElementById('reveal').hidden,
-      frames: document.querySelectorAll('#hang .hung').length, dot: !!document.querySelector('#hang .dot'), titles: document.getElementById('titles').textContent,
+      frames: document.querySelectorAll('#reveal-pair .unveil img').length, names: [...document.querySelectorAll('#reveal-pair b')].map((b) => b.textContent),
+      truth: [v.reveal.p1, v.reveal.p2].map((i) => __game.people[i].prenom), note: document.getElementById('reveal-note').textContent,
       stats: (JSON.parse(localStorage.getItem('qe3d.stats.v1') || '{}').games || []).length }`);
-    check('Revelation : deux secrets accroches, pastille, statistiques enregistrees', end.shown && end.frames === 2 && end.dot && end.stats === 1, { gagnant: end.winner, titres: end.titles.slice(0, 140) });
+    check('Revelation : les deux secrets montres, statistiques enregistrees', end.shown && end.frames === 2 && end.names.every((n) => end.truth.includes(n)) && end.stats === 1, { gagnant: end.winner, noms: end.names, note: end.note.slice(0, 120) });
     await shot(p, 'revelation');
     const png = await ev(p, `const u = await __game.contactSheet(); window.__png = u; return u.length`);
     const data = await ev(p, 'return window.__png');
@@ -102,13 +103,11 @@ async function shot(p, name) {
     await ev(p, `__game.net().send(__game.view().code, 'p2', { type: 'leave' })`);
     check("Adversaire parti : l'ecran le dit", await until(p, "!document.getElementById('away').hidden"));
     await shot(p, 'adversaire-parti');
-    const N = WIN ? 24 : 2;
-    const ms = await ev(p, `return __game.board.paintMs(${N})`);
-    const st = await ev(p, 'return __game.board.stats()');
+    const st = await ev(p, 'return __game.live() ? __game.live().stats() : {}');
     // ERR_TUNNEL_CONNECTION_FAILED : hote refuse par le reseau du cloud (interrupteur de maintenance du site)
     const errs = p.errors().filter((e) => !/ERR_TUNNEL_CONNECTION_FAILED/.test(e));
     check('Console sans erreur', errs.length === 0, errs.slice(0, 3));
-    const measures = { ...st, loadWallMs: Date.now() - t0, repaintAll24Ms: +(ms * 24 / N).toFixed(1), note: WIN ? 'GPU' : 'SwiftShader : temps sans valeur, a mesurer sur le PC' };
+    const measures = { ...st, loadWallMs: Date.now() - t0, note: WIN ? 'GPU' : 'SwiftShader : temps sans valeur, a mesurer sur le PC' };
     fs.writeFileSync(path.join(OUT, 'stats.json'), JSON.stringify(measures, null, 1));
     console.log('       Mesures :', JSON.stringify(measures));
     await p.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
