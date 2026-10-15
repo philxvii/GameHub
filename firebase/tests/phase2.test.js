@@ -260,23 +260,40 @@ describe('Maintenance', () => {
     await assertFails(set(ref(admin, 'hub/settings/maintenance'), 'oui'));
   });
   for (const [P, code] of Object.entries(GAMES)) {
-    test(`${P} : ni créer, ni rejoindre, ni jouer, ni supprimer ; l'admin si`, async () => {
+    test(`${P} : ni créer, ni rejoindre, ni lire, ni jouer, ni supprimer ; l'admin si`, async () => {
       await seed(`${P}/${code}`, { ...lobby(code), members: { alice: true, bob: true } });
       await on();
       await assertFails(set(ref(alice, `${P}/ABCD-11`), lobby('ABCD-11')));
       await assertFails(set(ref(eve, `${P}/${code}/members/eve`), true));
       await assertFails(update(ref(bob, `${P}/${code}`), { turnIndex: 1 }));
       await assertFails(remove(ref(alice, `${P}/${code}`)));
-      await assertSucceeds(get(ref(bob, `${P}/${code}`)));
+      await assertFails(get(ref(bob, `${P}/${code}`)));
+      await assertFails(get(ref(alice, `${P}/${code}/phase`)));
+      await assertFails(get(ref(eve, `${P}/${code}/phase`)));
+      await assertSucceeds(get(ref(admin, `${P}/${code}`)));
       await assertSucceeds(update(ref(admin, `${P}/${code}`), { turnIndex: 1 }));
       await assertSucceeds(remove(ref(admin, `${P}/${code}`)));
     });
   }
-  test("Undercover : l'hôte n'écrit plus ses secrets", async () => {
+  test("Undercover : secrets ni écrits ni lus", async () => {
     await seed('games/LOUP-42', { ...lobby('LOUP-42'), members: { alice: true } });
+    await seed('ucHost/LOUP-42', { civilWord: 'Café', undercoverWord: 'Thé', roles: ['civil'] });
+    await seed('ucSecret/LOUP-42/alice', { role: 'civil', word: 'Café' });
     await on();
+    await assertFails(get(ref(alice, 'ucHost/LOUP-42')));
+    await assertFails(get(ref(alice, 'ucSecret/LOUP-42/alice')));
+    await assertSucceeds(get(ref(admin, 'ucHost/LOUP-42')));
     await assertFails(set(ref(alice, 'ucHost/LOUP-42'), { civilWord: 'Café', undercoverWord: 'Thé', roles: ['civil'] }));
     await assertFails(set(ref(alice, 'ucSecret/LOUP-42/alice'), { role: 'civil', word: 'Café' }));
+  });
+  test('hub : ni présence ni compteur ; réglages publics et admin/<soi> lisibles', async () => {
+    await on();
+    await assertFails(set(ref(anon, 'hub/online/abc123'), { t: 1 }));
+    await assertFails(get(ref(anon, 'hub/online')));
+    await assertFails(update(ref(anon, 'hub/stats'), { visits: increment(1) }));
+    await assertSucceeds(get(ref(anon, 'hub/settings/maintenance')));
+    await assertSucceeds(get(ref(admin, 'admins/admin1')));
+    await assertSucceeds(set(ref(admin, 'hub/settings/maintenance'), false));
   });
   test('interrupteur coupé : le jeu reprend', async () => {
     await seed('hub/settings/maintenance', false);

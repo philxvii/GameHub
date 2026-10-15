@@ -20,7 +20,7 @@ const GAMES = {
 };
 
 const ADMIN = "auth != null && root.child('admins').child(auth.uid).val() === true";
-// Maintenance (hub/settings/maintenance) : plus aucune écriture dans les parties, sauf l'admin.
+// Maintenance (hub/settings/maintenance) : plus aucune lecture ni écriture, sauf l'admin.
 const OPEN = "root.child('hub').child('settings').child('maintenance').val() !== true";
 const NAME ="newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')";
 const SHORT_TEXT = n => `newData.isString() && newData.val().length <= ${n} && !newData.val().contains('<')`;
@@ -29,7 +29,7 @@ function gameRules(prefix, { code, joinAnyPhase }) {
   const phase = `root.child('${prefix}').child($code).child('phase')`;
   const room = {
     // Lecture : membres et admin. Jamais sur le préfixe entier (sauf admin).
-    '.read': `auth != null && (data.child('members').child(auth.uid).exists() || ${ADMIN})`,
+    '.read': `auth != null && ((${OPEN} && data.child('members').child(auth.uid).exists()) || ${ADMIN})`,
     '.write': [
       `auth != null && ((${OPEN} && (`,
       // création : code au format, l'auteur est l'hôte et le premier membre
@@ -51,7 +51,7 @@ function gameRules(prefix, { code, joinAnyPhase }) {
       },
     },
     // La phase seule est visible de tout compte : « code introuvable » ou « déjà lancée ».
-    phase: { '.read': 'auth != null', '.validate': 'newData.isString() && newData.val().length <= 32' },
+    phase: { '.read': `auth != null && ${OPEN}`, '.validate': 'newData.isString() && newData.val().length <= 32' },
     players: { $i: { name: { '.validate': NAME } } },
   };
   return {
@@ -69,9 +69,9 @@ const rules = {
 
   hub: {
     online: {
-      '.read': true,
+      '.read': OPEN,
       $key: {
-        '.write': '$key.matches(/^[a-z0-9]{1,16}$/)',
+        '.write': `${OPEN} && $key.matches(/^[a-z0-9]{1,16}$/)`,
         '.validate': "newData.hasChildren(['t'])",
         t: { '.validate': 'newData.isNumber()' },
         $other: { '.validate': false },
@@ -80,7 +80,7 @@ const rules = {
     stats: {
       visits: {
         '.read': true,
-        '.write': `newData.isNumber() && ((!data.exists() && newData.val() === 1) || (data.isNumber() && newData.val() === data.val() + 1) || (${ADMIN} && newData.val() === 0))`,
+        '.write': `newData.isNumber() && ((${OPEN} && ((!data.exists() && newData.val() === 1) || (data.isNumber() && newData.val() === data.val() + 1))) || (${ADMIN} && newData.val() === 0))`,
       },
     },
     hidden: { '.read': true, '.write': ADMIN, $id: { '.validate': 'newData.isBoolean()' } },
@@ -119,7 +119,7 @@ rules.ucHost = {
   '.read': ADMIN,
   '.write': `${ADMIN} && !newData.exists()`,
   $code: {
-    '.read': `${UC_HOST} || (${ADMIN})`,
+    '.read': `(${UC_HOST} && ${OPEN}) || (${ADMIN})`,
     '.write': `(${UC_HOST} && ${OPEN}) || (${ADMIN})`,
     '.validate': "newData.hasChildren(['civilWord', 'undercoverWord', 'roles'])",
     civilWord: { '.validate': WORD },
@@ -133,10 +133,10 @@ rules.ucSecret = {
   '.read': ADMIN,
   '.write': `${ADMIN} && !newData.exists()`,
   $code: {
-    '.read': `${UC_HOST} || (${ADMIN})`,
+    '.read': `(${UC_HOST} && ${OPEN}) || (${ADMIN})`,
     '.write': `(${UC_HOST} && ${OPEN}) || (${ADMIN})`,
     $uid: {
-      '.read': 'auth != null && auth.uid === $uid',
+      '.read': `auth != null && auth.uid === $uid && ${OPEN}`,
       '.validate': "newData.hasChildren(['role'])",
       role: { '.validate': ROLE },
       word: { '.validate': WORD },

@@ -19,7 +19,7 @@
       "stats": {
         "visits": {
           ".read": true,
-          ".write": "newData.isNumber() && ((!data.exists() && newData.val() === 1) || (data.isNumber() && newData.val() === data.val() + 1) || (auth != null && root.child('admins').child(auth.uid).val() === true && newData.val() === 0))"
+          ".write": "newData.isNumber() && ((root.child('hub').child('settings').child('maintenance').val() !== true && ((!data.exists() && newData.val() === 1) || (data.isNumber() && newData.val() === data.val() + 1))) || (auth != null && root.child('admins').child(auth.uid).val() === true && newData.val() === 0))"
         }
       },
       "hidden": {
@@ -251,7 +251,7 @@
       ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
       ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
       "$code": {
-        ".read": "auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".read": "(auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid && root.child('hub').child('settings').child('maintenance').val() !== true) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
         ".write": "(auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid && root.child('hub').child('settings').child('maintenance').val() !== true) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
         ".validate": "newData.hasChildren(['civilWord', 'undercoverWord', 'roles'])",
         "civilWord": {
@@ -274,10 +274,10 @@
       ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
       ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
       "$code": {
-        ".read": "auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".read": "(auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid && root.child('hub').child('settings').child('maintenance').val() !== true) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
         ".write": "(auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid && root.child('hub').child('settings').child('maintenance').val() !== true) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
         "$uid": {
-          ".read": "auth != null && auth.uid === $uid",
+          ".read": "auth != null && auth.uid === $uid && root.child('hub').child('settings').child('maintenance').val() !== true",
           ".validate": "newData.hasChildren(['role'])",
           "role": {
             ".validate": "newData.isString() && newData.val().matches(/^(civil|undercover|mrwhite)$/)"
