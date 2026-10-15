@@ -1,0 +1,2 @@
+# Les captures PNG brutes (revue à taille native) restent locales ; seules les WebP sont versionnées.
+*.png
