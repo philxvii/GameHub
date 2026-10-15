@@ -165,7 +165,8 @@
       <div class="score card" id="score-card">
         <div class="score-main"><svg aria-hidden="true"><use href="#i-pax"/></svg><strong id="score">0</strong></div>
         <div class="score-sub" id="score-sub"></div>
-        <div class="eff" id="eff" hidden><span>Efficacité</span><div class="eff-bar"><i id="eff-fill"></i></div></div>
+        <div class="eff" id="eff" hidden><span>Efficacité <b id="eff-val">50 %</b></span><div class="eff-bar"><i id="eff-fill"></i></div></div>
+        <div class="alert-chip" id="alert-chip" role="status" hidden></div>
       </div>
     </div>
     <div class="hud-right">
@@ -202,7 +203,7 @@
     </div>
     <div class="panel card" id="panel" role="dialog" aria-modal="false" hidden></div>
     <div class="drag-ghost" id="ghost" hidden></div>
-    <div class="hint card" id="hint" hidden></div>
+    <button class="hint card" id="hint" type="button" title="Toucher pour masquer" hidden></button>
   </section>
 
   <!-- ═════════════ Fenêtres ═════════════ -->
@@ -211,7 +212,9 @@
       <p class="eyebrow" id="rw-week">Fin de semaine</p>
       <h2 id="t-rw">Nouveau budget</h2>
       <p class="rw-granted" id="rw-granted"></p>
+      <p class="rw-step" id="rw-step1" hidden>1 · Matériel</p>
       <div class="rw-loco" id="rw-loco"></div>
+      <p class="rw-step" id="rw-step2" hidden>2 · Amélioration</p>
       <div class="rw-opts" id="rw-opts"></div>
     </div>
   </div>

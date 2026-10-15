@@ -56,7 +56,7 @@ export const DEFAULTS = {
   modifiers: { shapeChange: null },
   palette: {
     landDay: '#F1EDE3', landNight: '#121821', waterDay: '#BCD7DE', waterNight: '#1D3344',
-    parkDay: '#DDE7D0', parkNight: '#17261F',
+    parkDay: '#DDE7D0', parkNight: '#1E3328',
     lines: ['#E0412F', '#2A6FD6', '#1E9E62', '#F2A516', '#8A4FD3', '#12A7C4', '#E0599A'],
   },
 };

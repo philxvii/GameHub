@@ -49,18 +49,21 @@ const SCENES = {
   async drawing(b) {
     const p = await page(b, 1440, 900);
     await solo(p, { map: 'baie-brumes', mode: 'classic', seed: 9 });
-    await p.eval(`return window.__ff(2600);`);
-    await sleep(1200);
-    const pts = await p.eval(`const g = window.__ms.game; const st = g.view(); const free = st.stations.filter(s => !st.lines.some(l => l.s.includes(s.id))); const a = free[0] || st.stations[0]; const b2 = st.stations.find(s => s !== a && s.shape !== a.shape); return [a, b2].map(s => { const q = g.renderer.toScreen(s.x, s.y); return [q.x, q.y]; });`);
+    await p.eval(`const g = window.__ms.game; g.submit({ type: 'line', l: 0, s: [1, 2] }); return window.__ff(900, 1e9);`);
+    await sleep(1500);
+    // tracé réel à la souris : station 3 → station 1 → vers une autre station (bouton maintenu)
+    const pts = await p.eval(`const g = window.__ms.game; const st = g.view(); return [3, 1, st.stations[st.stations.length - 1].id].map(id => { const s = st.stations.find(x => x.id === id); const q = g.renderer.toScreen(s.x, s.y); return [q.x, q.y]; });`);
+    const mv = (x, y) => p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y, button: 'left', buttons: 1 });
     await p.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: pts[0][0], y: pts[0][1], button: 'left', clickCount: 1 });
-    for (let k = 1; k <= 14; k++) await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: pts[0][0] + (pts[1][0] - pts[0][0]) * k / 10, y: pts[0][1] + (pts[1][1] - pts[0][1]) * k / 10, button: 'left', buttons: 1 });
+    for (let k = 1; k <= 12; k++) await mv(pts[0][0] + (pts[1][0] - pts[0][0]) * k / 12, pts[0][1] + (pts[1][1] - pts[0][1]) * k / 12);
+    for (let k = 1; k <= 8; k++) await mv(pts[1][0] + (pts[2][0] - pts[1][0]) * k / 14, pts[1][1] + (pts[2][1] - pts[1][1]) * k / 14);
     await sleep(300);
     await shot(p, 'drawing');
   },
   async network(b) {
     const p = await page(b, 1440, 900);
     await solo(p, { map: 'delta-sauge', mode: 'classic', seed: 21 });
-    await p.eval(`return window.__ff(4200);`);
+    await p.eval(`return window.__ff(3400);`);
     await sleep(1500);
     await shot(p, 'network');
   },

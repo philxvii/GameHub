@@ -51,6 +51,7 @@ export class Game {
     this.peak = { lines: 0, crossings: 0 };
     this.t0 = performance.now();
     this.opp = null;
+    session.bind?.(this);
     this.wire();
     this.buildDock();
     this.fit(true);
@@ -81,6 +82,7 @@ export class Game {
     this.renderer.onEvents(st, evs);
     this.sound(st, evs);
     if (this.autoCam) this.fit(false);
+    else if (this.focus) { const c = this.renderer.cam, k = this.reduced ? 1 : 0.08; c.x += (this.focus.x - c.x) * k; c.y += (this.focus.y - c.y) * k; c.z += (this.focus.z - c.z) * k; }
     this.renderer.frame(st, f, this.input.ui, now);
     const other = this.session.other();
     if (other) { drainEvents(other); this.drawOpponent(other, now); }
@@ -97,7 +99,11 @@ export class Game {
       else if (e.k === 'board') a.board();
       else if (e.k === 'deliver') a.deliver();
       else if (e.k === 'station') a.station();
-      else if (e.k === 'warn') { a.warn(); if (this.settings.haptics) navigator.vibrate?.(60); }
+      else if (e.k === 'warn') {
+        a.warn(); if (this.settings.haptics) navigator.vibrate?.(60);
+        const s = stationById(st, e.s);
+        if (s && performance.now() - (this.lastWarnToast || 0) > 8000) { this.lastWarnToast = performance.now(); this.toast(`Station ${shapeName(s.shape)} au bord de la saturation !`, 'warn'); }
+      }
       else if (e.k === 'reward') a.reward();
       else if (e.k === 'shape') { a.station(); const s = stationById(st, e.s); if (s) this.toast(`Un quartier change de visage : une station devient ${shapeName(e.to)}.`); }
       else if (e.k === 'cmd' && e.type === 'line') a.line(0);
@@ -115,20 +121,38 @@ export class Game {
   }
 
   // ───────── caméra ─────────
+  // Zone de carte non couverte par le HUD (mesurée dans le DOM).
+  measureSafe() {
+    const R = this.renderer, H = R.H, W = R.W;
+    const rect = sel => { const e = document.querySelector(sel); return e && !e.hidden && e.offsetParent !== null ? e.getBoundingClientRect() : null; };
+    const top = Math.max(rect('#clock')?.bottom || 0, rect('#score-card')?.bottom || 0, rect('#mp-bar')?.bottom || 0);
+    const dock = rect('#dock'), cb = rect('#creative-bar'), hr = rect('.hud-right');
+    let bottom = dock ? H - dock.top : 80;
+    if (cb) bottom = Math.max(bottom, H - cb.top);
+    const mobile = W < 720;
+    if (mobile && hr) bottom = Math.max(bottom, H - hr.top);
+    const right = !mobile && hr ? W - hr.left : 0;
+    const opp = rect('#opp');
+    R.safe = { t: top + 8, r: right + 8 + (opp && !mobile ? 0 : 0), b: bottom + 8, l: 8 };
+    return R.safe;
+  }
   fit(snap) {
     const st = this.view();
     const R = this.renderer;
+    if (!R.safe || snap) this.measureSafe();
     if (!st.stations.length) return;
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const s of st.stations) { x0 = Math.min(x0, s.x); y0 = Math.min(y0, s.y); x1 = Math.max(x1, s.x); y1 = Math.max(y1, s.y); }
-    const pad = 130;
+    // marge : rayon de station, anneau, file d'attente (jusqu'à 6 glyphes à côté)
+    const pad = 70;
     const w = cfgOf(st).world;
-    x0 = Math.max(-40, x0 - pad); y0 = Math.max(-40, y0 - pad); x1 = Math.min(w.w + 40, x1 + pad + 60); y1 = Math.min(w.h + 40, y1 + pad);
+    x0 = Math.max(-20, x0 - pad - 30); y0 = Math.max(-20, y0 - pad); x1 = Math.min(w.w + 20, x1 + pad + 40); y1 = Math.min(w.h + 20, y1 + pad);
     const mobile = R.W < 720;
-    const t = R.fitBox(x0, y0, x1, y1, mobile ? { t: 70, r: 14, b: 140, l: 14 } : { t: 84, r: 70, b: 96, l: 40 });
+    const sf = R.safe;
+    const t = R.fitBox(x0, y0, x1, y1, { t: sf.t + 10, r: sf.r + 16, b: sf.b + 10, l: sf.l + 16 });
     t.z = Math.min(t.z, mobile ? 1.15 : 1.5);
     const c = R.cam;
-    const k = snap || this.reduced ? 1 : 0.06;
+    const k = snap || this.reduced ? 1 : 0.1;
     c.x += (t.x - c.x) * k; c.y += (t.y - c.y) * k; c.z += (t.z - c.z) * k;
   }
   userCamera() { this.autoCam = false; }
@@ -141,12 +165,13 @@ export class Game {
     on($('#btn-menu'), 'click', () => this.openPause());
     on($('#btn-fit'), 'click', () => { this.autoCam = true; this.fit(false); });
     on($('#btn-mute'), 'click', () => this.toggleMute());
-    on(window, 'resize', () => { this.renderer.resize(); this.oppR?.resize(); });
+    on(window, 'resize', () => { this.renderer.resize(); this.oppR?.resize(); this.measureSafe(); });
     on(window, 'keydown', e => this.key(e));
     on(document, 'visibilitychange', () => { if (document.hidden && this.settings.pauseOnHide && this.session.kind === 'solo' && this.view().speed) { this.prevSpeed = this.view().speed; this.setSpeed(0); } });
     on($('#dock'), 'pointerdown', e => this.dockDown(e));
     on($('#dock'), 'click', e => this.dockClick(e));
     on($('#panel'), 'click', e => this.panelClick(e));
+    on($('#hint'), 'click', () => { this.hint(null); this.hintKind = 'done'; });
     // Créatif
     const M = MODES[this.view().mode];
     $('#creative-bar').hidden = !M.stationEdit;
@@ -178,11 +203,24 @@ export class Game {
       this.lastScore = st.score;
     }
     const waiting = st.stations.reduce((n, s) => n + s.q.length, 0);
-    $('#score-sub').textContent = `${MAP_BY_ID[st.map].name} · ${MODES[st.mode].name}${waiting ? ` · ${waiting} en attente` : ''}`;
+    const warnAt = cfg.overload.warnAt;
+    const sat = st.stations.filter(s => s.o > 0);
+    const crit = sat.filter(s => s.o >= warnAt).length;
+    const al = $('#alert-chip');
+    al.hidden = !sat.length || !!st.over;
+    if (sat.length) {
+      const worst = Math.max(...sat.map(s => s.o));
+      al.classList.toggle('crit', crit > 0);
+      al.innerHTML = `<i style="--p:${Math.round(worst * 100)}"></i>${crit ? `${crit} station${crit > 1 ? 's' : ''} critique${crit > 1 ? 's' : ''}` : `${sat.length} station${sat.length > 1 ? 's' : ''} saturée${sat.length > 1 ? 's' : ''}`}`;
+    }
+    this.measureSafe();
+    const sub = `<span class="ss-map">${esc(MAP_BY_ID[st.map].name)} · ${MODES[st.mode].name}${waiting ? ' · ' : ''}</span>${waiting ? `${waiting} en attente` : ''}`;
+    if (this.lastSub !== sub) { $('#score-sub').innerHTML = sub; this.lastSub = sub; }
     if (MODES[st.mode].efficiency) {
       const e = $('#eff-fill');
       e.style.width = `${Math.round(st.eff * 100)}%`;
       e.style.background = st.eff < 0.3 ? 'var(--alert)' : st.eff < 0.6 ? 'var(--signal)' : 'var(--ok)';
+      $('#eff-val').textContent = `${Math.round(st.eff * 100)} %`;
     }
     document.querySelectorAll('#game .sp').forEach(b => {
       const on = Number(b.dataset.speed) === st.speed;
@@ -193,9 +231,9 @@ export class Game {
     if (this.panelState) this.renderPanel();
     if (this.session.hud) this.session.hud();
     if (this.hintKind === 'first' && st.lines.some(l => l.s.length >= 2)) {
-      this.hint(st.mode === 'creative' ? null : 'Les voyageurs montent seuls. Surveillez les files : une station qui déborde trop longtemps arrête le service.', 7000);
-      this.hintKind = 'second';
-    }
+      this.hint(st.mode === 'creative' ? null : 'Les voyageurs montent seuls. Surveillez les files : une station qui déborde trop longtemps arrête le service.');
+      this.hintKind = 'second'; this.hintAt = st.t;
+    } else if (this.hintKind === 'second' && (st.t - this.hintAt > cfg.time.dayTicks || st.score >= 3)) { this.hint(null); this.hintKind = 'done'; }
   }
 
   buildDock() {
@@ -213,12 +251,14 @@ export class Game {
     const inv = inventory(st);
     const unl = MODES[st.mode].unlimited;
     const nextFree = st.lines.find(l => l.s.length < 2 && l.id < st.own.lines);
+    const peek = st.lines.find(l => l.s.length < 2 && l.id >= st.own.lines);
     document.querySelectorAll('#dock-lines .lchip').forEach(b => {
       const l = st.lines[Number(b.dataset.line)];
       const used = l.s.length >= 2;
       b.classList.toggle('used', used);
       b.classList.toggle('locked', !used && l.id >= st.own.lines);
       b.classList.toggle('next', !!nextFree && nextFree.id === l.id);
+      b.classList.toggle('peek', !!peek && peek.id === l.id);
       b.setAttribute('aria-label', `Ligne ${l.id + 1} : ${used ? `${l.s.length} stations` : l.id >= st.own.lines ? 'verrouillée' : 'disponible'}`);
     });
     const vals = { loco: inv.free.locos, express: inv.free.express, car: inv.free.cars, bridge: inv.free.crossings, hub: inv.free.hubs };
@@ -282,11 +322,17 @@ export class Game {
     let snap = null;
     if (solo && creative && cmd.type !== 'speed') snap = snapshot(this.view());
     const r = this.session.submit(cmd);
-    if (r && r.pending) return;
+    if (r && r.pending) {
+      // en réseau : le tracé reste affiché, estompé, jusqu'à son application par le journal
+      const pv = this.input.ui.preview;
+      if (cmd.type === 'line' && cmd.s.length) this.input.ui.pendingPv = { color: pv ? pv.color : this.renderer.lineColor(this.view(), cmd.l), seq: cmd.s.slice(), loop: cmd.loop, ghost: true };
+      return;
+    }
     this.result(r, cmd, snap);
   }
   result(r, cmd, snap) {
     if (!r) return;
+    if (cmd && cmd.type === 'line') this.input.ui.pendingPv = null;
     if (!r.ok) { this.toast(r.err, 'warn'); this.audio.deny(); return; }
     if (snap) { this.history.push(snap); if (this.history.length > 60) this.history.shift(); this.future = []; }
     if (cmd && cmd.type === 'line') this.audio.line(cmd.l || 0);
@@ -433,16 +479,23 @@ export class Game {
     if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; }
     el.hidden = false;
     if (place && anchor) {
-      const p = this.renderer.toScreen(anchor.x, anchor.y);
-      const W = this.renderer.W, H = this.renderer.H;
+      const R = this.renderer, W = R.W, H = R.H, sf = R.safe || this.measureSafe();
       const w = el.offsetWidth, h = el.offsetHeight;
-      if (W < 720) { el.style.left = (W - w) / 2 + 'px'; el.style.top = 'auto'; el.style.bottom = `calc(${76}px + env(safe-area-inset-bottom, 0px))`; }
-      else {
-        el.style.bottom = 'auto';
-        let x = p.x + 30, y = p.y - h / 2;
-        if (x + w > W - 70) x = p.x - w - 30;
-        el.style.left = Math.max(12, x) + 'px'; el.style.top = Math.max(76, Math.min(H - h - 90, y)) + 'px';
-      }
+      // obstacle : la station, ou toute la ligne décrite (le panneau ne la couvre pas)
+      const ids = kind === 'line' ? st.lines[id].s : [id];
+      let ox0 = Infinity, oy0 = Infinity, ox1 = -Infinity, oy1 = -Infinity;
+      for (const sid of ids) { const q = stationById(st, sid); if (!q) continue; const p = R.toScreen(q.x, q.y); ox0 = Math.min(ox0, p.x); oy0 = Math.min(oy0, p.y); ox1 = Math.max(ox1, p.x); oy1 = Math.max(oy1, p.y); }
+      ox0 -= 34; oy0 -= 34; ox1 += 70; oy1 += 34;
+      const lo = { x: sf.l + 4, y: sf.t + 4 }, hi = { x: W - sf.r - w - 4, y: H - sf.b - h - 4 };
+      const clampX = x => Math.max(lo.x, Math.min(hi.x, x)), clampY = y => Math.max(lo.y, Math.min(hi.y, y));
+      const cy = (oy0 + oy1) / 2 - h / 2, cx = (ox0 + ox1) / 2 - w / 2;
+      const cands = [[ox1 + 10, cy], [ox0 - w - 10, cy], [cx, oy1 + 10], [cx, oy0 - h - 10], [hi.x, lo.y], [lo.x, lo.y], [hi.x, hi.y], [lo.x, hi.y]]
+        .map(([x, y]) => [clampX(x), clampY(y)]);
+      const overlap = ([x, y]) => Math.max(0, Math.min(x + w, ox1) - Math.max(x, ox0)) * Math.max(0, Math.min(y + h, oy1) - Math.max(y, oy0));
+      let best = cands[0], bo = Infinity;
+      for (const c of cands) { const o = overlap(c); if (o < bo - 1) { bo = o; best = c; } }
+      el.style.bottom = 'auto';
+      el.style.left = best[0] + 'px'; el.style.top = best[1] + 'px';
     }
   }
   panelClick(e) {
@@ -527,7 +580,11 @@ export class Game {
     if (!st.reward && this.rewardShown !== null && !$('#m-reward').hidden) { $('#m-reward').hidden = true; this.rewardShown = null; }
     // fin
     const res = this.session.result ? this.session.result() : st.over ? { solo: true } : null;
-    if (res && !this.ended) { this.ended = true; this.endTimer = setTimeout(() => this.showOver(st, res), 900); this.audio.over(); if (this.settings.haptics) navigator.vibrate?.([80, 60, 120]); this.input.abort(); this.panel(null); }
+    if (res && !this.ended) {
+      this.ended = true;
+      const bad = st.over && stationById(st, st.over.s);
+      if (bad) { this.autoCam = false; this.focus = { x: bad.x, y: bad.y, z: Math.max(this.renderer.cam.z, 1.25) }; this.input.ui.selStation = bad.id; }
+      this.endTimer = setTimeout(() => this.showOver(st, res), bad ? 1500 : 900); this.audio.over(); if (this.settings.haptics) navigator.vibrate?.([80, 60, 120]); this.input.abort(); this.panel(null); }
   }
 
   showReward(st) {
@@ -543,6 +600,7 @@ export class Game {
     $('#rw-week').textContent = MODES[st.mode].efficiency ? 'Réseau efficace' : `Fin de la semaine ${st.week}`;
     $('#rw-granted').textContent = r.granted ? `Vous recevez ${r.granted > 1 ? `${r.granted} locomotives` : 'une locomotive'}. Choisissez une amélioration :` : r.loco ? 'Choisissez votre matériel, puis une amélioration :' : 'Choisissez une amélioration :';
     this.locoPick = 0;
+    $('#rw-step1').hidden = $('#rw-step2').hidden = !r.loco;
     $('#rw-loco').innerHTML = r.loco ? r.loco.map((o, i) => `<button class="rw-opt ${i === 0 ? 'sel' : ''}" data-loco="${i}" aria-pressed="${i === 0}"><svg><use href="#i-${o.k === 'express' ? 'express' : 'loco'}"/></svg><strong>${o.k === 'express' ? `${o.n} express` : `${o.n} locomotives`}</strong><span>${o.k === 'express' ? 'Plus rapide sur les longues lignes.' : 'Deux trains classiques.'}</span></button>`).join('') : '';
     $('#rw-opts').innerHTML = r.opts.map((o, i) => {
       const [ic, name, desc] = INFO[o.k];
@@ -566,13 +624,13 @@ export class Game {
     const s = stationById(st, st.over?.s);
     const day = gameDay(st);
     let title = 'Station saturée', eyebrow = 'Fin de service', cause = '';
-    if (s) cause = `La station ${shapeName(s.shape)} a débordé ${DAYS[(st.over ? Math.floor(st.over.t / cfgOf(st).time.dayTicks) : day) % 7].toLowerCase()}, semaine ${st.week + 1}.`;
+    if (s) cause = `La station ${shapeName(s.shape)} (cerclée sur la carte) a débordé ${DAYS[(st.over ? Math.floor(st.over.t / cfgOf(st).time.dayTicks) : day) % 7].toLowerCase()}, semaine ${st.week + 1}.`;
     if (res.versus) {
       eyebrow = 'Duel terminé';
       title = res.outcome === 'win' ? 'Victoire' : res.outcome === 'lose' ? 'Défaite' : 'Égalité';
       cause = res.text;
     } else if (res.coop) { eyebrow = 'Service collectif terminé'; cause = (cause ? cause + ' ' : '') + (res.text || ''); }
-    if (st.over && st.over.reason === 'forfeit') { title = 'Abandon'; cause = res.text || 'Partie abandonnée.'; }
+    if (st.over && st.over.reason === 'forfeit' && !res.versus) { title = 'Abandon'; cause = res.text || 'Partie abandonnée.'; }
     $('#ov-eyebrow').textContent = eyebrow;
     $('#t-ov').textContent = title;
     $('#ov-score').textContent = st.score;

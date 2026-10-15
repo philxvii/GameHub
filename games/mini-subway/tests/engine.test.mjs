@@ -5,7 +5,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   createGame, step, apply, inventory, audit, stateHash, snapshot, cfgOf, segment, routes,
-  trainCapacity, stationCapacity, nextStop, drainEvents, reachable,
+  trainCapacity, stationCapacity, nextStop, drainEvents, reachable, duelOutcome,
 } from '../js/engine/sim.js';
 import { MAPS, buildConfig, inWater, inPark } from '../js/engine/maps.js';
 import { COMMON_SHAPES, RARE_SHAPES, MODES } from '../js/engine/params.js';
@@ -461,6 +461,24 @@ describe('robustesse', () => {
     const b = snapshot(a);
     for (let i = 0; i < 3000; i++) { step(a); step(b); if (i % 40 === 0) { botTurn(a); botTurn(b); } }
     assert.equal(stateHash(a), stateHash(b));
+  });
+});
+
+describe('Versus : issue du duel', () => {
+  const S = (over, score) => ({ over: over ? { t: 10 } : null, score });
+  test('premier réseau tombé perd, même tick = score, sinon nul', () => {
+    assert.equal(duelOutcome(S(false, 5), S(false, 9)), null);
+    assert.equal(duelOutcome(S(true, 50), S(false, 9)), 'lose');
+    assert.equal(duelOutcome(S(false, 5), S(true, 90)), 'win');
+    assert.equal(duelOutcome(S(true, 50), S(true, 40)), 'win');
+    assert.equal(duelOutcome(S(true, 40), S(true, 50)), 'lose');
+    assert.equal(duelOutcome(S(true, 40), S(true, 40)), 'draw');
+  });
+  test('abandon : forfait immédiat du réseau concerné', () => {
+    const a = createGame({ map: 'val-dorme', seed: 3, multi: true, indep: true });
+    ok(apply(a, { type: 'forfeit' }));
+    assert.equal(a.over.reason, 'forfeit');
+    ko(apply(a, { type: 'train', l: 0 }), /terminée/);
   });
 });
 

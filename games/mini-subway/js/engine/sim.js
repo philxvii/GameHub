@@ -828,6 +828,15 @@ export function ease(u, r) {
 }
 
 export const gameDay = st => Math.floor(st.t / cfgOf(st).time.dayTicks);
+
+// Issue d'un duel Versus (cahier §25.3) vue par `me` : le premier réseau tombé perd ;
+// tombés au même tick, le plus de voyageurs livrés gagne, sinon match nul.
+// null tant que les deux réseaux tiennent.
+export function duelOutcome(me, op) {
+  if (!me.over && !op.over) return null;
+  if (me.over && op.over) return me.score > op.score ? 'win' : me.score < op.score ? 'lose' : 'draw';
+  return me.over ? 'lose' : 'win';
+}
 export const shapeName = sh => SHAPE_NAMES[sh] || sh;
 
 // Diagnostic d'intégrité (tests et mode debug) : chaque voyageur existe une seule fois.

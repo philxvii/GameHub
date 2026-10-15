@@ -103,7 +103,7 @@ function startAttract() {
     const wide = R.W > 720;
     let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     for (const s of st.stations) { x0 = Math.min(x0, s.x); y0 = Math.min(y0, s.y); x1 = Math.max(x1, s.x); y1 = Math.max(y1, s.y); }
-    const target = R.fitBox(x0 - 90, y0 - 90, x1 + 140, y1 + 90, wide ? { t: 40, r: 40, b: 40, l: R.W * 0.42 } : { t: 30, r: 20, b: R.H * 0.55, l: 20 });
+    const target = R.fitBox(x0 - 90, y0 - 90, x1 + 140, y1 + 90, wide ? { t: 40, r: 40, b: 40, l: R.W * 0.42 } : { t: 24, r: 16, b: R.H * 0.64, l: 16 });
     const c = R.cam; c.x += (target.x - c.x) * 0.02; c.y += (target.y - c.y) * 0.02; c.z += (target.z - c.z) * 0.02;
     if (!attract.snapped) { Object.assign(c, target); attract.snapped = true; }
     R.now = t;
@@ -387,11 +387,12 @@ const net_err = e => (e && e.userMessage) || 'Erreur réseau : réessayez.';
 
 function enterLobby(l) {
   lobby = l;
+  try { sessionStorage.setItem('ms-room', l.code); } catch (_) {}
   closeSheets();
   show('lobby');
   l.onChange = renderLobby;
   l.onStart = session => startNet(session);
-  l.onClosed = msg => { lobby = null; if (game) { game.destroy(); game = null; } show('menu'); openSheet('multi'); mpStatus(msg, true); };
+  l.onClosed = msg => { lobby = null; forgetRoom(); if (game) { game.destroy(); game = null; } show('menu'); openSheet('multi'); mpStatus(msg, true); };
   renderLobby(l.info());
 }
 function renderLobby(info) {
@@ -415,7 +416,8 @@ function renderLobby(info) {
 }
 $('#lobby-ready').addEventListener('click', () => lobby && lobby.toggleReady());
 $('#lobby-start').addEventListener('click', () => lobby && lobby.start().catch(e => renderLobby({ ...lobby.info(), error: net_err(e) })));
-$('#lobby-leave').addEventListener('click', async () => { const l = lobby; lobby = null; if (l) await l.leave(); show('menu'); openSheet('multi'); });
+$('#lobby-leave').addEventListener('click', async () => { const l = lobby; lobby = null; forgetRoom(); if (l) await l.leave(); show('menu'); openSheet('multi'); });
+function forgetRoom() { try { sessionStorage.removeItem('ms-room'); } catch (_) {} }
 $('#lobby-copy').addEventListener('click', async () => {
   const url = `${location.origin}${location.pathname}?join=${encodeURIComponent($('#lobby-code').textContent)}${new URLSearchParams(location.search).has('emu') ? '&emu' : ''}`;
   try { await navigator.clipboard.writeText(url); $('#lobby-copy').textContent = 'Lien copié'; } catch (_) { $('#lobby-copy').textContent = url; }
@@ -434,7 +436,7 @@ function startNet(session) {
       out.saveFailed = !store.save();
       return out;
     },
-    onQuit: () => { game = null; audio.stopMusic(); const l = lobby; lobby = null; l?.leave(); show('menu'); refreshMenu(); },
+    onQuit: () => { game = null; audio.stopMusic(); const l = lobby; lobby = null; forgetRoom(); l?.leave(); show('menu'); refreshMenu(); },
     onRestart: () => lobby && lobby.rematch(),
   });
   game.saveSettings = saveSettings;
@@ -452,6 +454,9 @@ applyTheme();
 refreshMenu();
 show('menu');
 const q = new URLSearchParams(location.search);
+let resume = null;
+try { resume = sessionStorage.getItem('ms-room'); } catch (_) {}
+if (!q.get('join') && resume && profile.name) { openSheet('multi'); $('#mp-code').value = resume; mpStatus('Reprise de la partie en cours…'); join(resume).then(() => { if (!lobby) forgetRoom(); }); }
 if (q.get('join')) { openSheet('multi'); $('#mp-code').value = q.get('join').toUpperCase(); if (profile.name) setTimeout(() => join($('#mp-code').value), 50); }
 
 // Accès de test (outils locaux) : état courant, sans effet sur le jeu.

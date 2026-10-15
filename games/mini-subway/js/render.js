@@ -15,7 +15,7 @@ const THEMES = {
 
 const ST_R = 12.5;          // rayon d'une station
 const LINE_W = 9;           // épaisseur d'une ligne
-const PAX = 6.2;            // taille d'un voyageur
+const PAX = 8;              // taille d'un voyageur
 
 export class Renderer {
   constructor(canvas, fixed = null) {
@@ -83,9 +83,11 @@ export class Renderer {
     this.drawGeo(cfg, T);
     const off = this.lineOffsets(st);
     this.drawLines(st, T, off, ui);
+    if (ui && ui.pendingPv) { this.ctx.globalAlpha = 0.5; this.drawPreview(st, T, ui.pendingPv); this.ctx.globalAlpha = 1; }
     if (ui && ui.preview) this.drawPreview(st, T, ui.preview);
     this.drawTrains(st, T, off, f, ui);
-    this.drawStations(st, T, ui);
+    this.drawStations(st, T, ui, off);
+    if (this.palette === 'cb' || this.labels === 'large') this.drawLineLabels(st, T, off);
     this.drawFx(T);
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     this.drawOffscreen(st, T);
@@ -95,40 +97,45 @@ export class Renderer {
     const { ctx } = this;
     const night = this.theme === 'night';
     const W = cfg.world;
-    // cadre du monde : papier légèrement plus clair que le fond hors-carte
-    ctx.fillStyle = night ? shade(cfg.palette.landNight, 0.04) : shade(cfg.palette.landDay, 0.025);
+    // cadre du monde : feuille de papier posée sur un fond plus sombre, bord encré
+    ctx.fillStyle = T.shade;
+    ctx.fillRect(4, 6, W.w, W.h);
+    ctx.fillStyle = night ? shade(cfg.palette.landNight, 0.035) : shade(cfg.palette.landDay, 0.025);
     ctx.fillRect(0, 0, W.w, W.h);
-    ctx.fillStyle = this.pattern('grain');
-    ctx.fillRect(0, 0, W.w, W.h);
-    // grille discrète de plan
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, W.w, W.h); ctx.clip();
+    ctx.globalAlpha = night ? 0.6 : 1;
+    ctx.fillStyle = this.pattern('grain'); ctx.fillRect(0, 0, W.w, W.h);
+    ctx.globalAlpha = 1;
     ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
     ctx.beginPath();
     for (let x = 100; x < W.w; x += 100) { ctx.moveTo(x, 0); ctx.lineTo(x, W.h); }
     for (let y = 100; y < W.h; y += 100) { ctx.moveTo(0, y); ctx.lineTo(W.w, y); }
     ctx.stroke();
-    // parcs
     for (const p of cfg.parks) {
       path(ctx, p, true);
       ctx.fillStyle = night ? cfg.palette.parkNight : cfg.palette.parkDay; ctx.fill();
       ctx.fillStyle = this.pattern('dots'); ctx.fill();
     }
-    // eau : halo de rive, aplat, hachures ; puis les îles par-dessus
+    // Eau : halo de rive, liseré, aplat, hachures. Les liserés sont tracés AVANT les
+    // aplats : là où deux bras se rejoignent, l'aplat recouvre le liseré intérieur.
     const water = night ? cfg.palette.waterNight : cfg.palette.waterDay;
+    const edge = night ? 'rgba(150,200,230,0.32)' : 'rgba(40,90,110,0.30)';
     ctx.lineJoin = 'round';
-    for (const w of cfg.water) {
-      path(ctx, w, true);
-      ctx.strokeStyle = night ? 'rgba(120,180,220,0.10)' : 'rgba(255,255,255,0.55)'; ctx.lineWidth = 14; ctx.stroke();
-    }
+    for (const w of cfg.water) { path(ctx, w, true); ctx.strokeStyle = night ? 'rgba(120,180,220,0.10)' : 'rgba(255,255,255,0.55)'; ctx.lineWidth = 14; ctx.stroke(); }
+    for (const w of cfg.water) { path(ctx, w, true); ctx.strokeStyle = edge; ctx.lineWidth = 2.8; ctx.stroke(); }
     for (const w of cfg.water) { path(ctx, w, true); ctx.fillStyle = water; ctx.fill(); }
     for (const w of cfg.water) { path(ctx, w, true); ctx.fillStyle = this.pattern('hatch'); ctx.fill(); }
     for (const l of cfg.land) {
       path(ctx, l, true);
       ctx.strokeStyle = night ? 'rgba(120,180,220,0.12)' : 'rgba(255,255,255,0.6)'; ctx.lineWidth = 12; ctx.stroke();
-      ctx.fillStyle = night ? cfg.palette.landNight : cfg.palette.landDay; ctx.fill();
-      ctx.fillStyle = this.pattern('grain'); ctx.fill();
+      ctx.strokeStyle = edge; ctx.lineWidth = 1.6; ctx.stroke();
+      ctx.fillStyle = night ? shade(cfg.palette.landNight, 0.035) : shade(cfg.palette.landDay, 0.025); ctx.fill();
+      ctx.globalAlpha = night ? 0.6 : 1; ctx.fillStyle = this.pattern('grain'); ctx.fill(); ctx.globalAlpha = 1;
     }
-    for (const w of cfg.water) { path(ctx, w, true); ctx.strokeStyle = night ? 'rgba(150,200,230,0.25)' : 'rgba(40,90,110,0.22)'; ctx.lineWidth = 1.4; ctx.stroke(); }
-    for (const l of cfg.land) { path(ctx, l, true); ctx.strokeStyle = night ? 'rgba(150,200,230,0.25)' : 'rgba(40,90,110,0.22)'; ctx.lineWidth = 1.4; ctx.stroke(); }
+    ctx.restore();
+    ctx.strokeStyle = night ? 'rgba(233,228,216,0.28)' : 'rgba(30,35,43,0.35)'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(0, 0, W.w, W.h);
   }
 
   pattern(kind) {
@@ -189,10 +196,21 @@ export class Renderer {
     for (const l of st.lines) for (const [a, b] of lineSegments(l)) {
       const pts = this.segPts(st, off, l.id, a, b);
       for (const [d0, d1] of this.wetIntervals(cfg, st, l.id, a, b, pts)) {
-        const sub = subPath(pts, d0 - 7, d1 + 7);
-        path(ctx, sub, false);
-        ctx.strokeStyle = T.ink; ctx.globalAlpha = 0.75; ctx.lineWidth = (LINE_W + 9) * k; ctx.stroke();
-        ctx.globalAlpha = 1; ctx.strokeStyle = T.paper; ctx.lineWidth = (LINE_W + 5) * k; ctx.stroke();
+        // symbole cartographique d'ouvrage : deux parapets encrés et leurs barbules
+        const sub = subPath(pts, d0 - 6, d1 + 6);
+        const o = (LINE_W / 2 + 3.2) * k;
+        ctx.strokeStyle = T.ink; ctx.lineWidth = 1.6 * k; ctx.lineCap = 'butt';
+        for (const side of [-1, 1]) {
+          const q = offsetPoly(sub, side * o);
+          path(ctx, q, false); ctx.stroke();
+          for (const [ix, sgn] of [[0, -1], [q.length - 2, 1]]) {
+            const dir = ix === 0 ? pointAt(q, 0) : pointAt(q, polyLen(q));
+            const bx = q[ix], by = q[ix + 1];
+            ctx.beginPath(); ctx.moveTo(bx, by);
+            ctx.lineTo(bx + (sgn * dir.dx + side * -dir.dy) * 5 * k, by + (sgn * dir.dy + side * dir.dx) * 5 * k); ctx.stroke();
+          }
+        }
+        ctx.lineCap = 'round';
       }
     }
     for (const l of st.lines) {
@@ -212,15 +230,44 @@ export class Renderer {
   }
 
   // Extrémité de ligne : prolongement court terminé par une barre (poignée de prolongement).
+  // Extrémité de ligne : prolongement court terminé par une barre (poignée de prolongement).
+  // Plusieurs extrémités sur une même station s'écartent pour ne pas s'empiler, et
+  // évitent les tronçons qui en partent.
   terminalGeom(st, l, end, off) {
+    const key = st.netVer + ':' + st.geoVer + ':' + this.k.toFixed(3);
+    if (this.termKey !== key) { this.termKey = key; this.terms = new Map(); this.termUsed = new Map(); }
+    const tk = l.id + ':' + end;
+    if (this.terms.has(tk)) return this.terms.get(tk);
     const s = l.s, n = s.length;
     const a = end ? s[n - 1] : s[0], b = end ? s[n - 2] : s[1];
     const pts = this.segPts(st, off, l.id, b, a);
     const ex = pts[4], ey = pts[5];
     let dx = pts[4] - pts[2], dy = pts[5] - pts[3];
     const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
+    // directions déjà prises à cette station : tronçons sortants et autres extrémités
+    if (!this.termUsed.has(a)) {
+      const used = [];
+      for (const o of st.lines) for (const [p, q] of lineSegments(o)) {
+        if (p !== a && q !== a) continue;
+        const g = segment(st, p, q).pts;
+        const vx = p === a ? g[2] - g[0] : g[2] - g[4], vy = p === a ? g[3] - g[1] : g[3] - g[5];
+        const vl = Math.hypot(vx, vy); if (vl > 0.1) used.push([vx / vl, vy / vl]);
+      }
+      this.termUsed.set(a, used);
+    }
+    const used = this.termUsed.get(a);
+    let best = [dx, dy];
+    for (const rot of [0, 0.6, -0.6, 1.1, -1.1, 1.57, -1.57]) {
+      const c = Math.cos(rot), si = Math.sin(rot);
+      const cand = [dx * c - dy * si, dx * si + dy * c];
+      if (used.every(([ux, uy]) => cand[0] * ux + cand[1] * uy < 0.82)) { best = cand; break; }
+    }
+    used.push(best);
+    [dx, dy] = best;
     const L = 26 * this.k;
-    return { x0: ex, y0: ey, x1: ex + dx * L, y1: ey + dy * L, dx, dy, station: a };
+    const g = { x0: ex, y0: ey, x1: ex + dx * L, y1: ey + dy * L, dx, dy, station: a };
+    this.terms.set(tk, g);
+    return g;
   }
   drawTerminal(st, l, end, col, T, off) {
     const { ctx } = this;
@@ -231,13 +278,6 @@ export class Renderer {
     ctx.lineCap = 'round';
     const w = 11 * k;
     ctx.beginPath(); ctx.moveTo(g.x1 - g.dy * w, g.y1 + g.dx * w); ctx.lineTo(g.x1 + g.dy * w, g.y1 - g.dx * w); ctx.stroke();
-    if (this.palette === 'cb' || this.labels === 'large') {
-      ctx.fillStyle = T.paper; ctx.strokeStyle = col; ctx.lineWidth = 2.5 * k;
-      const cx = g.x1 + g.dx * 14 * k, cy = g.y1 + g.dy * 14 * k;
-      ctx.beginPath(); ctx.arc(cx, cy, 9 * k, 0, 7); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = T.ink; ctx.font = `700 ${11 * k}px "IBM Plex Mono", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(String(l.id + 1), cx, cy + 0.5);
-    }
   }
 
   wetIntervals(cfg, st, l, a, b, pts) {
@@ -266,8 +306,8 @@ export class Renderer {
     const k = this.k;
     const col = pv.color;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    const seq = pv.seq;
-    ctx.globalAlpha = 0.9;
+    const seq = pv.seq.filter(id => stationById(st, id));
+    ctx.globalAlpha = pv.ghost ? 0.45 : 0.9;
     ctx.strokeStyle = col; ctx.lineWidth = LINE_W * k;
     for (let i = 1; i < seq.length; i++) { path(ctx, segment(st, seq[i - 1], seq[i]).pts, false); ctx.stroke(); }
     if (pv.loop && seq.length > 2) { path(ctx, segment(st, seq[seq.length - 1], seq[0]).pts, false); ctx.stroke(); }
@@ -319,41 +359,71 @@ export class Renderer {
       const sel = ui && ui.selTrain === t.id;
       ctx.save();
       ctx.translate(g.x, g.y); ctx.rotate(ang); ctx.scale(k, k);
-      const Lc = 21, Wc = 12.5;
-      // wagons derrière la locomotive
+      const Lc = 26, Wc = 16, gap = 3.5;
+      // voitures : ombre portée, caisse couleur de ligne cerclée d'encre (se détache du trait)
       for (let i = t.c; i >= 0; i--) {
-        const x = -i * (Lc + 3);
+        const x = -i * (Lc + gap);
         ctx.fillStyle = T.shade;
-        rrect(ctx, x - Lc / 2 + 1.2, -Wc / 2 + 1.8, Lc, Wc, 3); ctx.fill();
-        ctx.fillStyle = col;
-        if (i === 0 && t.k === 'express') { // nez profilé
-          ctx.beginPath(); ctx.moveTo(x - Lc / 2, -Wc / 2); ctx.lineTo(x + Lc / 2 - 4, -Wc / 2); ctx.quadraticCurveTo(x + Lc / 2 + 5, 0, x + Lc / 2 - 4, Wc / 2); ctx.lineTo(x - Lc / 2, Wc / 2); ctx.closePath(); ctx.fill();
-        } else { rrect(ctx, x - Lc / 2, -Wc / 2, Lc, Wc, 3); ctx.fill(); }
-        if (sel) { ctx.strokeStyle = T.ink; ctx.lineWidth = 2; ctx.stroke(); }
+        rrect(ctx, x - Lc / 2 + 1.5, -Wc / 2 + 2.2, Lc, Wc, 4); ctx.fill();
+        if (i === 0 && t.k === 'express') {
+          ctx.beginPath(); ctx.moveTo(x - Lc / 2 + 4, -Wc / 2); ctx.lineTo(x + Lc / 2 - 6, -Wc / 2); ctx.quadraticCurveTo(x + Lc / 2 + 6, 0, x + Lc / 2 - 6, Wc / 2); ctx.lineTo(x - Lc / 2 + 4, Wc / 2); ctx.arcTo(x - Lc / 2, Wc / 2, x - Lc / 2, 0, 4); ctx.arcTo(x - Lc / 2, -Wc / 2, x, -Wc / 2, 4); ctx.closePath();
+        } else rrect(ctx, x - Lc / 2, -Wc / 2, Lc, Wc, 4);
+        ctx.fillStyle = col; ctx.fill();
+        ctx.lineWidth = sel ? 3 : 1.8; ctx.strokeStyle = sel ? '#F2A516' : T.ink; ctx.stroke();
+        if (i === 0) { ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(x + Lc / 2 - 4.5, -Wc / 2 + 3, 1.8, Wc - 6); }
       }
-      // voyageurs à bord : glyphes blancs en grille 3 × 2 par voiture
-      const cap = trainCapacity(st, t);
-      const per = Math.max(1, Math.ceil(cap / (t.c + 1)));
+      // voyageurs à bord : glyphes blancs cerclés d'encre, grille 3 × 2 par voiture
+      const per = Math.max(1, Math.ceil(trainCapacity(st, t) / (t.c + 1)));
       const cols = Math.ceil(per / 2);
       t.ld.forEach((pid, i) => {
         const p = st.pass[pid];
         if (!p) return;
         const car = Math.floor(i / per), j = i % per;
-        const cx = -car * (Lc + 3) - Lc / 2 + 3.5 + (j % cols) * ((Lc - 7) / Math.max(1, cols - 1 || 1));
-        const cy = j < cols ? -2.9 : 2.9;
-        ctx.fillStyle = '#FFFFFF';
-        shapePath(ctx, p.d, cx, cy, 2.35); ctx.fill();
+        const cx = -car * (Lc + gap) - Lc / 2 + 5.5 + (j % cols) * ((Lc - 13) / Math.max(1, cols - 1));
+        const cy = j < cols ? -3.6 : 3.6;
+        shapePath(ctx, p.d, cx, cy, 2.9);
+        ctx.fillStyle = '#FFFFFF'; ctx.fill();
+        ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(20,24,30,0.55)'; ctx.stroke();
       });
       ctx.restore();
     }
   }
 
-  drawStations(st, T, ui) {
+  // Numéros de ligne (palette daltonienne, grands repères) : au bout de chaque ligne,
+  // dessinés après les stations pour n'être jamais masqués.
+  drawLineLabels(st, T, off) {
+    const { ctx } = this;
+    const k = this.k;
+    for (const l of st.lines) {
+      if (l.s.length < 2) continue;
+      const col = this.lineColor(st, l.id);
+      const spots = l.loop ? [] : [0, 1].map(end => { const g = this.terminalGeom(st, l, end, off); return [g.x1 + g.dx * 15 * k, g.y1 + g.dy * 15 * k]; });
+      if (l.loop) { const pts = this.segPts(st, off, l.id, l.s[0], l.s[1]); const m = pointAt(pts, polyLen(pts) / 2); spots.push([m.x - m.dy * 16 * k, m.y + m.dx * 16 * k]); }
+      for (const [cx, cy] of spots) {
+        ctx.fillStyle = T.paper; ctx.strokeStyle = col; ctx.lineWidth = 3 * k;
+        ctx.beginPath(); ctx.arc(cx, cy, 10 * k, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = T.ink; ctx.font = `700 ${12 * k}px "IBM Plex Mono", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(String(l.id + 1), cx, cy + 0.5);
+      }
+    }
+  }
+
+  drawStations(st, T, ui, off) {
     const { ctx } = this;
     const k = this.k;
     const lineCount = new Map();
-    for (const l of st.lines) for (const id of l.s) lineCount.set(id, (lineCount.get(id) || 0) + 1);
+    const dirs = new Map(); // directions des tronçons au départ de chaque station
+    const addDir = (id, x, y) => { const l = Math.hypot(x, y); if (l > 0.1) { if (!dirs.has(id)) dirs.set(id, []); dirs.get(id).push([x / l, y / l]); } };
+    for (const l of st.lines) {
+      for (const id of l.s) lineCount.set(id, (lineCount.get(id) || 0) + 1);
+      for (const [a, b] of lineSegments(l)) {
+        const p = segment(st, a, b).pts;
+        addDir(a, p[2] - p[0], p[3] - p[1]); addDir(b, p[2] - p[4], p[3] - p[5]);
+      }
+      if (l.s.length >= 2 && !l.loop && off) for (const end of [0, 1]) { const g = this.terminalGeom(st, l, end, off); addDir(g.station, g.dx, g.dy); }
+    }
     const O = cfgOf(st).overload;
+    const SIDES = [['right', 1, 0], ['left', -1, 0], ['down', 0, 1], ['up', 0, -1]];
     for (const s of st.stations) {
       const born = this.anim.get('st' + s.id);
       let sc = 1;
@@ -366,21 +436,23 @@ export class Renderer {
       const n = lineCount.get(s.id) || 0;
       const hl = ui && ui.targets && ui.targets.has(s.id);
       const hover = ui && ui.hover === s.id;
-      // anneau de surcharge (compte à rebours)
+      const crit = s.o >= O.warnAt;
+      // anneau de surcharge : compte à rebours à l'encre (distinct des couleurs de ligne) ;
+      // en phase critique, halo d'alerte pulsé et intérieur teinté.
       if (s.o > 0) {
-        const pulse = s.o >= O.warnAt && !this.reduced ? 1 + 0.06 * Math.sin(this.now / 140) : 1;
-        const R = (r + 9 * k) * pulse;
-        ctx.lineWidth = 5.5 * k; ctx.lineCap = 'butt';
-        ctx.strokeStyle = T.shade; ctx.beginPath(); ctx.arc(s.x, s.y, R, 0, Math.PI * 2); ctx.stroke();
-        ctx.strokeStyle = s.o >= O.warnAt ? T.alert : T.warn;
-        ctx.beginPath(); ctx.arc(s.x, s.y, R, -Math.PI / 2, -Math.PI / 2 + s.o * Math.PI * 2); ctx.stroke();
+        const pulse = crit && !this.reduced ? 1 + 0.07 * Math.sin(this.now / 130) : 1;
+        const R = r + 10 * k;
+        if (crit) { ctx.fillStyle = T.alert; ctx.globalAlpha = 0.16 + (this.reduced ? 0 : 0.08 * Math.sin(this.now / 130)); ctx.beginPath(); ctx.arc(s.x, s.y, (R + 9 * k) * pulse, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+        ctx.lineCap = 'butt';
+        ctx.lineWidth = 9 * k; ctx.strokeStyle = T.paper; ctx.beginPath(); ctx.arc(s.x, s.y, R, 0, Math.PI * 2); ctx.stroke();
+        ctx.lineWidth = 6 * k; ctx.strokeStyle = T.shade; ctx.beginPath(); ctx.arc(s.x, s.y, R, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = T.ink; ctx.beginPath(); ctx.arc(s.x, s.y, R, -Math.PI / 2, -Math.PI / 2 + s.o * Math.PI * 2); ctx.stroke();
         ctx.lineCap = 'round';
       }
       if (hl || hover) {
-        ctx.fillStyle = hover ? 'rgba(242,165,22,0.30)' : 'rgba(242,165,22,0.16)';
-        ctx.beginPath(); ctx.arc(s.x, s.y, r + 13 * k, 0, 7); ctx.fill();
+        ctx.fillStyle = hover ? 'rgba(242,165,22,0.34)' : 'rgba(242,165,22,0.16)';
+        ctx.beginPath(); ctx.arc(s.x, s.y, r + 14 * k, 0, 7); ctx.fill();
       }
-      // station non reliée : halo pointillé discret
       if (n === 0 && st.mode !== 'creative') {
         ctx.setLineDash([2.5 * k, 4.5 * k]); ctx.strokeStyle = T.ink2; ctx.lineWidth = 1.3 * k;
         ctx.beginPath(); ctx.arc(s.x, s.y, r + 6 * k, 0, 7); ctx.stroke(); ctx.setLineDash([]);
@@ -392,45 +464,74 @@ export class Renderer {
       }
       shapePath(ctx, s.shape, s.x, s.y, r);
       ctx.fillStyle = T.paper; ctx.fill();
+      if (crit) { ctx.fillStyle = T.alert; ctx.globalAlpha = 0.22; ctx.fill(); ctx.globalAlpha = 1; }
       ctx.lineWidth = lw; ctx.strokeStyle = T.ink; ctx.stroke();
       if (ui && ui.selStation === s.id) { ctx.strokeStyle = '#F2A516'; ctx.lineWidth = 2.5 * k; shapePath(ctx, s.shape, s.x, s.y, r + 7 * k); ctx.stroke(); }
-      this.drawQueue(st, s, r, T);
+      // côté de la file : celui qu'aucun tronçon n'occupe
+      const ds = dirs.get(s.id) || [];
+      let side = 'right', best = Infinity;
+      for (const [name, sx, sy] of SIDES) {
+        const worst = ds.reduce((m, [dx, dy]) => Math.max(m, dx * sx + dy * sy), -1);
+        if (worst < best - 0.05) { best = worst; side = name; }
+      }
+      this.drawQueue(st, s, r + (s.o > 0 ? 8 * k : 0), T, side);
     }
   }
 
   // File d'attente : rangées de 6 glyphes à droite de la station ; au-delà de la
   // capacité, les glyphes passent en couleur d'alerte.
-  drawQueue(st, s, r, T) {
+  // File d'attente : rangées de 6 glyphes posées sur une étiquette papier, du côté de la
+  // station le moins encombré par les lignes ; au-delà de deux rangées, compteur « +n ».
+  // Les voyageurs au-delà de la capacité passent en couleur d'alerte.
+  drawQueue(st, s, r, T, side) {
+    if (!s.q.length) return;
     const { ctx } = this;
-    const k = this.k * (this.labels === 'large' ? 1.2 : 1) * (this.contrast ? 1.1 : 1);
+    const k = this.k * (this.labels === 'large' ? 1.22 : 1) * (this.contrast ? 1.1 : 1);
     const cap = stationCapacity(st, s);
-    const per = 6, size = PAX * k, gap = size * 1.55;
-    const x0 = s.x + r + 8 * this.k, y0 = s.y - r + size * 0.6;
-    s.q.forEach((pid, i) => {
-      const p = st.pass[pid];
-      if (!p) return;
-      const col = i % per, row = Math.floor(i / per);
-      const x = x0 + col * gap, y = y0 + row * gap;
+    const per = 6, size = PAX * k, gap = size * 1.45;
+    const shown = Math.min(s.q.length, per * 2);
+    const rows = Math.ceil(shown / per), colsN = Math.min(per, shown);
+    const more = s.q.length - shown;
+    const w = colsN * gap + (more ? 26 * k : 0), h = rows * gap;
+    const pad = 3 * k;
+    let x0, y0;
+    if (side === 'left') { x0 = s.x - r - 9 * this.k - w; y0 = s.y - h / 2; }
+    else if (side === 'up') { x0 = s.x - w / 2; y0 = s.y - r - 9 * this.k - h; }
+    else if (side === 'down') { x0 = s.x - w / 2; y0 = s.y + r + 9 * this.k; }
+    else { x0 = s.x + r + 9 * this.k; y0 = s.y - h / 2; }
+    ctx.fillStyle = T.paper; ctx.globalAlpha = 0.88;
+    rrect(ctx, x0 - pad, y0 - pad, w + pad * 2 - (gap - size), h + pad * 2 - (gap - size), 4 * k); ctx.fill();
+    ctx.globalAlpha = 1;
+    for (let i = 0; i < shown; i++) {
+      const p = st.pass[s.q[i]];
+      if (!p) continue;
+      const x = x0 + (i % per) * gap + size / 2, y = y0 + Math.floor(i / per) * gap + size / 2;
       ctx.globalAlpha = p.rd > st.t ? 0.45 : 1;
       shapePath(ctx, p.d, x, y, size / 2);
       ctx.fillStyle = i >= cap ? T.alert : T.glyph; ctx.fill();
       ctx.globalAlpha = 1;
-    });
+    }
+    if (more) {
+      ctx.fillStyle = s.q.length > cap ? T.alert : T.ink;
+      ctx.font = `600 ${10.5 * k}px "IBM Plex Mono", monospace`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText('+' + more, x0 + colsN * gap + 2 * k, y0 + h - gap / 2);
+    }
   }
 
   // Stations en alerte hors de l'écran : flèche au bord avec l'anneau du compte à rebours.
   drawOffscreen(st, T) {
     const { ctx } = this;
+    const sf = this.safe || { t: 70, r: 20, b: 90, l: 20 };
     for (const s of st.stations) {
       if (s.o <= 0.05) continue;
       const p = this.toScreen(s.x, s.y);
-      const m = 26;
-      if (p.x > m && p.x < this.W - m && p.y > 70 && p.y < this.H - 90) continue;
-      const x = Math.max(m, Math.min(this.W - m, p.x)), y = Math.max(76, Math.min(this.H - 96, p.y));
+      const x0 = sf.l + 22, x1 = this.W - sf.r - 22, y0 = sf.t + 22, y1 = this.H - sf.b - 22;
+      if (p.x > x0 && p.x < x1 && p.y > y0 && p.y < y1) continue;
+      const x = Math.max(x0, Math.min(x1, p.x)), y = Math.max(y0, Math.min(y1, p.y));
       const ang = Math.atan2(p.y - y, p.x - x);
       ctx.save(); ctx.translate(x, y);
       ctx.fillStyle = T.paper; ctx.beginPath(); ctx.arc(0, 0, 15, 0, 7); ctx.fill();
-      ctx.lineWidth = 4; ctx.strokeStyle = T.alert;
+      ctx.lineWidth = 4; ctx.strokeStyle = s.o >= cfgOf(st).overload.warnAt ? T.alert : T.ink;
       ctx.beginPath(); ctx.arc(0, 0, 15, -Math.PI / 2, -Math.PI / 2 + s.o * Math.PI * 2); ctx.stroke();
       ctx.fillStyle = T.ink; shapePath(ctx, s.shape, 0, 0, 6); ctx.fill();
       ctx.rotate(ang); ctx.beginPath(); ctx.moveTo(22, 0); ctx.lineTo(16, -5); ctx.lineTo(16, 5); ctx.closePath(); ctx.fillStyle = T.alert; ctx.fill();
