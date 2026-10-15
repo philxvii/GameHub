@@ -364,3 +364,71 @@ node games/qui-est-ce/prototype-3d/tools/measure_pc.js             # -> reports/
 
   puis la suite de [PC_RUNBOOK.md](PC_RUNBOOK.md), et le résumé de
   [FIN_DE_MISSION.md](FIN_DE_MISSION.md).
+
+---
+
+# Mission 3 (2026-10-15) — refonte premium ([MISSION_3.md](MISSION_3.md))
+
+Budget : 50 $ au total, réserve comprise (tableau des précisions de l'utilisateur). Un seul
+worktree (`/home/user/GameHub`), aucune autre session, arbre propre au départ ; `git pull` en avance
+rapide (`ef3ff2a`).
+
+## Bug du portrait géant : cause, correctif, test d'image
+
+**Cause réelle.** `board3d.js` peint les 24 cartes dans UN canevas partagé, case par case (zones de
+rendu et ciseaux). Pour le portrait net de « mon personnage », `portraitHD()` peint le secret en
+grand (360 × 480 px) **dans le coin haut-gauche du canevas**, le copie, puis repeint les cartes
+**une par une**. Chaque carte n'efface que sa propre case : les **espaces entre les cartes**
+gardaient la grande tête, visible par-dessus les colonnes 1 à 3 (le canevas est au-dessus des
+cartes, d'où aussi l'infobulle coupée). Dans le cloud, l'apparition du panneau « mon personnage »
+redimensionnait souvent le plateau, et un redimensionnement efface tout le canevas : les captures
+ne montraient rien. Sur le PC de l'utilisateur, pas de redimensionnement : la tête restait.
+Deuxième défaut : `snapshot()` copiait une carte de taille nulle (`drawImage` d'un canevas vide)
+quand une carte n'était pas encore mise en page.
+
+**Test** : `tools/test-board-pixels.js` lit les pixels du canevas et compte ceux qui sont peints
+**hors de toutes les cases** (marge 2 px), à 1280 × 720, 1440 × 900, 1440 × 900 en DPR 1,5 et
+1920 × 1080 : repos, survol, secret choisi, défilement, redimensionnement, console.
+
+| Code | Résultat (1280 × 720) |
+| --- | --- |
+| avant correction (`ef3ff2a`) | **ÉCHEC** : secret choisi → 54 651 pixels hors des cases, boîte `[0, 0, 359, 479]` = exactement le portrait HD ; idem après défilement (`reports/premium/bug/avant-correction-canevas.png`, fautifs en rouge) |
+| après correction | 1280 × 720 : 6/6 et 1440 × 900 : 6/6, 0 pixel hors des cases à chaque étape. En DPR 1,5 et 1920 × 1080, l'ancien plateau (24 personnages 3D en rendu logiciel) ne se charge pas en 400 s dans le cloud : ces tailles sont testées sur la nouvelle architecture (une seule carte 3D) |
+
+Correctif minimal : `repaintAll()` efface **tout** le canevas puis repeint chaque carte après le
+portrait HD ; `snapshot()` ne copie jamais une carte de taille nulle.
+
+## Audit (lot A)
+
+**Parcours réels** (code de `js/game/`) : accueil → (bot | salon local | en ligne sur `v3d/` :
+créer, ou rejoindre avec un code `ABCD-12`) → `lobby` (l'hôte attend) → `choose` (chacun choisit
+son secret ; la manche démarre quand les deux sont prêts) → `play` : le joueur du tour pose UNE
+question (`ask`) → l'autre répond oui / non (journal) → celui qui a demandé écarte les suspects
+chez lui puis termine son tour (`done`, ses croix partent avec) ; à son tour, il peut au lieu de
+demander **désigner** (`guess`) → la cible juge avec son secret : juste, le désigneur gagne ;
+faux, la cible gagne → `end` : les deux secrets révélés, score + 1 → revanche quand les deux
+l'acceptent (nouvelle manche, le premier joueur alterne) ; départ d'un joueur → écran « parti ».
+Bot : secret au hasard, meilleure question (la plus proche de la moitié), réponses honnêtes,
+désigne quand il ne reste qu'un suspect. Réseau : `net-mock.js` (local) et `net-firebase.js`
+(`qec3`, règles testées), même interface.
+
+**Problèmes relevés** :
+- bug ci-dessus ; 24 personnages 3D peints en permanence (14 Mo de GLB, 24 rigs) pour un plateau
+  qui bouge peu ;
+- **sécurité** : le nom de l'adversaire (venu de Firebase en ligne) était inséré tel quel dans du
+  HTML (`innerHTML`) : injection possible. La nouvelle interface échappe tout texte joueur ;
+- direction « casting » rejetée par l'utilisateur (Polaroïds, scotch, fond gris, panneau noir,
+  orange monospace, manuscrite) ; scores peu hiérarchisés ; planche adverse illisible (24
+  vignettes de 20 px) ;
+- personnages : 23 substituts = le même visage ; la variante rasée est blafarde en grand ; la
+  casquette se lit comme un bol de face ; le bas du buste (bord déchiré) se voyait.
+
+**Assets** : présents et intacts (`character-01-ict.glb`, `-opt.glb`, `hair-curly-v41-opt.glb`,
+accessoires, références photo). Banqueroll : tapis vert, papier, laiton, Gloock + Schibsted : à
+ne pas imiter. Les 10 liens de recherche sont refusés par le réseau du cloud (voir `DA_NOTE.md`).
+
+**Architecture retenue** (lot D, voir `DECISIONS.md`) : les 24 cartes sont des **portraits
+pré-rendus** (`portraits/<id>-<expression>.webp`, 4 expressions, fond transparent, même studio
+que la 3D), et **une seule** carte prend vie en 3D (survol, focus, toucher) dans un canevas posé
+exactement sur sa photo (`js/game/live.js`) ; 4 personnages gardés en mémoire au plus, les
+autres libérés.

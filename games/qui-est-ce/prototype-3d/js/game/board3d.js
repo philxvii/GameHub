@@ -108,6 +108,11 @@ export async function createBoard3D({ wrap, canvas, slots, people, look = 'casti
     set.key.intensity = set.keyI * (1 + 0.18 * c.hover);
     renderer.render(scene, camera); stats.renders++;
   }
+  // Efface TOUT le canevas (cases et espaces entre elles), puis repeint chaque carte dans sa case.
+  function repaintAll() {
+    renderer.setViewport(0, 0, W, H); renderer.setScissor(0, 0, W, H); renderer.setClearColor(0x000000, 0); renderer.clear();
+    for (const c of cards) { c.rect = rect(c); paint(c); }
+  }
   function resize() {
     const w = wrap.getBoundingClientRect(); W = Math.round(w.width); H = Math.round(w.height);
     renderer.setPixelRatio(still ? 1 : Math.min(devicePixelRatio, 2));
@@ -118,6 +123,7 @@ export async function createBoard3D({ wrap, canvas, slots, people, look = 'casti
   // image d'une carte (derniere peinture) : decrochage, planche contact, revelation
   function snapshot(c, type = 'image/jpeg') {
     const dpr = renderer.getPixelRatio(), r = c.rect;
+    if (!r || r.w < 1 || r.h < 1) return '';             // carte pas encore mise en page : rien a copier (drawImage d'un canevas vide)
     const was = c.out; c.out = false; paint(c); c.out = was;
     const cv = document.createElement('canvas'); cv.width = Math.round(r.w * dpr); cv.height = Math.round(r.h * dpr);
     cv.getContext('2d').drawImage(canvas, r.x * dpr, r.y * dpr, r.w * dpr, r.h * dpr, 0, 0, cv.width, cv.height);
@@ -150,7 +156,9 @@ export async function createBoard3D({ wrap, canvas, slots, people, look = 'casti
       const c = cards[i], keep = c.rect, was = c.out;
       c.rect = { x: 0, y: 0, w: Math.min(w, W), h: Math.min(h, H) }; c.out = false;
       const url = snapshot(c); c.rect = keep; c.out = was;
-      for (const k of cards) { k.rect = rect(k); paint(k); }
+      // Le grand portrait a ete peint dans le coin du canevas, par-dessus les espaces entre les
+      // cartes : les repeindre carte par carte ne l'effacait pas (bug « tete geante »).
+      repaintAll();
       return url;
     },
     pause(on) { paused = on; },                       // plateau cache (accueil) : plus aucune peinture
