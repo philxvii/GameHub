@@ -5,7 +5,7 @@
 <style id="mx-guard">html{visibility:hidden!important}</style><script src="shared/maintenance.js" onerror="window.stop();document.documentElement.innerHTML='&lt;body style=&quot;font:16px sans-serif;padding:2rem&quot;&gt;Site momentanément indisponible. Réessayez plus tard.&lt;/body&gt;'"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Hub</title>
-<meta name="description" content="Neuf jeux en ligne, sans compte : Banqueroll, Undercover, UNO, Puissance 4, Qui est-ce ?, Bataille Navale, Roulette, Mini Golf et WikiRace.">
+<meta name="description" content="Neuf jeux en ligne, sans compte : Banqueroll, Undercover, UNO, Puissance 4, Qui est-ce ?, Bataille Navale, Roulette, Mini Subway et Mini Golf.">
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="icons/favicon.ico" sizes="48x48">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -122,6 +122,11 @@
   .game-card{position:relative;min-width:0;flex:0 0 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));display:flex;flex-direction:column;container-type:inline-size;transition:opacity var(--d-3) var(--e-out);}
   .game-card.hidden-game{display:none;}
   .game-card.coming-soon{opacity:.45;pointer-events:none;}
+  .abandoned{margin:48px auto 0;max-width:var(--maxw,1100px);}
+  .abandoned summary{cursor:pointer;color:var(--muted);font-size:14px;text-align:center;list-style:none;padding:10px;}
+  .abandoned summary::-webkit-details-marker{display:none;}
+  .abandoned[open] summary{margin-bottom:18px;}
+  .abandoned .game-card{opacity:.8;}
   .media{position:relative;aspect-ratio:3/4;perspective:1400px;}
   .shade{position:absolute;left:10%;right:10%;bottom:0;height:30%;border-radius:50%;background:rgba(10,12,18,.5);filter:blur(var(--sb,16px));
     transform:translateY(var(--sy,4px)) scale(var(--ss,.9));opacity:var(--so,.55);transition:transform .4s var(--e-out),filter .4s var(--e-out),opacity .4s;}
@@ -441,11 +446,16 @@
         <a class="game-card" href="games/mini-golf/" id="card-minigolf" data-game="minigolf" data-tags="amis" style="--c:#2E9BE8">
           <span class="media"><span class="shade" aria-hidden="true"></span><span class="c3d"><span class="face front"><img src="games/mini-golf/cover.webp" width="720" height="960" alt="" decoding="async"><span class="cap"><span class="name">Mini Golf</span><span class="players">2 à 4 joueurs</span></span></span><span class="face back" aria-hidden="true"></span></span></span>
         </a>
+      </div>
+    </div>
+    <details class="abandoned">
+      <summary>Jeux abandonnés</summary>
+      <div class="cards">
         <a class="game-card" href="games/wikirace/" id="card-wikirace" data-game="wikirace" data-tags="solo" style="--c:#5F6FE8">
           <span class="media"><span class="shade" aria-hidden="true"></span><span class="c3d"><span class="face front"><img src="games/wikirace/cover.webp" width="720" height="960" alt="" decoding="async"><span class="cap"><span class="name">WikiRace</span><span class="players">Solo</span></span></span><span class="face back" aria-hidden="true"></span></span></span>
         </a>
       </div>
-    </div>
+    </details>
     <p class="sr-only" id="announce" aria-live="polite"></p>
   </main>
 
