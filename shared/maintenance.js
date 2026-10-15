@@ -84,9 +84,15 @@
         mx.setAttribute('role', 'dialog');
         mx.setAttribute('aria-modal', 'true');
         mx.addEventListener('click', onClick);
+        // Seule exception : le cadre invisible par lequel Firebase reçoit la réponse de
+        // Google pendant la connexion admin (rien du site ne s'y affiche).
+        var keep = function (n) {
+          return n === mx || (n.tagName === 'IFRAME' &&
+            /^https:\/\/(roulia\.me|[a-z0-9-]+\.firebaseapp\.com)\/__\/auth\/iframe/.test(n.src || ''));
+        };
         new MutationObserver(function () {
           if (isOpen()) return;
-          [].slice.call(document.body.childNodes).forEach(function (n) { if (n !== mx) n.remove(); });
+          [].slice.call(document.body.childNodes).forEach(function (n) { if (!keep(n)) n.remove(); });
           if (mx.parentNode !== document.body) document.body.appendChild(mx);
         }).observe(document.body, { childList: true });
       }
