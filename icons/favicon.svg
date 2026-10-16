@@ -1,19 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Favicon du hub : un de champagne en relief sur la tuile sombre du site.
-       Le troisieme point est attenue, comme le point de « GAME.HUB ». -->
-  <defs>
-    <linearGradient id="face" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f6ebcd"/>
-      <stop offset="1" stop-color="#dcc48a"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="15" fill="#07090f"/>
-  <rect x="1.5" y="1.5" width="61" height="61" rx="13.5" fill="none" stroke="#e8d5a3" stroke-opacity=".22" stroke-width="2"/>
-  <g transform="rotate(-11 32 32)">
-    <rect x="13" y="16" width="38" height="38" rx="9.5" fill="#8f7a45"/>
-    <rect x="13" y="12" width="38" height="38" rx="9.5" fill="url(#face)"/>
-    <circle cx="23" cy="22" r="4.4" fill="#07090f"/>
-    <circle cx="32" cy="31" r="4.4" fill="#07090f"/>
-    <circle cx="41" cy="40" r="4.4" fill="#07090f" fill-opacity=".3"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Favicon du hub : le dé GameHub, face 3. Graphite sur onglet clair, céramique blanche sur onglet sombre. -->
+  <style>
+    .lip{fill:#040508}.face{fill:#2A3040}.trim{fill:none;stroke:#fff;stroke-opacity:.3;stroke-width:.9}.p{fill:#F3F1F7}
+    @media (prefers-color-scheme:dark){.lip{fill:#7C8296}.face{fill:#F4F6FA}.trim{stroke:#fff;stroke-opacity:.9}.p{fill:#0D0B12}}
+  </style>
+  <rect class="lip" x="2" y="3.6" width="28" height="28" rx="9"/>
+  <rect class="face" x="2" y="1.6" width="28" height="28" rx="9"/>
+  <rect class="trim" x="2.8" y="2.4" width="26.4" height="26.4" rx="8.2"/>
+  <circle class="p" cx="9.6" cy="8.6" r="3"/>
+  <circle cx="16" cy="15.6" r="3.4" fill="#FF5A3C"/>
+  <circle class="p" cx="22.4" cy="22.6" r="3"/>
 </svg>
