@@ -344,6 +344,7 @@ canvas#rwheel{display:block;border-radius:50%;}
 <div class="toast" id="toast"></div>
 
 <script type="module">
+const escH=v=>String(v??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 import { ref, set, get, update, onValue, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { db, freeRoomCode, createRoom, openRoom, closeRoom } from '../../shared/firebase.js';
 
@@ -869,7 +870,7 @@ function renderLobby(game){
   (game.players||[]).forEach((p,i)=>{
     if(!p) return;
     const d=document.createElement('div'); d.className='prow';
-    d.innerHTML=`<div style="width:9px;height:9px;border-radius:50%;background:var(--gold);"></div><span style="font-size:15px;">${p.name}</span><span style="font-size:12px;color:var(--muted);margin-left:auto;">${fmt(p.balance)} ₣</span>`;
+    d.innerHTML=`<div style="width:9px;height:9px;border-radius:50%;background:var(--gold);"></div><span style="font-size:15px;">${escH(p.name)}</span><span style="font-size:12px;color:var(--muted);margin-left:auto;">${fmt(p.balance)} ₣</span>`;
     c.appendChild(d);
   });
 }
@@ -954,7 +955,7 @@ function handlePhase(game){
 
 function renderWait(game){
   const c=document.getElementById('wait-players'); if(!c) return; c.innerHTML='';
-  (game.players||[]).forEach((p,i)=>{ if(!p) return; const d=document.createElement('div'); d.className='prow'; d.innerHTML=`<div style="width:9px;height:9px;border-radius:50%;background:var(--gold);"></div><span style="font-size:15px;">${p.name}</span>`; c.appendChild(d); });
+  (game.players||[]).forEach((p,i)=>{ if(!p) return; const d=document.createElement('div'); d.className='prow'; d.innerHTML=`<div style="width:9px;height:9px;border-radius:50%;background:var(--gold);"></div><span style="font-size:15px;">${escH(p.name)}</span>`; c.appendChild(d); });
 }
 
 let gameScreenBuilt=false;
@@ -982,7 +983,7 @@ function updateGameUI(game){
     if(!p) return;
     const isMe=p.name===myName;
     const c=document.createElement('div'); c.className='pcc';
-    c.innerHTML=`<div class="pcc-name" style="${isMe?'color:var(--gold)':''}">${isMe?'Toi':p.name}</div><div class="pcc-bal">${fmt(p.balance)} ₣</div><div class="pcc-bet">${p.betTotal>0?'Mise: '+fmt(p.betTotal):''}</div>`;
+    c.innerHTML=`<div class="pcc-name" style="${isMe?'color:var(--gold)':''}">${isMe?'Toi':escH(p.name)}</div><div class="pcc-bal">${fmt(p.balance)} ₣</div><div class="pcc-bet">${p.betTotal>0?'Mise: '+fmt(p.betTotal):''}</div>`;
     strip.appendChild(c);
   });
   updateBetUI();
@@ -1023,7 +1024,7 @@ function showResultOverlay(game){
     if(!p) return;
     const gain=p.lastGain||0;
     const d=document.createElement('div'); d.className='res-pl-row';
-    d.innerHTML=`<div><div style="font-size:14px;${p.name===myName?'color:var(--gold);font-weight:600':''}">${p.name}</div><div style="font-size:11px;color:var(--muted);">${fmt(p.balance)} ₣</div></div><div class="res-gain ${gain>0?'pos':gain<0?'neg':'zero'}">${gain>0?'+':''}${fmt(gain)} ₣</div>`;
+    d.innerHTML=`<div><div style="font-size:14px;${p.name===myName?'color:var(--gold);font-weight:600':''}">${escH(p.name)}</div><div style="font-size:11px;color:var(--muted);">${fmt(p.balance)} ₣</div></div><div class="res-gain ${gain>0?'pos':gain<0?'neg':'zero'}">${gain>0?'+':''}${fmt(gain)} ₣</div>`;
     pl.appendChild(d);
   });
   document.getElementById('result-overlay').classList.remove('hidden');

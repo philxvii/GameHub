@@ -903,6 +903,7 @@ window.toggleMaintenance = async (enabled) => {
   logActivity('Paramètre', `Maintenance ${enabled?'activée':'désactivée'}`, 'index');
 };
 
+const escHtml = v => String(v ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
 window.loadParties = async () => {
   const container = document.getElementById('parties-list'); if(!container) return;
   container.innerHTML = '<p style="font-size:13px;color:var(--muted);">Chargement…</p>';
@@ -912,6 +913,7 @@ window.loadParties = async () => {
     const snap = await get(ref(db, g.db));
     if(!snap.exists()) continue;
     Object.entries(snap.val()).forEach(([code, party]) => {
+      if(!/^[A-Za-z0-9-]{1,16}$/.test(code)) return;   // clé inattendue : jamais injectée dans la page
       found = true;
       const players = (party.players||[]).filter(Boolean);
       html += `<div class="party-item">
@@ -919,12 +921,12 @@ window.loadParties = async () => {
           <div>
             <span class="party-code">${code}</span>
             <span style="font-size:11px;color:var(--muted);margin-left:8px;">${g.emoji} ${g.name}</span>
-            <div class="party-info">Phase : ${party.phase||'?'} · ${players.length} joueur${players.length>1?'s':''}</div>
+            <div class="party-info">Phase : ${escHtml(party.phase||'?')} · ${players.length} joueur${players.length>1?'s':''}</div>
           </div>
           <button class="btn-admin btn-admin-danger" onclick="adminDeleteParty('${g.db}','${code}')" style="font-size:11px;padding:4px 8px;">Suppr.</button>
         </div>
         <div class="party-players">
-          ${players.map((p,i)=>`<div class="player-badge">${p.name}<button class="player-kick" onclick="adminKickPlayer('${g.db}','${code}',${i})" title="Exclure">✕</button></div>`).join('')}
+          ${players.map((p,i)=>`<div class="player-badge">${escHtml(p.name)}<button class="player-kick" onclick="adminKickPlayer('${g.db}','${code}',${i})" title="Exclure">✕</button></div>`).join('')}
         </div>
       </div>`;
     });

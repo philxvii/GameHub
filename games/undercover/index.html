@@ -398,6 +398,7 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
+const escH=v=>String(v??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 import { ref, set, get, update, onValue, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { db, ensureAuth, freeRoomCode, createRoom, openRoom, closeRoom, adminSignIn } from '../../shared/firebase.js';
 
@@ -460,8 +461,8 @@ function renderWaitingLobby(game) {
     const isMe = p.name === myName;
     const div = document.createElement('div');
     div.className = 'player-item';
-    div.innerHTML = `<div class="avatar" style="background:${avatarBg(i)};color:${avatarTxt(i)};">${avatarLetter(p.name)}</div>
-      <span style="font-size:15px;${isMe?'font-weight:500;color:var(--accent)':''}">${p.name}${isMe?' (toi)':''}</span>
+    div.innerHTML = `<div class="avatar" style="background:${avatarBg(i)};color:${avatarTxt(i)};">${escH(avatarLetter(p.name))}</div>
+      <span style="font-size:15px;${isMe?'font-weight:500;color:var(--accent)':''}">${escH(p.name)}${isMe?' (toi)':''}</span>
       ${i===0?'<span class="tag" style="margin-left:auto;">Hôte</span>':''}`;
     container.appendChild(div);
   });
@@ -613,8 +614,8 @@ function renderLobby(game) {
   container.innerHTML='';
   players.forEach((p,i)=>{
     const div=document.createElement('div'); div.className='player-item';
-    div.innerHTML=`<div class="avatar" style="background:${avatarBg(i)};color:${avatarTxt(i)};">${avatarLetter(p.name)}</div>
-      <span style="font-size:15px;">${p.name}</span>
+    div.innerHTML=`<div class="avatar" style="background:${avatarBg(i)};color:${avatarTxt(i)};">${escH(avatarLetter(p.name))}</div>
+      <span style="font-size:15px;">${escH(p.name)}</span>
       ${i===0?'<span class="tag" style="margin-left:auto;">Hôte</span>':''}`;
     container.appendChild(div);
   });
@@ -876,7 +877,8 @@ function handlePlayingPhase(game) {
     container.innerHTML='';
     descs.forEach(d=>{
       const div=document.createElement('div'); div.className='description-item';
-      div.innerHTML=`<div class="desc-author">${d.author}</div><div class="desc-text">${d.text}</div>`;
+      div.innerHTML='<div class="desc-author"></div><div class="desc-text"></div>';
+      div.children[0].textContent=d.author; div.children[1].textContent=d.text;
       container.appendChild(div);
     });
     show('s-watch-turn');
@@ -941,7 +943,8 @@ function handleVotingPhase(game) {
     recap.innerHTML='<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Récap des descriptions</div>';
     descs.forEach(d=>{
       const d2=document.createElement('div'); d2.className='description-item';
-      d2.innerHTML=`<div class="desc-author">${d.author}</div><div class="desc-text">${d.text}</div>`;
+      d2.innerHTML='<div class="desc-author"></div><div class="desc-text"></div>';
+      d2.children[0].textContent=d.author; d2.children[1].textContent=d.text;
       recap.appendChild(d2);
     });
     container.appendChild(recap);
@@ -959,8 +962,8 @@ function handleVotingPhase(game) {
     const div=document.createElement('div');
     div.className='vote-option';
     div.dataset.vote=p.name;
-    div.innerHTML=`<div class="avatar" style="background:${avatarBg(ci)};color:${avatarTxt(ci)};width:32px;height:32px;font-size:12px;">${avatarLetter(p.name)}</div>
-      <span style="font-size:15px;">${p.name}</span>`;
+    div.innerHTML=`<div class="avatar" style="background:${avatarBg(ci)};color:${avatarTxt(ci)};width:32px;height:32px;font-size:12px;">${escH(avatarLetter(p.name))}</div>
+      <span style="font-size:15px;">${escH(p.name)}</span>`;
     div.onclick=()=>selectVote(p.name);
     container.appendChild(div);
   });
@@ -1182,8 +1185,8 @@ function handleGameOver(game) {
     div.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);';
     div.innerHTML=`
       <div style="display:flex;align-items:center;gap:10px;">
-        <div class="avatar" style="background:${avatarBg(i)};color:${avatarTxt(i)};${isElim?'opacity:0.4':''}">${avatarLetter(p.name)}</div>
-        <span style="font-size:15px;${isElim?'opacity:0.4;text-decoration:line-through':''}">${p.name}</span>
+        <div class="avatar" style="background:${avatarBg(i)};color:${avatarTxt(i)};${isElim?'opacity:0.4':''}">${escH(avatarLetter(p.name))}</div>
+        <span style="font-size:15px;${isElim?'opacity:0.4;text-decoration:line-through':''}">${escH(p.name)}</span>
       </div>
       <span class="role-pill ${role}">${roleLabel}</span>
     `;
@@ -1245,8 +1248,8 @@ window.adminCreateGame = async () => {
     const rl=role==='civil'?'Civil':role==='undercover'?'Undercover':'Mr. White';
     const div=document.createElement('div'); div.className='admin-player-row';
     div.innerHTML=`<div style="display:flex;align-items:center;gap:10px;">
-      <div class="avatar" style="background:${avatarBg(i)};color:${avatarTxt(i)};width:30px;height:30px;font-size:12px;">${avatarLetter(p.name)}</div>
-      <div><div style="font-size:14px;color:var(--text);">${p.name}</div>
+      <div class="avatar" style="background:${avatarBg(i)};color:${avatarTxt(i)};width:30px;height:30px;font-size:12px;">${escH(avatarLetter(p.name))}</div>
+      <div><div style="font-size:14px;color:var(--text);">${escH(p.name)}</div>
       <div style="font-size:12px;color:var(--muted);">Mot : <strong style="color:var(--text);">${word}</strong></div></div></div>
       <span class="role-pill ${role}">${rl}</span>`;
     rolesEl.appendChild(div);

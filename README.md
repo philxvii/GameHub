@@ -19,18 +19,22 @@ on partage le code, on joue. Pas d'installation, pas de compte.
 | ⚓ | [Bataille navale](https://roulia.me/games/bataille-navale/) | 2 | Place ta flotte et coule celle de l'adversaire |
 | 🔴 | [Puissance 4](https://roulia.me/games/puissance4/) | 2 | Aligne 4 jetons avant l'adversaire |
 
-## Sous le capot
+## Architecture
 
-- **HTML, CSS et JavaScript natifs**, sans framework ni étape de build : le dépôt est
-  servi tel quel par GitHub Pages.
-- **Firebase Realtime Database** synchronise les parties en temps réel, un nœud par jeu.
+- **Site statique.** HTML, CSS et JavaScript natifs, sans framework ni build : GitHub Pages
+  publie le dépôt tel quel à chaque `git push origin main`.
+- **Firebase Realtime Database** synchronise les parties en temps réel, un nœud par jeu ;
+  les [règles de la base](firebase/) sont versionnées avec leurs tests.
 - Banqueroll est découpé en modules ES ; son présentateur passe par un
   [Worker Cloudflare](games/banqueroll/ai-host/) gratuit (aucune clé côté navigateur).
 
 ```
-index.html        le hub
+index.html        le hub (liste des jeux)
 404.html          page introuvable, redirige aussi les anciennes adresses (/uno.html…)
 games/<jeu>/      un dossier autonome par jeu
+shared/           code commun
+firebase/         règles de la base et leurs tests
+icons/            favicon et icônes
 tools/            vérifications communes
 ```
 

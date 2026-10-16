@@ -102,6 +102,18 @@
             }
           }
         },
+        "descriptions": {
+          "$round": {
+            "$i": {
+              "author": {
+                ".validate": "newData.isString() && newData.val().length <= 30 && !newData.val().contains('<')"
+              },
+              "text": {
+                ".validate": "newData.isString() && newData.val().length <= 200 && !newData.val().contains('<')"
+              }
+            }
+          }
+        },
         "civilWord": {
           ".validate": false
         },
@@ -196,6 +208,24 @@
             "name": {
               ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')"
             }
+          }
+        },
+        "questions": {
+          "$i": {
+            "text": {
+              ".validate": "newData.isString() && newData.val().length <= 200 && !newData.val().contains('<')"
+            },
+            "authorName": {
+              ".validate": "newData.isString() && newData.val().length <= 30 && !newData.val().contains('<')"
+            }
+          }
+        },
+        "pendingQuestion": {
+          "text": {
+            ".validate": "newData.isString() && newData.val().length <= 200 && !newData.val().contains('<')"
+          },
+          "authorName": {
+            ".validate": "newData.isString() && newData.val().length <= 30 && !newData.val().contains('<')"
           }
         }
       }

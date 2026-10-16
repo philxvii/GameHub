@@ -8,11 +8,15 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const CODE = '/^[A-Z]{3,5}-[0-9]{2}$/';
+const SHORT_TEXT = n => `newData.isString() && newData.val().length <= ${n} && !newData.val().contains('<')`;
 const GAMES = {
-  games:      { code: CODE },                                   // Undercover
+  games:      { code: CODE, texts: { descriptions: { $round: { $i: { author: { '.validate': SHORT_TEXT(30) }, text: { '.validate': SHORT_TEXT(200) } } } } } },   // Undercover : descriptions des joueurs
   banqueroll: { code: '/^[A-Z]{3,5}-[0-9]{2}(-[a-z0-9]{1,3})?$/' },
   p4:         { code: CODE },
-  qec2:       { code: CODE },
+  qec2:       { code: CODE, texts: {                           // Qui est-ce : questions posées (120 caractères côté client)
+    questions: { $i: { text: { '.validate': SHORT_TEXT(200) }, authorName: { '.validate': SHORT_TEXT(30) } } },
+    pendingQuestion: { text: { '.validate': SHORT_TEXT(200) }, authorName: { '.validate': SHORT_TEXT(30) } },
+  } },
   bn:         { code: CODE },
   rl:         { code: CODE, joinAnyPhase: true },               // Roulette : on s'assoit à tout moment
   mg:         { code: CODE },
@@ -23,9 +27,8 @@ const ADMIN = "auth != null && root.child('admins').child(auth.uid).val() === tr
 // Maintenance (hub/settings/maintenance) : plus aucune lecture ni écriture, sauf l'admin.
 const OPEN = "root.child('hub').child('settings').child('maintenance').val() !== true";
 const NAME ="newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')";
-const SHORT_TEXT = n => `newData.isString() && newData.val().length <= ${n} && !newData.val().contains('<')`;
 
-function gameRules(prefix, { code, joinAnyPhase }) {
+function gameRules(prefix, { code, joinAnyPhase, texts }) {
   const phase = `root.child('${prefix}').child($code).child('phase')`;
   const room = {
     // Lecture : membres et admin. Jamais sur le préfixe entier (sauf admin).
@@ -53,6 +56,8 @@ function gameRules(prefix, { code, joinAnyPhase }) {
     // La phase seule est visible de tout compte : « code introuvable » ou « déjà lancée ».
     phase: { '.read': `auth != null && ${OPEN}`, '.validate': 'newData.isString() && newData.val().length <= 32' },
     players: { $i: { name: { '.validate': NAME } } },
+    // Textes libres saisis par les joueurs : longueur bornée et jamais de balise (anti-XSS, 2e couche).
+    ...texts,
   };
   return {
     '.read': ADMIN,

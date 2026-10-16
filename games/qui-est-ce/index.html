@@ -305,6 +305,7 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
+const escH=v=>String(v??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 import { ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { db, freeRoomCode, createRoom, openRoom, closeRoom } from '../../shared/firebase.js';
 
@@ -406,7 +407,7 @@ function renderLobby(game) {
   (game.players||[]).forEach((p,i)=>{
     if(!p) return;
     const div=document.createElement('div'); div.className='prow';
-    div.innerHTML=`<div class="pdot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div><span style="font-size:15px;">${p.name}</span>${i===0?'<span style="font-size:11px;color:var(--muted);margin-left:auto;padding:2px 8px;border:1px solid var(--border);border-radius:999px;">Hôte</span>':''}`;
+    div.innerHTML=`<div class="pdot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div><span style="font-size:15px;">${escH(p.name)}</span>${i===0?'<span style="font-size:11px;color:var(--muted);margin-left:auto;padding:2px 8px;border:1px solid var(--border);border-radius:999px;">Hôte</span>':''}`;
     c.appendChild(div);
   });
   if (!game.players[1]) { const d=document.createElement('div'); d.style.cssText='font-size:13px;color:var(--muted);padding:9px 0;display:flex;align-items:center;gap:8px;'; d.innerHTML='<span class="wdot"></span> En attente…'; c.appendChild(d); }
@@ -476,7 +477,7 @@ async function handlePhase(game) {
 
 function renderWait(game){
   const c=document.getElementById('wait-players');if(!c)return;c.innerHTML='';
-  (game.players||[]).forEach((p,i)=>{if(!p)return;const d=document.createElement('div');d.className='prow';d.innerHTML=`<div class="pdot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div><span style="font-size:15px;">${p.name}</span>`;c.appendChild(d);});
+  (game.players||[]).forEach((p,i)=>{if(!p)return;const d=document.createElement('div');d.className='prow';d.innerHTML=`<div class="pdot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div><span style="font-size:15px;">${escH(p.name)}</span>`;c.appendChild(d);});
 }
 
 // ── Pick ──
@@ -586,7 +587,8 @@ function renderThread(qs){
     const d=document.createElement('div');d.className='q-item';
     const ac=q.answer==='oui'?'oui':q.answer==='non'?'non':'pending';
     const al=q.answer==='oui'?'✓ OUI':q.answer==='non'?'✗ NON':'⏳ En attente…';
-    d.innerHTML=`<div class="q-author">${q.authorName}</div><div class="q-text">${q.text}</div><span class="q-ans ${ac}">${al}</span>`;
+    d.innerHTML=`<div class="q-author"></div><div class="q-text"></div><span class="q-ans ${ac}">${al}</span>`;
+    d.children[0].textContent=q.authorName; d.children[1].textContent=q.text;
     c.appendChild(d);
   });
   c.scrollTop=0;
@@ -653,8 +655,8 @@ function renderRoundOver(game){
   document.getElementById('ro-sub').textContent=res.correct?`${res.guesserName} a trouvé !`:`${res.guesserName} s'est trompé — défaite instantanée !`;
   const p0=charById(res.p0secretId); const p1=charById(res.p1secretId);
   document.getElementById('ro-reveal').innerHTML=`
-    <div class="reveal-card" style="border-color:var(--p1bd);"><div class="reveal-face">${p0?.face||'?'}</div><div class="reveal-name">${p0?.name||'?'}</div><div class="reveal-lbl" style="color:var(--p1);">${players[0]?.name||'J1'}</div></div>
-    <div class="reveal-card" style="border-color:var(--p2bd);"><div class="reveal-face">${p1?.face||'?'}</div><div class="reveal-name">${p1?.name||'?'}</div><div class="reveal-lbl" style="color:var(--p2);">${players[1]?.name||'J2'}</div></div>`;
+    <div class="reveal-card" style="border-color:var(--p1bd);"><div class="reveal-face">${p0?.face||'?'}</div><div class="reveal-name">${escH(p0?.name||'?')}</div><div class="reveal-lbl" style="color:var(--p1);">${players[0]?.name||'J1'}</div></div>
+    <div class="reveal-card" style="border-color:var(--p2bd);"><div class="reveal-face">${p1?.face||'?'}</div><div class="reveal-name">${escH(p1?.name||'?')}</div><div class="reveal-lbl" style="color:var(--p2);">${players[1]?.name||'J2'}</div></div>`;
   const pp1=players[0]||{name:'J1',score:0}; const pp2=players[1]||{name:'J2',score:0};
   document.getElementById('ro-score').textContent=`Score : ${pp1.name} ${pp1.score} — ${pp2.score} ${pp2.name}`;
   const btn=document.getElementById('ro-btn');
