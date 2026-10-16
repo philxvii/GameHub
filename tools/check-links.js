@@ -26,6 +26,8 @@ function resolves(fromFile, url) {
   const clean = url.split(/[?#]/)[0];
   if (!clean) return true;
   const p = path.resolve(path.dirname(fromFile), decodeURI(clean));
+  // GitHub Pages sert /home depuis home.html (adresse sans extension).
+  if (!path.extname(p) && !fs.existsSync(p) && fs.existsSync(p + '.html')) return true;
   // Fichier prive non versionne (ex. le prompt du presentateur) : son modele public suffit.
   if (clean.endsWith('.js') && !fs.existsSync(p) && fs.existsSync(p.replace(/\.js$/, '.example.js'))) return true;
   if (clean.endsWith('/')) return fs.existsSync(path.join(p, 'index.html'));
@@ -53,7 +55,7 @@ function refsOf(file) {
 }
 
 // 1. Le hub pointe vers des jeux qui existent.
-const hub = path.join(ROOT, 'index.html');
+const hub = path.join(ROOT, 'home.html');
 const hubLinks = [...fs.readFileSync(hub, 'utf8').matchAll(/class="game-card" href="([^"]+)"/g)].map(m => m[1]);
 check('Hub : chaque carte mene a games/<jeu>/',
   hubLinks.length > 0 && hubLinks.every(u => u.startsWith('games/') && resolves(hub, u)),
@@ -90,12 +92,12 @@ else {
 
 // 4. Racine : seulement le hub, la page 404, les icones et les dossiers prevus.
 // Icones du site : dans icons/, declarees par chaque page (hub, 404, jeux).
-const allowed = new Set(['index.html', '404.html', 'CNAME', 'README.md', 'LICENSE', 'games', 'icons', 'tools', 'shared', 'firebase', '__']);
+const allowed = new Set(['index.html', 'home.html', '404.html', 'CNAME', 'README.md', 'LICENSE', 'games', 'icons', 'tools', 'shared', 'firebase', '__']);
 const stray = fs.readdirSync(ROOT).filter(f => !f.startsWith('.') && !allowed.has(f));
 check('Racine propre : aucun code de jeu ni fichier en trop', stray.length === 0, stray.length ? 'en trop : ' + stray.join(', ') : '');
 
 // 5. Dans chaque jeu, tout chemin relatif mene a un fichier, sans sortir du jeu
-//    (sauf le retour au hub, ../../index.html, les icones du site, ../../icons/, et le
+//    (sauf le retour au hub, ../../home, les icones du site, ../../icons/, et le
 //    code commun, ../../shared/, dont la configuration Firebase).
 for (const g of games) {
   const files = walk(path.join(GAMES, g)).filter(f => /\.(html|css|js)$/.test(f));
@@ -104,7 +106,7 @@ for (const g of games) {
     for (const u of refsOf(f)) {
       if (!resolves(f, u)) broken.push(`${rel(f)} -> ${u}`);
       const target = path.resolve(path.dirname(f), u.split(/[?#]/)[0]);
-      if (!target.startsWith(path.join(GAMES, g)) && target !== hub && !target.startsWith(path.join(ROOT, 'icons') + path.sep) && !target.startsWith(path.join(ROOT, 'shared') + path.sep)) escaping.push(`${rel(f)} -> ${u}`);
+      if (!target.startsWith(path.join(GAMES, g)) && target !== hub.replace(/.html$/, '') && !target.startsWith(path.join(ROOT, 'icons') + path.sep) && !target.startsWith(path.join(ROOT, 'shared') + path.sep)) escaping.push(`${rel(f)} -> ${u}`);
     }
   }
   check(`games/${g} : chemins relatifs`, broken.length === 0 && escaping.length === 0,
