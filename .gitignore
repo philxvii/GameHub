@@ -19,3 +19,6 @@ Thumbs.db
 
 # Audit de sécurité : reste local (liste des points sensibles)
 docs/SECURITE.md
+
+# Récapitulatif en clair : seule la version chiffrée (.md.enc) va sur GitHub
+docs/RECAP-MAINTENANCE-SECURITE.md
