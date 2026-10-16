@@ -75,7 +75,7 @@ exécute Gemini dans son navigateur ; **ne jamais contourner une protection** (C
 
 ## Prompt de démarrage conseillé pour la nouvelle session
 
-> Lis `games/qui-est-ce/prototype-3d/VISION_V4.md` puis `HANDOFF.md`. Branche `proto/qui-est-ce-3d`
+> Tu es l'orchestrateur (Opus). Lis `games/qui-est-ce/prototype-3d/team/TEAM.md`, lance `bash games/qui-est-ce/prototype-3d/team/install.sh` si `.claude/agents/` est vide (puis dis-moi de relancer la session), et délègue selon TEAM.md : modèles les plus petits pour les ouvriers, Opus seulement pour toi et par exception. Lis `games/qui-est-ce/prototype-3d/VISION_V4.md` puis `HANDOFF.md`. Branche `proto/qui-est-ce-3d`
 > (worktree `C:\Java\GameHub-proto`). On refait la DA et la mise en scène du Qui est-ce ? selon la vision
 > V4 : un vrai plateau en 3D, caméra d'intro, volets qui se rabattent. Commence par une **recherche courte**
 > (références visuelles du plateau, jeux de déduction, game feel) dans `RESEARCH.md`, puis propose
