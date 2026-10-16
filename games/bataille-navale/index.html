@@ -293,6 +293,7 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
+const escH=v=>String(v??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 import { ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { db, freeRoomCode, createRoom, openRoom, closeRoom } from '../../shared/firebase.js';
 
@@ -351,7 +352,7 @@ function renderLobby(game){
     if(!p)return;
     const div=document.createElement('div');div.className='prow';
     div.innerHTML=`<div class="pdot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div>
-      <span style="font-size:15px;">${p.name}</span>
+      <span style="font-size:15px;">${escH(p.name)}</span>
       ${i===0?'<span style="font-size:11px;color:var(--muted);margin-left:auto;padding:2px 8px;border:1px solid var(--border);border-radius:999px;">Hôte</span>':''}`;
     c.appendChild(div);
   });
@@ -435,7 +436,7 @@ function renderWait(game){
   players.forEach((p,i)=>{
     if(!p)return;
     const div=document.createElement('div');div.className='prow';
-    div.innerHTML=`<div class="pdot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div><span style="font-size:15px;">${p.name}</span>`;
+    div.innerHTML=`<div class="pdot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div><span style="font-size:15px;">${escH(p.name)}</span>`;
     c.appendChild(div);
   });
 }

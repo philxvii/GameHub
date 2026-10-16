@@ -305,6 +305,7 @@ select option{background:#130d10;}
 <div class="toast" id="toast"></div>
 
 <script type="module">
+const escH=v=>String(v??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 import { ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { db, freeRoomCode, createRoom, openRoom, closeRoom } from '../../shared/firebase.js';
 
@@ -426,7 +427,7 @@ function renderLobby(game){
   const c=document.getElementById('lobby-players');if(!c)return;c.innerHTML='';
   (game.players||[]).forEach((p,i)=>{
     const d=document.createElement('div');d.className='prow';
-    d.innerHTML=`<div style="width:10px;height:10px;border-radius:50%;background:${['#ef4444','#3b82f6','#22c55e','#fbbf24','#a78bfa','#f472b6'][i]};"></div><span style="font-size:15px;">${p.name}</span>`;
+    d.innerHTML=`<div style="width:10px;height:10px;border-radius:50%;background:${['#ef4444','#3b82f6','#22c55e','#fbbf24','#a78bfa','#f472b6'][i]};"></div><span style="font-size:15px;">${escH(p.name)}</span>`;
     c.appendChild(d);
   });
   if(game.players.length<(game.maxPlayers||2)){
@@ -515,7 +516,7 @@ function renderWait(game){
   const c=document.getElementById('wait-players');if(!c)return;c.innerHTML='';
   (game.players||[]).forEach((p,i)=>{
     const d=document.createElement('div');d.className='prow';
-    d.innerHTML=`<div style="width:10px;height:10px;border-radius:50%;background:${['#ef4444','#3b82f6','#22c55e','#fbbf24','#a78bfa','#f472b6'][i]};"></div><span style="font-size:15px;">${p.name}</span>`;
+    d.innerHTML=`<div style="width:10px;height:10px;border-radius:50%;background:${['#ef4444','#3b82f6','#22c55e','#fbbf24','#a78bfa','#f472b6'][i]};"></div><span style="font-size:15px;">${escH(p.name)}</span>`;
     c.appendChild(d);
   });
 }
@@ -540,7 +541,7 @@ function renderGame(game){
       const isActive=i===turnIdx;
       const d=document.createElement('div');
       d.className=`player-info-card${isActive?' active':''}`;
-      d.innerHTML=`<div class="pic-name" style="${p.name===myName?'color:var(--text)':''}">${p.name===myName?'Toi':p.name}</div>
+      d.innerHTML=`<div class="pic-name" style="${p.name===myName?'color:var(--text)':''}">${p.name===myName?'Toi':escH(p.name)}</div>
         <div class="pic-cards">${(p.hand||[]).length}</div>
         ${(p.hand||[]).length===1?'<div class="pic-uno">UNO!</div>':''}`;
       bar.appendChild(d);

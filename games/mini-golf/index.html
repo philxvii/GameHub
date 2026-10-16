@@ -239,6 +239,7 @@ canvas#golf{display:block;width:100%;cursor:crosshair;}
 <div class="toast" id="toast"></div>
 
 <script type="module">
+const escH=v=>String(v??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 import { ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { db, freeRoomCode, createRoom, openRoom, closeRoom } from '../../shared/firebase.js';
 
@@ -784,7 +785,7 @@ function updateScoreboard(game){
     holesHtml+='</div>';
 
     div.innerHTML=`<div class="pdot" style="background:${col};"></div>
-      <div class="sb-name" style="${p.name===myName?'color:var(--text);font-weight:500':'color:var(--muted)'}">${p.name}</div>
+      <div class="sb-name" style="${p.name===myName?'color:var(--text);font-weight:500':'color:var(--muted)'}">${escH(p.name)}</div>
       ${holesHtml}
       <div class="sb-score" style="color:${col};">${total||0}</div>`;
     container.appendChild(div);
@@ -814,7 +815,7 @@ function renderLobby(game){
   const c=document.getElementById('lobby-players'); if(!c)return; c.innerHTML='';
   (game.players||[]).forEach((p,i)=>{
     const d=document.createElement('div');d.className='prow';
-    d.innerHTML=`<div class="pdot" style="background:${PLAYER_COLORS[i]};"></div><span style="font-size:15px;">${p.name}</span>`;
+    d.innerHTML=`<div class="pdot" style="background:${PLAYER_COLORS[i]};"></div><span style="font-size:15px;">${escH(p.name)}</span>`;
     c.appendChild(d);
   });
   if(game.players.length<(game.maxPlayers||2)){
@@ -907,7 +908,7 @@ function renderWaitLobby(game){
   const c=document.getElementById('wait-players');if(!c)return;c.innerHTML='';
   (game.players||[]).forEach((p,i)=>{
     const d=document.createElement('div');d.className='prow';
-    d.innerHTML=`<div class="pdot" style="background:${PLAYER_COLORS[i]};"></div><span style="font-size:15px;">${p.name}</span>`;
+    d.innerHTML=`<div class="pdot" style="background:${PLAYER_COLORS[i]};"></div><span style="font-size:15px;">${escH(p.name)}</span>`;
     c.appendChild(d);
   });
 }
@@ -931,7 +932,7 @@ function renderGameOver(game){
   ranked.forEach((p,rank)=>{
     const d=document.createElement('div');d.className='fs-row';
     d.innerHTML=`<div class="fs-rank">${medals[rank]||''}</div>
-      <div class="fs-name" style="${p.name===myName?'color:var(--text);font-weight:500':'color:var(--muted)'}">${p.name}</div>
+      <div class="fs-name" style="${p.name===myName?'color:var(--text);font-weight:500':'color:var(--muted)'}">${escH(p.name)}</div>
       <div class="fs-score" style="color:${PLAYER_COLORS[p.i%PLAYER_COLORS.length]};">${p.total} coups</div>`;
     fs.appendChild(d);
   });

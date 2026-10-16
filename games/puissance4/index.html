@@ -220,6 +220,7 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
+const escH=v=>String(v??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 import { ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { db, freeRoomCode, createRoom, openRoom, closeRoom } from '../../shared/firebase.js';
 
@@ -341,7 +342,7 @@ function renderLobby(game) {
     if (!p) return;
     const div = document.createElement('div'); div.className = 'prow';
     div.innerHTML = `<div class="dot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div>
-      <span style="font-size:15px;">${p.name}</span>
+      <span style="font-size:15px;">${escH(p.name)}</span>
       ${i===0 ? '<span style="font-size:11px;color:var(--muted);margin-left:auto;padding:2px 8px;border:1px solid var(--border);border-radius:999px;">Hôte</span>' : ''}`;
     container.appendChild(div);
   });
@@ -436,7 +437,7 @@ function renderWait(game) {
     if (!p) return;
     const div = document.createElement('div'); div.className = 'prow';
     div.innerHTML = `<div class="dot" style="background:${i===0?'var(--p1)':'var(--p2)'};"></div>
-      <span style="font-size:15px;">${p.name}</span>`;
+      <span style="font-size:15px;">${escH(p.name)}</span>`;
     container.appendChild(div);
   });
 }
@@ -600,11 +601,11 @@ function renderWinScreen(game) {
 
   document.getElementById('score-cards').innerHTML = `
     <div class="scard" style="background:var(--p1bg);border:1px solid var(--p1bd);">
-      <div class="scard-name">${p1.name}</div>
+      <div class="scard-name">${escH(p1.name)}</div>
       <div class="scard-score" style="color:var(--p1);">${p1.score}</div>
     </div>
     <div class="scard" style="background:var(--p2bg);border:1px solid var(--p2bd);">
-      <div class="scard-name">${p2.name}</div>
+      <div class="scard-name">${escH(p2.name)}</div>
       <div class="scard-score" style="color:var(--p2);">${p2.score}</div>
     </div>
   `;
