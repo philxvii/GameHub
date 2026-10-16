@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import worker, { signSession, checkSession } from '../src/worker.js';
 
 const SECRET = 'x'.repeat(40);
-const UID = 'KCTGn1Mr4fYObYW5nrMMmN8CPX02';
+const UID = 'TestUid0123456789abcdefghij';
 const origin = [];
 let flagValue, flagFails, adminAnswer;
 
@@ -109,6 +109,8 @@ test("en-têtes de sécurité sur le site ouvert et sur l'écran de maintenance"
   assert.equal(res.headers.get('X-Content-Type-Options'), 'nosniff');
   assert.equal(res.headers.get('X-Frame-Options'), 'SAMEORIGIN');
   assert.match(res.headers.get('Strict-Transport-Security'), /max-age=\d+/);
+  assert.match(res.headers.get('Content-Security-Policy-Report-Only'), /object-src 'none'/);
+  assert.equal(res.headers.get('Content-Security-Policy'), null);   // rapport seulement : rien n'est bloqué
   await reset();
   res = await worker.fetch(req('/'), env);
   assert.equal(res.status, 503);

@@ -79,14 +79,30 @@ async function adminUid(token) {
 }
 
 // En-têtes ajoutés aux pages servies par GitHub Pages, qui ne permet pas d'en poser.
-// Pas de Content-Security-Policy ici : les pages portent des scripts en ligne, il faudra
-// d'abord la tester en mode rapport (voir docs/SECURITE.md).
+// La politique de contenu est en mode RAPPORT : elle ne bloque rien, le navigateur signale
+// seulement dans sa console (F12) ce qu'elle aurait refusé. Les pages portent des scripts en
+// ligne ('unsafe-inline'), qu'il faudra sortir des pages pour pouvoir l'appliquer vraiment.
+// Une fois la console propre sur tous les jeux, renommer l'en-tête en Content-Security-Policy.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.googleapis.com https://fr.wikipedia.org https://*.workers.dev",
+  "frame-src 'self' https://accounts.google.com https://*.firebaseapp.com https://apis.google.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'self'",
+].join('; ');
 const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'SAMEORIGIN',   // SAMEORIGIN et non DENY : Firebase Auth charge /__/auth/iframe dans la page
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
   'Strict-Transport-Security': 'max-age=15552000',
+  'Content-Security-Policy-Report-Only': CSP,
 };
 export function secure(res) {
   const out = new Response(res.body, res);
