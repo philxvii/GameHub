@@ -21,34 +21,19 @@ on partage le code, on joue. Pas d'installation, pas de compte.
 
 ## Architecture
 
-```
-visiteur ─▶ Cloudflare (Worker edge/) ─▶ GitHub Pages ─ pages statiques
-                                                │
-                                                ▼  (depuis le navigateur)
-                                   Firebase : comptes anonymes + base temps réel
-```
-
 - **Site statique.** HTML, CSS et JavaScript natifs, sans framework ni build : GitHub Pages
   publie le dépôt tel quel à chaque `git push origin main`.
-- **Firebase Realtime Database** synchronise les parties, un nœud par jeu. Chaque joueur
-  reçoit un compte anonyme : les [règles de la base](firebase/) ne laissent lire et écrire une
-  partie qu'à ses membres. Il n'y a aucun serveur applicatif, les clients arbitrent la partie.
-- **Cloudflare Worker** ([edge/](edge/README.md)) placé devant GitHub Pages. Il ajoute les
-  en-têtes de sécurité et sert de portier : en maintenance, il répond lui-même et rien du site
-  ne sort. L'admin entre avec son compte Google (son uid doit figurer dans `admins/`).
-- **Maintenance** : un interrupteur Firebase (`hub/settings/maintenance`) que le Worker, la page
-  ([shared/maintenance.js](shared/maintenance.js)) et les règles de la base lisent tous les trois.
+- **Firebase Realtime Database** synchronise les parties en temps réel, un nœud par jeu ;
+  les [règles de la base](firebase/) sont versionnées avec leurs tests.
 - Banqueroll est découpé en modules ES ; son présentateur passe par un
   [Worker Cloudflare](games/banqueroll/ai-host/) gratuit (aucune clé côté navigateur).
 
 ```
-index.html        le hub (liste des jeux, panneau admin)
+index.html        le hub (liste des jeux)
 404.html          page introuvable, redirige aussi les anciennes adresses (/uno.html…)
 games/<jeu>/      un dossier autonome par jeu
-shared/           code commun : connexion Firebase, maintenance, charte graphique
-firebase/         règles de la base et leurs tests (émulateur)
-edge/             Worker Cloudflare devant le site, avec ses tests
-__/auth/          pages de connexion Google de Firebase, servies depuis roulia.me
+shared/           code commun
+firebase/         règles de la base et leurs tests
 icons/            favicon et icônes
 tools/            vérifications communes
 ```
@@ -68,7 +53,6 @@ Node 22+, sans dépendance npm ; Chrome pour les tests navigateur.
 node tools/check-links.js                        # structure du site
 node games/banqueroll/tests/check-static.js      # règles de Banqueroll, sans navigateur
 node games/banqueroll/tests/test-browser.js      # parties réelles dans Chrome
-node --test edge/test/worker.test.mjs              # Worker Cloudflare, sans réseau
 ```
 
 Détails : [tools/](tools/README.md) · [tests de Banqueroll](games/banqueroll/tests/README.md).
