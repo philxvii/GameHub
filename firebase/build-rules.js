@@ -10,12 +10,12 @@ import { readFileSync, writeFileSync } from 'node:fs';
 const CODE = '/^[A-Z]{3,5}-[0-9]{2}$/';
 const SHORT_TEXT = n => `newData.isString() && newData.val().length <= ${n} && !newData.val().contains('<')`;
 const GAMES = {
-  games:      { code: CODE, texts: { descriptions: { $round: { $i: { author: SHORT_TEXT(30), text: SHORT_TEXT(200) } } } } },   // Undercover : descriptions des joueurs
+  games:      { code: CODE, texts: { descriptions: { $round: { $i: { author: { '.validate': SHORT_TEXT(30) }, text: { '.validate': SHORT_TEXT(200) } } } } } },   // Undercover : descriptions des joueurs
   banqueroll: { code: '/^[A-Z]{3,5}-[0-9]{2}(-[a-z0-9]{1,3})?$/' },
   p4:         { code: CODE },
   qec2:       { code: CODE, texts: {                           // Qui est-ce : questions posées (120 caractères côté client)
-    questions: { $i: { text: SHORT_TEXT(200), authorName: SHORT_TEXT(30) } },
-    pendingQuestion: { text: SHORT_TEXT(200), authorName: SHORT_TEXT(30) },
+    questions: { $i: { text: { '.validate': SHORT_TEXT(200) }, authorName: { '.validate': SHORT_TEXT(30) } } },
+    pendingQuestion: { text: { '.validate': SHORT_TEXT(200) }, authorName: { '.validate': SHORT_TEXT(30) } },
   } },
   bn:         { code: CODE },
   rl:         { code: CODE, joinAnyPhase: true },               // Roulette : on s'assoit à tout moment

@@ -105,8 +105,12 @@
         "descriptions": {
           "$round": {
             "$i": {
-              "author": "newData.isString() && newData.val().length <= 30 && !newData.val().contains('<')",
-              "text": "newData.isString() && newData.val().length <= 200 && !newData.val().contains('<')"
+              "author": {
+                ".validate": "newData.isString() && newData.val().length <= 30 && !newData.val().contains('<')"
+              },
+              "text": {
+                ".validate": "newData.isString() && newData.val().length <= 200 && !newData.val().contains('<')"
+              }
             }
           }
         },
@@ -208,13 +212,21 @@
         },
         "questions": {
           "$i": {
-            "text": "newData.isString() && newData.val().length <= 200 && !newData.val().contains('<')",
-            "authorName": "newData.isString() && newData.val().length <= 30 && !newData.val().contains('<')"
+            "text": {
+              ".validate": "newData.isString() && newData.val().length <= 200 && !newData.val().contains('<')"
+            },
+            "authorName": {
+              ".validate": "newData.isString() && newData.val().length <= 30 && !newData.val().contains('<')"
+            }
           }
         },
         "pendingQuestion": {
-          "text": "newData.isString() && newData.val().length <= 200 && !newData.val().contains('<')",
-          "authorName": "newData.isString() && newData.val().length <= 30 && !newData.val().contains('<')"
+          "text": {
+            ".validate": "newData.isString() && newData.val().length <= 200 && !newData.val().contains('<')"
+          },
+          "authorName": {
+            ".validate": "newData.isString() && newData.val().length <= 30 && !newData.val().contains('<')"
+          }
         }
       }
     },
