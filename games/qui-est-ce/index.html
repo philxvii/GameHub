@@ -586,7 +586,8 @@ function renderThread(qs){
     const d=document.createElement('div');d.className='q-item';
     const ac=q.answer==='oui'?'oui':q.answer==='non'?'non':'pending';
     const al=q.answer==='oui'?'✓ OUI':q.answer==='non'?'✗ NON':'⏳ En attente…';
-    d.innerHTML=`<div class="q-author">${q.authorName}</div><div class="q-text">${q.text}</div><span class="q-ans ${ac}">${al}</span>`;
+    d.innerHTML=`<div class="q-author"></div><div class="q-text"></div><span class="q-ans ${ac}">${al}</span>`;
+    d.children[0].textContent=q.authorName; d.children[1].textContent=q.text;
     c.appendChild(d);
   });
   c.scrollTop=0;

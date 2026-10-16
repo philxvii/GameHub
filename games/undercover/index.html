@@ -876,7 +876,8 @@ function handlePlayingPhase(game) {
     container.innerHTML='';
     descs.forEach(d=>{
       const div=document.createElement('div'); div.className='description-item';
-      div.innerHTML=`<div class="desc-author">${d.author}</div><div class="desc-text">${d.text}</div>`;
+      div.innerHTML='<div class="desc-author"></div><div class="desc-text"></div>';
+      div.children[0].textContent=d.author; div.children[1].textContent=d.text;
       container.appendChild(div);
     });
     show('s-watch-turn');
@@ -941,7 +942,8 @@ function handleVotingPhase(game) {
     recap.innerHTML='<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Récap des descriptions</div>';
     descs.forEach(d=>{
       const d2=document.createElement('div'); d2.className='description-item';
-      d2.innerHTML=`<div class="desc-author">${d.author}</div><div class="desc-text">${d.text}</div>`;
+      d2.innerHTML='<div class="desc-author"></div><div class="desc-text"></div>';
+      d2.children[0].textContent=d.author; d2.children[1].textContent=d.text;
       recap.appendChild(d2);
     });
     container.appendChild(recap);
