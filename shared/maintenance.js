@@ -84,11 +84,15 @@
         mx.setAttribute('role', 'dialog');
         mx.setAttribute('aria-modal', 'true');
         mx.addEventListener('click', onClick);
-        // Seule exception : le cadre invisible par lequel Firebase reçoit la réponse de
-        // Google pendant la connexion admin (rien du site ne s'y affiche).
+        // Seule exception : les cadres invisibles de Firebase, celui qui reçoit la réponse de
+        // Google pendant la connexion admin et celui du long-polling de la base (qu'il retire
+        // lui-même du body : le supprimer ici fait échouer son removeChild et bloque la lecture
+        // de admins/). Rien du site ne s'y affiche.
         var keep = function (n) {
-          return n === mx || (n.tagName === 'IFRAME' &&
-            /^https:\/\/(roulia\.me|[a-z0-9-]+\.firebaseapp\.com)\/__\/auth\/iframe/.test(n.src || ''));
+          if (n === mx) return true;
+          if (n.tagName !== 'IFRAME') return false;
+          return /^https:\/\/(roulia\.me|[a-z0-9-]+\.firebaseapp\.com)\/__\/auth\/iframe/.test(n.src || '') ||
+            (n.style.display === 'none' && (!n.src || /^javascript:/.test(n.src)));   // long-polling de la base : caché, sans adresse
         };
         new MutationObserver(function () {
           if (isOpen()) return;
