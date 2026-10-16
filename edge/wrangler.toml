@@ -1,0 +1,13 @@
+# Portier de roulia.me — Cloudflare Workers, offre gratuite (100 000 requetes par jour).
+# Place devant GitHub Pages : en maintenance, le contenu du site ne sort plus de l'origine.
+# Secret du Worker (jamais dans ce fichier) :
+#   npx wrangler secret put COOKIE_SECRET     (une longue chaine aleatoire, 32 octets ou plus)
+name = "roulia-gate"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+
+# Le Worker ne s'applique que si le DNS de roulia.me passe par Cloudflare (nuage orange).
+routes = [
+  { pattern = "roulia.me/*", zone_name = "roulia.me" },
+  { pattern = "www.roulia.me/*", zone_name = "roulia.me" },
+]
