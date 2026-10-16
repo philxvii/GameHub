@@ -16,3 +16,6 @@ node_modules/
 .DS_Store
 Thumbs.db
 *.backup
+
+# Audit de sécurité : reste local (liste des points sensibles)
+docs/SECURITE.md
