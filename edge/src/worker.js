@@ -180,6 +180,12 @@ export default {
       return json(200, { ok: true }, { 'Set-Cookie': cookie });
     }
 
+    // Aperçu : l'écran de maintenance, tel que le voient les visiteurs, même pour l'admin ou site ouvert.
+    if (pathname === '/__gh/maintenance' && request.method === 'GET') return page(200, maintenancePage());
+
+    // Le calque de secours du site demande ici si le cookie admin est valide (HttpOnly : illisible côté page).
+    if (pathname === '/__gh/session' && request.method === 'GET') return json(admin ? 200 : 401, { admin: !!admin });
+
     if (admin || await siteOpen()) return secure(await fetch(request));
 
     // Seule exception pendant la maintenance : les pages de Firebase Auth copiées dans __/auth/

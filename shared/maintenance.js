@@ -113,6 +113,7 @@
         }).observe(document.body, { childList: true });
       }
       var t = TEXT[kind];
+      document.title = kind === 'error' ? 'Site indisponible' : 'Site en maintenance';
       mx.innerHTML =
         '<div class="mx-card">' +
           '<div class="mx-art" aria-hidden="true">' + DIE + '<img src="' + new URL('maintenance.webp', base) + '" alt="" onerror="this.remove()"></div>' +
@@ -174,6 +175,13 @@
       store(sessionStorage, ADMIN_HINT, null);
       lock('locked');
     });
+  }
+
+  // Le Worker a laissé passer la requête : si c'est grâce à son cookie admin, l'admin entre.
+  // Réponse vérifiée par le Worker (le cookie est signé et HttpOnly) ; sans Worker : refus.
+  function workerAdmin() {
+    return fetch('/__gh/session', { cache: 'no-store', credentials: 'same-origin' })
+      .then(function (r) { return r.ok; }, function () { return false; });
   }
 
   function onClick(e) {
@@ -238,7 +246,8 @@
         store(sessionStorage, ADMIN_HINT, null);
         if (state !== 'open') open(false);
       } else if (state === 'pending' || state === 'open') {
-        if (store(sessionStorage, ADMIN_HINT) === '1') verifyAdmin(); else lock('locked');
+        if (store(sessionStorage, ADMIN_HINT) === '1') verifyAdmin();
+        else workerAdmin().then(function (ok) { if (ok) open(true); else lock('locked'); });
       }
     }, function () {
       // Base injoignable au chargement : la page reste fermée. En cours de partie, on

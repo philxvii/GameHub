@@ -68,6 +68,29 @@ test('cookie signé valide : le site s\'ouvre en maintenance', async () => {
   assert.equal(await res.text(), 'ORIGINE');
 });
 
+test('GET /__gh/session : 200 avec un cookie valide, 401 sinon, origine jamais appelee', async () => {
+  await reset();
+  const cookie = `gh_admin=${await signSession(SECRET, UID)}`;
+  const ok = await worker.fetch(req('/__gh/session', { headers: { Cookie: cookie } }), env);
+  assert.equal(ok.status, 200);
+  assert.deepEqual(await ok.json(), { admin: true });
+  const no = await worker.fetch(req('/__gh/session'), env);
+  assert.equal(no.status, 401);
+  assert.equal(origin.length, 0);
+});
+
+test('GET /__gh/maintenance : ecran montre meme a ladmin et site ouvert, origine jamais appelee', async () => {
+  await reset();
+  flagValue = false;
+  const cookie = `gh_admin=${await signSession(SECRET, UID)}`;
+  for (const headers of [{}, { Cookie: cookie }]) {
+    const res = await worker.fetch(req('/__gh/maintenance', { headers }), env);
+    assert.equal(res.status, 200);
+    assert.match(await res.text(), /On revient vite/);
+  }
+  assert.equal(origin.length, 0);
+});
+
 test('cookie falsifié, expiré ou signé avec un autre secret : refusé', async () => {
   await reset();
   const good = await signSession(SECRET, UID);
