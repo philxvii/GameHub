@@ -10,6 +10,8 @@
 // L'interrupteur est le même que celui du site : hub/settings/maintenance (Firebase).
 // Cette couche s'ajoute à shared/maintenance.js et aux règles de la base, elle ne les remplace pas.
 
+import { HEAD, CSS, BODY } from './maintenance-view.js';
+
 const DB = 'https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app';
 const PROJECT = 'undercover-game-b0d2a';
 const API_KEY = 'AIzaSyDYrmf-ThU5x0SQBdEvUy5k83LyTXxhgFA';   // clé web publique, déjà dans shared/firebase.js
@@ -113,7 +115,8 @@ export function secure(res) {
 const NO_STORE = { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow' };
 
 function page(status, html) {
-  return new Response(html, { status, headers: { 'Content-Type': 'text/html; charset=utf-8', ...NO_STORE, ...SECURITY_HEADERS } });
+  const retry = status === 503 ? { 'Retry-After': '300' } : {};
+  return new Response(html, { status, headers: { 'Content-Type': 'text/html; charset=utf-8', ...NO_STORE, ...retry, ...SECURITY_HEADERS } });
 }
 
 function json(status, obj, extra = {}) {
@@ -121,36 +124,13 @@ function json(status, obj, extra = {}) {
 }
 
 const maintenancePage = () => `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><title>Site en maintenance</title>
-<style>
-html,body{margin:0;height:100%;background:#14432f;color:#1b2420;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-body{display:grid;place-items:center;padding:16px;text-align:center}
-.card{max-width:440px;width:100%;box-sizing:border-box;padding:2.2rem 1.8rem;background:#f4ecd8;border:2px solid #1b2420;border-radius:14px;box-shadow:0 6px 0 #1b2420}
-h1{font:700 1.7rem/1.2 Georgia,"Times New Roman",serif;margin:0 0 .8rem}
-p{margin:0;color:#5a6159}p+p{margin-top:.6rem}
-hr{border:0;border-top:2px solid #b08a3e;width:48px;margin:1.2rem auto}
-.admin{margin-top:1.4rem;padding-top:1.2rem;border-top:1px dashed #b9ae94;display:grid;gap:8px}
-.admin[hidden],button[hidden]{display:none}
-button{padding:11px 14px;border:2px solid #1b2420;border-radius:10px;background:#fffaf0;color:#1b2420;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
-button.main{background:#1b2420;color:#f4ecd8}button:disabled{opacity:.5;cursor:wait}
-.gear{position:fixed;right:16px;bottom:16px;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:transparent;color:#f4ecd8;opacity:.55;font-size:22px}
-.gear:hover{opacity:1}
-#msg{font-size:13px;color:#a03a24;min-height:1.2em;word-break:break-word}
-</style></head><body>
-<div class="card"><h1>Site en maintenance</h1>
-<p>Roulia est momentanément indisponible le temps d'une opération de maintenance.</p><hr>
-<p>Les jeux reviennent très vite. Merci de votre patience !</p>
-<div class="admin" id="admin" hidden>
-<button class="main" id="login" type="button">Se connecter avec Google</button>
-<button class="main" id="reopen" type="button" hidden>Réactiver le site</button>
-<button id="enter" type="button" hidden>Entrer quand même (admin)</button>
-<div id="msg" aria-live="polite"></div></div></div>
-<button class="gear" id="gear" type="button" aria-label="Administration">&#9881;</button>
+<html lang="fr"><head>${HEAD}
+<style>${CSS}</style></head><body>
+${BODY}
 <script type="module">
 const $ = id => document.getElementById(id);
 const msg = $('msg');
-$('gear').onclick = () => { $('admin').hidden = !$('admin').hidden; };
+$('gear').onclick = () => { $('admin').hidden = !$('admin').hidden; $('gear').setAttribute('aria-expanded', String(!$('admin').hidden)); };
 let fb;
 const load = () => fb || (fb = Promise.all([
   import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
