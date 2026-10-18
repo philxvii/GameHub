@@ -203,3 +203,30 @@ test('partie complète jouée au hasard : jamais d’état incohérent', () => {
     } else assert.ok(isFull(toBoard(g.board)));
   }
 });
+
+test('couleurs : rouge et bleu par défaut, jamais identiques, choix au salon seulement', async () => {
+  const { PALETTE, colorsOf, pickColor } = await import('../rules.js');
+  assert.deepEqual(colorsOf(game()), ['rouge', 'bleu']);
+  assert.deepEqual(colorsOf({}), ['rouge', 'bleu']);
+  const lobby = game({ phase: 'lobby' });
+  // Une couleur affichée chez l'adversaire est prise, même par défaut.
+  assert.equal(pickColor(lobby, { pnum: 0, color: 'bleu' }).reason, 'taken');
+  const g1 = pickColor(lobby, { pnum: 0, color: 'emeraude' });
+  assert.ok(g1.ok); assert.deepEqual(colorsOf(g1.game), ['emeraude', 'bleu']);
+  const g2 = pickColor(g1.game, { pnum: 1, color: 'jaune' });
+  assert.deepEqual(colorsOf(g2.game), ['emeraude', 'jaune']);
+  assert.equal(pickColor(g2.game, { pnum: 0, color: 'jaune' }).reason, 'taken');
+  // Partie écrite par un autre client : deux fois la même couleur → l'invité est décalé.
+  assert.deepEqual(colorsOf(game({ players: [{ name: 'A', color: 'bleu' }, { name: 'B', color: 'bleu' }] })), ['bleu', 'rouge']);
+  // Valeurs refusées : hors palette, hors salon, siège vide ou inconnu.
+  assert.equal(pickColor(lobby, { pnum: 0, color: '<b>' }).reason, 'color');
+  assert.equal(pickColor(game(), { pnum: 0, color: 'jaune' }).reason, 'phase');
+  assert.equal(pickColor(game({ phase: 'lobby', players: [{ name: 'A' }, null] }), { pnum: 1, color: 'jaune' }).reason, 'seat');
+  assert.equal(pickColor(lobby, { pnum: 2, color: 'jaune' }).reason, 'seat');
+  // Une couleur inconnue écrite dans la base retombe sur la valeur par défaut.
+  assert.deepEqual(colorsOf(game({ players: [{ name: 'A', color: 'x' }, { name: 'B', color: 'rouge' }] })), ['rouge', 'bleu']);
+  // La couleur traverse les coups et les manches.
+  const played = playMove(game({ players: g2.game.players }), { col: 0, pnum: 0 }).game;
+  assert.deepEqual(colorsOf(played), ['emeraude', 'jaune']);
+  assert.ok(PALETTE.length >= 5);
+});

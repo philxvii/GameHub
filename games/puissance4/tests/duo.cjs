@@ -16,7 +16,8 @@ const { Browser, Page, sleep } = require('../../../tools/cdp');
 const SITE = process.env.SITE || 'http://localhost:4174';
 const EMU = 'http://127.0.0.1:9000';
 const NS = 'ns=undercover-game-b0d2a-default-rtdb';
-const URL_P4 = `${SITE}/games/puissance4/?emu`;
+// P4_2D=1 : force le plateau de repli (sans WebGL).
+const URL_P4 = `${SITE}/games/puissance4/?emu${process.env.P4_2D ? '&2d' : ''}`;
 const args = process.argv.slice(2);
 const SHOTS = (args.find(a => a.startsWith('--shots=')) || '').slice(8);
 const VISIBLE = args.includes('--visible');
@@ -52,6 +53,8 @@ async function player(browser, label, { w = 1440, h = 900, mobile = false, dark 
   page.context = browserContextId; page.mobile = mobile;
   await page.goto(URL_P4);
   await waitFor(() => page.eval(`return document.body.dataset.screen === 's-home' && getComputedStyle(document.documentElement).visibility !== 'hidden'`));
+  page.intro = await page.eval(`return getComputedStyle(document.getElementById('intro-veil')).display !== 'none'`);
+  await waitFor(() => page.eval(`return !document.documentElement.classList.contains('intro') && getComputedStyle(document.getElementById('intro-veil')).display === 'none'`), 8000);   // fin de l'ouverture
   return page;
 }
 const dispose = p => p.browser.send('Target.disposeBrowserContext', { browserContextId: p.context }).catch(() => {});
@@ -62,6 +65,38 @@ async function shot(p, name) {
   if (!SHOTS) return;
   await sleep(250);
   await p.screenshot(path.join(SHOTS, name + '.png'));
+}
+// Pistes typographiques comparées dans le jeu réel (--fonts) : mêmes états, polices injectées.
+const FONTS = {
+  unbounded: { family: 'Unbounded:wght@500;600', display: "'Unbounded'", w: 600, track: '-.03em' },
+  caprasimo: { family: 'Caprasimo', display: "'Caprasimo'", w: 400, track: '-.01em' },
+  ultra: { family: 'Ultra', display: "'Ultra'", w: 400, track: '0em' },
+  limelight: { family: 'Limelight', display: "'Limelight'", w: 400, track: '0em' },
+};
+async function shotFonts(p, name) {
+  if (!SHOTS || !args.includes('--fonts')) return;
+  for (const [k, v] of Object.entries(FONTS)) {
+    await p.eval(`if (!document.getElementById('f-${k}')) { const l = document.createElement('link'); l.id = 'f-${k}'; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=${v.family}&display=block'; document.head.appendChild(l); await new Promise(r => { l.onload = r; setTimeout(r, 4000); }); }
+      const r = document.documentElement.style; r.setProperty('--f-display', ${JSON.stringify(v.display)} + ',serif'); r.setProperty('--f-num', ${JSON.stringify(v.display)} + ',serif'); r.setProperty('--display-w', '${v.w}'); r.setProperty('--display-track', '${v.track}'); await document.fonts.ready;`);
+    await sleep(500);
+    await p.screenshot(path.join(SHOTS, `typo-${name}-${k}.png`));
+  }
+  await p.eval(`['--f-display','--f-num','--display-w','--display-track'].forEach(v => document.documentElement.style.removeProperty(v));`);
+}
+// Rafale (--film) : des images rapprochées du plateau pendant une animation, pour juger le mouvement.
+async function film(p, name, action, ms = 900) {
+  if (!SHOTS || !args.includes('--film')) { await action(); return; }
+  const box = await p.eval(`const r = document.querySelector('#s-game .stage').getBoundingClientRect(); return { x: r.left, y: r.top - 70, width: r.width, height: r.height + 140 }`);
+  const frames = [];
+  const t0 = Date.now();
+  const run = action();
+  while (Date.now() - t0 < ms) {
+    const { data } = await p.send('Page.captureScreenshot', { format: 'jpeg', quality: 70, clip: { ...box, scale: .5 } });
+    frames.push({ t: Date.now() - t0, data });
+  }
+  await run;
+  require('fs').mkdirSync(SHOTS, { recursive: true });
+  frames.forEach((f, i) => require('fs').writeFileSync(path.join(SHOTS, `film-${name}-${String(i).padStart(2, '0')}-${f.t}ms.jpg`), Buffer.from(f.data, 'base64')));
 }
 async function setTheme(p, theme) {
   await p.eval(`if (document.documentElement.dataset.theme !== '${theme}') document.getElementById('theme-toggle').click();`);
@@ -107,12 +142,20 @@ async function main() {
   try {
     // ── Accueil ──
     await shot(A, '01-accueil-clair-desktop');
+    await shotFonts(A, 'accueil');
     await setTheme(A, 'dark'); await shot(A, '02-accueil-sombre-desktop'); await setTheme(A, 'light');
     await shot(B, '03-accueil-clair-mobile');
-    check('accueil : titre, deux actions, vitrine du plateau', await A.eval(`return !!document.querySelector('#s-home h1') && document.querySelectorAll('#demo .disc.p1,#demo .disc.p2').length > 5`));
+    check('ouverture : jouée à la première visite, puis retirée', A.intro && await A.eval(`return getComputedStyle(document.getElementById('intro-veil')).display === 'none' && getComputedStyle(document.querySelector('#s-home h1')).opacity === '1'`));
+        check('accueil : titre, deux actions, vitrine du plateau', await A.eval(`return !!document.querySelector('#s-home h1') && document.querySelectorAll('#demo .disc.p1,#demo .disc.p2').length > 5`));
 
     // ── Création (premier à 2 victoires) ──
-    await A.eval(`show('s-create'); document.getElementById('create-name').value = 'Alice'; document.querySelector('input[name=bo][value="2"]').click(); createGame();`);
+    await setTheme(A, 'dark');
+    await A.eval(`show('s-create'); document.getElementById('create-name').value = 'Alice'; document.querySelector('input[name=bo][value="2"]').click();`);
+    await shot(A, '03b-creation-desktop-sombre');
+    await setTheme(A, 'light');
+    await B.eval(`show('s-join'); document.getElementById('join-code').value = 'DISC-42'; document.getElementById('join-name').value = 'Bob';`);
+    await shot(B, '03c-rejoindre-mobile');
+    await A.eval(`createGame();`);
     const code = await waitFor(async () => Object.keys((await admin('p4')) || {}).find(k => !before.includes(k)));
     check('création : une partie dans l’émulateur', code, code);
     if (!code) throw new Error('pas de partie');
@@ -131,6 +174,15 @@ async function main() {
     check('rejoindre : deux membres distincts, B sur le siège 2 avec son uid', Object.keys(g1.members).length === 2 && g1.players[1].name === 'Bob' && g1.players[1].uid && g1.players[1].uid !== g1.hostUid);
     check('salon : « Lancer » s’active chez l’hôte', await waitFor(() => A.eval(`return !document.getElementById('lobby-start').disabled`)));
     check('salon : l’invité n’a pas de bouton « Lancer »', await B.eval(`return document.getElementById('lobby-start').hidden`));
+    // ── Couleurs : B prend l'émeraude ; A la voit indisponible, prend l'ocre ──
+    await B.eval(`document.querySelector('#swatches .swatch[data-color="emeraude"]').click()`);
+    check('couleurs : le choix de B est enregistré', await waitFor(async () => (await admin(`p4/${code}`)).players?.[1]?.color === 'emeraude'));
+    check('couleurs : chez A, l’émeraude est indisponible', await waitFor(() => A.eval(`return document.querySelector('#swatches .swatch[data-color="emeraude"]').disabled`)));
+    await A.eval(`window.pickColor('emeraude')`); await sleep(600);
+    check('couleurs : A ne peut pas prendre la couleur de B', (await admin(`p4/${code}`)).players?.[0]?.color !== 'emeraude');
+    await A.eval(`document.querySelector('#swatches .swatch[data-color="jaune"]').click()`);
+    check('couleurs : A passe à l’ocre, les jetons suivent', await waitFor(async () => (await admin(`p4/${code}`)).players?.[0]?.color === 'jaune'
+      && (await B.eval(`return getComputedStyle(document.documentElement).getPropertyValue('--p1').trim().toUpperCase()`)) === '#D9A33A'));
     await shot(A, '05-salon-pret-desktop');
     await shot(B, '06-salon-mobile');
 
@@ -155,12 +207,13 @@ async function main() {
     check('mise en page : aucun défilement horizontal (bureau, mobile)', fa.x <= 0 && fb.x <= 0, JSON.stringify({ fa, fb }));
     check('mise en page : la partie tient dans l’écran (bureau 1440×900, mobile 390×844)', fa.y <= 0 && fb.y <= 0, JSON.stringify({ fa, fb }));
     const sizes = [];
-    for (const [w, h, m] of [[1920, 1080, false], [1280, 720, false], [1024, 768, false], [820, 1180, true], [768, 1024, true], [360, 640, true]]) {
+    for (const [w, h, m] of [[1914, 835, false], [1920, 1080, false], [1280, 720, false], [1024, 768, false], [820, 1180, true], [768, 1024, true], [360, 640, true]]) {
       await A.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: m });
       await sleep(250);
       const f = await fit(A), cell = await A.eval(`return Math.round(document.querySelector('#cols .col').getBoundingClientRect().width)`);
       sizes.push(`${w}x${h}: ${f.x > 0 ? 'déborde en x ' : ''}${f.y > 0 ? 'défile ' + f.y + 'px ' : ''}colonne ${cell}px`);
       if (w === 1280) await shot(A, '07b-partie-1280x720');
+      if (w === 1914) { await sleep(900); await shot(A, '07d-partie-1914x835'); }
       if (w === 360) await shot(A, '07c-partie-360x640');
       // L'aide ne doit jamais passer sous les réserves de pions.
       const clash = await A.eval(`const h = document.getElementById('hint').getBoundingClientRect(); return [...document.querySelectorAll('#s-game .reserve')].some(r => { const b = r.getBoundingClientRect(); return b.width && getComputedStyle(r).display !== 'none' && b.left < h.right && b.right > h.left && b.top < h.bottom && b.bottom > h.top; })`);
@@ -207,12 +260,14 @@ async function main() {
     check('transaction : un coup calculé sur un plateau dépassé est refusé', !stale.committed && stale.reason === 'stale', JSON.stringify(stale));
 
     // ── Partie au milieu, captures ──
-    await sequence(code, [A, B], [3, 2, 4, 2, 4]);
+    await sequence(code, [A, B], [3, 2, 4, 2]);
+    await film(A, 'chute', () => sequence(code, [A, B], [4]), 800);
     await sleep(500);
     await hover(A, 5); await sleep(250);
     await shot(A, '08-milieu-partie-desktop-clair');
     await setTheme(A, 'dark'); await hover(A, 1); await sleep(250);
     await shot(A, '09-milieu-partie-desktop-sombre');
+    await shotFonts(A, 'partie');
     await A.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 10, y: 10 });
     await shot(B, '10-milieu-partie-mobile');
 
@@ -250,7 +305,7 @@ async function main() {
     await A.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }, { name: 'prefers-reduced-motion', value: 'reduce' }] });
     await sequence(code, [A, B], [0, 1, 1, 2, 2, 3, 2, 3, 3, 5]);
     const nb = pieces(await admin(`p4/${code}`));
-    await playCol(A, 3);
+    await film(B, 'victoire', () => playCol(A, 3), 1900);
     await waitFor(() => A.eval(`return document.querySelectorAll('#board .threads line').length === 1`), 3000);
     const rm = await A.eval(`await new Promise(r => setTimeout(r, 60)); const l = document.querySelector('#board .threads line'); return { off: l && parseFloat(getComputedStyle(l).strokeDashoffset), anims: document.querySelectorAll('#board .disc')[2 * 7 + 3].getAnimations().filter(a => a.playState === 'running' && a.effect.getComputedTiming().duration > 50).length }`);
     check('mouvement réduit : pas de chute animée, fil de victoire tracé d’emblée', rm.off === 0 && rm.anims === 0 && pieces(await admin(`p4/${code}`)) === nb + 1, JSON.stringify(rm));
@@ -261,17 +316,23 @@ async function main() {
     const endA = await A.eval(`return { t: document.getElementById('end-title').textContent, win: document.querySelectorAll('#board .disc.win').length, line: document.querySelectorAll('#board .threads line').length, shown: document.getElementById('end').classList.contains('in'), btn: document.getElementById('rematch-btn').textContent }`);
     const endB = await B.eval(`return { t: document.getElementById('end-title').textContent, win: document.querySelectorAll('#board .disc.win').length, line: document.querySelectorAll('#board .threads line').length, shown: document.getElementById('end').classList.contains('in') }`);
     check('victoire : 4 pions marqués et le fil, chez les deux', endA.win === 4 && endB.win === 4 && endA.line === 1 && endB.line === 1, JSON.stringify([endA, endB]));
+    const lit = await B.eval(`const w = [...document.querySelectorAll('#board .disc.win')], o = document.querySelector('#board .disc.p1:not(.win),#board .disc.p2:not(.win)'); return { win: w.map(d => getComputedStyle(d).filter), other: o && getComputedStyle(o).filter }`);
+    check('victoire : les 4 gagnants restent pleinement éclairés, les autres s’effacent', lit.win.every(f => f === 'none') && /brightness/.test(lit.other || ''), JSON.stringify(lit));
+    const gl3 = await A.eval(`return window.__p4gl ? window.__p4gl() : null`);
+    if (gl3) check('3D : 4 pions avancés et cerclés, le fil, les autres dans l’ombre, couleurs (ocre ; bleu après son retour au salon)', gl3.lifted === 4 && gl3.halos === 4 && gl3.threads === 1 && gl3.dimmed === gl3.pieces - 4 && gl3.colors.join() === '#D9A33A,#2D5BB5', JSON.stringify(gl3));
+    else check('3D : WebGL indisponible, repli 2D', true, 'pas de contexte WebGL');
     check('victoire : annonce cohérente (toi / Alice)', endA.t === 'Tu gagnes la manche' && endB.t === 'Alice gagne la manche' && endA.shown && endB.shown);
     check('victoire : match en 2 victoires → « Manche suivante »', endA.btn === 'Manche suivante');
     check('victoire : le plateau reste visible', await A.eval(`const r = document.getElementById('board').getBoundingClientRect(); return r.height > 300 && document.body.dataset.screen === 's-game'`));
     await shot(A, '11-victoire-desktop-sombre');
+    await shotFonts(A, 'victoire');
     await setTheme(A, 'light'); await shot(A, '12-victoire-desktop-clair');
     await shot(B, '13-victoire-mobile');
     await playCol(B, 4); await sleep(500);
     check('après la fin : plus aucun coup', pieces(await admin(`p4/${code}`)) === pieces(gw));
 
     // ── Revanche simultanée : une seule manche lancée, B commence ──
-    await Promise.all([A.eval(`rematch()`), B.eval(`rematch()`)]);
+    await film(A, 'vidange', () => Promise.all([A.eval(`rematch()`), B.eval(`rematch()`)]), 900);
     const gr = await waitFor(async () => { const g = await admin(`p4/${code}`); return g.phase === 'playing' && g; });
     check('revanche : manche 2, plateau vide, l’invité commence', gr && gr.gameNum === 2 && pieces(gr) === 0 && gr.turn === 1 && !gr.winCells, gr && `manche ${gr.gameNum}, tour ${gr.turn}`);
     check('revanche : plus de marque de victoire', await waitFor(() => A.eval(`return !document.querySelector('#board .disc.win') && !document.querySelector('#board .threads line') && document.getElementById('end').hidden && document.querySelectorAll('#board .disc.p1,#board .disc.p2').length === 0`)));

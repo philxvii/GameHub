@@ -117,3 +117,27 @@ export function nextRound(game, { gameNum, fresh = false } = {}) {
     turn: (n - 1) % 2, gameNum: n, winner: null, winCells: null, last: null,
   } };
 }
+
+// Couleurs de pions, choisies par chaque joueur au salon. Rouge et bleu par défaut ; les deux
+// joueurs n'ont jamais la même (la marque point / croissant reste en plus de la couleur).
+export const PALETTE = ['rouge', 'bleu', 'jaune', 'ivoire', 'emeraude', 'corail'];
+export const DEFAULT_COLORS = ['rouge', 'bleu'];
+
+export function colorsOf(game) {
+  const p = toPlayers(game?.players);
+  const a = PALETTE.includes(p[0]?.color) ? p[0].color : DEFAULT_COLORS[0];
+  let b = PALETTE.includes(p[1]?.color) ? p[1].color : DEFAULT_COLORS[1];
+  if (b === a) b = [...DEFAULT_COLORS, ...PALETTE].find(x => x !== a);
+  return [a, b];
+}
+
+// Choisir sa couleur : seulement au salon, et pas celle que l'adversaire affiche déjà.
+export function pickColor(game, { pnum, color }) {
+  if (!game || game.phase !== 'lobby') return { ok: false, reason: 'phase' };
+  if (!PALETTE.includes(color)) return { ok: false, reason: 'color' };
+  const players = toPlayers(game.players);
+  if ((pnum !== 0 && pnum !== 1) || !players[pnum]) return { ok: false, reason: 'seat' };
+  if (colorsOf(game)[1 - pnum] === color) return { ok: false, reason: 'taken' };
+  players[pnum] = { ...players[pnum], color };
+  return { ok: true, game: { ...game, players } };
+}
