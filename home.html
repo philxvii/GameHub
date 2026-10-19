@@ -783,24 +783,42 @@ const GAMES = [
 ];
 
 // ── Presence ──
+// onDisconnect ne part pas toujours (onglet tué, mobile en veille, maintenance) : chaque
+// visiteur rafraîchit son heure toutes les minutes, on ne compte que les entrées récentes
+// et on efface celles qui ont plus de 10 minutes.
 const presenceKey = Math.random().toString(36).slice(2);
 const onlineRef = ref(db, `hub/online/${presenceKey}`);
-import { onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+const HEARTBEAT = 60_000, STALE = 3 * HEARTBEAT, PURGE = 10 * HEARTBEAT;
+let serverOffset = 0, onlineList = {};
+onValue(ref(db, '.info/serverTimeOffset'), snap => { serverOffset = snap.val() || 0; renderOnline(); });
+const beat = () => set(onlineRef, {t:serverTimestamp()}).catch(() => {});
 onValue(ref(db, '.info/connected'), snap => {
   if(snap.val()){
-    set(onlineRef, {t:Date.now()});
+    beat();
     onDisconnect(onlineRef).remove();
   }
 });
+setInterval(beat, HEARTBEAT);
 onValue(ref(db, 'hub/online'), snap => {
-  const count = snap.exists() ? Object.keys(snap.val()).length : 0;
+  onlineList = snap.val() || {};
+  const now = Date.now() + serverOffset;
+  for(const [k, v] of Object.entries(onlineList)){
+    if(k !== presenceKey && !(now - (v && v.t) < PURGE)) remove(ref(db, `hub/online/${k}`)).catch(() => {});
+  }
+  renderOnline();
+});
+setInterval(renderOnline, HEARTBEAT);
+function renderOnline(){
+  const now = Date.now() + serverOffset;
+  const count = Object.entries(onlineList).filter(([k, v]) => k === presenceKey || now - (v && v.t) < STALE).length;
   const el = document.getElementById('online-count');
   if(el) el.textContent = `${count} personne${count>1?'s':''} connectée${count>1?'s':''} actuellement`;
   const mini = document.getElementById('live-mini');
   if(mini){ mini.lastElementChild.textContent = `${count} en ligne`; mini.hidden = false; }
   const statEl = document.getElementById('stat-online');
   if(statEl) statEl.textContent = count;
-});
+}
 
 // ── Visit counter ──
 update(ref(db, 'hub/stats'), {visits: increment(1)});
