@@ -5,7 +5,7 @@
 import { test, describe, before, after, beforeEach } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
-import { ref, get, set, update, remove, push, runTransaction, increment, query, orderByKey, onDisconnect } from 'firebase/database';
+import { ref, get, set, update, remove, push, runTransaction, increment, query, orderByKey, onDisconnect, serverTimestamp } from 'firebase/database';
 
 const RULES = readFileSync(new URL('../database.rules.phase2.json', import.meta.url), 'utf8');
 let env, alice, bob, eve, anon, admin;
@@ -233,6 +233,30 @@ describe('Hub et admin', () => {
     await assertFails(set(ref(alice, 'hub/updateLog'), [entry]));
     await assertSucceeds(set(ref(admin, 'hub/updateLog'), [entry]));
     await assertFails(set(ref(admin, 'hub/updateLog'), [{ ...entry, change: '<img src=x onerror=alert(1)>' }]));
+  });
+  test("ancien journal : plus lisible par les visiteurs", async () => {
+    await seed('hub/updateLog', [{ ts: 1, change: 'ok' }]);
+    await assertFails(get(ref(anon, 'hub/updateLog')));
+    await assertFails(get(ref(alice, 'hub/updateLog')));
+    await assertSucceeds(get(ref(admin, 'hub/updateLog')));
+  });
+  test("journal admin : ajout seul, heure du serveur, auteur réel, lecture admin", async () => {
+    const e = { ts: serverTimestamp(), cat: 'jeu', msg: 'UNO masqué', target: 'uno', by: 'admin1' };
+    await assertFails(set(push(ref(alice, 'adminLog')), { ...e, by: 'alice' }));
+    await assertFails(set(push(ref(anon, 'adminLog')), e));
+    const r = push(ref(admin, 'adminLog'));
+    await assertSucceeds(set(r, e));
+    await assertFails(set(r, { ...e, msg: 'réécrit' }));            // aucune modification
+    await assertFails(remove(r));                                     // aucune suppression
+    await assertFails(remove(ref(admin, 'adminLog')));
+    await assertFails(set(push(ref(admin, 'adminLog')), { ...e, ts: 1 }));          // heure imposée par le serveur
+    await assertFails(set(push(ref(admin, 'adminLog')), { ...e, by: 'alice' }));   // pas d'usurpation
+    await assertFails(set(push(ref(admin, 'adminLog')), { ...e, cat: 'autre' }));
+    await assertFails(set(push(ref(admin, 'adminLog')), { ...e, msg: '<img src=x>' }));
+    await assertFails(set(push(ref(admin, 'adminLog')), { ...e, extra: 1 }));
+    await assertFails(get(ref(alice, 'adminLog')));
+    await assertFails(get(ref(anon, 'adminLog')));
+    await assertSucceeds(get(ref(admin, 'adminLog')));
   });
   test("admins/ : chacun ne lit que sa propre ligne, personne n'écrit", async () => {
     await assertSucceeds(get(ref(alice, 'admins/alice')));

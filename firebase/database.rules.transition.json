@@ -294,6 +294,31 @@
     "wr": {
       ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
       ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()"
+    },
+    "adminLog": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      "$id": {
+        ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !data.exists() && newData.exists()",
+        ".validate": "newData.hasChildren(['ts', 'cat', 'msg', 'by'])",
+        "ts": {
+          ".validate": "newData.val() === now"
+        },
+        "cat": {
+          ".validate": "newData.isString() && newData.val().matches(/^(connexion|jeu|reglage|partie|joueur|stats|global)$/)"
+        },
+        "msg": {
+          ".validate": "newData.isString() && newData.val().length <= 300 && !newData.val().contains('<')"
+        },
+        "target": {
+          ".validate": "newData.isString() && newData.val().length <= 60 && !newData.val().contains('<')"
+        },
+        "by": {
+          ".validate": "newData.val() === auth.uid"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
     }
   }
 }

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Confidentialité — GameHub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+<style>
+  :root{--bg:#f6f7fb;--surface:#fff;--text:#12151f;--muted:#5b6275;--border:#dde1ec;--accent:#2F4DE0;--on-accent:#fff}
+  @media (prefers-color-scheme:dark){:root{--bg:#07090f;--surface:#10141f;--text:#eef0f7;--muted:#9aa2b8;--border:#232a3c;--accent:#7b93ff;--on-accent:#07090f}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;padding:1.5rem 16px 4rem}
+  main{max-width:680px;margin:0 auto}
+  h1{font-size:28px;letter-spacing:-.03em;margin:.5rem 0 1rem}
+  h2{font-size:17px;margin:2rem 0 .5rem}
+  p,li{color:var(--muted)} strong{color:var(--text)}
+  a{color:var(--accent)}
+  .box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1rem 1.25rem;margin-top:1.5rem}
+  label{display:flex;gap:.75rem;align-items:flex-start;color:var(--text);cursor:pointer}
+  input[type=checkbox]{width:20px;height:20px;margin-top:3px;accent-color:var(--accent)}
+  #state{font-size:14px;margin:.5rem 0 0}
+</style>
+</head>
+<body>
+<main>
+  <p><a href="/home">← GameHub</a></p>
+  <h1>Confidentialité et mesure d’audience</h1>
+
+  <p>GameHub mesure sa fréquentation pour savoir quels jeux sont utilisés, depuis quels pays et sur quels appareils. Cette mesure est <strong>statistique et anonyme</strong> : elle ne cherche pas à reconnaître les personnes.</p>
+
+  <h2>Ce qui est compté</h2>
+  <ul>
+    <li>Un chargement de page = un compteur incrémenté, par heure.</li>
+    <li>Page ou jeu consulté (sans adresse complète, sans code de partie, sans pseudo).</li>
+    <li>Pays et ville déduits approximativement de l’adresse IP (la ville est souvent celle du fournisseur d’accès), type d’appareil, navigateur et système d’exploitation (catégories seulement), nom de domaine du site d’origine.</li>
+  </ul>
+
+  <h2>Ce qui n’est pas fait</h2>
+  <ul>
+    <li>L’adresse IP n’est <strong>pas enregistrée</strong> : elle sert un instant à déduire le pays et la ville, puis disparaît. Pour la carte, chaque ville est placée sur un point arrondi à une dizaine de kilomètres ; aucune position individuelle n’est connue ni conservée.</li>
+    <li>Pas de cookie, pas d’identifiant, pas de stockage dans votre navigateur pour la mesure.</li>
+    <li>Pas de « visiteurs uniques » ni de suivi d’un visiteur d’une visite à l’autre, pas de lien avec vos pseudos, vos parties ou votre compte.</li>
+    <li>Pas de partage avec des tiers, pas de publicité, pas de recoupement avec d’autres sites.</li>
+  </ul>
+
+  <h2>Conservation</h2>
+  <p>Seuls des totaux (par heure, page, pays, ville, appareil, navigateur, système, source) sont conservés, 13 mois au plus, puis supprimés automatiquement. Une ville ou un groupe de moins de 5 pages vues sur la période n’est jamais affiché à part.</p>
+
+  <h2>Vous opposer</h2>
+  <p>Votre navigateur peut envoyer le signal « Do Not Track » ou « Global Privacy Control » : il est respecté. Vous pouvez aussi cocher la case ci-dessous (mémorisée dans ce navigateur).</p>
+  <div class="box">
+    <label><input type="checkbox" id="optout"> <span><strong>Ne pas compter mes visites</strong><br><span style="color:var(--muted);font-size:14px">Cette case enregistre votre choix dans ce navigateur uniquement.</span></span></label>
+    <p id="state" role="status" aria-live="polite"></p>
+  </div>
+
+  <h2>Hébergement</h2>
+  <p>Le site transite par Cloudflare, qui reçoit les requêtes comme tout hébergeur ; les compteurs sont stockés chez Cloudflare. Les parties utilisent Firebase (Google), sans lien avec la mesure d’audience.</p>
+</main>
+<script>
+  var box = document.getElementById('optout'), st = document.getElementById('state');
+  function show(){ st.textContent = box.checked ? 'Vos visites ne sont pas comptées.' : 'Vos visites sont comptées dans les statistiques anonymes.'; }
+  try { box.checked = localStorage.getItem('gh-stats-optout') === '1'; } catch (e) { box.disabled = true; st.textContent = 'Stockage indisponible : utilisez « Do Not Track » dans votre navigateur.'; }
+  if (!box.disabled) show();
+  box.addEventListener('change', function(){ try { box.checked ? localStorage.setItem('gh-stats-optout','1') : localStorage.removeItem('gh-stats-optout'); } catch (e) {} show(); });
+</script>
+</body>
+</html>

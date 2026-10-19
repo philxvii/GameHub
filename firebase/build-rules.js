@@ -90,8 +90,9 @@ const rules = {
     },
     hidden: { '.read': true, '.write': ADMIN, $id: { '.validate': 'newData.isBoolean()' } },
     settings: { '.write': ADMIN, ageGate: { '.read': true, '.validate': 'newData.isBoolean()' }, maintenance: { '.read': true, '.validate': 'newData.isBoolean()' }, $other: { '.validate': false } },
+    // Ancien journal (20 dernières entrées) : n'est plus écrit ; lisible par l'admin seul (il contenait des pseudos).
     updateLog: {
-      '.read': true,
+      '.read': ADMIN,
       '.write': ADMIN,
       $i: {
         '.validate': "newData.hasChildren(['ts'])",
@@ -101,6 +102,22 @@ const rules = {
         change: { '.validate': SHORT_TEXT(200) },
         $other: { '.validate': false },
       },
+    },
+  },
+
+  // Journal de l'admin : complet, lisible par l'admin seul, en ajout seulement (aucune entrée ne se
+  // modifie ni ne s'efface, même par l'admin). Heure fixée par le serveur, auteur = le compte connecté.
+  adminLog: {
+    '.read': ADMIN,
+    $id: {
+      '.write': `${ADMIN} && !data.exists() && newData.exists()`,
+      '.validate': "newData.hasChildren(['ts', 'cat', 'msg', 'by'])",
+      ts: { '.validate': 'newData.val() === now' },
+      cat: { '.validate': "newData.isString() && newData.val().matches(/^(connexion|jeu|reglage|partie|joueur|stats|global)$/)" },
+      msg: { '.validate': SHORT_TEXT(300) },
+      target: { '.validate': SHORT_TEXT(60) },
+      by: { '.validate': 'newData.val() === auth.uid' },
+      $other: { '.validate': false },
     },
   },
 
@@ -250,6 +267,8 @@ for (const prefix of Object.keys(GAMES)) {
   room.hostUid = rules[prefix].$code.hostUid;
   transition[prefix] = { '.read': ADMIN, '.write': `${ADMIN} && !newData.exists()`, $code: room };
 }
-transition.hub = { ...phase1.hub, hidden: rules.hub.hidden, settings: rules.hub.settings, updateLog: rules.hub.updateLog, stats: rules.hub.stats };
+// Anciens clients : ils lisent encore hub/updateLog au chargement, la lecture reste publique ici.
+transition.hub = { ...phase1.hub, hidden: rules.hub.hidden, settings: rules.hub.settings, updateLog: { ...rules.hub.updateLog, '.read': true }, stats: rules.hub.stats };
+transition.adminLog = rules.adminLog;
 writeFileSync(new URL('./database.rules.transition.json', import.meta.url), JSON.stringify({ rules: transition }, null, 2) + '\n');
 console.log('database.rules.transition.json écrit');

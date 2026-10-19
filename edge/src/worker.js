@@ -91,7 +91,8 @@ const CSP = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.googleapis.com https://fr.wikipedia.org https://*.workers.dev",
+  "connect-src 'self' https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.googleapis.com https://fr.wikipedia.org https://*.workers.dev https://tiles.openfreemap.org",
+  "worker-src 'self' blob:",   // carte de l'admin (MapLibre)
   "frame-src 'self' https://accounts.google.com https://*.firebaseapp.com https://apis.google.com",
   "object-src 'none'",
   "base-uri 'self'",

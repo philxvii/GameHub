@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <style id="mx-guard">html{visibility:hidden!important}</style><script src="shared/maintenance.js" onerror="window.stop();document.documentElement.innerHTML='&lt;body style=&quot;font:16px sans-serif;padding:2rem&quot;&gt;Site momentanément indisponible. Réessayez plus tard.&lt;/body&gt;'"></script>
+<script src="shared/analytics.js" defer></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Hub</title>
 <meta name="description" content="Neuf jeux en ligne, sans compte : Banqueroll, Undercover, UNO, Puissance 4, Qui est-ce ?, Bataille Navale, Roulette, Mini Subway et Mini Golf.">
@@ -200,49 +201,72 @@
   .admin-trigger:hover{opacity:1;transform:rotate(60deg);}
   .admin-trigger svg{width:16px;height:16px;}
 
-  /* ── Admin ── */
-  #admin-gate{position:fixed;inset:0;z-index:200;background:color-mix(in srgb,var(--bg) 96%,transparent);display:flex;align-items:center;justify-content:center;padding:1rem;}
+  /* ── Admin : même langage que le hub (bandeau, grand titre, puces, filets fins) ── */
+  #admin-gate{position:fixed;inset:0;z-index:200;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:1rem;}
   #admin-gate.hidden{display:none;}
-  .admin-gate-box{width:100%;max-width:340px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2rem 1.5rem;text-align:center;box-shadow:var(--shadow);}
-  .admin-gate-box input{width:100%;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:15px;text-align:center;outline:none;letter-spacing:3px;margin-bottom:10px;font-weight:600;}
-  #admin-panel{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;padding:1.5rem;}
+  .admin-gate-box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.25rem 1.75rem 1.5rem;text-align:center;box-shadow:var(--shadow);}
+  .admin-gate-box .gate-icon{background:var(--back) var(--die) center/58% no-repeat;}
+  .adm-ghost-btn{width:100%;margin-top:6px;padding:11px;border-radius:var(--r-sm);border:none;background:transparent;color:var(--muted);font-size:14px;cursor:pointer;}
+  .adm-ghost-btn:hover{color:var(--text);}
+  #admin-panel{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;}
   #admin-panel.hidden{display:none;}
-  .admin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;padding-bottom:1rem;border-bottom:1px solid var(--border);}
-  .admin-title{font-weight:600;font-size:26px;letter-spacing:-.03em;}
-  .admin-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;}
-  .admin-section-title{font-weight:600;font-size:14px;color:var(--text);margin-bottom:1rem;}
-  .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
-  .stat-card{background:var(--surface2);border-radius:var(--r-sm);padding:1rem;text-align:center;}
-  .stat-val{font-weight:600;font-size:28px;letter-spacing:-.03em;}
-  .stat-lbl{font-size:12px;color:var(--muted);margin-top:3px;}
-  .game-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
-  .game-toggle-row:last-child{border-bottom:none;}
-  .toggle{position:relative;width:40px;height:22px;cursor:pointer;flex-shrink:0;}
-  .toggle input{opacity:0;width:0;height:0;}
-  .toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:22px;transition:.2s;}
-  .toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.2s;}
+  .adm-top{position:sticky;top:0;z-index:600;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+  .adm-brand{display:inline-flex;align-items:center;gap:10px;font-size:19px;font-weight:600;letter-spacing:-.04em;}
+  .adm-brand i{width:30px;height:30px;border-radius:9px;background:var(--back) var(--die) center/62% no-repeat;box-shadow:var(--shadow);}
+  .adm-brand span{font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--muted);border:1px solid var(--border2);border-radius:999px;padding:3px 9px;}
+  .adm-back svg{width:16px;height:16px;}
+  .adm-pulse{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;padding:4px 0 34px;border-bottom:1px solid var(--border);margin-bottom:34px;}
+  .adm-pulse b{display:block;font-weight:600;font-size:clamp(26px,2.6vw,34px);line-height:1.05;letter-spacing:-.04em;font-variant-numeric:tabular-nums;}
+  .adm-pulse span{display:inline-flex;align-items:center;gap:7px;margin-top:6px;font-size:13.5px;color:var(--muted);}
+  .adm-pulse span i{width:6px;height:6px;border-radius:50%;background:#2EB872;}
+  .adm-pane{padding-bottom:72px;}
+  .adm-pane[hidden]{display:none;}
+  .adm-h{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px 16px;margin-bottom:10px;}
+  .adm-h h2{font-weight:600;font-size:19px;letter-spacing:-.02em;}
+  .adm-sub{font-size:14px;color:var(--muted);margin-bottom:22px;max-width:62ch;}
+  .adm-group+.adm-group{margin-top:48px;}
+  .adm-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid var(--border);}
+  .adm-row:last-child{border-bottom:none;}
+  .adm-row .t{font-size:15px;font-weight:500;}
+  .adm-row .d{font-size:13px;color:var(--muted);margin-top:2px;}
+  .adm-games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:48px;}
+  .adm-games .adm-row:last-child{border-bottom:1px solid var(--border);}
+  .game-row{display:flex;align-items:center;gap:14px;min-width:0;}
+  .game-row img{width:36px;height:48px;border-radius:8px;object-fit:cover;flex:none;box-shadow:var(--shadow);background:var(--surface2);transition:filter var(--d-2),opacity var(--d-2);}
+  .game-row.off img{filter:grayscale(1);opacity:.45;}
+  .toggle{position:relative;width:42px;height:24px;cursor:pointer;flex-shrink:0;}
+  .toggle input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:1;}
+  .toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:24px;transition:background-color var(--d-2);}
+  .toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform var(--d-2) var(--e-out);}
   .toggle input:checked+.toggle-slider{background:var(--accent);}
   .toggle input:checked+.toggle-slider::before{transform:translateX(18px);background:var(--on-accent);}
-  .btn-admin{padding:8px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .15s;width:auto;}
+  .toggle input:focus-visible+.toggle-slider{outline:2px solid var(--focus);outline-offset:3px;}
+  .btn-admin{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 15px;border-radius:999px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text);transition:border-color var(--d-2),background-color var(--d-2);white-space:nowrap;}
   .btn-admin:hover{border-color:var(--text);}
-  .btn-admin-danger{border-color:rgba(210,64,42,.35);color:#D2402A;}
-  .btn-admin-danger:hover{background:rgba(210,64,42,.08);}
-  .btn-admin-primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:600;}
-  .game-row{display:flex;align-items:center;gap:10px;}
-  .party-item{padding:10px 0;border-bottom:1px solid var(--border);}
+  .btn-admin-danger{border-color:rgba(210,64,42,.4);color:#D2402A;}
+  .btn-admin-danger:hover{border-color:#D2402A;background:rgba(210,64,42,.07);}
+  .btn-admin-sm{height:30px;padding:0 12px;font-size:13px;}
+  .party-item{padding:18px 0;border-bottom:1px solid var(--border);}
   .party-item:last-child{border-bottom:none;}
-  .party-code{font-weight:600;font-size:15px;letter-spacing:.04em;}
-  .party-info{font-size:12px;color:var(--muted);margin-top:2px;}
-  .party-players{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
-  .player-badge{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:12px;}
-  .player-kick{background:none;border:none;color:#D2402A;opacity:.7;cursor:pointer;font-size:12px;padding:0 2px;}
-  .player-kick:hover{opacity:1;}
-  .log-item{font-size:12px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:8px;}
-  .log-item:last-child{border-bottom:none;}
-  .log-dot{width:6px;height:6px;border-radius:50%;background:var(--text);flex-shrink:0;margin-top:3px;}
-  .log-time{font-size:11px;color:var(--muted);white-space:nowrap;}
-  .log-msg{flex:1;}
+  .party-head{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .party-code{font-weight:600;font-size:16px;letter-spacing:.06em;font-variant-numeric:tabular-nums;}
+  .party-game{font-size:13px;color:var(--muted);margin-left:10px;}
+  .party-info{font-size:13px;color:var(--muted);margin-top:2px;}
+  .party-players{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .player-badge{display:flex;align-items:center;gap:6px;background:var(--surface2);border-radius:999px;padding:4px 6px 4px 12px;font-size:13px;}
+  .player-kick{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;}
+  .player-kick:hover{color:#D2402A;background:rgba(210,64,42,.1);}
+  .adm-empty{font-size:14px;color:var(--muted);padding:12px 0;}
+  .adm-danger{margin-top:48px;padding-top:24px;border-top:1px solid rgba(210,64,42,.25);}
+  .adm-danger h2{color:#D2402A;}
+  .adm-actions{display:flex;gap:10px;flex-wrap:wrap;}
   @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
+  @media (max-width:640px){
+    .adm-pulse{gap:12px;}
+    .adm-games{grid-template-columns:1fr;}
+      .adm-back span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+    .adm-back{width:38px;padding:0;justify-content:center;}
+  }
 
   /* ── Tablette ── */
   @media (max-width:1100px){
@@ -273,7 +297,6 @@
     .cap{display:block;padding:0 14px 13px;}
     .game-card[data-wide] .name{font-size:22px;}
     .face{border-radius:13px;}
-    .stat-grid{grid-template-columns:1fr 1fr;}
   }
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{animation-duration:1ms !important;animation-delay:0ms !important;transition-duration:1ms !important;transition-delay:0ms !important;}
@@ -300,107 +323,101 @@
 </div>
 
 <!-- ── ADMIN GATE ── -->
-<div id="admin-gate" class="hidden">
+<div id="admin-gate" class="hidden" role="dialog" aria-modal="true" aria-labelledby="admin-gate-title">
   <div class="admin-gate-box">
-    <div style="font-family:var(--f-display);font-weight:800;font-size:26px;color:var(--accent);margin-bottom:0.5rem;">Admin</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:1.5rem;">Compte Google administrateur</div>
-    <button onclick="adminLogin()" style="width:100%;padding:12px;border-radius:var(--r-sm);font-family:var(--f-body);font-size:15px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:var(--on-accent);transition:all 0.15s;margin-bottom:8px;">Se connecter avec Google</button>
-    <div class="gate-error" id="admin-pwd-err" style="margin-top:0;"></div>
-    <button onclick="closeAdminGate()" style="width:100%;padding:10px;border-radius:var(--r-sm);font-size:13px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);margin-top:6px;">Annuler</button>
+    <span class="gate-icon" aria-hidden="true"></span>
+    <div class="gate-title" id="admin-gate-title">Administration</div>
+    <div class="gate-sub">Réservé au compte Google administrateur.</div>
+    <button class="gate-btn" type="button" onclick="adminLogin()">Se connecter avec Google</button>
+    <div class="gate-error" id="admin-pwd-err"></div>
+    <button class="adm-ghost-btn" type="button" onclick="closeAdminGate()">Annuler</button>
   </div>
 </div>
 
 <!-- ── ADMIN PANEL ── -->
-<div id="admin-panel" class="hidden">
-  <div style="max-width:700px;margin:0 auto;">
-    <div class="admin-header">
-      <div class="admin-title">Panel Admin</div>
-      <button onclick="closeAdmin()" style="padding:8px 16px;border-radius:var(--r-sm);font-size:13px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);">✕ Fermer</button>
-    </div>
-
-    <!-- Stats -->
-    <div class="admin-section">
-      <div class="admin-section-title">📊 Statistiques</div>
-      <div class="stat-grid">
-        <div class="stat-card"><div class="stat-val" id="stat-online">—</div><div class="stat-lbl">En ligne</div></div>
-        <div class="stat-card"><div class="stat-val" id="stat-visits">—</div><div class="stat-lbl">Visites totales</div></div>
-        <div class="stat-card"><div class="stat-val" id="stat-parties">—</div><div class="stat-lbl">Parties actives</div></div>
-        <div class="stat-card"><div class="stat-val" id="stat-players">—</div><div class="stat-lbl">Joueurs actifs</div></div>
-      </div>
-      <div style="margin-top:1rem;font-size:12px;color:var(--muted);line-height:1.8;" id="stat-lastupdate-block">
-        <strong style="color:var(--text);">Dernières mises à jour :</strong><br>
-        <span id="stat-lastupdate">Chargement…</span>
+<div id="admin-panel" class="hidden" role="dialog" aria-modal="true" aria-labelledby="admin-title">
+  <header class="adm-top">
+    <div class="wrap top">
+      <div class="adm-brand"><i aria-hidden="true"></i>GameHub <span>Admin</span></div>
+      <div class="top-right">
+        <button class="surprise adm-back" type="button" onclick="closeAdmin()" aria-label="Retour au site">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Retour au site</span>
+        </button>
       </div>
     </div>
+  </header>
 
-    <!-- Age gate toggle -->
-    <div class="admin-section">
-      <div class="admin-section-title">🔞 Vérification d'âge</div>
-      <div class="game-toggle-row">
-        <div class="game-row">
-          <span style="font-size:20px;">🔞</span>
-          <div>
-            <div style="font-size:14px;color:var(--text);">Activer la vérification d'âge</div>
-            <div style="font-size:11px;color:var(--muted);">Si désactivé, les visiteurs accèdent directement au site</div>
-          </div>
+  <main class="wrap">
+    <div class="intro">
+      <div>
+        <h1 id="admin-title">Administration</h1>
+        <p class="lede">L’audience, les jeux et les parties de GameHub.</p>
+      </div>
+      <div class="controls"><div class="filters" role="group" aria-label="Rubriques de l’administration" id="adm-tabs">
+        <button class="chip" type="button" data-pane="audience" aria-pressed="true">Audience</button>
+        <button class="chip" type="button" data-pane="jeux" aria-pressed="false">Jeux</button>
+        <button class="chip" type="button" data-pane="parties" aria-pressed="false">Parties</button>
+        <button class="chip" type="button" data-pane="reglages" aria-pressed="false">Réglages</button>
+        <button class="chip" type="button" data-pane="journal" aria-pressed="false">Journal</button>
+      </div></div>
+    </div>
+
+    <div class="adm-pulse">
+      <div><b id="stat-online">—</b><span><i aria-hidden="true"></i>En ligne maintenant</span></div>
+      <div><b id="stat-parties">—</b><span>Parties ouvertes</span></div>
+      <div><b id="stat-players">—</b><span>Joueurs dans ces parties</span></div>
+    </div>
+
+    <section class="adm-pane" data-pane="audience" id="audience-section" aria-label="Audience">
+      <div id="audience-root"><p class="adm-empty">Chargement…</p></div>
+    </section>
+
+    <section class="adm-pane" data-pane="jeux" aria-label="Jeux" hidden>
+      <div class="adm-h"><h2>Jeux affichés sur l’accueil</h2></div>
+      <p class="adm-sub">Un jeu masqué disparaît de l’accueil ; son adresse reste joignable.</p>
+      <div id="game-toggles" class="adm-games"></div>
+    </section>
+
+    <section class="adm-pane" data-pane="parties" aria-label="Parties" hidden>
+      <div class="adm-h"><h2>Parties ouvertes</h2><button class="btn-admin btn-admin-sm" type="button" onclick="loadParties()">Actualiser</button></div>
+      <p class="adm-sub">Toutes les parties présentes dans la base, tous jeux confondus.</p>
+      <div id="parties-list"><p class="adm-empty">Chargement…</p></div>
+    </section>
+
+    <section class="adm-pane" data-pane="reglages" aria-label="Réglages" hidden>
+      <div class="adm-group">
+        <div class="adm-h"><h2>Accès au site</h2></div>
+        <div class="adm-row">
+          <div><div class="t">Vérification d’âge</div><div class="d">Demande la date de naissance avant d’entrer.</div></div>
+          <label class="toggle"><input type="checkbox" id="age-gate-toggle" checked onchange="toggleAgeGate(this.checked)" aria-label="Vérification d’âge"/><span class="toggle-slider"></span></label>
         </div>
-        <label class="toggle">
-          <input type="checkbox" id="age-gate-toggle" checked onchange="toggleAgeGate(this.checked)"/>
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-    </div>
-
-    <!-- Maintenance toggle -->
-    <div class="admin-section">
-      <div class="admin-section-title">🛠️ Maintenance</div>
-      <div class="game-toggle-row">
-        <div class="game-row">
-          <span style="font-size:20px;">🛠️</span>
-          <div>
-            <div style="font-size:14px;color:var(--text);">Site en maintenance</div>
-            <div style="font-size:11px;color:var(--muted);">Toutes les pages affichent l'écran de maintenance et les parties sont gelées</div>
-          </div>
+        <div class="adm-row">
+          <div><div class="t">Maintenance</div><div class="d">Toutes les pages affichent l’écran de maintenance, les parties sont gelées.</div></div>
+          <label class="toggle"><input type="checkbox" id="maintenance-toggle" onchange="toggleMaintenance(this.checked)" aria-label="Maintenance"/><span class="toggle-slider"></span></label>
         </div>
-        <label class="toggle">
-          <input type="checkbox" id="maintenance-toggle" onchange="toggleMaintenance(this.checked)"/>
-          <span class="toggle-slider"></span>
-        </label>
       </div>
-    </div>
-
-    <!-- Game visibility -->
-    <div class="admin-section">
-      <div class="admin-section-title">🎮 Jeux — Afficher / Masquer</div>
-      <div id="game-toggles"></div>
-    </div>
-
-    <!-- Active parties -->
-    <div class="admin-section">
-      <div class="admin-section-title">🎲 Parties actives
-        <button class="btn-admin" onclick="loadParties()" style="margin-left:10px;padding:4px 10px;font-size:11px;">Rafraîchir</button>
+      <div class="adm-group">
+        <div class="adm-h"><h2>Compteur historique</h2></div>
+        <div class="adm-row">
+          <div><div class="t">Visites comptées : <span id="stat-visits">—</span></div><div class="d">Ancien compteur de l’accueil, sans période. L’onglet Audience le remplace.</div></div>
+          <button class="btn-admin btn-admin-sm" type="button" onclick="adminResetStats()">Remettre à zéro</button>
+        </div>
       </div>
-      <div id="parties-list"><p style="font-size:13px;color:var(--muted);">Chargement…</p></div>
-    </div>
-
-    <!-- Activity log -->
-    <div class="admin-section">
-      <div class="admin-section-title">📋 Journal d'activité admin</div>
-      <div id="activity-log"><div style="font-size:13px;color:var(--muted);">Aucune activité.</div></div>
-    </div>
-
-    <!-- Danger zone -->
-    <div class="admin-section" style="border-color:rgba(239,68,68,0.2);">
-      <div class="admin-section-title" style="color:#ef4444;">⚠ Zone dangereuse</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn-admin btn-admin-danger" onclick="adminClearAllParties()">Supprimer toutes les parties</button>
-        <button class="btn-admin btn-admin-danger" onclick="adminResetStats()">Remettre les stats à zéro</button>
+      <div class="adm-danger">
+        <div class="adm-h"><h2>Zone sensible</h2></div>
+        <p class="adm-sub">Irréversible : toutes les parties en cours sont supprimées pour tous les joueurs.</p>
+        <div class="adm-actions"><button class="btn-admin btn-admin-danger" type="button" onclick="adminClearAllParties()">Supprimer toutes les parties</button></div>
       </div>
-    </div>
-  </div>
+    </section>
+
+    <section class="adm-pane" data-pane="journal" aria-label="Journal" hidden>
+      <div class="adm-h"><h2>Journal de l’administration</h2></div>
+      <p class="adm-sub">Toutes les actions faites depuis ce panneau, conservées en entier. Personne, pas même l’admin, ne peut modifier ou effacer une entrée.</p>
+      <div id="journal-root"><p class="adm-empty">Chargement…</p></div>
+    </section>
+  </main>
 </div>
-
-
 
 <!-- ── HUB ── -->
 <div id="hub">
@@ -487,6 +504,7 @@
     <span class="footer-text"><span class="online-dot"></span><span id="online-count">Chargement…</span></span>
     <div style="display:flex;align-items:center;gap:12px;">
       <div class="footer-text">By XVIIIUUUU</div>
+      <a class="footer-text" href="/confidentialite" style="text-decoration:underline">Confidentialité</a>
       <button class="admin-trigger" type="button" onclick="openAdminGate()" aria-label="Administration">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
       </button>
@@ -604,7 +622,7 @@
   table.addEventListener('pointerleave', () => { grid.style.setProperty('--ty', '0deg'); grid.style.setProperty('--tx', '0deg'); });
 
   // ── Filtres : les jeux ecartes s'enfoncent et s'eteignent ; rien ne change de place ──
-  const chips = [...document.querySelectorAll('.chip')];
+  const chips = [...document.querySelectorAll('.chip[data-filter]')];
   let filter = 'all';
   const matches = c => filter === 'all' || c.dataset.tags.split(' ').includes(filter);
   function setDown(c, down, delay = 0) {
@@ -767,19 +785,20 @@
 <script type="module">
 import { ref, set, get, update, onValue, remove, increment, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { db, adminSignIn } from './shared/firebase.js';
+import { logAdmin, mountJournal } from './shared/admin-journal.js';
 
 // All games with Firebase db paths
 const GAMES = [
-  {id:'undercover', name:'Undercover',      emoji:'🕵️', db:'games'},
-  {id:'puissance4', name:'Puissance 4',     emoji:'🔴', db:'p4'},
-  {id:'quiestce',   name:'Qui est-ce ?',    emoji:'🤔', db:'qec2'},
-  {id:'bataille',   name:'Bataille Navale', emoji:'⚓', db:'bn'},
-  {id:'roulette',   name:'Roulette',        emoji:'🎰', db:'rl'},
-  {id:'minigolf',   name:'Mini Golf',       emoji:'⛳', db:'mg'},
-  {id:'banqueroll', name:'Banqueroll',      emoji:'💼', db:'banqueroll'},
-  {id:'uno',        name:'UNO',             emoji:'🃏', db:'uno'},
-  {id:'wikirace',   name:'WikiRace',        emoji:'🌍', db:'wr'},
-  {id:'minisubway', name:'Mini Subway',     emoji:'🚇'},
+  {id:'undercover', name:'Undercover',      dir:'undercover', emoji:'🕵️', db:'games'},
+  {id:'puissance4', name:'Puissance 4',     dir:'puissance4', emoji:'🔴', db:'p4'},
+  {id:'quiestce',   name:'Qui est-ce ?',    dir:'qui-est-ce', emoji:'🤔', db:'qec2'},
+  {id:'bataille',   name:'Bataille Navale', dir:'bataille-navale', emoji:'⚓', db:'bn'},
+  {id:'roulette',   name:'Roulette',        dir:'roulette', emoji:'🎰', db:'rl'},
+  {id:'minigolf',   name:'Mini Golf',       dir:'mini-golf', emoji:'⛳', db:'mg'},
+  {id:'banqueroll', name:'Banqueroll',      dir:'banqueroll', emoji:'💼', db:'banqueroll'},
+  {id:'uno',        name:'UNO',             dir:'uno', emoji:'🃏', db:'uno'},
+  {id:'wikirace',   name:'WikiRace',        dir:'wikirace', emoji:'🌍', db:'wr'},
+  {id:'minisubway', name:'Mini Subway',     dir:'mini-subway', emoji:'🚇'},
 ];
 
 // ── Presence ──
@@ -873,19 +892,6 @@ onValue(ref(db, 'hub/settings/maintenance'), snap => {
   if(toggle) toggle.checked = snap.val() === true;
 });
 
-// ── Update log from Firebase ──
-onValue(ref(db, 'hub/updateLog'), snap => {
-  const el = document.getElementById('stat-lastupdate');
-  if(!el) return;
-  if(!snap.exists()){ el.textContent = 'Aucune mise à jour enregistrée.'; return; }
-  const logs = snap.val();
-  const items = Array.isArray(logs) ? logs : Object.values(logs);
-  const sorted = items.sort((a,b) => (b.ts||0)-(a.ts||0)).slice(0,5);
-  el.innerHTML = sorted.map(l =>
-    `<span style="color:var(--text);font-weight:500;">${l.datetime}</span> — <span style="color:var(--accent);">${l.game}</span> : ${l.change}`
-  ).join('<br>');
-});
-
 // ── Admin ──
 window.openAdminGate = () => {
   document.getElementById('admin-gate').classList.remove('hidden');
@@ -908,16 +914,49 @@ window.adminLogin = async () => {
   }
   errEl.textContent = '';
   document.getElementById('admin-gate').classList.add('hidden');
+  logAdmin('connexion', 'Connexion au panneau d’administration', 'Google');
   openAdminPanel();
 };
-window.closeAdmin = () => { document.getElementById('admin-panel').classList.add('hidden'); };
+window.closeAdmin = () => {
+  document.getElementById('admin-panel').classList.add('hidden');
+  document.documentElement.style.overflow = '';
+};
+// Onglets : mêmes puces que les filtres de l'accueil.
+document.getElementById('adm-tabs')?.addEventListener('click', e => {
+  const b = e.target.closest('[data-pane]'); if(!b) return;
+  document.querySelectorAll('#adm-tabs [data-pane]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  document.querySelectorAll('.adm-pane').forEach(p => { p.hidden = p.dataset.pane !== b.dataset.pane; });
+  if(b.dataset.pane === 'parties') loadParties();
+  if(b.dataset.pane === 'jeux') loadGameToggles();
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && !document.getElementById('admin-panel').classList.contains('hidden')) closeAdmin();
+});
 
 function openAdminPanel(){
   document.getElementById('admin-panel').classList.remove('hidden');
+  document.documentElement.style.overflow = 'hidden';
   loadAdminStats();
+  loadAudience();
   loadGameToggles();
   loadParties();
-  renderLog();
+  if(!journal) journal = mountJournal(document.getElementById('journal-root'));
+  journal.start();
+}
+let journal;
+
+let audience;
+async function loadAudience(){
+  try {
+    if (!audience) {
+      const dev = location.hostname === 'localhost' ? new URLSearchParams(location.search).get('audience-dev') : null;
+      const { mountAudience } = await import('./shared/admin-audience.js');
+      audience = mountAudience(document.getElementById('audience-root'), { devEndpoint: dev || undefined });
+    }
+    audience.load();
+  } catch (e) {
+    document.getElementById('audience-root').textContent = 'Module Audience indisponible.';
+  }
 }
 
 async function loadAdminStats(){
@@ -944,18 +983,18 @@ function loadGameToggles(){
     const hidden = snap.exists() ? snap.val() : {};
     container.innerHTML = '';
     GAMES.forEach(g => {
-      const row = document.createElement('div'); row.className = 'game-toggle-row';
+      const row = document.createElement('div'); row.className = 'adm-row';
       const isVisible = !hidden[g.id];
       row.innerHTML = `
-        <div class="game-row">
-          <span style="font-size:18px;">${g.emoji}</span>
+        <div class="game-row${isVisible?'':' off'}">
+          <img src="games/${g.dir}/cover.webp" alt="" width="36" height="48" loading="lazy" decoding="async">
           <div>
-            <div style="font-size:14px;color:var(--text);">${g.name}</div>
-            ${g.db===null?'<div style="font-size:11px;color:var(--muted);">Bientôt disponible</div>':''}
+            <div class="t">${g.name}</div>
+            <div class="d">${isVisible?'Affiché':'Masqué'}</div>
           </div>
         </div>
         <label class="toggle">
-          <input type="checkbox" ${isVisible?'checked':''} onchange="toggleGame('${g.id}', this.checked)"/>
+          <input type="checkbox" ${isVisible?'checked':''} aria-label="Afficher ${g.name}" onchange="toggleGame('${g.id}', this.checked); const r=this.closest('.adm-row'); r.querySelector('.game-row').classList.toggle('off', !this.checked); r.querySelector('.d').textContent = this.checked ? 'Affiché' : 'Masqué';"/>
           <span class="toggle-slider"></span>
         </label>`;
       container.appendChild(row);
@@ -965,12 +1004,13 @@ function loadGameToggles(){
 
 window.toggleGame = async (gameId, visible) => {
   await update(ref(db, 'hub/hidden'), {[gameId]: !visible});
-  logActivity('Jeu', `"${gameId}" ${visible?'affiché':'masqué'}`, gameId);
+  const g = GAMES.find(x => x.id === gameId);
+  logAdmin('jeu', `${g ? g.name : gameId} ${visible ? 'affiché sur' : 'masqué de'} l’accueil`, gameId);
 };
 
 window.toggleAgeGate = async (enabled) => {
   await update(ref(db, 'hub/settings'), {ageGate: enabled});
-  logActivity('Paramètre', `Vérification d'âge ${enabled?'activée':'désactivée'}`, 'index');
+  logAdmin('reglage', `Vérification d’âge ${enabled ? 'activée' : 'désactivée'}`);
 };
 
 window.toggleMaintenance = async (enabled) => {
@@ -981,13 +1021,13 @@ window.toggleMaintenance = async (enabled) => {
   // L'admin qui l'active garde l'accès dans cet onglet (badge en bas à gauche).
   if(enabled){ try { sessionStorage.setItem('gh-mx-admin', '1'); } catch(e) {} }
   await update(ref(db, 'hub/settings'), {maintenance: enabled});
-  logActivity('Paramètre', `Maintenance ${enabled?'activée':'désactivée'}`, 'index');
+  logAdmin('reglage', `Maintenance ${enabled ? 'activée' : 'désactivée'}`);
 };
 
 const escHtml = v => String(v ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
 window.loadParties = async () => {
   const container = document.getElementById('parties-list'); if(!container) return;
-  container.innerHTML = '<p style="font-size:13px;color:var(--muted);">Chargement…</p>';
+  container.innerHTML = '<p class="adm-empty">Chargement…</p>';
   let html = ''; let found = false;
   for(const g of GAMES){
     if(!g.db) continue;
@@ -998,21 +1038,20 @@ window.loadParties = async () => {
       found = true;
       const players = (party.players||[]).filter(Boolean);
       html += `<div class="party-item">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="party-head">
           <div>
-            <span class="party-code">${code}</span>
-            <span style="font-size:11px;color:var(--muted);margin-left:8px;">${g.emoji} ${g.name}</span>
+            <span class="party-code">${code}</span><span class="party-game">${g.name}</span>
             <div class="party-info">Phase : ${escHtml(party.phase||'?')} · ${players.length} joueur${players.length>1?'s':''}</div>
           </div>
-          <button class="btn-admin btn-admin-danger" onclick="adminDeleteParty('${g.db}','${code}')" style="font-size:11px;padding:4px 8px;">Suppr.</button>
+          <button class="btn-admin btn-admin-danger btn-admin-sm" type="button" onclick="adminDeleteParty('${g.db}','${code}')">Supprimer</button>
         </div>
-        <div class="party-players">
-          ${players.map((p,i)=>`<div class="player-badge">${escHtml(p.name)}<button class="player-kick" onclick="adminKickPlayer('${g.db}','${code}',${i})" title="Exclure">✕</button></div>`).join('')}
-        </div>
+        ${players.length ? `<div class="party-players">
+          ${players.map((p,i)=>`<div class="player-badge">${escHtml(p.name)}<button class="player-kick" type="button" onclick="adminKickPlayer('${g.db}','${code}',${i})" aria-label="Exclure ${escHtml(p.name)}" title="Exclure">✕</button></div>`).join('')}
+        </div>` : ''}
       </div>`;
     });
   }
-  container.innerHTML = found ? html : '<p style="font-size:13px;color:var(--muted);">Aucune partie active.</p>';
+  container.innerHTML = found ? html : '<p class="adm-empty">Aucune partie ouverte.</p>';
 };
 
 window.adminDeleteParty = async (dbPath, code) => {
@@ -1022,7 +1061,7 @@ window.adminDeleteParty = async (dbPath, code) => {
     await remove(ref(db, `ucHost/${code}`));
   }
   await remove(ref(db, `${dbPath}/${code}`));
-  logActivity('Partie', `${code} supprimée`, dbPath);
+  logAdmin('partie', `Partie ${code} supprimée`, GAMES.find(g => g.db === dbPath)?.name || dbPath);
   loadParties(); loadAdminStats();
 };
 
@@ -1035,7 +1074,7 @@ window.adminKickPlayer = async (dbPath, code, playerIdx) => {
   if(!confirm(`Exclure ${playerName} de ${code} ?`)) return;
   players[playerIdx] = null;
   await update(ref(db, `${dbPath}/${code}`), {players});
-  logActivity('Joueur', `"${playerName}" exclu de ${code}`, dbPath);
+  logAdmin('joueur', `${playerName} exclu de la partie ${code}`, GAMES.find(g => g.db === dbPath)?.name || dbPath);
   loadParties();
 };
 
@@ -1043,55 +1082,15 @@ window.adminClearAllParties = async () => {
   if(!confirm('Supprimer TOUTES les parties ? Irréversible.')) return;
   for(const g of GAMES){ if(!g.db) continue; await remove(ref(db, g.db)); }
   await remove(ref(db, 'ucSecret')); await remove(ref(db, 'ucHost'));
-  logActivity('Global', 'Toutes les parties supprimées', 'toutes');
+  logAdmin('global', 'Toutes les parties supprimées', 'tous les jeux');
   loadParties(); loadAdminStats();
 };
 
 window.adminResetStats = async () => {
   if(!confirm('Remettre les stats à zéro ?')) return;
   await set(ref(db, 'hub/stats/visits'), 0);
-  logActivity('Stats', 'Remises à zéro', 'index');
+  logAdmin('stats', 'Compteur historique de visites remis à zéro');
 };
-
-// ── Activity log (local + Firebase update log) ──
-const activityLog = [];
-function logActivity(category, msg, gameFile){
-  const now = new Date();
-  const datetime = now.toLocaleDateString('fr-FR') + ' ' +
-    now.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  activityLog.unshift({category, msg, datetime, gameFile});
-  if(activityLog.length > 30) activityLog.pop();
-  // Push to Firebase update log
-  const logEntry = {
-    datetime,
-    game: GAMES.find(g=>g.db===gameFile||g.id===gameFile)?.name || gameFile,
-    change: msg,
-    ts: Date.now()
-  };
-  const logsRef = ref(db, 'hub/updateLog');
-  get(logsRef).then(snap => {
-    const existing = snap.exists() ? Object.values(snap.val()) : [];
-    existing.unshift(logEntry);
-    const trimmed = existing.slice(0, 20);
-    set(logsRef, trimmed);
-  });
-  renderLog();
-}
-
-function renderLog(){
-  const container = document.getElementById('activity-log'); if(!container) return;
-  if(activityLog.length === 0){
-    container.innerHTML = '<div style="font-size:13px;color:var(--muted);">Aucune activité.</div>';
-    return;
-  }
-  container.innerHTML = activityLog.map(l =>
-    `<div class="log-item">
-      <div class="log-dot"></div>
-      <span class="log-time">${l.datetime}</span>
-      <span class="log-msg"><strong style="color:var(--text);">[${l.category}]</strong> ${l.msg}</span>
-    </div>`
-  ).join('');
-}
 
 // ── Age gate ──
 window.gateInput = (el, nextId, maxLen) => {

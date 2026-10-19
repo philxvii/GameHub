@@ -1,0 +1,33 @@
+# Mesure d'audience de GameHub — Worker SÉPARÉ de roulia-gate (portier) et de l'IA de Banqueroll.
+# Collecte des compteurs agrégés dans D1 ; lecture réservée à l'admin. Voir README.md.
+name = "roulia-stats"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+
+# Route plus précise que celle de roulia-gate (roulia.me/*) : Cloudflare choisit la plus précise.
+routes = [{ pattern = "roulia.me/_stats/*", zone_name = "roulia.me" }]
+
+# Pas de journaux de requêtes : ni payload, ni IP.
+[observability]
+enabled = false
+
+[vars]
+RETENTION_DAYS = "395"   # ~13 mois ; purge quotidienne
+ALLOWED_ORIGINS = "https://roulia.me,https://www.roulia.me"
+
+[triggers]
+crons = ["17 3 * * *"]
+
+# À créer : npx wrangler d1 create roulia-stats, puis coller l'identifiant ici (avant déploiement).
+[[d1_databases]]
+binding = "DB"
+database_name = "roulia-stats"
+database_id = "A_REMPLACER_APRES_wrangler_d1_create"
+
+# Limitation de débit par adresse (la clé n'est jamais stockée par ce Worker).
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "2101"
+  [ratelimits.simple]
+  limit = 20
+  period = 60
