@@ -10,7 +10,7 @@ export const CB_LINES = ['#D55E00', '#0072B2', '#009E73', '#E69F00', '#CC79A7', 
 
 const THEMES = {
   day: { ink: '#1E232B', ink2: '#5B6270', paper: '#FFFDF8', alert: '#E2462F', warn: '#E89A1C', hatch: 'rgba(30,60,80,0.10)', grid: 'rgba(30,35,43,0.035)', shade: 'rgba(30,35,43,0.14)', glyph: '#1E232B' },
-  night: { ink: '#E9E4D8', ink2: '#9AA3B2', paper: '#1A212C', alert: '#FF6A4D', warn: '#FFB23E', hatch: 'rgba(160,210,240,0.08)', grid: 'rgba(233,228,216,0.03)', shade: 'rgba(0,0,0,0.35)', glyph: '#E9E4D8' },
+  night: { ink: '#E9E4D8', ink2: '#9AA3B2', paper: '#1A212C', alert: '#FF6A4D', warn: '#FFB23E', hatch: 'rgba(140,195,230,0.075)', grid: 'rgba(233,228,216,0.028)', shade: 'rgba(0,0,0,0.45)', glyph: '#E9E4D8', casing: '#161C25' },
 };
 
 const ST_R = 12.5;          // rayon d'une station
@@ -66,7 +66,7 @@ export class Renderer {
   }
   lineColor(st, l) {
     const c = this.colors(st)[l % 7];
-    return this.theme === 'night' && this.palette !== 'cb' ? lighten(c, 0.12) : c;
+    return this.theme === 'night' && this.palette !== 'cb' ? nightLine(c) : c;
   }
 
   // ── image ──
@@ -99,9 +99,9 @@ export class Renderer {
     const night = this.theme === 'night';
     const W = cfg.world;
     // cadre du monde : feuille de papier posée sur un fond plus sombre, bord encré
-    if (this.frameless) { ctx.fillStyle = night ? shade(cfg.palette.landNight, 0.035) : shade(cfg.palette.landDay, 0.025); ctx.fillRect(-4000, -4000, W.w + 8000, W.h + 8000); }
+    if (this.frameless) { ctx.fillStyle = night ? shade(cfg.palette.landNight, 0.045) : shade(cfg.palette.landDay, 0.025); ctx.fillRect(-4000, -4000, W.w + 8000, W.h + 8000); }
     else { ctx.fillStyle = T.shade; ctx.fillRect(4, 6, W.w, W.h); }
-    ctx.fillStyle = night ? shade(cfg.palette.landNight, 0.035) : shade(cfg.palette.landDay, 0.025);
+    ctx.fillStyle = night ? shade(cfg.palette.landNight, 0.045) : shade(cfg.palette.landDay, 0.025);
     ctx.fillRect(0, 0, W.w, W.h);
     ctx.save();
     ctx.beginPath(); ctx.rect(0, 0, W.w, W.h); ctx.clip();
@@ -120,22 +120,22 @@ export class Renderer {
     // Eau : halo de rive, liseré, aplat, hachures. Les liserés sont tracés AVANT les
     // aplats : là où deux bras se rejoignent, l'aplat recouvre le liseré intérieur.
     const water = night ? cfg.palette.waterNight : cfg.palette.waterDay;
-    const edge = night ? 'rgba(150,200,230,0.32)' : 'rgba(40,90,110,0.30)';
+    const edge = night ? 'rgba(140,195,228,0.42)' : 'rgba(40,90,110,0.30)';
     ctx.lineJoin = 'round';
-    for (const w of cfg.water) { path(ctx, w, true); ctx.strokeStyle = night ? 'rgba(120,180,220,0.10)' : 'rgba(255,255,255,0.55)'; ctx.lineWidth = 14; ctx.stroke(); }
+    for (const w of cfg.water) { path(ctx, w, true); ctx.strokeStyle = night ? 'rgba(110,170,215,0.07)' : 'rgba(255,255,255,0.55)'; ctx.lineWidth = 14; ctx.stroke(); }
     for (const w of cfg.water) { path(ctx, w, true); ctx.strokeStyle = edge; ctx.lineWidth = 2.8; ctx.stroke(); }
     for (const w of cfg.water) { path(ctx, w, true); ctx.fillStyle = water; ctx.fill(); }
     for (const w of cfg.water) { path(ctx, w, true); ctx.fillStyle = this.pattern('hatch'); ctx.fill(); }
     for (const l of cfg.land) {
       path(ctx, l, true);
-      ctx.strokeStyle = night ? 'rgba(120,180,220,0.12)' : 'rgba(255,255,255,0.6)'; ctx.lineWidth = 12; ctx.stroke();
+      ctx.strokeStyle = night ? 'rgba(110,170,215,0.08)' : 'rgba(255,255,255,0.6)'; ctx.lineWidth = 12; ctx.stroke();
       ctx.strokeStyle = edge; ctx.lineWidth = 1.6; ctx.stroke();
-      ctx.fillStyle = night ? shade(cfg.palette.landNight, 0.035) : shade(cfg.palette.landDay, 0.025); ctx.fill();
+      ctx.fillStyle = night ? shade(cfg.palette.landNight, 0.045) : shade(cfg.palette.landDay, 0.025); ctx.fill();
       ctx.globalAlpha = night ? 0.6 : 1; ctx.fillStyle = this.pattern('grain'); ctx.fill(); ctx.globalAlpha = 1;
     }
     ctx.restore();
     if (this.frameless) return;
-    ctx.strokeStyle = night ? 'rgba(233,228,216,0.28)' : 'rgba(30,35,43,0.35)'; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = night ? 'rgba(233,228,216,0.16)' : 'rgba(30,35,43,0.35)'; ctx.lineWidth = 1.5;
     ctx.strokeRect(0, 0, W.w, W.h);
   }
 
@@ -149,7 +149,7 @@ export class Renderer {
       let s = 7;
       const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
       for (let i = 0; i < 900; i++) {
-        g.fillStyle = night ? `rgba(255,255,255,${0.03 + rnd() * 0.04})` : `rgba(60,50,30,${0.015 + rnd() * 0.03})`;
+        g.fillStyle = night ? `rgba(255,255,255,${0.012 + rnd() * 0.022})` : `rgba(60,50,30,${0.015 + rnd() * 0.03})`;
         g.fillRect(rnd() * 128, rnd() * 128, 1 + rnd(), 1 + rnd());
       }
     } else if (kind === 'hatch') {
@@ -158,7 +158,7 @@ export class Renderer {
       g.beginPath(); g.moveTo(0, 16); g.lineTo(16, 0); g.moveTo(-4, 4); g.lineTo(4, -4); g.moveTo(12, 20); g.lineTo(20, 12); g.stroke();
     } else if (kind === 'dots') {
       c.width = c.height = 14;
-      g.fillStyle = night ? 'rgba(170,220,170,0.10)' : 'rgba(60,110,50,0.13)';
+      g.fillStyle = night ? 'rgba(150,215,165,0.17)' : 'rgba(60,110,50,0.13)';
       g.beginPath(); g.arc(3.5, 3.5, 1.1, 0, 7); g.arc(10.5, 10.5, 1.1, 0, 7); g.fill();
     }
     return (this.patterns[kind] = this.ctx.createPattern(c, 'repeat'));
@@ -223,6 +223,11 @@ export class Renderer {
         for (const [a, b] of lineSegments(l)) { path(ctx, this.segPts(st, off, l.id, a, b), false); ctx.strokeStyle = col; ctx.globalAlpha = 0.25; ctx.lineWidth = (LINE_W + 10) * k; ctx.stroke(); }
         ctx.globalAlpha = 1;
       }
+      if (T.casing) {
+        ctx.strokeStyle = T.casing; ctx.lineWidth = (LINE_W + 4) * k;
+        for (const [a, b] of lineSegments(l)) { path(ctx, this.segPts(st, off, l.id, a, b), false); ctx.stroke(); }
+        if (!l.loop) for (const end of [0, 1]) this.drawTerminal(st, l, end, T.casing, T, off, 4);
+      }
       ctx.strokeStyle = col; ctx.lineWidth = LINE_W * k;
       for (const [a, b] of lineSegments(l)) { path(ctx, this.segPts(st, off, l.id, a, b), false); ctx.stroke(); }
       if (!l.loop) for (const end of [0, 1]) this.drawTerminal(st, l, end, col, T, off);
@@ -270,14 +275,14 @@ export class Renderer {
     this.terms.set(tk, g);
     return g;
   }
-  drawTerminal(st, l, end, col, T, off) {
+  drawTerminal(st, l, end, col, T, off, extra = 0) {
     const { ctx } = this;
     const g = this.terminalGeom(st, l, end, off);
     const k = this.k;
-    ctx.strokeStyle = col; ctx.lineWidth = LINE_W * k; ctx.lineCap = 'butt';
+    ctx.strokeStyle = col; ctx.lineWidth = (LINE_W + extra) * k; ctx.lineCap = 'butt';
     ctx.beginPath(); ctx.moveTo(g.x0, g.y0); ctx.lineTo(g.x1, g.y1); ctx.stroke();
     ctx.lineCap = 'round';
-    const w = 11 * k;
+    const w = (11 + extra / 2) * k;
     ctx.beginPath(); ctx.moveTo(g.x1 - g.dy * w, g.y1 + g.dx * w); ctx.lineTo(g.x1 + g.dy * w, g.y1 - g.dx * w); ctx.stroke();
   }
 
@@ -770,5 +775,20 @@ function distSeg(px, py, ax, ay, bx, by) {
 }
 const backOut = u => { const s = 1.9; u -= 1; return u * u * ((s + 1) * u + s) + 1; };
 function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
-function lighten(h, a) { const [r, g, b] = hexToRgb(h); const f = v => Math.round(v + (255 - v) * a); return `rgb(${f(r)},${f(g)},${f(b)})`; }
+// Ligne de nuit : même teinte, clarté relevée à 58 % au moins, saturation plafonnée.
+const NIGHT_LINES = new Map();
+function nightLine(h) {
+  if (NIGHT_LINES.has(h)) return NIGHT_LINES.get(h);
+  const [r, g, b] = hexToRgb(h).map(v => v / 255);
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let hue = 0;
+  if (d) hue = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  const L0 = (mx + mn) / 2, S0 = d ? d / (1 - Math.abs(2 * L0 - 1)) : 0;
+  const L = Math.max(L0, 0.58), S = Math.min(S0, 0.72);
+  const C = (1 - Math.abs(2 * L - 1)) * S, X = C * (1 - Math.abs((hue % 2 + 2) % 2 - 1)), m = L - C / 2;
+  const [p, q, t] = [[C, X, 0], [X, C, 0], [0, C, X], [0, X, C], [X, 0, C], [C, 0, X]][Math.floor((hue + 6) % 6)];
+  const out = `rgb(${[p, q, t].map(v => Math.round((v + m) * 255)).join(',')})`;
+  NIGHT_LINES.set(h, out);
+  return out;
+}
 function shade(h, a) { const [r, g, b] = hexToRgb(h); const f = v => Math.max(0, Math.min(255, Math.round(v + 255 * a))); return `rgb(${f(r)},${f(g)},${f(b)})`; }

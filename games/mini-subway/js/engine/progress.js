@@ -6,7 +6,7 @@ import { hashString } from './rng.js';
 import { MAPS, MAP_BY_ID } from './maps.js';
 import { deepMerge } from './params.js';
 
-export const PROFILE_VERSION = 1;
+export const PROFILE_VERSION = 2;
 const BASE_MAPS = MAPS.filter(m => !m.unlock).map(m => m.id);
 
 export const CHALLENGE_MODS = {
@@ -52,7 +52,7 @@ export function weeklyChallenge(now = new Date()) {
 export function newProfile() {
   return {
     v: PROFILE_VERSION, records: {}, history: [], achievements: {}, challenges: {}, played: {}, totals: { delivered: 0, games: 0 },
-    settings: { theme: 'day', palette: 'standard', contrast: false, motion: 'auto', music: 0.5, sfx: 0.7, muted: false, speed: 1, pauseOnHide: true, hints: true, confirmRestart: true, labels: 'normal', haptics: true },
+    settings: { theme: 'auto', palette: 'standard', contrast: false, motion: 'auto', music: 0.5, sfx: 0.7, muted: false, speed: 1, pauseOnHide: true, hints: true, confirmRestart: true, labels: 'normal', haptics: true },
   };
 }
 
@@ -61,6 +61,8 @@ export function migrateProfile(p) {
   const base = newProfile();
   if (!p || typeof p !== 'object') return base;
   const out = { ...base, ...p, settings: { ...base.settings, ...(p.settings || {}) }, totals: { ...base.totals, ...(p.totals || {}) } };
+  // v2 : le thème suit l'appareil par défaut ; « Jour » n'était que l'ancien défaut.
+  if ((p.v || 0) < 2 && out.settings.theme === 'day') out.settings.theme = 'auto';
   out.v = PROFILE_VERSION;
   return out;
 }

@@ -189,6 +189,7 @@ export class Game {
     on($('#btn-menu'), 'click', () => this.openPause());
     on($('#btn-fit'), 'click', () => { this.autoCam = true; this.fit(false); });
     on($('#btn-mute'), 'click', () => this.toggleMute());
+    on($('#btn-theme'), 'click', () => this.switchTheme());
     on(window, 'resize', () => { this.renderer.resize(); this.oppR?.resize(); this.measureSafe(); });
     on(window, 'keydown', e => this.key(e));
     on(document, 'visibilitychange', () => { if (document.hidden && this.settings.pauseOnHide && this.session.kind === 'solo' && this.view().speed) { this.prevSpeed = this.view().speed; this.setSpeed(0); } });
@@ -268,9 +269,8 @@ export class Game {
   buildDock() {
     const st = this.view();
     const cfg = cfgOf(st);
-    const cols = this.renderer.colors(st);
     $('#dock-lines').innerHTML = Array.from({ length: cfg.limits.maxLines }, (_, i) =>
-      `<button class="lchip" data-line="${i}" style="--c:${cols[i % cols.length]}" aria-label="Ligne ${i + 1}"><i></i>${this.settings.palette === 'cb' || this.settings.labels === 'large' ? `<b>${i + 1}</b>` : ''}</button>`).join('');
+      `<button class="lchip" data-line="${i}" style="--c:${this.renderer.lineColor(st, i)}" aria-label="Ligne ${i + 1}"><i></i>${this.settings.palette === 'cb' || this.settings.labels === 'large' ? `<b>${i + 1}</b>` : ''}</button>`).join('');
     const res = [['loco', 'Locomotive'], ['express', 'Express'], ['car', 'Wagon'], ['bridge', 'Pont ou tunnel'], ['hub', 'Pôle d’échange']];
     $('#dock-res').innerHTML = res.map(([k, n]) => `<button class="res" data-res="${k}" aria-label="${n}" title="${n}"><svg><use href="#i-${k}"/></svg><b>0</b></button>`).join('');
     this.dockBuilt = true;
@@ -413,12 +413,17 @@ export class Game {
     else if (k === 'Escape') { if (this.panelState || this.input.armed) { this.panel(null); this.input.armed = null; this.armed(null); } else if (!$('#m-pause').hidden) this.closePause(); else this.openPause(); }
     else if (k === 'f' || k === 'F') { this.autoCam = true; }
     else if (k === 'm' || k === 'M') this.toggleMute();
+    else if (k === 'n' || k === 'N') this.switchTheme();
     else if (k === '+' || k === '=') this.zoomBy(1.2);
     else if (k === '-') this.zoomBy(1 / 1.2);
     else if ((e.ctrlKey || e.metaKey) && (k === 'z' || k === 'Z')) { e.preventDefault(); e.shiftKey ? this.redo() : this.undo(); }
     else if ((e.ctrlKey || e.metaKey) && (k === 'y' || k === 'Y')) { e.preventDefault(); this.redo(); }
   }
   zoomBy(f) { const R = this.renderer; R.cam.z = Math.max(0.35, Math.min(3.5, R.cam.z * f)); this.userCamera(); }
+  switchTheme() {
+    if (!this.toggleTheme) return;
+    this.toast(this.toggleTheme() ? 'Thème Nuit.' : 'Thème Jour.');
+  }
   toggleMute() {
     this.settings.muted = !this.settings.muted;
     this.audio.set({ muted: this.settings.muted });

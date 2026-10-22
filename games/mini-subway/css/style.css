@@ -81,6 +81,7 @@ svg { display: block; }
 .menu-main > .btn small { margin-left: 12px; text-align: right; }
 .menu-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .menu-row .btn { flex: 1 1 auto; min-height: 42px; font-size: 14px; padding: 8px 12px; }
+.menu-row .theme-btn { flex: 0 0 42px; padding: 0; }
 .hub-link { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 14px; text-decoration: none; margin-top: 6px; align-self: flex-start; padding: 6px 2px; }
 .hub-link:hover { color: var(--ink); }
 .hub-link svg { width: 16px; height: 16px; }
@@ -340,6 +341,7 @@ input:focus, select:focus { outline: none; border-color: var(--ink); }
   .hud-right { top: auto; bottom: calc(80px + var(--safe-b)); right: 8px; }
   .speed { flex-direction: row; }
   .hud-right { flex-direction: row-reverse; align-items: center; }
+  #btn-theme { display: none; }
   .dock { bottom: calc(8px + var(--safe-b)); padding: 5px 5px; gap: 2px; }
   .dock-lines, .dock-res { gap: 2px; }
   .lchip { width: 30px; height: 40px; }

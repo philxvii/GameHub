@@ -513,5 +513,9 @@ describe('défis et progression', () => {
     assert.equal(m.settings.sfx, 0.1);
     assert.equal(m.settings.music, 0.5);
     assert.deepEqual(m.records, { a: 1 });
+    assert.equal(newProfile().settings.theme, 'auto');
+    assert.equal(migrateProfile({ v: 1, settings: { theme: 'day' } }).settings.theme, 'auto');
+    assert.equal(migrateProfile({ v: 2, settings: { theme: 'day' } }).settings.theme, 'day');
+    assert.equal(migrateProfile({ v: 1, settings: { theme: 'night' } }).settings.theme, 'night');
   });
 });

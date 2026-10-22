@@ -32,6 +32,8 @@
     <symbol id="i-pax" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.4" fill="currentColor"/><path d="M5.5 20c.6-4.6 3.2-7 6.5-7s5.9 2.4 6.5 7z" fill="currentColor"/></symbol>
     <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
     <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="currentColor"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
     <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 0 1 0 10h-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 7l5 5-5 5M20 12H9a5 5 0 0 0 0 10h2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
@@ -66,6 +68,7 @@
           <button class="btn ghost" data-open="records">Records &amp; succès</button>
           <button class="btn ghost" data-open="settings">Réglages</button>
           <button class="btn ghost" data-open="help">Aide</button>
+          <button class="btn ghost theme-btn" id="menu-theme" aria-label="Passer en thème Nuit" title="Thème Jour / Nuit"><svg width="18" height="18"><use href="#i-moon"/></svg></button>
         </div>
         <a class="hub-link" href="../../home"><svg width="16" height="16"><use href="#i-back"/></svg>GameHub</a>
       </nav>
@@ -179,6 +182,7 @@
       <button class="icon-btn card" id="btn-menu" aria-label="Menu (Échap)" title="Menu (Échap)"><svg><use href="#i-menu"/></svg></button>
       <button class="icon-btn card" id="btn-fit" aria-label="Recentrer la carte (F)" title="Recentrer (F)"><svg><use href="#i-target"/></svg></button>
       <button class="icon-btn card" id="btn-mute" aria-label="Couper le son (M)" title="Son (M)"><svg><use href="#i-sound"/></svg></button>
+      <button class="icon-btn card" id="btn-theme" aria-label="Passer en thème Nuit (N)" title="Thème Jour / Nuit (N)"><svg><use href="#i-moon"/></svg></button>
     </div>
     <div class="mp-bar card" id="mp-bar" hidden></div>
     <div class="opp card" id="opp" hidden><canvas id="opp-canvas" aria-label="Réseau de l'adversaire (lecture seule)"></canvas><div class="opp-cap"><span><small>Réseau adverse · lecture seule</small><span id="opp-name">Adversaire</span></span><strong id="opp-score">0</strong></div></div>

@@ -38,6 +38,10 @@ function applyTheme() {
   root.dataset.contrast = S.contrast ? 'high' : 'normal';
   root.dataset.motion = S.motion === 'reduced' ? 'reduced' : 'normal';
   $('meta[name="theme-color"]').content = night ? '#121821' : '#F1EDE3';
+  for (const b of $$('#btn-theme, #menu-theme')) {
+    b.querySelector('use').setAttribute('href', night ? '#i-sun' : '#i-moon');
+    b.setAttribute('aria-label', `Passer en thème ${night ? 'Jour' : 'Nuit'}${b.id === 'btn-theme' ? ' (N)' : ''}`);
+  }
   audio.set({ music: S.music, sfx: S.sfx, muted: S.muted });
   if (game) game.applySettings(S);
   if (attract) attract.R.setOptions({ theme: night ? 'night' : 'day', palette: S.palette, reduced: reducedMotion() });
@@ -45,6 +49,12 @@ function applyTheme() {
   if (!$('#p-play').hidden) renderMaps();
 }
 const reducedMotion = () => S.motion === 'reduced' || (S.motion === 'auto' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+// Bascule rapide Jour ↔ Nuit (accueil, barre de jeu, touche N) ; renvoie true si Nuit.
+function toggleTheme() {
+  S.theme = document.documentElement.dataset.theme === 'night' ? 'day' : 'night';
+  saveSettings(); applyTheme(); audio.ui();
+  return S.theme === 'night';
+}
 function saveSettings() { if (!store.save()) toastMenu('Impossible d’enregistrer : stockage du navigateur indisponible.'); }
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', applyTheme);
 
@@ -67,6 +77,7 @@ function closeSheets() { $$('.sheet').forEach(s => (s.hidden = true)); }
 document.addEventListener('click', e => {
   const o = e.target.closest('[data-open]');
   if (o) { audio.unlock(); audio.ui(); openSheet(o.dataset.open); return; }
+  if (e.target.closest('#menu-theme')) { audio.unlock(); toggleTheme(); return; }
   if (e.target.closest('[data-close]')) { closeSheets(); if (game) gameSheetClosed(); lastFocus?.focus?.(); }
 });
 document.addEventListener('keydown', e => {
@@ -187,6 +198,7 @@ function startSolo(opts) {
     onRestart: () => startSolo({ ...opts, seed: opts.challenge ? opts.seed : (Math.random() * 2 ** 32) >>> 0 }),
   });
   game.saveSettings = saveSettings;
+  game.toggleTheme = toggleTheme;
   game.onSheet = name => openInGame(name);
 }
 
@@ -322,7 +334,7 @@ function renderHelp() {
     <h3>Commandes</h3>
     <ul>
       <li><span class="kbd">Espace</span> pause / reprise · <span class="kbd">1</span> vitesse normale · <span class="kbd">2</span> vitesse rapide</li>
-      <li><span class="kbd">Échap</span> menu · <span class="kbd">F</span> recentrer · <span class="kbd">M</span> son · <span class="kbd">+</span> <span class="kbd">−</span> zoom</li>
+      <li><span class="kbd">Échap</span> menu · <span class="kbd">F</span> recentrer · <span class="kbd">M</span> son · <span class="kbd">N</span> Jour / Nuit · <span class="kbd">+</span> <span class="kbd">−</span> zoom</li>
       <li>Molette ou pincement : zoom · glisser dans le vide : déplacer la carte</li>
       <li>Créatif : <span class="kbd">Ctrl</span>+<span class="kbd">Z</span> annuler, <span class="kbd">Ctrl</span>+<span class="kbd">Y</span> rétablir</li>
     </ul>
@@ -442,6 +454,7 @@ function startNet(session) {
     onRestart: () => lobby && lobby.rematch(),
   });
   game.saveSettings = saveSettings;
+  game.toggleTheme = toggleTheme;
   game.onSheet = name => openInGame(name);
 }
 

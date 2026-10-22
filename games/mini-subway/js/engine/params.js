@@ -55,8 +55,8 @@ export const DEFAULTS = {
   infinite: { gainPerDelivery: 0.014, lossPerExcess: 0.00005, decay: 0.00002, resetTo: 0.25 },
   modifiers: { shapeChange: null },
   palette: {
-    landDay: '#F1EDE3', landNight: '#121821', waterDay: '#BCD7DE', waterNight: '#1D3344',
-    parkDay: '#DDE7D0', parkNight: '#1E3328',
+    landDay: '#F1EDE3', landNight: '#141A23', waterDay: '#BCD7DE', waterNight: '#0A1B2C',
+    parkDay: '#DDE7D0', parkNight: '#1C3427',
     lines: ['#E0412F', '#2A6FD6', '#1E9E62', '#F2A516', '#8A4FD3', '#12A7C4', '#E0599A'],
   },
 };
