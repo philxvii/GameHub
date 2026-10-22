@@ -159,7 +159,7 @@ export function mountAudience(root, { devEndpoint } = {}) {
   async function token() {
     if (demo) return 'dev';
     await auth.authStateReady();
-    if (!auth.currentUser || auth.currentUser.isAnonymous) throw new Error('Connexion administrateur requise.');
+    if (!auth.currentUser || auth.currentUser.isAnonymous) throw new Error('Accès refusé.');
     return auth.currentUser.getIdToken();
   }
 
@@ -173,7 +173,7 @@ export function mountAudience(root, { devEndpoint } = {}) {
       const res = await fetch(`${devEndpoint || ''}/_stats/summary?range=${st.range}&game=${encodeURIComponent(st.game)}`,
         { headers: { Authorization: 'Bearer ' + await token() }, cache: 'no-store' });
       if (my !== st.seq) return;
-      if (res.status === 401) throw new Error('Accès refusé : ce compte n’est pas administrateur.');
+      if (res.status === 401) throw new Error('Accès refusé.');
       if (res.status === 404) throw new Error('Le service de mesure n’est pas encore déployé.');
       if (!res.ok) throw new Error('Service indisponible (' + res.status + ').');
       st.data = await res.json();

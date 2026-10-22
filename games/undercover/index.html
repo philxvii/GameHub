@@ -1204,7 +1204,7 @@ window.adminLogin = async () => {
   const errEl=document.getElementById('admin-err');
   let res;
   try { res=await adminSignIn(); } catch(e) { errEl.style.display='block'; errEl.textContent='Connexion Google annulée ou impossible.'; return; }
-  if(!res.isAdmin){errEl.style.display='block';errEl.textContent=`Compte non autorisé. Pour l'autoriser : admins/${res.uid} = true dans la console Firebase.`;return;}
+  if(!res.isAdmin){errEl.style.display='block';errEl.textContent='Accès refusé.';return;}
   errEl.style.display='none';
   document.getElementById('admin-result').style.display='none';
   adminLoadGames(); show('s-admin');

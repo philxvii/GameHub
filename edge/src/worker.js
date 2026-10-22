@@ -148,7 +148,7 @@ $('login').onclick = async () => {
     const { au, auth } = await load();
     const { user } = await au.signInWithPopup(auth, new au.GoogleAuthProvider());
     const res = await fetch('/__gh/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: await user.getIdToken() }) });
-    if (!res.ok) { msg.textContent = res.status === 403 ? 'Compte non autorisé.' : 'Échec de la vérification (' + res.status + ').'; b.disabled = false; return; }
+    if (!res.ok) { msg.textContent = 'Accès refusé.'; b.disabled = false; return; }
     b.hidden = true; $('reopen').hidden = false; $('enter').hidden = false; b.disabled = false;
   } catch (e) { b.disabled = false; msg.textContent = 'Connexion Google annulée ou impossible' + (e && e.code ? ' (' + e.code + ')' : '') + '.'; }
 };

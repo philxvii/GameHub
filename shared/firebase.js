@@ -120,7 +120,7 @@ export async function closeRoom(prefix, code) {
 }
 
 // Connexion admin par Google. L'uid doit figurer dans `admins/` (ajouté depuis la
-// console Firebase) ; il est renvoyé pour pouvoir l'y ajouter la première fois.
+// console Firebase).
 // Le compte anonyme du navigateur est rattaché au compte Google (même uid) : les
 // parties ouvertes dans d'autres onglets gardent leur hôte. Si ce compte Google est
 // déjà rattaché ailleurs, on s'y connecte (l'uid de ce navigateur change alors).

@@ -199,7 +199,7 @@
       msg.textContent = '';
       loadFb().then(function (m) { return m[0].adminSignIn(); }).then(function (res) {
         btn.disabled = false;
-        if (!res.isAdmin) { msg.textContent = 'Compte non autorisé.'; return; }
+        if (!res.isAdmin) { msg.textContent = 'Accès refusé.'; return; }
         btn.hidden = true;
         mx.querySelector('[data-mx="reopen"]').hidden = false;
         mx.querySelector('[data-mx="enter"]').hidden = false;

@@ -907,7 +907,7 @@ window.adminLogin = async () => {
   try { res = await adminSignIn(); }
   catch (e) { errEl.textContent = 'Connexion Google annulée ou impossible.'; return; }
   if(!res.isAdmin){
-    errEl.textContent = `Compte non autorisé. Pour l'autoriser : admins/${res.uid} = true dans la console Firebase.`;
+    errEl.textContent = 'Accès refusé.';
     const box = document.querySelector('.admin-gate-box');
     box.style.animation='none'; box.offsetHeight; box.style.animation='shake 0.4s ease';
     return;
