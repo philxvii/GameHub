@@ -381,3 +381,28 @@ body.money-time .board{box-shadow:inset 0 0 0 .35cqi var(--ink), inset 0 0 0 .55
 .mode-adult-text small{font-size:.8rem;opacity:.75;}
 .mode-adult:has(input:checked){box-shadow:0 0 0 2px var(--ink), 0 0 0 5px var(--oxblood);}
 .mode-chip--adult{background:var(--oxblood);color:var(--cream);}
+
+/* Scenes animees des cartes de regles (voir js/briefing-anim.js) */
+.brief-card{min-height:0;}
+.brief-card h3{margin-bottom:6px;}
+.brief-cap{font-size:1.02rem;font-weight:600;line-height:1.35;margin-bottom:8px;}
+.brief-more{font-size:.88rem;opacity:.85;}
+.brief-more summary{cursor:pointer;font-weight:700;margin-bottom:6px;}
+.brief-more ul{margin-top:6px;}
+.ba-stage{position:relative;height:150px;margin:6px 0 12px;border-radius:10px;overflow:hidden;
+  background:repeating-linear-gradient(135deg,var(--paper-lo) 0 10px,var(--paper) 10px 20px);box-shadow:inset 0 0 0 2px var(--ink);}
+.ba{position:absolute;line-height:1;white-space:nowrap;opacity:0;animation-duration:7s;animation-iteration-count:infinite;animation-timing-function:ease-in-out;animation-fill-mode:both;}
+.ba-tag{display:inline-block;padding:4px 9px;border-radius:8px;background:var(--paper-hi);box-shadow:0 0 0 1.5px var(--ink);font-size:.8rem;font-weight:700;color:var(--ink);}
+.ba-tag.ok{background:#cfe8d6;} .ba-tag.gold{background:var(--brass-hi);} .ba-tag.on-rent{background:#f3d9c9;}
+.ba-tile{display:grid;place-items:center;width:62px;height:62px;border-radius:8px;background:var(--paper-hi);border-top:12px solid var(--c,#c9b993);
+  box-shadow:0 0 0 2px var(--ink);font-style:normal;font-size:1.4rem;color:var(--ink);text-align:center;}
+.ba-tile small{display:block;font-size:.6rem;font-weight:700;margin-top:-2px;} .ba-tile b{font-size:.95rem;}
+.ba-gain,.ba-loss{font-family:var(--display);font-weight:400;font-size:1.3rem;-webkit-text-stroke:0;text-shadow:0 1px 0 var(--paper-hi);}
+.ba-gain{color:var(--money);} .ba-loss{color:var(--oxblood);}
+.ba-track{position:absolute;left:6%;right:6%;top:46%;height:16px;border-radius:9px;background:var(--paper-hi);box-shadow:0 0 0 2px var(--ink);overflow:hidden;}
+.ba-fill{display:block;height:100%;width:0;background:var(--money);animation:ba-fill 7s ease-in-out infinite;}
+@keyframes ba-fill{0%,4%{width:0}70%,94%{width:100%}100%{width:100%}}
+@media (prefers-reduced-motion:reduce){
+  .ba{animation:none !important;opacity:1;transform:none;}
+  .ba-fill{animation:none;width:60%;}
+}

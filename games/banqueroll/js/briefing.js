@@ -81,7 +81,7 @@ function baseCards(game) {
   const max = roundsOf(game), target = targetOf(game);
   const mini = on(game, 'eventMinigames'), will = on(game, 'testament');
   return [
-    { key: 'goal', icon: '🎯', title: 'Le but', lines: [
+    { key: 'goal', icon: '🎯', title: 'Le but', n: target, lines: [
       `Premier à ${fmt(target)} de fortune nette${max ? `, ou le plus riche après ${max} manches` : ''}.`,
       'Fortune nette = argent + villes + bâtiments.',
       `Un seul dé ; un 6 fait rejouer. Passer par le Départ rapporte ${fmt(START_BONUS)}.`,

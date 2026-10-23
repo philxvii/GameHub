@@ -16,6 +16,7 @@ import { sfx, isMuted, setMuted } from './sfx.js';
 import { HOST_AVATAR } from './render.js';
 import { MINIGAMES, MEMORY_COLORS } from './minigames.js';
 import { briefingCards, briefingActive, briefingPending } from './briefing.js';
+import { ensureAnimCss, sceneHTML, captionOf } from './briefing-anim.js';
 
 const $id = id => document.getElementById(id);
 const esc = v => String(v === undefined || v === null ? '' : v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -908,8 +909,11 @@ function drawBriefCard() {
   if (!card || !c) return;
   const n = briefUI.cards.length;
   card.classList.toggle('special', !!c.special);
-  card.innerHTML = `<span class="brief-count">${briefUI.idx + 1} / ${n}</span><span class="brief-icon" aria-hidden="true">${esc(c.icon)}</span>
-    <h3 id="brief-title">${esc(c.title)}</h3><ul>${c.lines.map(l => `<li class="${l.startsWith('• ') ? 'sub' : ''}">${esc(l.replace(/^• /, ''))}</li>`).join('')}</ul>`;
+  ensureAnimCss();
+  const scene = sceneHTML(c);
+  const detail = c.lines.length > 1 ? `<details class="brief-more"><summary>Détails</summary><ul>${c.lines.map(l => `<li class="${l.startsWith('• ') ? 'sub' : ''}">${esc(l.replace(/^• /, ''))}</li>`).join('')}</ul></details>` : '';
+  card.innerHTML = `<span class="brief-count">${briefUI.idx + 1} / ${n}</span>${scene || `<span class="brief-icon" aria-hidden="true">${esc(c.icon)}</span>`}
+    <h3 id="brief-title">${esc(c.title)}</h3><p class="brief-cap">${esc(captionOf(c))}</p>${detail}`;
   card.classList.remove('flip'); void card.offsetWidth; card.classList.add('flip');
   if (dots) dots.innerHTML = briefUI.cards.map((x, i) => `<button type="button" class="brief-dot${i === briefUI.idx ? ' on' : ''}${x.special ? ' special' : ''}" data-act="brief-go" data-arg="${i}" aria-label="Carte ${i + 1} : ${esc(x.title)}"></button>`).join('');
   document.querySelectorAll('[data-act="brief-prev"]').forEach(b => { b.disabled = briefUI.idx === 0; });
