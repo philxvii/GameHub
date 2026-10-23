@@ -20,6 +20,13 @@ Pour mettre à jour le récapitulatif : modifie le `.md` en clair, relance
 `node tools/notes-crypt.mjs encrypt docs/RECAP-MAINTENANCE-SECURITE.md` (l'utilisateur tape le mot de
 passe), puis commite seulement le `.md.enc`.
 
+## Reprise en cours : Mauvais Perdants
+
+Un nouveau jeu, `games/mauvais-perdants/`, est développé sur la branche `feature/party-showdown`
+(pas encore en production). **Lis d'abord `docs/REPRISE-MAUVAIS-PERDANTS.md`** : état, résultats
+des tests, ce qu'il reste à faire, pièges. Mets-la à jour à chaque étape ; supprime-la, ainsi que
+cette section, une fois le jeu en production.
+
 ## Règles du dépôt
 
 - Pousser sur `main` déploie en production (GitHub Pages). Jamais `--force`.
