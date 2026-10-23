@@ -569,6 +569,16 @@ export async function buyProperty(by = S.playerId) {
   }]);
 }
 
+// Pas les moyens d'acheter : on laisse la case à la banque et le tour continue, sans enchère.
+export async function skipBuy(by = S.playerId) {
+  const game = S.game;
+  const a = game && game.currentAction;
+  if (!a || a.type !== 'buy' || a.playerId !== by) return;
+  const square = BOARD[a.position];
+  if (me(game, by).cash >= square.price) { toast('Tu peux acheter : achète ou mets aux enchères.'); return; }
+  return endTurn(game, {}, [{ text: `${me(game, by).name} passe : ${square.name} reste à la banque.`, meta:{ t:'buy-skip', p: by, pos: a.position } }]);
+}
+
 export async function startAuction(by = S.playerId) {
   const game = S.game;
   const a = game.currentAction;

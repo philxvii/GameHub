@@ -313,7 +313,7 @@ function actionHTML(game) {
       const after = { ...game, ownership: { ...(game.ownership || {}), [a.position]: S.playerId } };
       const completes = sq.type === 'property' && ownsFullGroup(after, S.playerId, sq.group);
       return box(`${esc(sq.name)} est libre`, `Prix <strong>${fmt(sq.price)}</strong> · loyer ${isPublic(sq) ? `${PUBLIC_BASE_RENT} $ × tes propriétés publiques` : `${baseRent(a.position)} $`}.${completes ? ' <strong class="good">Complète ton groupe !</strong>' : ''}${short ? ' <span class="bad">Il te manque ' + fmt(sq.price - me.cash) + ' : vends une propriété ou mets aux enchères.</span>' : ''}`,
-        btn(`Acheter ${fmt(sq.price)}`, 'buy', 'btn-primary', undefined, short) + btn('Mettre aux enchères', 'auction', 'btn-secondary'), 'action-box--buy');
+        btn(`Acheter ${fmt(sq.price)}`, 'buy', 'btn-primary', undefined, short) + btn('Mettre aux enchères', 'auction', 'btn-secondary') + (short ? btn('Passer', 'buy-skip', 'btn-ghost') : ''), 'action-box--buy');
     }
     if (a.type === 'swapPick' && a.playerId === S.playerId) {
       const list = ownedBy(game, S.playerId).filter(p => tradeable(game, p));

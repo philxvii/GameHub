@@ -71,6 +71,7 @@ const ACTS = {
   roll: () => A.rollDice(),
   buy: () => A.buyProperty(),
   auction: () => A.startAuction(),
+  'buy-skip': () => A.skipBuy(),
   'bid-open': () => R.openAuctionModal(),
   bid: () => A.placeBid($id('auction-bid').value),
   'bid-close': () => R.dismissAuction(),
