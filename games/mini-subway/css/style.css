@@ -380,3 +380,24 @@ input:focus, select:focus { outline: none; border-color: var(--ink); }
 .alert-chip { max-width: 100%; white-space: nowrap; }
 .players .pstate.host { color: var(--ink); background: color-mix(in srgb, var(--signal) 40%, transparent); padding: 2px 7px; border-radius: 6px; }
 #m-over.center { place-items: center; padding: 16px; }
+
+/* ───────── cartes d'introduction animées (js/intro.js) ───────── */
+.modal.intro { z-index: 40; }
+.intro-card { width: min(440px, 100%); text-align: center; }
+.intro-scene { width: 100%; height: auto; margin: 10px 0 8px; border-radius: 14px; border: 1.5px solid var(--line-2); background: var(--paper-2); }
+.intro-card h2 { margin: 2px 0 6px; font-size: 26px; }
+.intro-cap { color: var(--ink-2); font-size: 15.5px; min-height: 3em; margin-bottom: 8px; }
+.intro-dots { display: flex; justify-content: center; gap: 7px; margin-bottom: 14px; }
+.intro-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--line-2); }
+.intro-dots i.on { background: var(--signal); box-shadow: 0 0 0 2px var(--ink); }
+.intro-actions { display: grid; grid-template-columns: auto 52px 1fr; gap: 8px; }
+.k { animation-duration: 6s; animation-iteration-count: infinite; animation-timing-function: ease-in-out; animation-fill-mode: both; }
+.k-cursor { opacity: 0; }
+:root[data-motion="reduced"] .k { animation: none !important; opacity: 1; }
+:root[data-motion="reduced"] .k-cursor { opacity: 0; }
+:root[data-motion="reduced"] .k[stroke-dasharray] { stroke-dashoffset: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .k { animation: none !important; opacity: 1; }
+  .k-cursor { opacity: 0; }
+  .k[stroke-dasharray] { stroke-dashoffset: 0; }
+}

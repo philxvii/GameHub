@@ -11,6 +11,7 @@ import { dailyChallenge, weeklyChallenge, CHALLENGE_MODS, recordRun, isUnlocked,
 import { Renderer, shapeSVG } from './render.js';
 import { Audio } from './audio.js';
 import { Game, LocalSession } from './game.js';
+import { showIntro } from './intro.js';
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -183,8 +184,13 @@ $('#start-solo').addEventListener('click', () => {
   startSolo({ map: pick.map, mode: pick.mode, seed });
 });
 
+// Genre de carte finale de l'intro : défi, sinon le mode.
+const introKind = opts => (opts.challenge ? 'challenge' : opts.mode);
+
 function startSolo(opts) {
   closeSheets();
+  // Cartes animées avant le départ (pas au « Recommencer » : on connaît déjà).
+  if (!opts.introDone) { showIntro(introKind(opts)).then(() => startSolo({ ...opts, introDone: true })); return; }
   if (game) { game.destroy(); game = null; }
   const st = createGame({ map: opts.map, mode: opts.mode, seed: opts.seed, patch: opts.patch || null });
   if (S.speed === 2) apply(st, { type: 'speed', v: 2 });
@@ -195,7 +201,7 @@ function startSolo(opts) {
     meta: { challenge: opts.challenge || null, kind: opts.kind || 'solo' },
     onEnd: run => endSolo(run, opts),
     onQuit: () => { game = null; audio.stopMusic(); show('menu'); refreshMenu(); },
-    onRestart: () => startSolo({ ...opts, seed: opts.challenge ? opts.seed : (Math.random() * 2 ** 32) >>> 0 }),
+    onRestart: () => startSolo({ ...opts, introDone: true, seed: opts.challenge ? opts.seed : (Math.random() * 2 ** 32) >>> 0 }),
   });
   game.saveSettings = saveSettings;
   game.toggleTheme = toggleTheme;
@@ -456,6 +462,7 @@ function startNet(session) {
   game.saveSettings = saveSettings;
   game.toggleTheme = toggleTheme;
   game.onSheet = name => openInGame(name);
+  showIntro(session.kind === 'versus' ? 'versus' : 'coop');   // la partie en ligne suit l'horloge de l'hôte : pas de pause possible
 }
 
 // ───────── démarrage ─────────
