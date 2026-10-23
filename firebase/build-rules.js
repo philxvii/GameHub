@@ -211,6 +211,154 @@ function msRules() {
 }
 rules.ms = msRules();
 
+// Mauvais Perdants (mp/<code>) : tournoi de mini-jeux. Un COORDINATEUR (l'hôte, ou un membre qui
+// le remplace quand sa présence n'a plus battu depuis 15 s) écrit seul l'état du tournoi
+// (match), la phase et les répliques du présentateur (mc). Chaque joueur n'écrit que ses
+// propres nœuds : fiche, présence, « prêt », progression, fanfaronnade, votes, et sa
+// réponse de manche — UNE fois, pendant l'étape `play`, jusqu'à l'échéance + 2,5 s
+// (horloge du serveur) : une réponse tardive ou rejouée est refusée par la base.
+function mpRules() {
+  const R = "root.child('mp').child($code)";
+  const M = `${R}.child('match')`;
+  const AUTH = `auth != null && ${OPEN}`;
+  const MEMBER = `${R}.child('members').child(auth.uid).exists()`;
+  const HOST = `${R}.child('hostUid').val() === auth.uid`;
+  const COORD = `${R}.child('coord').val() === auth.uid`;
+  const NUM = 'newData.isNumber()';
+  const ROSTER = `${M}.child('roster').child($uid).exists()`;
+  const CUR = `$tid === ${M}.child('tid').val() && $rk === ${M}.child('rk').val()`;
+  const OWN = `${AUTH} && auth.uid === $uid && ${MEMBER}`;
+  const STALE = `(!${R}.child('presence').child(data.val()).exists() || ${R}.child('presence').child(data.val()).val() < now - 15000)`;
+  const room = {
+    '.read': `auth != null && ((${OPEN} && data.child('members').child(auth.uid).exists()) || ${ADMIN})`,
+    '.write': [
+      `auth != null && ((${OPEN} && (`,
+      `(!data.exists() && $code.matches(${CODE}) && newData.child('hostUid').val() === auth.uid && newData.child('members').child(auth.uid).val() === true && newData.child('phase').val() === 'lobby' && newData.child('coord').val() === auth.uid)`,
+      "|| (data.exists() && !newData.exists() && data.child('hostUid').val() === auth.uid)))",
+      `|| (${ADMIN}))`,
+    ].join(' '),
+    '.validate': "newData.hasChildren(['phase', 'hostUid']) && newData.child('members').child(newData.child('hostUid').val()).val() === true",
+    hostUid: { '.validate': 'newData.isString() && (!data.exists() || newData.val() === data.val())' },
+    members: {
+      $uid: {
+        '.write': `auth != null && auth.uid === $uid && !data.exists() && ${OPEN} && ${R}.child('phase').val() === 'lobby'`,
+        '.validate': `newData.val() === true && ($uid === auth.uid || data.exists() || (${ADMIN}))`,
+      },
+    },
+    phase: { '.read': `auth != null && ${OPEN}`, '.write': `${AUTH} && (${HOST} || ${COORD})`, '.validate': "newData.isString() && newData.val().matches(/^(lobby|playing|ended)$/)" },
+    // Reprise : un membre prend la coordination si celle de l'actuel coordinateur est éteinte ; l'hôte la reprend quand il veut.
+    coord: {
+      '.write': `${AUTH} && ${MEMBER} && newData.val() === auth.uid && (${HOST} || !data.exists() || ${STALE})`,
+      '.validate': 'newData.isString()',
+    },
+    cfg: {
+      '.write': `${AUTH} && ${HOST}`,
+      '.validate': "newData.hasChildren(['roast', 'crude'])",
+      roast: { '.validate': "newData.isString() && newData.val().matches(/^(soft|hard)$/)" },
+      crude: { '.validate': 'newData.isBoolean()' },
+      v: { '.validate': NUM },
+      $other: { '.validate': false },
+    },
+    players: {
+      $uid: {
+        '.write': `${AUTH} && auth.uid === $uid && ${MEMBER}`,
+        '.validate': "newData.hasChildren(['name', 'c', 'dev'])",
+        name: { '.validate': NAME + ' && newData.val().length <= 16' },
+        c: { '.validate': 'newData.isNumber() && newData.val() >= 0 && newData.val() <= 7' },
+        dev: { '.validate': "newData.isString() && newData.val().matches(/^(touch|mouse)$/)" },
+        t: { '.validate': NUM },
+        $other: { '.validate': false },
+      },
+    },
+    presence: { $uid: { '.write': OWN, '.validate': 'newData.val() === now' } },
+    ready: { $uid: { '.write': OWN, '.validate': "newData.isString() && newData.val().length <= 16" } },
+    prog: {
+      $uid: {
+        '.write': OWN,
+        '.validate': "newData.hasChildren(['k', 'v'])",
+        k: { '.validate': "newData.isString() && newData.val().length <= 16" },
+        v: { '.validate': 'newData.isNumber() && newData.val() >= -1000 && newData.val() <= 100000' },
+        $other: { '.validate': false },
+      },
+    },
+    match: {
+      '.write': `${AUTH} && ${COORD}`,
+      '.validate': "newData.hasChildren(['tid', 'rk', 'step', 'at', 'end', 'seed', 'plan', 'roster'])",
+      tid: { '.validate': "newData.isString() && newData.val().matches(/^t[0-9]{1,4}$/)" },
+      rk: { '.validate': "newData.isString() && newData.val().matches(/^r[0-9]$/)" },
+      i: { '.validate': 'newData.isNumber() && newData.val() >= 0 && newData.val() <= 5' },
+      step: { '.validate': "newData.isString() && newData.val().matches(/^(intro|count|play|judge|vote|reveal|board|final)$/)" },
+      at: { '.validate': NUM }, end: { '.validate': NUM }, seq: { '.validate': NUM },
+      seed: { '.validate': "newData.isString() && newData.val().matches(/^[A-Z0-9]{4,16}$/)" },
+      plan: { $k: { g: { '.validate': "newData.isString() && newData.val().matches(/^[a-z]{2,12}$/)" }, f: { '.validate': "newData.isString() && newData.val().matches(/^[a-z]{2,12}$/)" }, $other: { '.validate': false } } },
+      roster: { $uid: { name: { '.validate': NAME + ' && newData.val().length <= 16' }, c: { '.validate': NUM }, dev: { '.validate': 'newData.isString()' }, $other: { '.validate': false } } },
+      tb: { $uid: { '.validate': 'newData.val() === true' } },
+      tbg: { '.validate': "newData.isString() && newData.val().matches(/^(gong|calcul)$/)" },
+      recent: { $k: { '.validate': "newData.isString() && newData.val().length <= 12" } },
+      res: { $i: { $uid: {
+        // Bornes du barème (10 points de place, ×2 en finale, fanfaronnade ±3) : un coordinateur ne peut pas écrire 999.
+        rank: { '.validate': 'newData.isNumber() && newData.val() >= 1 && newData.val() <= 8' },
+        base: { '.validate': 'newData.isNumber() && newData.val() >= 0 && newData.val() <= 20' },
+        boast: { '.validate': 'newData.isNumber() && newData.val() >= -3 && newData.val() <= 3' },
+        pts: { '.validate': 'newData.isNumber() && newData.val() >= -3 && newData.val() <= 23' },
+        absent: { '.validate': 'newData.isBoolean()' }, tied: { '.validate': 'newData.isBoolean()' },
+        label: { '.validate': SHORT_TEXT(60) }, st: { '.validate': 'newData.isString() && newData.val().length <= 800' },
+        $other: { '.validate': false },
+      } } },
+      // Détail d'une manche (correction du Petit Bac, ordre de départage…) : JSON borné, écrit par le coordinateur.
+      det: { $i: { '.validate': 'newData.isString() && newData.val().length <= 30000' } },
+      $other: { '.validate': false },
+    },
+    // Répliques du présentateur : le coordinateur seul. Texte borné, sans balise.
+    mc: {
+      '.write': `${AUTH} && ${COORD}`,
+      $id: {
+        '.validate': "newData.hasChildren(['t', 'ts'])",
+        t: { '.validate': SHORT_TEXT(300) }, ts: { '.validate': NUM },
+        ev: { '.validate': "newData.isString() && newData.val().length <= 24" },
+        src: { '.validate': "newData.isString() && newData.val().matches(/^(local|gemini|openrouter|workersai)$/)" },
+        $other: { '.validate': false },
+      },
+    },
+    subs: {
+      '.write': `${AUTH} && ${COORD} && !newData.exists()`,
+      $tid: { $rk: { $uid: {
+        '.write': `${OWN} && !data.exists() && ${CUR} && ${M}.child('step').val() === 'play' && now <= ${M}.child('end').val() + 2500 && ${ROSTER} && (!${M}.child('tb').exists() || ${M}.child('tb').child($uid).exists())`,
+        '.validate': "newData.hasChildren(['d', 't'])",
+        d: { '.validate': 'newData.isString() && newData.val().length <= 4000' },
+        t: { '.validate': 'newData.val() === now' },
+        $other: { '.validate': false },
+      } } },
+    },
+    // Manche commencée : écrit une fois par le joueur au lancement de son interface. Un
+    // rechargement voit le marqueur et arrête la manche (pas de rejeu du contenu déjà vu).
+    start: {
+      '.write': `${AUTH} && ${COORD} && !newData.exists()`,
+      $tid: { $rk: { $uid: {
+        '.write': `${OWN} && !data.exists() && ${CUR} && ${M}.child('step').val() === 'play' && ${ROSTER}`,
+        '.validate': 'newData.val() === now',
+      } } },
+    },
+    boast: {
+      '.write': `${AUTH} && ${COORD} && !newData.exists()`,
+      $tid: { $rk: { $uid: {
+        '.write': `${OWN} && !data.exists() && ${CUR} && ${M}.child('step').val() === 'intro' && ${ROSTER}`,
+        '.validate': 'newData.val() === true',
+      } } },
+    },
+    votes: {
+      '.write': `${AUTH} && ${COORD} && !newData.exists()`,
+      $tid: { $rk: { $uid: {
+        '.write': `${OWN} && ${CUR} && ${M}.child('step').val() === 'vote' && now <= ${M}.child('end').val() + 2500 && ${ROSTER}`,
+        $g: { '.validate': "$g.matches(/^g[0-9]{1,3}$/) && newData.isBoolean()" },
+      } } },
+    },
+    $other: { '.validate': false },
+  };
+  return { '.read': ADMIN, '.write': `${ADMIN} && !newData.exists()`, $code: room };
+}
+rules.mp = mpRules();
+
 // Undercover : les secrets ne sont jamais dans games/<code>.
 const room = rules.games.$code;
 room.civilWord = { '.validate': false };

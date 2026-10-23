@@ -14,6 +14,7 @@ on partage le code, on joue. Pas d'installation, pas de compte.
 | 🕵️ | [Undercover](https://roulia.me/games/undercover/) | 3–9 | Trouve l'imposteur avant qu'il ne te démasque |
 | 🎰 | [Roulette](https://roulia.me/games/roulette/) | 2–8 | Misez vos jetons, la roue tourne |
 | ⛳ | [Mini Golf](https://roulia.me/games/mini-golf/) | 2–4 | 9 trous, le moins de coups gagne |
+| 🎤 | [Mauvais Perdants](https://roulia.me/games/mauvais-perdants/) | 2–8 | Tournoi de cinq mini-jeux animé par un présentateur odieux |
 | 🚇 | [Mini Subway](https://roulia.me/games/mini-subway/) | 1–4 | Trace des lignes de métro et achemine les passagers avant la saturation |
 | 🤔 | [Qui est-ce ?](https://roulia.me/games/qui-est-ce/) | 2 | Devine le personnage adverse |
 | ⚓ | [Bataille navale](https://roulia.me/games/bataille-navale/) | 2 | Place ta flotte et coule celle de l'adversaire |
@@ -53,6 +54,7 @@ Node 22+, sans dépendance npm ; Chrome pour les tests navigateur.
 node tools/check-links.js                        # structure du site
 node games/banqueroll/tests/check-static.js      # règles de Banqueroll, sans navigateur
 node games/banqueroll/tests/test-browser.js      # parties réelles dans Chrome
+node --test games/mauvais-perdants/tests/*.test.mjs    # règles de Mauvais Perdants, sans navigateur
 ```
 
 Détails : [tools/](tools/README.md) · [tests de Banqueroll](games/banqueroll/tests/README.md).

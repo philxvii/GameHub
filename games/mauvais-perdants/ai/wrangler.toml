@@ -1,0 +1,18 @@
+# Worker du présentateur et du correcteur de Mauvais Perdants — Cloudflare Workers, 100 % gratuit.
+# NON DÉPLOYÉ. Les clés ne sont PAS ici : secrets du Worker (un fournisseur sans clé est sauté) :
+#   npx wrangler secret put GEMINI_API_KEY      (offre gratuite Google AI Studio)
+#   npx wrangler secret put OPENROUTER_API_KEY  (modèles gratuits)
+# Sur un poste où wrangler est bloqué : node games/mauvais-perdants/ai/build-bundle.mjs, puis coller
+# dist/worker.bundle.js dans l'éditeur du tableau de bord Cloudflare (voir README.md).
+name = "mauvais-perdants-host"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+ALLOWED_ORIGINS = "https://roulia.me,https://www.roulia.me,http://localhost:4173,http://127.0.0.1:4173,http://localhost:4174"
+GEMINI_MODEL = "gemini-3.5-flash-lite"
+OPENROUTER_MODEL = "google/gemma-4-31b-it:free,dots-studio/dots-3-note-preview:free,nvidia/nemotron-3.5-lightning:free"
+WORKERS_AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+
+[ai]
+binding = "AI"

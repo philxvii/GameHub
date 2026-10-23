@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style id="mx-guard">html{visibility:hidden!important}</style><script src="../../shared/maintenance.js" onerror="window.stop();document.documentElement.innerHTML='&lt;body style=&quot;font:16px sans-serif;padding:2rem&quot;&gt;Site momentanément indisponible. Réessayez plus tard.&lt;/body&gt;'"></script>
+<script src="../../shared/analytics.js" defer></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#141110">
+<title>Mauvais Perdants</title>
+<meta name="description" content="Mauvais Perdants : un tournoi de cinq mini-jeux entre amis, animé par un présentateur odieux. Un code, des téléphones, pas de compte.">
+<meta property="og:title" content="Mauvais Perdants">
+<meta property="og:description" content="Cinq manches, un seul vainqueur, et un présentateur qui ne pardonne rien.">
+<link rel="icon" href="../../icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../../icons/favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="../../icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/show.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Gonzague Stentor : affiche en deux tons, crème et encre. Bouche, sourcils et regard animés par classes. -->
+    <symbol id="host" viewBox="0 0 200 220">
+      <path class="h-suit" d="M14 220c4-50 34-70 86-74 52 4 82 24 86 74z"/>
+      <path class="h-lapel" d="M66 152l34 44 34-44-14-6-20 28-20-28z"/>
+      <path class="h-pocket" d="M50 194l4-9 4 6 4-8 3 9 3-5 1 9z"/>
+      <path class="h-shirt" d="M86 150h28l-14 24z"/>
+      <path class="h-neck" d="M86 128h28v26H86z"/>
+      <path class="h-bow" d="M76 158l22 9-22 9zM124 158l-22 9 22 9z"/><circle class="h-bow" cx="100" cy="167" r="4.6"/>
+      <ellipse class="h-face" cx="62" cy="102" rx="6" ry="9"/><ellipse class="h-face" cx="138" cy="102" rx="6" ry="9"/>
+      <ellipse class="h-face" cx="100" cy="98" rx="38" ry="45"/>
+      <path class="h-hair" d="M62 94C55 62 66 34 93 24c22-8 50-3 61 15 7 11 5 23-4 27-4-13-16-20-30-20 6 6 4 13-2 15-10-10-29-12-43-6-9 5-12 20-11 39z"/>
+      <path class="h-hair" d="M62 92h5l1 20h-5zM138 92h-5l-1 20h5z"/>
+      <path class="h-hair" d="M112 46c-7 10-6 19 1 26-3-10 1-18 9-24z"/>
+      <g class="h-brows">
+        <path class="h-brow h-brow-l" d="M72 83c6-5 14-6 22-3"/>
+        <path class="h-brow h-brow-r" d="M108 78c8-5 16-4 23 2"/>
+      </g>
+      <g class="h-eyes">
+        <circle class="h-pupil" cx="85" cy="96" r="3.3"/><circle class="h-pupil" cx="119" cy="96" r="3.3"/>
+        <path class="h-lid" d="M75 93c6-4 13-4 19 0"/><path class="h-lid" d="M109 93c6-4 13-4 19 0"/>
+      </g>
+      <path class="h-nose" d="M101 99c-3 9-4 14 3 16"/>
+      <path class="h-stache" d="M84 123c6-4 12-4 16-1 4-3 10-3 16 1-5 2-11 2-16 0-5 2-11 2-16 0z"/>
+      <path class="h-mouth h-mouth-closed" d="M89 131c8 2 17 1 26-6"/>
+      <ellipse class="h-mouth h-mouth-open" cx="101" cy="132" rx="8.5" ry="5.8"/>
+      <path class="h-line" d="M97 141q3 2 6 0"/>
+      <g class="h-mic">
+        <rect x="140" y="150" width="9" height="64" rx="4" transform="rotate(-16 144 182)"/>
+        <ellipse class="h-mic-head" cx="135" cy="141" rx="13" ry="15" transform="rotate(-16 135 141)"/>
+        <path class="h-grille" d="M124 137l22-6M125 144l22-6M127 151l18-5"/>
+      </g>
+      <path class="h-hand" d="M127 171c0-10 10-14 20-12l9 4c6 4 6 14 0 19l-15 4c-8 0-14-6-14-15z"/>
+      <path class="h-line" d="M133 167l19 2M132 173l20 2M133 179l17 1"/>
+    </symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M14 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  </defs>
+</svg>
+
+<div id="app" data-screen="home">
+
+  <!-- ═════════════ Accueil ═════════════ -->
+  <section id="home" class="screen" aria-label="Accueil">
+    <a class="hub-link" href="../../home" aria-label="Retour aux jeux"><svg><use href="#i-back"/></svg><span>Jeux</span></a>
+    <div class="home-stage">
+      <div class="marquee" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <h1 class="logo"><span class="logo-a">Mauvais</span><span class="logo-b">Perdants</span></h1>
+      <p class="tagline">Cinq manches. Un seul vainqueur. Un présentateur qui ne pardonne rien.</p>
+      <svg class="host-big" viewBox="0 0 200 220" aria-hidden="true"><use href="#host"/></svg>
+    </div>
+    <div class="home-panel">
+      <label class="field"><span>Ton pseudo</span><input id="name" maxlength="16" autocomplete="nickname" placeholder="Ex. Camille" enterkeyhint="go"></label>
+      <div class="home-actions">
+        <div class="join-row">
+          <label class="field code-field"><span>Code du salon</span><input id="code" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="GONG-42" enterkeyhint="go"></label>
+          <button class="btn btn-ghost" id="btn-join" type="button">Rejoindre</button>
+        </div>
+        <div class="or"><span>ou</span></div>
+        <button class="btn btn-main" id="btn-create" type="button">Créer un salon</button>
+      </div>
+      <details class="create-opts" id="create-opts">
+        <summary>Réglages du présentateur</summary>
+        <fieldset class="seg" id="roast-seg">
+          <legend>Intensité</legend>
+          <label><input type="radio" name="roast" value="soft" checked><span><b>Pièces rapportées</b><i>Taquin, piquant, bon enfant</i></span></label>
+          <label><input type="radio" name="roast" value="hard"><span><b>Sans pitié</b><i>Roast mordant, sur le jeu seulement</i></span></label>
+        </fieldset>
+        <label class="check"><input type="checkbox" id="crude"><span>Autoriser les grossièretés</span></label>
+        <label class="check"><input type="checkbox" id="scene"><span>Cet appareil est l’écran de scène (télé, ordinateur) : je ne joue pas</span></label>
+      </details>
+      <label class="check scene-join"><input type="checkbox" id="scene-join"><span>Rejoindre comme écran de scène (sans jouer)</span></label>
+      <p class="fine">Sans compte. Pseudo seulement. Les réponses du Petit Bac peuvent être envoyées à un service d’IA pour être corrigées ; rien d’autre ne quitte la partie.</p>
+      <p class="err" id="home-err" role="alert"></p>
+    </div>
+  </section>
+
+  <!-- ═════════════ Salon ═════════════ -->
+  <section id="lobby" class="screen" aria-label="Salon">
+    <header class="topbar">
+      <button class="icon-btn" id="btn-leave" type="button" aria-label="Quitter le salon"><svg><use href="#i-back"/></svg></button>
+      <span class="mini-logo">Mauvais Perdants</span>
+      <button class="icon-btn" data-mute type="button" aria-label="Couper le son"><svg><use href="#i-sound"/></svg></button>
+    </header>
+    <div class="lobby-grid">
+      <div class="lobby-left">
+        <p class="kicker">Code du salon</p>
+        <button class="room-code" id="room-code" type="button" aria-label="Copier le code"><span class="flaps" id="code-flaps"></span><svg><use href="#i-copy"/></svg></button>
+        <p class="hint" id="code-hint">Tes amis ouvrent <b>roulia.me</b>, choisissent Mauvais Perdants et tapent ce code.</p>
+        <div class="stage stage-lobby" data-stage></div>
+      </div>
+      <div class="lobby-right">
+        <h2 class="h2"><span id="count">0</span> candidat<span id="count-s">s</span> <small id="count-min"></small></h2>
+        <ul class="roster" id="roster"></ul>
+        <div class="rules-card">
+          <h3>Le règlement</h3>
+          <ol>
+            <li><b>5 manches</b> tirées au sort, une par famille : vitesse, espace, mémoire, mots, chiffres.</li>
+            <li>À chaque manche, la <b>place</b> rapporte des points : 10 au premier, 2 au dernier.</li>
+            <li>La <b>5<sup>e</sup> manche vaut double.</b> Égalité finale : manches gagnées, puis départage au Gong.</li>
+            <li><b>Fanfaronner</b> avant une manche : +3 si tu la gagnes, −3 si tu finis dans la moitié basse (2e sur 2, 3e sur 3, 3e ou 4e sur 4…).</li>
+            <li><b>Petit Bac</b> corrigé par IA ; une réponse douteuse passe au vote : il faut <b>deux refus</b> et la majorité pour la faire tomber (en duel, l’autre joueur juge seul).</li>
+          </ol>
+          <p class="cfg-line" id="cfg-line"></p>
+        </div>
+        <div class="host-ctl" id="host-ctl">
+          <fieldset class="seg seg-compact" id="lobby-roast">
+            <legend>Présentateur</legend>
+            <label><input type="radio" name="lroast" value="soft"><span><b>Pièces rapportées</b></span></label>
+            <label><input type="radio" name="lroast" value="hard"><span><b>Sans pitié</b></span></label>
+          </fieldset>
+          <label class="check"><input type="checkbox" id="lcrude"><span>Grossièretés</span></label>
+          <button class="btn btn-main btn-xl" id="btn-start" type="button">Lancer le tournoi</button>
+        </div>
+        <p class="wait-host" id="wait-host">L’hôte lance le tournoi quand tout le monde est là.</p>
+        <p class="err" id="lobby-err" role="alert"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════ Émission ═════════════ -->
+  <section id="show" class="screen" aria-label="Tournoi">
+    <header class="topbar show-bar">
+      <span class="mini-logo">Mauvais Perdants</span>
+      <ol class="pips" id="pips" aria-label="Manches"></ol>
+      <div class="clock" id="clock" aria-live="off"><span id="clock-num">--</span></div>
+      <button class="icon-btn" data-mute type="button" aria-label="Couper le son"><svg><use href="#i-sound"/></svg></button>
+    </header>
+    <div class="show-grid">
+      <aside class="stage" data-stage id="show-stage"></aside>
+      <main class="deck" id="deck"></main>
+    </div>
+    <div class="conn" id="conn" hidden>Connexion perdue… reconnexion en cours</div>
+  </section>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
