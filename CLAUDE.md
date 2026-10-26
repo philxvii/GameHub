@@ -22,8 +22,8 @@ passe), puis commite seulement le `.md.enc`.
 
 ## Reprise en cours : Mauvais Perdants
 
-Le nouveau jeu `games/mauvais-perdants/` est sur `main`, mais pas encore fonctionnel en ligne
-(règles Firebase à publier). **Lis `docs/REPRISE-MAUVAIS-PERDANTS.md` dès le début de la session**,
+Le nouveau jeu `games/mauvais-perdants/` est en ligne sur roulia.me ; prochaine étape : refonte
+complète de son interface (l'utilisateur envoie un prompt). **Lis `docs/REPRISE-MAUVAIS-PERDANTS.md` dès le début de la session**,
 même si l'utilisateur ne t'en parle pas : il ne retient pas les commandes, c'est toi qui les lances.
 Mets la note à jour à chaque étape ; supprime-la, ainsi que cette section, quand tout marche en ligne.
 
