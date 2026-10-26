@@ -17,12 +17,50 @@ L'utilisateur ne retient pas les commandes. **C'est toi qui les lances.** Il dir
    navigateurs différents (Chrome, Edge, une fenêtre privée) : chacun est un joueur distinct.
 3. Ne pousse sur `main` (production) qu'à sa demande explicite.
 
+## Prochaine étape : refonte complète de l'interface (demandée le 26/10)
+
+L'utilisateur trouve l'interface trop basique, « faite par IA », sans vraie direction
+artistique. Il va envoyer un prompt de refonte : **attends-le** avant de coder, puis
+reprends l'interface depuis zéro.
+
+**Périmètre** : `css/`, `index.html`, `js/ui/`, `js/play/` et les vues de `js/main.js`.
+Le moteur ne bouge pas : règles, réseau, barème, machine à états, Petit Bac, présentateur.
+Les tests Node et navigateur (`tests/*.test.mjs`, `multi.cjs`, `rounds.cjs`, `solo.cjs`)
+doivent rester verts. Les tests navigateur et `tests/bot.js` s'appuient sur des sélecteurs
+(`#btn-solo`, `#btn-create`, `#btn-join`, `#name`, `#code`, `#btn-start`, `.gong.go`,
+`.target`, `.grid .cell`, `.word`, `.calc-q`, `.answer-row`, `.bac-fields input`,
+`.vote-item`, `.next-btn`, `.final-actions button`…) : garde-les, ou mets les tests à jour.
+
+**DA actuelle (à remplacer)**
+- Fond encre `#141110`, surfaces `#1d1916` à `#3a322c`, texte crème `#f3ebdc`, accent laiton
+  `#d6a84a`, rouge signal `#ff4a2e`, 8 couleurs de joueur saturées, rideaux lie-de-vin en
+  dégradé discret sur les bords.
+- Polices : Anton (titres, chiffres) et Instrument Sans (interface).
+- Composants : cartes sombres arrondies à liseré, boutons pilule, pastilles carrées.
+- Présentateur : SVG plat en deux tons (crème et noir), avec des humeurs par classes CSS et
+  une bulle crème façon télé-prompteur.
+- Signature : tableau à palettes pour le code et les totaux.
+- Mise en page : présentateur à gauche, contenu à droite sur ordinateur ; bandeau sur
+  mobile.
+
+**Pourquoi elle est rejetée**
+- C'est une palette, pas un univers : du mode sombre de SaaS, sans décor, sans matière,
+  sans lumière de scène.
+- Composants génériques, manches toutes dans le même cadre.
+- Présentateur plat et petit.
+- Moments forts (résultats, podium) sans mise en scène.
+- Aucun lien avec les affiches du hub, qui sont des photos réalistes en clair-obscur,
+  avec un faisceau de projecteur et de la fumée sur une table sombre.
+
+**À garder** : l'idée du présentateur odieux, le tableau à palettes et le rouge réservé
+aux signaux, si le prompt de l'utilisateur ne dit pas autre chose.
+
 ## Où on en est
 
-- **Code** : fusionné dans `main` et poussé le 26/10/2026, donc visible sur roulia.me.
+- **Code** : fusionné dans `main` et poussé le 26/10/2026, en ligne et jouable sur
+  roulia.me (règles Firebase publiées le 26/10). Mode solo contre Gonzague inclus.
   La branche `feature/party-showdown` contient la même chose.
-- **Il reste à publier les règles Firebase** (étape 2a). Sans elles, le jeu affiche
-  « Accès refusé » à la création d'un salon.
+- Règles Firebase : **publiées** (étape 2a faite).
 - **Jeu** : `games/mauvais-perdants/`. C'est un tournoi de 5 mini-jeux entre amis (2 à 8
   joueurs, code de salon, sans compte), animé par Gonzague Stentor, un présentateur odieux.
   - 11 manches réparties en 5 familles, une manche par famille à chaque tournoi.
