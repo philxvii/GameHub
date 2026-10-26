@@ -197,18 +197,27 @@
   /* ── Pied de page ── */
   /* Le pied reprend l'en-tete : meme hauteur, meme dé, le reste en gris discret. */
   .hub-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 24px;min-height:68px;margin-top:8px;padding-top:12px;padding-bottom:12px;border-top:1px solid var(--border);}
-  .ft-id{display:inline-flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);}
-  .ft-id i{flex:none;width:26px;height:26px;border-radius:8px;background:var(--back) var(--die) center/60% no-repeat;}
-  .ft-id b{font-weight:600;color:var(--text);letter-spacing:-.02em;}
+  .ft-id{display:inline-flex;align-items:center;gap:5px;font-size:14px;color:var(--muted);}
+  .ft-home{display:inline-flex;align-items:center;gap:10px;}
+  .ft-id i{flex:none;width:26px;height:26px;border-radius:8px;background:var(--back) var(--die) center/60% no-repeat;opacity:.7;transition:opacity var(--d-2);}
+  .ft-id b{font-weight:600;letter-spacing:-.02em;}
+  .ft-home:hover i,.ft-home:focus-visible i{opacity:1;animation:logo-pop .45s cubic-bezier(.3,1.6,.5,1);}
   .ft-end{display:flex;align-items:center;gap:18px;}
-  /* Au survol, un reflet traverse le lien et la roue, comme celui du logo. */
+  /* Au survol, un reflet traverse le nom, le lien et la roue, comme celui du logo. */
   @property --ft-c{syntax:'<color>';inherits:true;initial-value:#686D79;}
   .hub-footer{--ft-sheen:rgba(255,255,255,.95);--ft-on:var(--text);}
   :root[data-theme="dark"] .hub-footer{--ft-sheen:#FFFFFF;--ft-on:#C9C4D6;}
   .ft-link{--ft-c:var(--muted);font-size:13px;color:transparent;-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text;
     background-image:linear-gradient(105deg,transparent 40%,var(--ft-sheen) 50%,transparent 60%),linear-gradient(var(--ft-c),var(--ft-c));
     background-size:260% 100%,100% 100%;background-position:130% 0,0 0;background-repeat:no-repeat;transition:--ft-c var(--d-2);}
-  .ft-link:hover,.ft-link:focus-visible{--ft-c:var(--ft-on);animation:ft-glint .9s var(--e-out);}
+  .ft-link:hover,.ft-link:focus-visible,.ft-home:hover .ft-link,.ft-home:focus-visible .ft-link{--ft-c:var(--ft-on);animation:ft-glint .9s var(--e-out);}
+  .ft-sig{font-size:inherit;}
+  /* La signature : les lettres ondulent l'une après l'autre. */
+  .ft-me{font-size:12px;letter-spacing:.02em;cursor:default;transition:color var(--d-2);}
+  .ft-me span span{display:inline-block;}
+  .ft-me:hover{color:var(--ft-on);}
+  .ft-me:hover span span{animation:ft-wave .5s var(--e-out) both;animation-delay:calc(var(--i)*40ms);}
+  @keyframes ft-wave{0%,100%{transform:translateY(0)}40%{transform:translateY(-1.5px)}}
   @keyframes ft-glint{from{background-position:130% 0,0 0}to{background-position:-30% 0,0 0}}
   .admin-trigger{position:relative;display:inline-grid;place-items:center;width:28px;height:28px;border:none;background:transparent;color:var(--muted);opacity:.6;cursor:pointer;transition:opacity var(--d-2),color var(--d-2),transform .7s var(--e-out);}
   .admin-trigger::after{content:"";position:absolute;inset:0;pointer-events:none;
@@ -218,7 +227,7 @@
   .admin-trigger:hover::after,.admin-trigger:focus-visible::after{animation:ft-glint-g .9s var(--e-out);}
   @keyframes ft-glint-g{from{background-position:130% 0}to{background-position:-30% 0}}
   .admin-trigger svg{width:15px;height:15px;}
-  @media (prefers-reduced-motion:reduce){.ft-link,.admin-trigger::after{animation:none!important;}}
+  @media (prefers-reduced-motion:reduce){.ft-link,.ft-home i,.ft-me span span,.admin-trigger::after{animation:none!important;}}
   @media (max-width:640px){.hub-footer{padding-top:16px;padding-bottom:20px;}.ft-end{width:100%;}.ft-end .live{margin-right:auto;}}
 
   /* ── Admin : même langage que le hub (bandeau, grand titre, puces, filets fins) ── */
@@ -583,7 +592,7 @@
   </main>
 
   <footer class="wrap hub-footer">
-    <span class="ft-id"><i aria-hidden="true"></i><span><b>GameHub</b> · par xviiuuu</span></span>
+    <span class="ft-id"><a class="ft-home" href="#" aria-label="Revenir en haut de la page"><i aria-hidden="true"></i><b class="ft-link ft-sig">GameHub</b></a><span>· par <span class="ft-me" aria-label="XVIIUUU"><span aria-hidden="true"><span style="--i:0">X</span><span style="--i:1">V</span><span style="--i:2">I</span><span style="--i:3">I</span><span style="--i:4">U</span><span style="--i:5">U</span><span style="--i:6">U</span></span></span></span></span>
     <div class="ft-end">
       <span class="live"><i></i><span id="online-count">…</span></span>
       <a class="ft-link" href="/confidentialite">Confidentialité</a>
@@ -1172,6 +1181,10 @@ function syncAbandoned(){
   btn.hidden = !any;
   if(!any){ sec.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
 }
+document.querySelector('.ft-home')?.addEventListener('click', e => {
+  e.preventDefault();
+  scrollTo({top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+});
 document.getElementById('aband-toggle')?.addEventListener('click', e => {
   const sec = document.getElementById('abandoned');
   const open = sec.hidden;
