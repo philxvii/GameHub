@@ -233,20 +233,13 @@
   .wip-card span{display:block;font-size:13px;line-height:1.4;color:var(--muted);}
   .wip-teaser{margin-top:14px;padding:14px 14px 12px;border-radius:16px;background:var(--surface2);border:1px solid var(--border);}
   .wip-teaser > p{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
-  .wip-chars{display:flex;justify-content:space-around;gap:6px;}
-  .wip-char{width:min(84px,22%);cursor:pointer;touch-action:manipulation;}
-  .wip-char svg{width:100%;height:auto;display:block;overflow:visible;}
-  .wip-char .body{transform-box:fill-box;transform-origin:50% 100%;transition:transform .3s var(--e-out);}
-  .wip-char:hover .body,.wip-char.hi .body{animation:wip-bob .7s var(--e-in-out) infinite;}
-  .wip-char .pupil{transition:transform .12s linear;}
-  .wip-char .mouth-o{opacity:0;transition:opacity .15s;}
-  .wip-char:hover .mouth,.wip-char.hi .mouth{opacity:0;}
-  .wip-char:hover .mouth-o,.wip-char.hi .mouth-o{opacity:1;}
-  .wip-char .arm{transform-box:fill-box;transform-origin:50% 0;}
-  .wip-char:hover .arm,.wip-char.hi .arm{animation:wip-wave .5s ease-in-out infinite alternate;}
-  .wip-char .name{font:600 11px var(--f);text-align:center;color:var(--muted);margin-top:2px;}
-  @keyframes wip-bob{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-7px) rotate(2deg);}}
-  @keyframes wip-wave{from{transform:rotate(-18deg);}to{transform:rotate(22deg);}}
+  .wip-chars{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;perspective:700px;}
+  .wip-char{position:relative;cursor:pointer;touch-action:manipulation;text-align:center;}
+  .wip-pic{position:relative;aspect-ratio:4/5;border-radius:14px;overflow:hidden;background:radial-gradient(120% 90% at 50% 100%,var(--k) 0%,color-mix(in srgb,var(--k) 35%,var(--surface)) 70%);box-shadow:inset 0 0 0 1px var(--border);transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .25s var(--e-out);}
+  .wip-pic img{position:absolute;inset:6% 0 0;width:100%;height:94%;object-fit:contain;object-position:50% 100%;opacity:0;transform:translate(var(--tx,0px),var(--ty,0px)) scale(1);transition:opacity .12s linear,transform .3s var(--e-out);}
+  .wip-pic img.on{opacity:1;}
+  .wip-char:hover .wip-pic img.on,.wip-char.hi .wip-pic img.on{transform:translate(var(--tx,0px),var(--ty,0px)) scale(1.06);}
+  .wip-char .name{font:600 12px var(--f);color:var(--muted);margin-top:6px;}
   .wip-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;}
   .wip-actions button{flex:1 1 200px;padding:13px 16px;border-radius:var(--r-sm);font:600 15px var(--f);cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text);transition:opacity var(--d-2),transform var(--d-1) var(--e-out);}
   .wip-actions .go{background:var(--accent);color:var(--on-accent);border-color:transparent;}
@@ -254,7 +247,7 @@
   .wip-actions button:active{transform:scale(.98);}
   .wip-note{margin-top:10px;font-size:12px;color:var(--muted);text-align:center;}
   @media (max-width:560px){.wip-box{padding:22px 18px 18px;border-radius:20px;}.wip-next{grid-template-columns:1fr;}.wip-card{display:grid;grid-template-columns:22px 1fr;column-gap:12px;}.wip-card svg{margin:2px 0 0;grid-row:span 2;}}
-  @media (prefers-reduced-motion:reduce){#wip,.wip-box,.wip-fill{transition:none;}.wip-char:hover .body,.wip-char.hi .body,.wip-char:hover .arm,.wip-char.hi .arm{animation:none;}}
+  @media (prefers-reduced-motion:reduce){#wip,.wip-box,.wip-fill{transition:none;}.wip-pic,.wip-pic img{transition:none;}}
   #admin-panel{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;}
   #admin-panel.hidden{display:none;}
   .adm-top{position:sticky;top:0;z-index:600;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
@@ -767,7 +760,7 @@
     undercover: { name: 'Undercover', pct: 10, soon: [['brush', 'Une nouvelle ambiance', 'Une affiche et un décor à la hauteur du bluff.'], ['spark', 'Des révélations soignées', 'Les rôles et les votes mis en scène.'], ['bolt', 'Des manches plus rythmées', 'Moins d’attente entre deux tours de table.']] },
     uno: { name: 'UNO', pct: 10, soon: [['brush', 'Des cartes retravaillées', 'Un tapis, des cartes qui se posent pour de vrai.'], ['hand', 'Une main plus agréable', 'Choisir et jouer une carte devient un plaisir.'], ['spark', 'Des animations de table', 'Pioche, +4, sens inversé : tout se voit.']] },
     puissance4: { name: 'Puissance 4', pct: 60, step: 'Bien avancé', soon: [['cube', 'Un plateau en 3D', 'Noyer verni, ouvertures cerclées d’acier, pions en émail.'], ['moon', 'Un observatoire', 'La partie se joue sous la lune, ou à l’aube en thème clair.'], ['brush', 'Tes couleurs', 'Tu choisis la couleur de tes pions.']] },
-    quiestce: { name: 'Qui est-ce ?', pct: 15, soon: [['face', 'De vrais personnages', 'Chaque visage a son caractère, son style, sa tête.'], ['hand', 'Ils réagissent', 'Passe la souris dessus : ils bougent, te suivent des yeux.'], ['spark', 'Un plateau vivant', 'Rabattre un visage devient un geste satisfaisant.']] },
+    quiestce: { name: 'Qui est-ce ?', pct: 15, soon: [['face', 'De vrais personnages', 'Chaque visage a son caractère, son style, sa tête.'], ['hand', 'Ils réagissent', 'Passe la souris dessus : ils se tournent vers toi, sourient ou se méfient.'], ['spark', 'Un plateau vivant', 'Rabattre un visage devient un geste satisfaisant.']] },
     bataille: { name: 'Bataille Navale', pct: 5, soon: [['brush', 'Une mer retravaillée', 'Un plateau qui a de la profondeur.'], ['spark', 'Des tirs qui se voient', 'Eau, touché, coulé : chaque coup a son effet.'], ['bolt', 'Un placement plus fluide', 'Poser sa flotte sans se battre avec l’écran.']] },
     roulette: { name: 'Roulette', pct: 5, soon: [['cube', 'Une roue plus vraie', 'Une bille, un bol, un vrai tour de roue.'], ['spark', 'Un suspense mis en scène', 'Le ralenti avant le numéro gagnant.'], ['brush', 'Un tapis soigné', 'Mises et jetons lisibles à plusieurs.']] },
     minigolf: { name: 'Mini Golf', pct: 5, soon: [['cube', 'Des parcours repensés', 'Des pistes avec du relief et des obstacles.'], ['bolt', 'Un tir plus précis', 'Viser et doser la puissance, sans approximation.'], ['spark', 'Une partie à plusieurs', 'Voir la balle de chacun rouler sur le green.']] }
@@ -778,34 +771,36 @@
   let wipCard = null, wipBack = null;
   // Rouge sous un tiers, jaune jusqu'aux deux tiers, vert ensuite.
   const stage = p => p < 34 ? ['#E5484D', 'Démarrage'] : p < 67 ? ['#F5B83D', 'En cours'] : ['#2FB36B', 'Bien avancé'];
-  // Quatre personnages de Qui est-ce ? : les pupilles suivent le pointeur, ils font coucou au survol.
+  // Quatre personnages du prototype de Qui est-ce ? (portraits pre-rendus, 4 expressions) :
+  // ils suivent le pointeur, sourient au survol, sursautent au clic et se mefient de leurs voisins.
   const CHARS = [
-    { n: 'Léa', skin: '#F2C7A5', hair: '#6B3A1E', cloth: '#E0412F', hairD: '<path d="M16 38c-2-18 8-26 24-26s26 8 24 26c-4-8-10-12-24-12s-20 4-24 12Z" fill="#6B3A1E"/>' },
-    { n: 'Sam', skin: '#8D5A3B', hair: '#16121A', cloth: '#2F4DE0', hairD: '<path d="M18 34c-1-14 8-22 22-22s23 8 22 22c-5-5-10-7-22-7s-17 2-22 7Z" fill="#16121A"/>' },
-    { n: 'Zoé', skin: '#F5D9C0', hair: '#E8B24A', cloth: '#13A08C', hairD: '<path d="M14 56c-4-26 4-44 26-44s30 18 26 44c-3-2-5-5-5-9 0-9-5-14-21-14s-21 5-21 14c0 4-2 7-5 9Z" fill="#E8B24A"/>' },
-    { n: 'Max', skin: '#C98E64', hair: '#B5532B', cloth: '#6B4CD6', hairD: '<path d="M17 36c0-17 9-25 23-25s23 8 23 25c-4-6-9-9-23-9S21 30 17 36Z" fill="#B5532B"/><circle cx="40" cy="10" r="6" fill="#B5532B"/>' }
+    { id: '01', n: 'Raphaël', k: '#E0412F' }, { id: '22', n: 'Kenji', k: '#2F4DE0' },
+    { id: '17', n: 'Damien', k: '#13A08C' }, { id: '19', n: 'Farid', k: '#6B4CD6' }
   ];
-  const charSvg = c => `<svg viewBox="0 0 80 100" aria-hidden="true"><g class="body">
-    <path d="M8 100c0-18 14-28 32-28s32 10 32 28Z" fill="${c.cloth}"/>
-    <rect class="arm" x="64" y="76" width="9" height="20" rx="4.5" fill="${c.skin}"/>
-    <circle cx="40" cy="42" r="22" fill="${c.skin}"/>${c.hairD}
-    <g fill="#fff"><circle cx="31" cy="44" r="5.5"/><circle cx="49" cy="44" r="5.5"/></g>
-    <g class="pupils" fill="#16121A"><circle class="pupil" cx="31" cy="44" r="2.6"/><circle class="pupil" cx="49" cy="44" r="2.6"/></g>
-    <path class="mouth" d="M33 55q7 4 14 0" fill="none" stroke="#16121A" stroke-width="2" stroke-linecap="round"/>
-    <ellipse class="mouth-o" cx="40" cy="56" rx="5" ry="4" fill="#7A2A2A"/>
-  </g></svg><div class="name">${c.n}</div>`;
-  wipChars.innerHTML = CHARS.map(c => `<div class="wip-char">${charSvg(c)}</div>`).join('');
-  wipChars.addEventListener('pointermove', e => {
-    wipChars.querySelectorAll('.wip-char').forEach(ch => {
-      const r = ch.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height * 0.4);
-      const d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / 60) * 2.3;
-      ch.querySelectorAll('.pupil').forEach(p => { p.style.transform = `translate(${dx / d * k}px, ${dy / d * k}px)`; });
+  const EXPR = ['neutral', 'smile', 'surprised', 'suspicious'];
+  wipChars.innerHTML = CHARS.map(c => `<div class="wip-char" style="--k:${c.k}"><div class="wip-pic">${EXPR.map(e =>
+    `<img data-src="games/qui-est-ce/avant-gout/${c.id}-${e}.webp" data-e="${e}" width="300" height="375" alt="" decoding="async">`).join('')}</div><div class="name">${c.n}</div></div>`).join('');
+  const chars = [...wipChars.querySelectorAll('.wip-char')];
+  const face = (ch, e) => ch.querySelectorAll('img').forEach(i => i.classList.toggle('on', i.dataset.e === e));
+  let over = null, pressed = null;
+  function rest() { // chaque visage selon l'etat du pointeur
+    chars.forEach(ch => face(ch, ch === pressed ? 'surprised' : ch === over ? 'smile' : over ? 'suspicious' : 'neutral'));
+  }
+  let loaded = false;
+  const loadChars = () => { if (loaded) return; loaded = true; wipChars.querySelectorAll('img').forEach(i => { i.src = i.dataset.src; }); rest(); };
+  chars.forEach(ch => {
+    ch.addEventListener('pointerenter', () => { over = ch; rest(); });
+    ch.addEventListener('pointerleave', () => { over = null; ch.style.removeProperty('--rx'); ch.style.removeProperty('--ry'); ch.style.removeProperty('--tx'); ch.style.removeProperty('--ty'); rest(); });
+    ch.addEventListener('pointermove', e => {
+      if (reduce.matches) return;
+      const r = ch.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      const p = ch.querySelector('.wip-pic').style; p.setProperty('--rx', `${-y * 10}deg`); p.setProperty('--ry', `${x * 12}deg`);
+      p.setProperty('--tx', `${x * 6}px`); p.setProperty('--ty', `${y * 4}px`);
     });
-  });
-  // Au toucher, un appui fait réagir le personnage.
-  wipChars.addEventListener('click', e => {
-    const ch = e.target.closest('.wip-char'); if (!ch) return;
-    ch.classList.add('hi'); setTimeout(() => ch.classList.remove('hi'), 1400);
+    ch.addEventListener('click', () => {
+      pressed = ch; rest(); ch.classList.add('hi');
+      setTimeout(() => { if (pressed === ch) pressed = null; ch.classList.remove('hi'); rest(); }, 1100);
+    });
   });
   function openWip(card) {
     const g = card.dataset.game, d = WIP[g];
@@ -822,6 +817,7 @@
     document.getElementById('wip-next').innerHTML = d.soon.map(([ic, t, s]) =>
       `<div class="wip-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[ic]}</svg><b>${t}</b><span>${s}</span></div>`).join('');
     wipTeaser.hidden = g !== 'quiestce';
+    if (g === 'quiestce') { over = pressed = null; loadChars(); rest(); }
     wip.classList.add('open'); wip.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
     requestAnimationFrame(() => { wipFill.style.width = `${d.pct}%`; });
