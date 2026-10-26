@@ -236,9 +236,12 @@
   .wip-chars{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;perspective:700px;}
   .wip-char{position:relative;cursor:pointer;touch-action:manipulation;text-align:center;}
   .wip-pic{position:relative;aspect-ratio:4/5;border-radius:14px;overflow:hidden;background:radial-gradient(120% 90% at 50% 100%,var(--k) 0%,color-mix(in srgb,var(--k) 35%,var(--surface)) 70%);box-shadow:inset 0 0 0 1px var(--border);transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .25s var(--e-out);}
-  .wip-pic img{position:absolute;inset:6% 0 0;width:100%;height:94%;object-fit:contain;object-position:50% 100%;opacity:0;transform:translate(var(--tx,0px),var(--ty,0px)) scale(1);transition:opacity .12s linear,transform .3s var(--e-out);}
+  .wip-pic .stage{position:absolute;inset:6% 3% 0;transform:translate(var(--tx,0px),var(--ty,0px));transition:transform .3s var(--e-out);}
+  .wip-pic img{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .12s linear;}
   .wip-pic img.on{opacity:1;}
-  .wip-char:hover .wip-pic img.on,.wip-char.hi .wip-pic img.on{transform:translate(var(--tx,0px),var(--ty,0px)) scale(1.06);}
+  .wip-pic .eyes{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .12s linear;}
+  .wip-pic .eyes.on{opacity:1;}
+  .wip-pic .eyes i{position:absolute;left:28.333%;top:53.333%;width:43.5%;height:11.467%;background-size:700% 300%;background-repeat:no-repeat;-webkit-mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent),linear-gradient(0deg,transparent,#000 18%,#000 82%,transparent);-webkit-mask-composite:source-in;mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent),linear-gradient(0deg,transparent,#000 18%,#000 82%,transparent);mask-composite:intersect;}
   .wip-char .name{font:600 12px var(--f);color:var(--muted);margin-top:6px;}
   .wip-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;}
   .wip-actions button{flex:1 1 200px;padding:13px 16px;border-radius:var(--r-sm);font:600 15px var(--f);cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text);transition:opacity var(--d-2),transform var(--d-1) var(--e-out);}
@@ -247,7 +250,7 @@
   .wip-actions button:active{transform:scale(.98);}
   .wip-note{margin-top:10px;font-size:12px;color:var(--muted);text-align:center;}
   @media (max-width:560px){.wip-box{padding:22px 18px 18px;border-radius:20px;}.wip-next{grid-template-columns:1fr;}.wip-card{display:grid;grid-template-columns:22px 1fr;column-gap:12px;}.wip-card svg{margin:2px 0 0;grid-row:span 2;}}
-  @media (prefers-reduced-motion:reduce){#wip,.wip-box,.wip-fill{transition:none;}.wip-pic,.wip-pic img{transition:none;}}
+  @media (prefers-reduced-motion:reduce){#wip,.wip-box,.wip-fill{transition:none;}.wip-pic,.wip-pic .stage,.wip-pic img,.wip-pic .eyes{transition:none;}}
   #admin-panel{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;}
   #admin-panel.hidden{display:none;}
   .adm-top{position:sticky;top:0;z-index:600;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
@@ -771,31 +774,63 @@
   let wipCard = null, wipBack = null;
   // Rouge sous un tiers, jaune jusqu'aux deux tiers, vert ensuite.
   const stage = p => p < 34 ? ['#E5484D', 'Démarrage'] : p < 67 ? ['#F5B83D', 'En cours'] : ['#2FB36B', 'Bien avancé'];
-  // Quatre personnages du prototype de Qui est-ce ? (portraits pre-rendus, 4 expressions) :
-  // ils suivent le pointeur, sourient au survol, sursautent au clic et se mefient de leurs voisins.
+  // Quatre personnages du prototype de Qui est-ce ? (rendus 3D pre-calcules) : le visage change
+  // d'expression (sourire au survol, mefiance des voisins, sursaut au clic) et les yeux suivent
+  // le pointeur, ou que soit la souris : planches de 7 x 3 regards pour « neutre » et « sourire ».
   const CHARS = [
     { id: '01', n: 'Raphaël', k: '#E0412F' }, { id: '22', n: 'Kenji', k: '#2F4DE0' },
     { id: '17', n: 'Damien', k: '#13A08C' }, { id: '19', n: 'Farid', k: '#6B4CD6' }
   ];
-  const EXPR = ['neutral', 'smile', 'surprised', 'suspicious'];
-  wipChars.innerHTML = CHARS.map(c => `<div class="wip-char" style="--k:${c.k}"><div class="wip-pic">${EXPR.map(e =>
-    `<img data-src="games/qui-est-ce/avant-gout/${c.id}-${e}.webp" data-e="${e}" width="300" height="375" alt="" decoding="async">`).join('')}</div><div class="name">${c.n}</div></div>`).join('');
+  const EXPR = ['neutral', 'smile', 'surprised', 'suspicious'], GAZE = ['neutral', 'smile'];
+  const NX = 7, NY = 3, DIR = 'games/qui-est-ce/avant-gout/';
+  wipChars.innerHTML = CHARS.map(c => `<div class="wip-char" style="--k:${c.k}"><div class="wip-pic"><div class="stage">${EXPR.map(e =>
+    `<img data-src="${DIR}${c.id}-${e}.webp" data-e="${e}" width="480" height="600" alt="" decoding="async">`).join('')}
+    ${GAZE.map(e => `<div class="eyes" data-e="${e}"><i data-src="${DIR}${c.id}-${e}-yeux.webp"></i></div>`).join('')}</div></div><div class="name">${c.n}</div></div>`).join('');
   const chars = [...wipChars.querySelectorAll('.wip-char')];
-  const face = (ch, e) => ch.querySelectorAll('img').forEach(i => i.classList.toggle('on', i.dataset.e === e));
+  const face = (ch, e) => {
+    ch.querySelectorAll('img').forEach(i => i.classList.toggle('on', i.dataset.e === e));
+    ch.querySelectorAll('.eyes').forEach(y => y.classList.toggle('on', y.dataset.e === e));
+  };
   let over = null, pressed = null;
   function rest() { // chaque visage selon l'etat du pointeur
     chars.forEach(ch => face(ch, ch === pressed ? 'surprised' : ch === over ? 'smile' : over ? 'suspicious' : 'neutral'));
   }
+  // Regard : la case de la planche la plus proche de la direction du pointeur.
+  let ptr = null, gazeRaf = 0;
+  function aim() {
+    gazeRaf = 0;
+    chars.forEach(ch => {
+      const eyes = ch.querySelectorAll('.eyes i');
+      let col = (NX - 1) / 2, row = (NY - 1) / 2;
+      if (ptr && !reduce.matches) {
+        const r = ch.getBoundingClientRect(), dx = ptr.x - (r.left + r.width / 2), dy = ptr.y - (r.top + r.height * 0.45);
+        col = Math.round((Math.max(-1, Math.min(1, dx / 220)) + 1) / 2 * (NX - 1));
+        row = Math.round((Math.max(-1, Math.min(1, dy / 140)) + 1) / 2 * (NY - 1));
+      }
+      eyes.forEach(i => { i.style.backgroundPosition = `${col / (NX - 1) * 100}% ${row / (NY - 1) * 100}%`; });
+    });
+  }
+  document.addEventListener('pointermove', e => {
+    if (!wip.classList.contains('open') || wipTeaser.hidden) return;
+    ptr = { x: e.clientX, y: e.clientY };
+    if (!gazeRaf) gazeRaf = requestAnimationFrame(aim);
+  });
+  document.addEventListener('pointerleave', () => { ptr = null; aim(); });
   let loaded = false;
-  const loadChars = () => { if (loaded) return; loaded = true; wipChars.querySelectorAll('img').forEach(i => { i.src = i.dataset.src; }); rest(); };
+  const loadChars = () => {
+    if (loaded) return; loaded = true;
+    wipChars.querySelectorAll('img').forEach(i => { i.src = i.dataset.src; });
+    wipChars.querySelectorAll('.eyes i').forEach(i => { i.style.backgroundImage = `url(${i.dataset.src})`; });
+    rest(); aim();
+  };
   chars.forEach(ch => {
     ch.addEventListener('pointerenter', () => { over = ch; rest(); });
-    ch.addEventListener('pointerleave', () => { over = null; ch.style.removeProperty('--rx'); ch.style.removeProperty('--ry'); ch.style.removeProperty('--tx'); ch.style.removeProperty('--ty'); rest(); });
+    ch.addEventListener('pointerleave', () => { over = null; ['--rx', '--ry', '--tx', '--ty'].forEach(p => ch.querySelector('.wip-pic').style.removeProperty(p)); rest(); });
     ch.addEventListener('pointermove', e => {
       if (reduce.matches) return;
       const r = ch.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-      const p = ch.querySelector('.wip-pic').style; p.setProperty('--rx', `${-y * 10}deg`); p.setProperty('--ry', `${x * 12}deg`);
-      p.setProperty('--tx', `${x * 6}px`); p.setProperty('--ty', `${y * 4}px`);
+      const p = ch.querySelector('.wip-pic').style; p.setProperty('--rx', `${-y * 6}deg`); p.setProperty('--ry', `${x * 8}deg`);
+      p.setProperty('--tx', `${x * 4}px`); p.setProperty('--ty', `${y * 3}px`);
     });
     ch.addEventListener('click', () => {
       pressed = ch; rest(); ch.classList.add('hi');
