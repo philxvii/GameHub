@@ -10,7 +10,9 @@ import { progress } from './staging.js';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const breathe = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));   // rend la main au navigateur
 
-export async function createLive(hosts, { reduced = false, onProgress = () => {} } = {}) {
+// `quiet` : attente avant chaque etape lourde (construction, premier rendu : ~0,2 s chacune). Le hub
+// y fait patienter le prechargement tant que l'utilisateur bouge, pour qu'il ne sente rien.
+export async function createLive(hosts, { reduced = false, onProgress = () => {}, quiet = breathe } = {}) {
   const base = new URL('../', import.meta.url);
   const [people, sizes] = await Promise.all([fetch(new URL('roster.json', base)).then((r) => r.json()), fetch(new URL('sizes.json', base)).then((r) => r.json())]);
   const cast = createCast(people);
@@ -34,15 +36,17 @@ export async function createLive(hosts, { reduced = false, onProgress = () => {}
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(devicePixelRatio * 2, 3));
     const studio = createStudio(renderer, frame);
-    await breathe();
+    await quiet();
     const { model, rig } = await cast.build(i, { reduced });
     studio.show(model);
     for (let k = 0; k < 90; k++) rig.update(1 / 60, k / 60, { x: 0, y: 0.05, active: true });   // pose stable
     const it = { host, canvas, renderer, studio, rig, painted: false, w: 0, h: 0 };
     const r = host.getBoundingClientRect();
     if (r.width) { it.w = Math.round(r.width); it.h = Math.round(r.width / ASPECT); renderer.setSize(it.w, it.h, false); }
-    await breathe();
-    studio.render();                                          // compile les shaders maintenant, pas au premier affichage
+    // Shaders compiles en parallele par le GPU (KHR_parallel_shader_compile) plutot qu'au premier rendu.
+    if (renderer.compileAsync) await renderer.compileAsync(studio.scene, studio.camera).catch(() => {});
+    await quiet();
+    studio.render();                                          // premiere image peinte maintenant, pas au premier affichage
     items.push(it); built++; report();
   }
   progress.onBytes = null;

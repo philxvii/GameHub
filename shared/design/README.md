@@ -77,6 +77,7 @@ liseré clair très discret pour se détacher.
 
 | Séquence | Durée | Détail |
 | --- | --- | --- |
+| Chargement | 0 à 8 s | fond uni, un dé qui roule et une fine barre ; montré seulement si quelque chose manque encore après 250 ms (cache plein : jamais). Attend le site ouvert, les polices, les affiches et les réglages de la base (jeux masqués, vérification d'âge), gardés de la visite précédente dans `localStorage` (`gh-hub`) |
 | Ouverture | ~2 s | en-tête en fondu ; paquet face cachée ; chaque carte décolle en arc, se retourne en vol, se pose avec un léger dépassement ; l'affiche arrive dans le noir et s'allume comme sous un projecteur, avec un reflet qui la traverse |
 | Survol | 0,4 s | la carte monte, s'incline sous le pointeur, reflet qui suit la souris |
 | Filtre | 0,38 s | les jeux écartés s'effacent, rien ne bouge |
