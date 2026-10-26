@@ -122,8 +122,8 @@ async function tournamentDone(devs, tid, ms = 9 * 60000) {
     const err = await waitFor(B.p, `return document.querySelector('#home-err').textContent;`);
     assert.match(err, /inconnu|invalide/i);
   });
-  await check('impossible de lancer seul', async () => {
-    assert.equal(await A.p.eval(`return document.querySelector('#btn-start').disabled;`), true);
+  await check('seul au salon : le bouton propose le duel contre Gonzague', async () => {
+    assert.equal(await A.p.eval(`return document.querySelector('#btn-start').textContent;`), 'Jouer seul contre Gonzague');
   });
   await check('rejoindre : 2 joueurs + un écran de scène ; présentateur accueille', async () => {
     await join(B, code, 'Bob');
