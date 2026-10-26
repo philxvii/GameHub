@@ -22,6 +22,7 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}</script>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
 <!--
   Hub de GameHub : les neuf jeux sont des cartes illustrees, distribuees a l'ouverture.
@@ -149,7 +150,7 @@
   .game-card.coming-soon{opacity:.45;pointer-events:none;}
   .ghost{height:36px;padding:0 8px;border:none;background:transparent;font-size:12px;color:var(--muted);opacity:.45;cursor:pointer;}
   .ghost:hover,.ghost[aria-expanded="true"]{opacity:.9;}
-  .abandoned{margin:36px auto 0;}
+  .abandoned{margin:0 auto;padding-bottom:56px;}
   .abandoned .game-card{opacity:.75;}
   .media{position:relative;aspect-ratio:3/4;perspective:1400px;}
   .shade{position:absolute;left:10%;right:10%;bottom:0;height:30%;border-radius:50%;background:rgba(10,12,18,.5);filter:blur(var(--sb,16px));
@@ -194,9 +195,22 @@
   .launch-veil{position:fixed;inset:0;background:#000;opacity:0;}
 
   /* ── Pied de page ── */
-  .hub-footer{border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px 24px;padding-top:20px;padding-bottom:28px;}
-  .footer-text{font-size:13px;color:var(--muted);}
-  .online-dot{width:6px;height:6px;border-radius:50%;background:#2EB872;display:inline-block;margin-right:8px;vertical-align:2px;}
+  .hub-footer{border-top:1px solid var(--border);padding-top:32px;padding-bottom:28px;}
+  .ft-main{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px 32px;padding-bottom:28px;}
+  .ft-brand{display:flex;align-items:center;gap:14px;}
+  .ft-die{flex:none;width:44px;height:44px;border-radius:13px;background:var(--back) var(--die) center/58% no-repeat;box-shadow:var(--shadow);}
+  :root[data-theme="dark"] .ft-die{box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),var(--shadow);}
+  .ft-brand b{display:block;font-weight:600;font-size:17px;line-height:1.2;letter-spacing:-.025em;}
+  .ft-brand span{display:block;margin-top:2px;font-size:14px;color:var(--muted);}
+  .ft-live{display:inline-flex;align-items:center;gap:10px;height:38px;padding:0 16px 0 14px;border-radius:999px;border:1px solid var(--border2);font-size:14px;color:var(--text);font-variant-numeric:tabular-nums;}
+  .ft-live i{position:relative;width:7px;height:7px;border-radius:50%;background:#2EB872;}
+  .ft-live i::after{content:"";position:absolute;inset:0;border-radius:50%;background:#2EB872;animation:ft-ping 2.4s var(--e-out) infinite;}
+  @keyframes ft-ping{0%{transform:scale(1);opacity:.55}70%,100%{transform:scale(3.2);opacity:0}}
+  .ft-bottom{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 20px;padding-top:16px;border-top:1px solid var(--border);font-size:13px;color:var(--muted);}
+  .ft-links{display:flex;align-items:center;gap:6px 18px;}
+  .ft-links a{text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--border2);transition:color var(--d-2),text-decoration-color var(--d-2);}
+  .ft-links a:hover{color:var(--text);text-decoration-color:currentColor;}
+  @media (prefers-reduced-motion:reduce){.ft-live i::after{animation:none;}}
   .admin-trigger{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:50%;color:var(--muted);opacity:.6;cursor:pointer;user-select:none;background:none;border:none;transition:opacity var(--d-2),transform .7s var(--e-out);}
   .admin-trigger:hover{opacity:1;transform:rotate(60deg);}
   .admin-trigger svg{width:16px;height:16px;}
@@ -209,9 +223,11 @@
   .adm-ghost-btn{width:100%;margin-top:6px;padding:11px;border-radius:var(--r-sm);border:none;background:transparent;color:var(--muted);font-size:14px;cursor:pointer;}
   .adm-ghost-btn:hover{color:var(--text);}
   /* Jeux pas encore refaits : le fond du hub se voile, l'affiche du jeu vient se poser, le texte reste sobre. */
-  #wip{position:fixed;inset:0;z-index:150;overflow-y:auto;overscroll-behavior:contain;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(18px) saturate(.8);-webkit-backdrop-filter:blur(18px) saturate(.8);opacity:0;visibility:hidden;transition:opacity var(--d-3) var(--e-out),visibility 0s linear var(--d-3);}
-  #wip.open{opacity:1;visibility:visible;transition:opacity var(--d-3) var(--e-out);}
-  .wip-in{min-height:100%;display:flex;flex-direction:column;justify-content:center;gap:34px;max-width:960px;margin:0 auto;padding:72px var(--gutter) 48px;}
+  #wip{position:fixed;inset:0;z-index:150;overflow-y:auto;overscroll-behavior:contain;visibility:hidden;}
+  #wip.show{visibility:visible;}
+  #wip::before{content:"";position:fixed;inset:0;background:var(--bg);opacity:0;transition:opacity .42s var(--e-out);}
+  #wip.open::before{opacity:1;}
+  .wip-in{position:relative;z-index:1;min-height:100%;display:flex;flex-direction:column;justify-content:center;gap:34px;max-width:960px;margin:0 auto;padding:72px var(--gutter) 48px;}
   .wip-x{position:fixed;top:16px;right:max(16px,calc(var(--gutter) - 8px));z-index:2;display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 10px;border-radius:999px;border:1px solid var(--border2);background:transparent;color:var(--text);font-size:14px;font-weight:500;cursor:pointer;transition:border-color var(--d-2);}
   .wip-x:hover{border-color:var(--text);}
   .wip-x svg{width:15px;height:15px;}
@@ -228,10 +244,12 @@
   .wip-prog{margin-top:30px;}
   .wip-prog-top{display:flex;align-items:baseline;gap:12px;}
   .wip-pct{font-weight:600;font-size:clamp(44px,5vw,64px);line-height:1;letter-spacing:-.05em;font-variant-numeric:tabular-nums;}
-  .wip-step{font-size:14.5px;color:var(--muted);}
-  .wip-bar{position:relative;height:6px;margin-top:14px;border-radius:99px;background:var(--border2);}
+  .wip-step{display:flex;flex-direction:column;gap:2px;font-size:14.5px;line-height:1.3;color:var(--muted);}
+  .wip-step b{color:var(--text);font-weight:600;}
+  .wip-ends{display:flex;justify-content:space-between;margin-top:8px;font-size:12.5px;color:var(--muted);}
+  .wip-bar{position:relative;height:8px;margin-top:14px;border-radius:99px;background:linear-gradient(90deg,rgba(229,72,77,.24),rgba(245,184,61,.24),rgba(47,179,107,.24));}
   .wip-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#E5484D 0%,#F5B83D 50%,#2FB36B 100%);transition:width 1200ms var(--e-out) 350ms;}
-  .wip-bar::after{content:"";position:absolute;top:-3px;left:var(--p,0%);width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--wip-c);box-shadow:0 0 0 3px var(--bg);transition:left 1200ms var(--e-out) 350ms;}
+  .wip-bar::after{content:"";position:absolute;top:-4px;left:var(--p,0%);width:16px;height:16px;margin-left:-8px;border-radius:50%;background:var(--wip-c);box-shadow:0 0 0 3px var(--bg);transition:left 1200ms var(--e-out) 350ms;}
   .wip-next{margin-top:26px;list-style:none;border-top:1px solid var(--border);}
   .wip-next li{display:flex;gap:16px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--border);font-size:15px;}
   .wip-next b{flex:none;width:11.5em;font-weight:600;letter-spacing:-.01em;}
@@ -252,9 +270,12 @@
   .wip-pic .eyes{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .12s linear;}
   .wip-pic .eyes.on{opacity:1;}
   .wip-pic .eyes i{position:absolute;left:28.333%;top:53.333%;width:43.5%;height:11.467%;background-size:700% 300%;background-repeat:no-repeat;-webkit-mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent),linear-gradient(0deg,transparent,#000 18%,#000 82%,transparent);-webkit-mask-composite:source-in;mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent),linear-gradient(0deg,transparent,#000 18%,#000 82%,transparent);mask-composite:intersect;}
+  .wip-pic .stage.live img,.wip-pic .stage.live .eyes{visibility:hidden;}
+  #wip.q .wip-in{max-width:1140px;padding-top:64px;padding-bottom:36px;}
+  @media (min-width:721px){#wip.q .wip-main{grid-template-columns:minmax(0,500px) minmax(0,1fr);}}
   .wip-char .name{margin-top:6px;font-size:14px;font-weight:600;letter-spacing:-.01em;}
-  @media (max-width:720px){.wip-main{grid-template-columns:1fr;justify-items:start;}.wip-left{width:min(70vw,300px);}.wip-poster{width:min(46vw,200px);}.wip-next li{flex-direction:column;gap:2px;}.wip-next b{width:auto;}.wip-in{padding-top:64px;}}
-  @media (prefers-reduced-motion:reduce){#wip,.wip-fill,.wip-bar::after,.wip-poster .sheet,.wip-poster img,.wip-pic,.wip-pic .stage,.wip-pic img,.wip-pic .eyes{transition:none;}}
+  @media (max-width:720px){.wip-main{grid-template-columns:1fr;justify-items:start;}.wip-left{width:min(88vw,500px);}.wip-poster{width:min(46vw,200px);}.wip-next li{flex-direction:column;gap:2px;}.wip-next b{width:auto;}.wip-in{padding-top:64px;}}
+  @media (prefers-reduced-motion:reduce){#wip::before,.wip-fill,.wip-bar::after,.wip-poster .sheet,.wip-poster img,.wip-pic,.wip-pic .stage,.wip-pic img,.wip-pic .eyes{transition:none;}}
   #admin-panel{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;}
   #admin-panel.hidden{display:none;}
   .adm-top{position:sticky;top:0;z-index:600;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
@@ -551,13 +572,21 @@
   </main>
 
   <footer class="wrap hub-footer">
-    <span class="footer-text"><span class="online-dot"></span><span id="online-count">Chargement…</span></span>
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div class="footer-text">By XVIIIUUUU</div>
-      <a class="footer-text" href="/confidentialite" style="text-decoration:underline">Confidentialité</a>
-      <button class="admin-trigger" type="button" onclick="openAdminGate()" aria-label="Administration">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
-      </button>
+    <div class="ft-main">
+      <div class="ft-brand">
+        <span class="ft-die" aria-hidden="true"></span>
+        <div><b>GameHub</b><span>Des jeux en ligne entre amis, sans compte.</span></div>
+      </div>
+      <span class="ft-live"><i aria-hidden="true"></i><span id="online-count">Chargement…</span></span>
+    </div>
+    <div class="ft-bottom">
+      <span>© 2026 GameHub · par XVIIIUUUU</span>
+      <div class="ft-links">
+        <a href="/confidentialite">Confidentialité</a>
+        <button class="admin-trigger" type="button" onclick="openAdminGate()" aria-label="Administration">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        </button>
+      </div>
     </div>
   </footer>
 </div>
@@ -572,15 +601,16 @@
         <div class="wip-poster" id="wip-poster"><div class="sheet"><img id="wip-img" alt=""></div></div>
         <div class="wip-teaser" id="wip-teaser" hidden>
           <div class="wip-chars" id="wip-chars"></div>
-          <p>Passe la souris sur eux.</p>
+          <p>Bouge la souris sur eux, ou touche-les.</p>
         </div>
       </div>
       <div class="wip-text">
         <h2 id="wip-title"></h2>
         <p class="wip-lede">La nouvelle version est en préparation. En attendant, tu peux jouer à l’<b>ancienne</b> : même jeu, avec moins de soin.</p>
         <div class="wip-prog">
-          <div class="wip-prog-top"><span class="wip-pct" id="wip-pct"></span><span class="wip-step" id="wip-step"></span></div>
+          <div class="wip-prog-top"><span class="wip-pct" id="wip-pct"></span><span class="wip-step"><span>de la nouvelle version est faite</span><b id="wip-step"></b></span></div>
           <div class="wip-bar" id="wip-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Avancement de la nouvelle version"><div class="wip-fill" id="wip-fill"></div></div>
+          <div class="wip-ends"><span>Pas commencée</span><span>Terminée</span></div>
         </div>
         <ul class="wip-next" id="wip-next"></ul>
         <div class="wip-actions">
@@ -761,10 +791,11 @@
   const WIP = {
     undercover: { name: 'Undercover', pct: 10, soon: [['Une nouvelle ambiance', 'Une affiche et un décor à la hauteur du bluff.'], ['Des révélations soignées', 'Les rôles et les votes mis en scène.'], ['Des manches plus rythmées', 'Moins d’attente entre deux tours de table.']] },
     uno: { name: 'UNO', pct: 10, soon: [['Des cartes retravaillées', 'Un tapis, des cartes qui se posent pour de vrai.'], ['Une main plus agréable', 'Choisir et jouer une carte devient un plaisir.'], ['Des animations de table', 'Pioche, +4, sens inversé : tout se voit.']] },
-    puissance4: { name: 'Puissance 4', pct: 60, step: 'Bien avancé', soon: [['Un plateau en 3D', 'Noyer verni, ouvertures cerclées d’acier, pions en émail.'], ['Un observatoire', 'La partie se joue sous la lune, ou à l’aube en thème clair.'], ['Tes couleurs', 'Tu choisis la couleur de tes pions.']] },
+    puissance4: { name: 'Puissance 4', pct: 60, soon: [['Un plateau en 3D', 'Noyer verni, ouvertures cerclées d’acier, pions en émail.'], ['Un observatoire', 'La partie se joue sous la lune, ou à l’aube en thème clair.'], ['Tes couleurs', 'Tu choisis la couleur de tes pions.']] },
     quiestce: { name: 'Qui est-ce ?', pct: 15, soon: [['De vrais personnages', 'Chaque visage a son caractère, son style, sa tête.'], ['Ils réagissent', 'Passe la souris dessus : ils se tournent vers toi, sourient ou se méfient.'], ['Un plateau vivant', 'Rabattre un visage devient un geste satisfaisant.']] },
     bataille: { name: 'Bataille Navale', pct: 5, soon: [['Une mer retravaillée', 'Un plateau qui a de la profondeur.'], ['Des tirs qui se voient', 'Eau, touché, coulé : chaque coup a son effet.'], ['Un placement plus fluide', 'Poser sa flotte sans se battre avec l’écran.']] },
     roulette: { name: 'Roulette', pct: 5, soon: [['Une roue plus vraie', 'Une bille, un bol, un vrai tour de roue.'], ['Un suspense mis en scène', 'Le ralenti avant le numéro gagnant.'], ['Un tapis soigné', 'Mises et jetons lisibles à plusieurs.']] },
+    mauvaisperdants: { name: 'Mauvais Perdants', pct: 30, soon: [['Un vrai plateau de télé', 'Rideaux, projecteurs et ampoules : une émission, pas un écran.'], ['Un animateur qui existe', 'Gonzague plus grand, plus expressif, plus odieux.'], ['Des finales mises en scène', 'Résultats et podium avec un vrai moment de gloire.']] },
     minigolf: { name: 'Mini Golf', pct: 5, soon: [['Des parcours repensés', 'Des pistes avec du relief et des obstacles.'], ['Un tir plus précis', 'Viser et doser la puissance, sans approximation.'], ['Une partie à plusieurs', 'Voir la balle de chacun rouler sur le green.']] }
   };
   const wip = document.getElementById('wip');
@@ -772,7 +803,7 @@
   const wipChars = document.getElementById('wip-chars'), wipTeaser = document.getElementById('wip-teaser');
   let wipCard = null, wipBack = null;
   // Rouge sous un tiers, jaune jusqu'aux deux tiers, vert ensuite.
-  const stage = p => p < 34 ? ['#E5484D', 'Démarrage'] : p < 67 ? ['#F5B83D', 'En cours'] : ['#2FB36B', 'Bien avancé'];
+  const stage = p => p < 34 ? ['#E5484D', 'On vient de s’y mettre'] : p < 67 ? ['#F5B83D', 'En cours de route'] : ['#2FB36B', 'Bientôt prête'];
   // Quatre personnages du prototype de Qui est-ce ? (rendus 3D pre-calcules) : le visage change
   // d'expression (sourire au survol, mefiance des voisins, sursaut au clic) et les yeux suivent
   // le pointeur, ou que soit la souris : planches de 7 x 3 regards pour « neutre » et « sourire ».
@@ -792,7 +823,7 @@
   };
   let over = null, pressed = null;
   function rest() { // chaque visage selon l'etat du pointeur
-    chars.forEach(ch => face(ch, ch === pressed ? 'surprised' : ch === over ? 'smile' : over ? 'suspicious' : 'neutral'));
+    chars.forEach((ch, i) => { const e = ch === pressed ? 'surprised' : ch === over ? 'smile' : over ? 'suspicious' : 'neutral'; face(ch, e); if (live) live.express(i, e); });
   }
   // Regard : la case de la planche la plus proche de la direction du pointeur.
   let ptr = null, gazeRaf = 0;
@@ -811,16 +842,26 @@
   }
   document.addEventListener('pointermove', e => {
     if (!wip.classList.contains('open') || wipTeaser.hidden) return;
-    ptr = { x: e.clientX, y: e.clientY };
+    ptr = { x: e.clientX, y: e.clientY }; if (live) live.point(ptr);
     if (!gazeRaf) gazeRaf = requestAnimationFrame(aim);
   });
-  document.addEventListener('pointerleave', () => { ptr = null; aim(); });
+  document.addEventListener('pointerleave', () => { ptr = null; if (live) live.point(null); aim(); });
+  // 3D temps reel (modules et modeles charges a la demande) ; les portraits ci-dessus restent le repli.
+  let live = null, liveTried = false;
+  async function loadLive() {
+    if (liveTried) return; liveTried = true;
+    try {
+      const { createLive } = await import('./games/qui-est-ce/vivant/js/live.js');
+      live = await createLive(chars.map(ch => ch.querySelector('.stage')), { reduced: reduce.matches });
+      rest(); if (wip.classList.contains('open') && !wipTeaser.hidden) live.start();
+    } catch (err) { live = null; console.warn('Personnages 3D indisponibles, portraits utilisés', err); }
+  }
   let loaded = false;
   const loadChars = () => {
     if (loaded) return; loaded = true;
     wipChars.querySelectorAll('img').forEach(i => { i.src = i.dataset.src; });
     wipChars.querySelectorAll('.eyes i').forEach(i => { i.style.backgroundImage = `url(${i.dataset.src})`; });
-    rest(); aim();
+    rest(); aim(); loadLive();
   };
   chars.forEach(ch => {
     ch.addEventListener('pointerenter', () => { over = ch; rest(); });
@@ -844,7 +885,7 @@
     wip.style.setProperty('--wip-c', col);
     document.getElementById('wip-title').textContent = d.name;
     document.getElementById('wip-pct').textContent = `${d.pct} %`;
-    document.getElementById('wip-step').textContent = d.step || lab;
+    document.getElementById('wip-step').textContent = lab;
     wipBar.setAttribute('aria-valuenow', d.pct);
     // Le degrade couvre toute la piste : la barre ne montre que son debut jusqu'a d.pct.
     wipFill.style.backgroundSize = `${10000 / d.pct}% 100%`;
@@ -852,15 +893,19 @@
     document.getElementById('wip-next').innerHTML = d.soon.map(([t, s]) => `<li><b>${t}</b><span>${s}</span></li>`).join('');
     wipImg.src = card.querySelector('.front img').src;
     wipTeaser.hidden = g !== 'quiestce'; wipPoster.hidden = g === 'quiestce';
-    if (g === 'quiestce') { over = pressed = null; loadChars(); rest(); }
-    wip.classList.add('open'); wip.setAttribute('aria-hidden', 'false');
+    wip.classList.toggle('q', g === 'quiestce');
+    if (g === 'quiestce') { over = pressed = null; loadChars(); rest(); if (live) live.start(); }
+    wip.classList.add('show', 'open'); wip.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden'; wip.scrollTop = 0;
-    requestAnimationFrame(() => {
+    const flyer = g === 'quiestce' ? wipTeaser : wipPoster, media = card.querySelector('.media');
+    if (!reduce.matches) media.style.opacity = '0';          // la carte du hub « part » avec l'affiche
+    Promise.race([wipImg.decode().catch(() => {}), wait(120)]).then(() => {
       wipFill.style.width = `${d.pct}%`; wipBar.style.setProperty('--p', `${d.pct}%`);
       if (reduce.matches) return;
+      if (!wip.classList.contains('open') || wipCard !== card) { media.style.opacity = ''; return; }
       // L'affiche part de la carte du hub et vient se poser ; le texte suit en fondu.
-      const from = card.querySelector('.media').getBoundingClientRect(), to = (g === 'quiestce' ? wipTeaser : wipPoster).getBoundingClientRect();
-      (g === 'quiestce' ? wipTeaser : wipPoster).animate([{ transform: `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width})` }, { transform: 'none' }], { duration: 760, easing: 'cubic-bezier(.22,1,.36,1)' });
+      const from = media.getBoundingClientRect(), to = flyer.getBoundingClientRect();
+      flyer.animate([{ transform: `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width})` }, { transform: 'none' }], { duration: 700, easing: 'cubic-bezier(.22,1,.36,1)' });
       wip.querySelectorAll('.wip-text > *, .wip-x').forEach((el, k) =>
         el.animate([{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], { duration: 560, delay: 160 + k * 70, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'backwards' }));
     });
@@ -874,12 +919,25 @@
     st.setProperty('--mx', `${x * 100}%`); st.setProperty('--my', `${y * 100}%`);
   });
   wipPoster.addEventListener('pointerleave', () => ['--rx', '--ry'].forEach(p => wipPoster.style.removeProperty(p)));
-  function closeWip() {
-    if (!wip.classList.contains('open')) return;
-    wip.classList.remove('open'); wip.setAttribute('aria-hidden', 'true');
+  let closing = false;
+  function wipReset() { // etat neutre, sans animation
+    if (live) live.stop();
+    wip.classList.remove('show', 'open'); wip.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
+    document.querySelectorAll('.game-card .media').forEach(m => { m.style.opacity = ''; });
+    wip.getAnimations({ subtree: true }).forEach(x => x.cancel());
+    wipCard = null; closing = false;
+  }
+  function closeWip() {
+    if (!wip.classList.contains('open') || closing) return;
+    const card = wipCard, flyer = wipTeaser.hidden ? wipPoster : wipTeaser;
     if (wipBack && wipBack.focus) wipBack.focus({ preventScroll: true });
-    wipCard = null;
+    if (reduce.matches || !card) { wipReset(); return; }
+    closing = true; wip.classList.remove('open');           // le voile s'efface pendant le retour de l'affiche
+    const from = flyer.getBoundingClientRect(), to = card.querySelector('.media').getBoundingClientRect();
+    wip.querySelectorAll('.wip-text > *, .wip-x').forEach(el => el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, easing: 'ease-out', fill: 'forwards' }));
+    flyer.animate([{ transform: 'none' }, { transform: `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width})` }],
+      { duration: 520, easing: 'cubic-bezier(.65,0,.25,1)', fill: 'forwards' }).finished.then(wipReset, wipReset);
   }
   document.getElementById('wip-x').addEventListener('click', closeWip);
   document.getElementById('wip-later').addEventListener('click', closeWip);
@@ -894,11 +952,19 @@
     }
   });
   document.getElementById('wip-go').addEventListener('click', () => {
-    const a = wipCard; if (!a) return;
-    a.dataset.wipOk = '1';
-    wip.classList.remove('open'); wip.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; wipCard = null;
-    a.click();
+    const a = wipCard; if (!a || closing || launching) return;
+    if (reduce.matches) { const href = a.href; wipReset(); location.href = href; return; }
+    launching = true;
+    const flyer = wipTeaser.hidden ? wipPoster : wipTeaser;
+    // L'affiche s'avance vers soi, le reste s'efface, l'ecran passe au noir, puis le jeu s'ouvre.
+    wip.querySelectorAll('.wip-text > *, .wip-x').forEach(el => el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-8px)' }], { duration: 260, easing: 'ease-in', fill: 'forwards' }));
+    flyer.animate([{ transform: 'none' }, { transform: 'scale(1.18)' }], { duration: 720, easing: 'cubic-bezier(.55,0,.8,.4)', fill: 'forwards' });
+    const veil = document.createElement('div'); veil.className = 'launch-veil';
+    warp.replaceChildren(veil); warp.classList.add('go');
+    veil.animate([{ opacity: 0 }, { opacity: 0, offset: 0.35 }, { opacity: 1 }], { duration: 760, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+    setTimeout(() => { location.href = a.href; }, 780);
   });
+  addEventListener('pageshow', () => { if (wip.classList.contains('show')) wipReset(); });
   // Interception : les clics sur les jeux de la liste WIP ouvrent la fenetre (sauf une fois confirmé).
   document.addEventListener('click', e => {
     const a = e.target.closest('a.game-card');
@@ -1064,7 +1130,7 @@ function renderOnline(){
   const now = Date.now() + serverOffset;
   const count = Object.entries(onlineList).filter(([k, v]) => k === presenceKey || now - (v && v.t) < STALE).length;
   const el = document.getElementById('online-count');
-  if(el) el.textContent = `${count} personne${count>1?'s':''} connectée${count>1?'s':''} actuellement`;
+  if(el) el.textContent = `${count} personne${count>1?'s':''} en ligne`;
   const mini = document.getElementById('live-mini');
   if(mini){ mini.lastElementChild.textContent = `${count} en ligne`; mini.hidden = false; }
   const statEl = document.getElementById('stat-online');

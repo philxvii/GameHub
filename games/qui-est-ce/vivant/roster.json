@@ -1,0 +1,114 @@
+[
+ {
+  "id": "character-01",
+  "prenom": "Raphaël",
+  "age": 36,
+  "statut": "modelise",
+  "apparence": {
+   "visage": "teint clair méditerranéen, visage allongé, mâchoire marquée, quelques taches de rousseur sur le nez",
+   "coiffure": "cheveux brun foncé courts, volume bouclé sur le dessus",
+   "pilosite": "barbe courte bien taillée et moustache"
+  },
+  "attributs": {
+   "genre": "homme",
+   "age": "adulte",
+   "cheveux": "brun",
+   "coupe": "court",
+   "cheveux_boucles": true,
+   "yeux": "vert",
+   "lunettes": false,
+   "chapeau": false,
+   "barbe": true,
+   "moustache": true,
+   "boucles_oreilles": false
+  }
+ },
+ {
+  "id": "character-22",
+  "prenom": "Kenji",
+  "age": 47,
+  "statut": "pilote",
+  "apparence": {
+   "visage": "peau claire d'Asie de l'Est, visage carré",
+   "coiffure": "cheveux noirs courts, raides, quelques fils gris",
+   "pilosite": null
+  },
+  "attributs": {
+   "genre": "homme",
+   "age": "adulte",
+   "cheveux": "noir",
+   "coupe": "court",
+   "cheveux_boucles": false,
+   "yeux": "marron",
+   "lunettes": true,
+   "chapeau": false,
+   "barbe": false,
+   "moustache": false,
+   "boucles_oreilles": false
+  },
+  "glb": "models/character-22/character-22-ict-opt.glb",
+  "coiffure": "models/hair/prop-short-grey-opt.glb",
+  "teinte": "noir",
+  "accessoires": [
+   "models/character-22/accessories/glasses-metal.glb"
+  ]
+ },
+ {
+  "id": "character-17",
+  "prenom": "Damien",
+  "age": 35,
+  "statut": "pilote",
+  "apparence": {
+   "visage": "peau métisse caramel, visage ovale, lèvres pleines",
+   "coiffure": "cheveux noirs bouclés courts",
+   "pilosite": null
+  },
+  "attributs": {
+   "genre": "homme",
+   "age": "adulte",
+   "cheveux": "noir",
+   "coupe": "court",
+   "cheveux_boucles": true,
+   "yeux": "marron",
+   "lunettes": false,
+   "chapeau": true,
+   "barbe": false,
+   "moustache": false,
+   "boucles_oreilles": false
+  },
+  "glb": "models/character-17/character-17-ict-opt.glb",
+  "coiffure": "models/hair/hair-curly-v41-opt.glb",
+  "teinte": "noir",
+  "accessoires": []
+ },
+ {
+  "id": "character-19",
+  "prenom": "Farid",
+  "age": 42,
+  "statut": "pilote",
+  "apparence": {
+   "visage": "peau mate maghrébine, visage anguleux, nez aquilin",
+   "coiffure": "cheveux noirs courts, coupe nette",
+   "pilosite": "moustache noire épaisse, joues rasées"
+  },
+  "attributs": {
+   "genre": "homme",
+   "age": "adulte",
+   "cheveux": "noir",
+   "coupe": "court",
+   "cheveux_boucles": false,
+   "yeux": "marron",
+   "lunettes": false,
+   "chapeau": false,
+   "barbe": false,
+   "moustache": true,
+   "boucles_oreilles": false
+  },
+  "glb": "models/character-19/character-19-ict-opt.glb",
+  "coiffure": "models/hair/prop-short-grey-opt.glb",
+  "teinte": "noir",
+  "accessoires": [
+   "models/character-19/accessories/moustache.glb"
+  ]
+ }
+]
