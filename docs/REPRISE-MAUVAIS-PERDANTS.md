@@ -17,43 +17,31 @@ L'utilisateur ne retient pas les commandes. **C'est toi qui les lances.** Il dir
    navigateurs différents (Chrome, Edge, une fenêtre privée) : chacun est un joueur distinct.
 3. Ne pousse sur `main` (production) qu'à sa demande explicite.
 
-## Prochaine étape : refonte complète de l'interface (demandée le 26/10)
+## Refonte de l'interface « Canal 7 » (26/10/2026) : faite en local, NON commitée
 
-L'utilisateur trouve l'interface trop basique, « faite par IA », sans vraie direction
-artistique. Il va envoyer un prompt de refonte : **attends-le** avant de coder, puis
-reprends l'interface depuis zéro.
+Après plusieurs pistes refusées (music-hall avec présentateur dessiné, tableau sombre),
+l'utilisateur a validé un prototype animé : le jeu est une émission de **Canal 7**, chaîne
+fictive de la fin des années 70. Pas de présentateur à l'écran (ses répliques sont toujours
+écrites en base, juste plus affichées), **pas de son** pour l'instant (`ENABLED = false` dans
+`js/sfx.js`). Tout est décrit dans `games/mauvais-perdants/docs/DIRECTION-ARTISTIQUE.md`.
 
-**Périmètre** : `css/`, `index.html`, `js/ui/`, `js/play/` et les vues de `js/main.js`.
-Le moteur ne bouge pas : règles, réseau, barème, machine à états, Petit Bac, présentateur.
-Les tests Node et navigateur (`tests/*.test.mjs`, `multi.cjs`, `rounds.cjs`, `solo.cjs`)
-doivent rester verts. Les tests navigateur et `tests/bot.js` s'appuient sur des sélecteurs
-(`#btn-solo`, `#btn-create`, `#btn-join`, `#name`, `#code`, `#btn-start`, `.gong.go`,
-`.target`, `.grid .cell`, `.word`, `.calc-q`, `.answer-row`, `.bac-fields input`,
-`.vote-item`, `.next-btn`, `.final-actions button`…) : garde-les, ou mets les tests à jour.
+- Fichiers : `index.html`, `css/show.css`, `js/main.js` (vues), `js/ui/fx.js` (transitions).
+  Supprimés : `js/ui/stage.js` (présentateur), anciens fichiers de décor. Moteur, règles,
+  réseau, Firebase, IA : inchangés.
+- Tests : `tests/multi.cjs` adapté (bouton « Jouer en solo », réplique lue en base au lieu de
+  l'écran, fenêtres de rechargement et de 3e tournoi élargies à intro ou compte à rebours).
+- Poussé le 26/10 à la demande de l'utilisateur AVANT les tests navigateur des derniers ajouts :
+  animations ralenties, mises à jour sur place (fluidité), Gong vert/rouge, nouvelle manche
+  « L'Étiquette » (`js/rounds/prix.js`, `js/play/prix.js`), choix des manches par l'hôte (codé dans
+  `cfg.v`, voir `encodePicks` dans `js/draw.js`). Node : 67/67. **À faire en premier** : relancer
+  `multi.cjs`, `rounds.cjs` (nouvelles graines MAN00000 / MAN00006) et `solo.cjs` sur le port 4173,
+  regarder les captures, corriger.
+  Le nom « Sans Appel » évoqué dans un prompt n'a pas été repris (le jeu reste Mauvais Perdants).
 
-**DA actuelle (à remplacer)**
-- Fond encre `#141110`, surfaces `#1d1916` à `#3a322c`, texte crème `#f3ebdc`, accent laiton
-  `#d6a84a`, rouge signal `#ff4a2e`, 8 couleurs de joueur saturées, rideaux lie-de-vin en
-  dégradé discret sur les bords.
-- Polices : Anton (titres, chiffres) et Instrument Sans (interface).
-- Composants : cartes sombres arrondies à liseré, boutons pilule, pastilles carrées.
-- Présentateur : SVG plat en deux tons (crème et noir), avec des humeurs par classes CSS et
-  une bulle crème façon télé-prompteur.
-- Signature : tableau à palettes pour le code et les totaux.
-- Mise en page : présentateur à gauche, contenu à droite sur ordinateur ; bandeau sur
-  mobile.
-
-**Pourquoi elle est rejetée**
-- C'est une palette, pas un univers : du mode sombre de SaaS, sans décor, sans matière,
-  sans lumière de scène.
-- Composants génériques, manches toutes dans le même cadre.
-- Présentateur plat et petit.
-- Moments forts (résultats, podium) sans mise en scène.
-- Aucun lien avec les affiches du hub, qui sont des photos réalistes en clair-obscur,
-  avec un faisceau de projecteur et de la fumée sur une table sombre.
-
-**À garder** : l'idée du présentateur odieux, le tableau à palettes et le rouge réservé
-aux signaux, si le prompt de l'utilisateur ne dit pas autre chose.
+**Pièges de cette session** : l'IA simulée n'accepte que les origines `localhost:4173` et
+`:4174` ; des Chrome de test orphelins (profil `bq-cdp-*`, parent mort) peuvent garder les
+ports 9400+ : les fermer avant de relancer ; ne jamais lancer deux suites navigateur en même
+temps (elles partagent ces ports et l'émulateur).
 
 ## Où on en est
 

@@ -93,7 +93,7 @@ export const LINES = {
   ],
   intro_game: [
     L(c => c.g === 'gong' && `Le Gong. Un panneau, un doigt, et votre dignité suspendue à quelques millisecondes.`),
-    L(c => c.g === 'gong' && `Le Gong. Celui qui touche avant le rouge sera publiquement humilié. Par moi.`),
+    L(c => c.g === 'gong' && `Le Gong. Celui qui touche avant le vert sera publiquement humilié. Par moi.`),
     L(c => c.g === 'tir' && `Le Stand de tir. Vingt cibles. Elles ne bougent pas, elles. Vous n'avez aucune excuse.`),
     L(c => c.g === 'tir' && `Stand de tir. Visez bien : chaque tir à côté, je le compte, et je m'en souviendrai.`),
     L(c => c.g === 'dictee' && `La Dictée. Une phrase, un clavier. Ceux qui tapent avec deux doigts, c'est le moment de prier.`),
@@ -108,6 +108,7 @@ export const LINES = {
     L(c => c.g === 'calcul' && `Calcul express. Des opérations de primaire. Je répète : de primaire. Ne me décevez pas.`),
     L(c => c.g === 'calcul' && `Calcul express. Une erreur coûte un point. Taper au hasard, c'est payer pour perdre.`),
     L(c => c.g === 'nuage' && `Le Nuage. Combien de points ? Personne ne compte, tout le monde ment. Approchez-vous de la vérité.`),
+    L(c => c.g === 'prix' && `L'Étiquette. Combien ça coûte ? Vous allez découvrir que vous ne faites jamais vos courses.`),
   ],
   round_win: [
     L(c => `${c.P} gagne la manche. Je note, je souligne, et je fais semblant de ne pas être impressionné.`),

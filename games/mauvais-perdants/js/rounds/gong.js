@@ -1,4 +1,4 @@
-// Le Gong — réflexes. Le panneau passe au rouge vif : toucher le plus vite possible.
+// Le Gong — réflexes. Le panneau passe au vert : toucher le plus vite possible.
 // 5 signaux, délais tirés de la graine (identiques pour tous). Toucher avant le signal
 // = faux départ : l'essai est rejoué avec le délai suivant, et le faux départ est
 // compté (départage). Le temps est mesuré sur l'appareil, entre l'affichage du signal
@@ -12,7 +12,7 @@ export const MIN_MS = 100;
 
 export default {
   id: 'gong', family: 'vitesse', title: 'Le Gong', verb: 'Réagis',
-  rules: ['Attends que le panneau passe au ROUGE, puis touche-le.', 'Cinq signaux. Toucher trop tôt = faux départ.', 'Temps moyen le plus bas gagne.'],
+  rules: ['Attends que le panneau passe au VERT, puis touche-le.', 'Cinq signaux. Toucher trop tôt = faux départ.', 'Temps moyen le plus bas gagne.'],
   playMs: 32000,
   unit: 'temps de réaction moyen',
   // Tactile et souris mélangés : l'écart de latence matérielle (plusieurs dizaines de ms)

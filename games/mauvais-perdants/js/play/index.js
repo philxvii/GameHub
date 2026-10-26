@@ -17,8 +17,9 @@ import dejavu from './dejavu.js';
 import bac from './bac.js';
 import calcul from './calcul.js';
 import nuage from './nuage.js';
+import prix from './prix.js';
 
-export const PLAY = { gong, tir, dictee, chemin, numeros, damier, coffre, dejavu, bac, calcul, nuage };
+export const PLAY = { gong, tir, dictee, chemin, numeros, damier, coffre, dejavu, bac, calcul, nuage, prix };
 
 export function mountPlay(el, { gameId, params, startAt, endAt, now, send, progress, doneText, save, finished }) {
   clear(el);

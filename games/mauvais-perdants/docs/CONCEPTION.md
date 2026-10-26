@@ -20,24 +20,9 @@ tenues.
 
 ## Direction artistique
 
-- **Palette** : encre chaude `#141110`, crème d'affiche `#f3ebdc`, laiton `#d6a84a`,
-  et un seul rouge « antenne » `#ff4a2e`, réservé aux signaux (Gong, cibles, mauvaise
-  réponse, ×2). Huit couleurs de joueur bien distinctes. Ni dégradé violet, ni néon.
-- **Typographie** : Anton (fronton de théâtre, titres et chiffres) et Instrument Sans
-  (la police du hub, pour l'interface).
-- **Signature** : le **tableau à palettes**. Code du salon et totaux défilent lettre par
-  lettre avec un claquement synthétisé. Il ne s'anime que quand le classement bouge.
-- **Le présentateur** : une affiche en deux tons, en SVG. Ses humeurs (narquois,
-  ravi, choqué, jaloux) passent par des classes CSS sur les sourcils, le regard et la
-  bouche, et sa bouche bouge pendant qu'il parle. Son bandeau fait office de
-  télé-prompteur.
-- **Mouvement rare** : compte à rebours qui cogne, lignes de résultats révélées du
-  dernier au premier, lignes du classement qui glissent vers leur nouvelle place,
-  podium qui monte, confettis. Tout est coupé avec `prefers-reduced-motion`.
-- **Son** : synthèse Web Audio, sans fichier, avec un bouton de coupure mémorisé. Il
-  n'est jamais utilisé comme signal de jeu.
-- **Écrans** : sur un écran large, la scène est à gauche et l'action à droite. Sur un
-  téléphone, le présentateur se réduit à un bandeau et disparaît pendant l'action.
+Voir [`DIRECTION-ARTISTIQUE.md`](DIRECTION-ARTISTIQUE.md) : le jeu est une émission de Canal 7,
+chaîne fictive de la fin des années 70 ; l'interface est l'habillage de la chaîne. Le
+présentateur n'est plus affiché (ses répliques restent écrites en base) et le son est coupé.
 
 ## Audit de Banqueroll et ce qui en est repris
 

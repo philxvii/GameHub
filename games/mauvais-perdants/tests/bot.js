@@ -95,6 +95,14 @@ window.__installBot = function (skill) {
       const n = S.st.count; S.st.count = null;
       later(300, () => { setVal(row.querySelector('input'), String(Math.round(n * skill.estimate))); row.querySelector('button').click(); });
     },
+    prix(p) {
+      const card = $('.price-card .pc-name'), input = $('.answer-row input');
+      if (!card || !input || card.textContent === S.st.last) return;
+      const it = p.items.find(x => x.name === card.textContent);
+      if (!it) return;
+      S.st.last = card.textContent;
+      later(skill.type * 4, () => { setVal(input, String(Math.round(it.price * skill.estimate * 100) / 100).replace('.', ',')); $('.answer-row button').click(); });
+    },
     bac(p) {
       if (S.st.filled) return;
       const inputs = $$('.bac-fields input');

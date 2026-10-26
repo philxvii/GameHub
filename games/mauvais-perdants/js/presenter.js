@@ -20,6 +20,7 @@ const EXPLOIT = {
   dejavu: s => s.correct >= 40,
   calcul: s => s.net >= 22,
   nuage: s => s.pct <= 6,
+  prix: s => s.pct <= 12,
   bac: s => s.pts >= 35,
 };
 
@@ -28,7 +29,7 @@ function gapText(game, a, b) {
   if (game === 'gong' && a.mean && b.mean) { const d = b.mean - a.mean; return d > 0 && d < 25 ? `${d} ms` : null; }
   if (game === 'tir' && a.total && b.total) { const d = b.total - a.total; return d > 0 && d < 500 ? `${(d / 1000).toFixed(2).replace('.', ',')} s` : null; }
   if (game === 'dictee' && a.ms && b.ms) { const d = b.ms - a.ms; return d > 0 && d < 600 ? `${(d / 1000).toFixed(2).replace('.', ',')} s` : null; }
-  if (game === 'nuage' && a.pct !== undefined && b.pct !== undefined) { const d = b.pct - a.pct; return d > 0 && d <= 2 ? `${d} point${d > 1 ? 's' : ''} d'écart` : null; }
+  if ((game === 'nuage' || game === 'prix') && a.pct !== undefined && b.pct !== undefined) { const d = b.pct - a.pct; return d > 0 && d <= 2 ? `${d} point${d > 1 ? 's' : ''} d'écart` : null; }
   return null;
 }
 

@@ -8,7 +8,7 @@
 // point ne peut pas être compté deux fois.
 
 import { decide, contenders, gameOf, INTRO_MS, allowed, STALL_MS } from './machine.js';
-import { drawPlan, ROUNDS_PER_TOURNAMENT } from './draw.js';
+import { drawPlan, decodePicks, ROUNDS_PER_TOURNAMENT } from './draw.js';
 import { round, TIEBREAK } from './rounds/index.js';
 import { rankRound, standings, needsTiebreak, tiebreakOrder, awards, FINAL_MULT, MIN_PLAYERS } from './scoring.js';
 import { prepare, aiItems, triage, resolve, scoreBac, voteList } from './petitbac.js';
@@ -111,7 +111,7 @@ export class Coordinator {
     if (solo) roster[GHOST] = { name: 'Gonzague', c: players[0].c === 1 ? 2 : 1, dev: players[0].dev };
     const seed = (typeof window !== 'undefined' && window.__mpSeed) || newSeed();
     const recent = prev && prev.plan ? prev.plan.map(x => x.g) : [];
-    const plan = drawPlan(seed, { devices: players.map(p => p.dev), solo, ai: !!aiBase() }, recent);
+    const plan = drawPlan(seed, { devices: players.map(p => p.dev), solo, ai: !!aiBase() }, recent, decodePicks((room.s.cfg || {}).v));
     // Revanche : numéro suivant ; nouveau salon ou retour au salon : numéro neuf (jamais réutilisé d'affilée).
     const tid = `t${prev && prev.tid ? (Number(prev.tid.slice(1)) % 9999) + 1 : 1 + Math.floor(Math.random() * 9999)}`;
     await room.clearRoundData();

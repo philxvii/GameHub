@@ -23,6 +23,12 @@ export const $ = (sel, root = document) => root.querySelector(sel);
 export const clear = el => { while (el.firstChild) el.removeChild(el.firstChild); return el; };
 export const PCOLORS = ['var(--p0)', 'var(--p1)', 'var(--p2)', 'var(--p3)', 'var(--p4)', 'var(--p5)', 'var(--p6)', 'var(--p7)'];
 export const chip = c => h('span', { class: 'chip', style: { '--pc': PCOLORS[(Number(c) || 0) % 8] } });
+// Dessin vectoriel STATIQUE (emblèmes, couronne) : jamais de donnée de joueur ici.
+export function svg(markup) {
+  const t = document.createElement('template');
+  t.innerHTML = markup.trim();
+  return t.content.firstElementChild;
+}
 export const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let toastTimer = null;

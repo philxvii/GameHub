@@ -12,7 +12,7 @@ export default function mount(root, { p, submit, progress }) {
   const main = h('div', { class: 'g-main' }), sub = h('div', { class: 'g-sub' });
   const pad = h('button', { class: 'gong wait', type: 'button', 'aria-live': 'assertive' }, h('div', {}, main, sub));
   const dots = h('div', { class: 'dots', 'aria-hidden': 'true' });
-  const head = h('div', { class: 'play-head' }, h('span', { text: 'Touche quand le panneau devient ROUGE' }), dots);
+  const head = h('div', { class: 'play-head' }, h('span', { text: 'Touche dès que le panneau passe au VERT' }), dots);
   root.append(head, pad);
   const drawDots = () => { dots.replaceChildren(...Array.from({ length: trials }, (_, k) => h('i', { class: k < times.length ? 'on' : '' }))); };
   const show = (cls, a, b) => { pad.className = `gong ${cls}`; main.textContent = a; sub.textContent = b || ''; };

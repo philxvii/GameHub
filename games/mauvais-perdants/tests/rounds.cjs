@@ -1,5 +1,6 @@
 // Complément de multi.cjs : fait jouer PAR L'INTERFACE les manches que son tirage fixe
-// ne couvre pas (Tir, Dictée, Chemin, Damier, Déjà vu, Nuage). Trois navigateurs de
+// ne couvre pas (Gong, Dictée), en repassant par d'autres (Chemin, Déjà vu, Damier, L'Étiquette…).
+// Graines recalculées à l'ajout de L'Étiquette (le tirage dépend du catalogue). Trois navigateurs de
 // bureau (claviers identiques : la Dictée est éligible), deux tournois aux graines
 // choisies. Mêmes prérequis que multi.cjs.
 //
@@ -94,8 +95,8 @@ async function tournament(devs, seed, shotPrefix) {
     await d.p.eval(`document.querySelector('#name').value = ${js(n)}; document.querySelector('#code').value = ${js(code)}; document.querySelector('#btn-join').click(); return 1;`);
     await waitFor(d.p, `return document.querySelector('#app').dataset.screen === 'lobby';`);
   }
-  const rule = { tir: /[0-9],[0-9] s|cibles/, dictee: /mots\/min|% tapé/, chemin: /^niveau [0-9]+$/, damier: /^niveau [0-9]+$/, dejavu: /bonnes/, nuage: /^écart [0-9]+ %$/, bac: /pts$/ };
-  for (const [seed, prefix] of [['MAN00011', '08-manches'], ['MAN00006', '09-manches']]) {
+  const rule = { tir: /[0-9],[0-9] s|cibles/, dictee: /mots\/min|% tapé/, chemin: /^niveau [0-9]+$/, damier: /^niveau [0-9]+$/, dejavu: /bonnes/, nuage: /^écart [0-9]+ %$/, prix: /^écart [0-9]+ %$/, bac: /pts$/ };
+  for (const [seed, prefix] of [['MAN00000', '08-manches'], ['MAN00006', '09-manches']]) {
     let m;
     await check(`tournoi ${seed} jusqu’au podium`, async () => { m = await tournament(devs, seed, prefix); });
     if (!m) continue;

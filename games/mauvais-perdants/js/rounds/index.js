@@ -12,8 +12,9 @@ import dejavu from './dejavu.js';
 import bac from './bac.js';
 import calcul from './calcul.js';
 import nuage from './nuage.js';
+import prix from './prix.js';
 
-export const ROUNDS = [gong, tir, dictee, chemin, numeros, damier, coffre, dejavu, bac, calcul, nuage];
+export const ROUNDS = [gong, tir, dictee, chemin, numeros, damier, coffre, dejavu, bac, calcul, nuage, prix];
 export const BY_ID = Object.fromEntries(ROUNDS.map(r => [r.id, r]));
 export const round = id => BY_ID[id] || null;
 export { FAMILIES, compareKeys, ABSENT, MAX_PAYLOAD } from './contract.js';

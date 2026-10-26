@@ -14,7 +14,7 @@ export class Flaps {
     this.text = ''.padEnd(len);
     this.timers = [];
   }
-  set(value, { pad = 'end', sound = true } = {}) {
+  set(value, { pad = 'end', sound = true, scroll = true } = {}) {
     const raw = String(value).toUpperCase().slice(0, this.len);
     const t = pad === 'start' ? raw.padStart(this.len) : raw.padEnd(this.len);
     this.timers.forEach(clearTimeout); this.timers = [];
@@ -24,6 +24,12 @@ export class Flaps {
       cell.classList.toggle('sp', ch === ' ' && pad === 'none');
       if (this.text[i] === ch) return;
       if (instant) { cell.textContent = ch; return; }
+      if (!scroll) {
+        cell.classList.remove('spin'); void cell.offsetWidth; cell.classList.add('spin');
+        this.timers.push(setTimeout(() => { cell.textContent = ch; }, 40));
+        if (sound) sfx.flap();
+        return;
+      }
       const steps = 3 + Math.floor(Math.random() * 4) + i % 3;
       for (let s = 0; s <= steps; s++) {
         this.timers.push(setTimeout(() => {

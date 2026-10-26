@@ -16,9 +16,10 @@ import coffre, { numberFor, normalizeDigits, START as C_START } from '../js/roun
 import dejavu, { WORDS, stream, _fold } from '../js/rounds/dejavu.js';
 import calcul, { problems } from '../js/rounds/calcul.js';
 import nuage, { errorOf, MISSING } from '../js/rounds/nuage.js';
+import prix, { CATALOG, parsePrice, ITEMS_PER_ROUND } from '../js/rounds/prix.js';
 import bac from '../js/rounds/bac.js';
 import { rankRound, slotPoints, standings, needsTiebreak, tiebreakOrder, awards, FINAL_MULT } from '../js/scoring.js';
-import { drawPlan, eligibleRounds } from '../js/draw.js';
+import { drawPlan, eligibleRounds, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks } from '../js/draw.js';
 import { decide, allowed, NEXT, GRACE_MS, INTRO_MS, COUNT_MS, gameOf, playMsOf, STALL_MS } from '../js/machine.js';
 import { prepare, aiItems, parseJudge, triage, resolve, scoreBac, voteList } from '../js/petitbac.js';
 import { cleanName, cleanAnswer, answerKey, firstLetter, validName } from '../js/text.js';
@@ -313,6 +314,60 @@ describe('Tirage des cinq manches', () => {
     const seen = new Set();
     for (let s = 0; s < 200; s++) drawPlan(`V${s}`, {}).forEach(x => seen.add(x.g));
     assert.equal(seen.size, ROUNDS.length);
+  });
+  test('manches choisies par l’hôte : codage stable, au moins cinq, tirage limité au choix', () => {
+    assert.deepEqual([...PICK_ORDER].sort(), ROUNDS.map(r => r.id).sort(), 'toute manche est sélectionnable');
+    assert.equal(encodePicks(PICK_ORDER), 1);
+    assert.deepEqual(decodePicks(1), PICK_ORDER);
+    assert.deepEqual(decodePicks(undefined), PICK_ORDER);
+    const pick = ['gong', 'chemin', 'coffre', 'bac', 'prix', 'tir'];
+    assert.deepEqual(decodePicks(encodePicks(pick)).sort(), pick.slice().sort());
+    assert.deepEqual(decodePicks(encodePicks(['gong', 'tir'])), PICK_ORDER, 'moins de cinq : tout le programme');
+    assert.deepEqual(decodePicks(-3), PICK_ORDER);
+    assert.equal(MIN_PICKS, 5);
+    for (let s = 0; s < 100; s++) {
+      const plan = drawPlan(`P${s}`, { devices: ['mouse', 'mouse'] }, [], pick);
+      assert.equal(plan.length, 5);
+      assert.ok(plan.every(x => pick.includes(x.g)), plan.map(x => x.g).join(','));
+      assert.equal(new Set(plan.map(x => x.g)).size, 5);
+    }
+    // Choix réduit par l'équité (salon mixte : ni Gong ni Dictée) : le tirage complète.
+    const mixed = drawPlan('P-mixte', { devices: ['touch', 'mouse'] }, [], ['gong', 'dictee', 'tir', 'chemin', 'coffre']);
+    assert.equal(mixed.length, 5);
+    assert.ok(!mixed.some(x => x.g === 'gong' || x.g === 'dictee'));
+  });
+});
+
+describe('L’Étiquette (prix)', () => {
+  test('catalogue : prix positifs, objets uniques, cinq objets distincts par manche, reproductible', () => {
+    assert.ok(CATALOG.length >= 30);
+    assert.ok(CATALOG.every(([n, h, p]) => n && h && p > 0));
+    assert.equal(new Set(CATALOG.map(c => c[0])).size, CATALOG.length);
+    const p = prix.params('S1', 2);
+    assert.equal(p.items.length, ITEMS_PER_ROUND);
+    assert.equal(new Set(p.items.map(i => i.name)).size, ITEMS_PER_ROUND);
+    assert.deepEqual(prix.params('S1', 2), p);
+  });
+  test('saisie : virgule, espaces, symbole euro ; refus du reste', () => {
+    assert.equal(parsePrice('3,50 €'), 3.5);
+    assert.equal(parsePrice('9 500'), 9500);
+    assert.equal(parsePrice('12'), 12);
+    for (const bad of ['', '0', 'abc', '-3', '1,234', '12e3']) assert.equal(parsePrice(bad), null, bad);
+  });
+  test('score : écart en rapport, plus petit = meilleur ; exact = 0 ; vide = absent', () => {
+    const p = prix.params('S2', 0);
+    const exact = prix.score({ a: p.items.map(i => i.price) }, p);
+    assert.deepEqual(exact.key, [0]);
+    assert.equal(exact.label, 'écart 0 %');
+    const off = prix.score({ a: p.items.map(i => i.price * 1.2) }, p);
+    assert.equal(off.label, 'écart 20 %');
+    // Même rapport, dans un sens ou dans l'autre : même pénalité.
+    const low = prix.score({ a: p.items.map(i => i.price / 1.2) }, p);
+    assert.deepEqual(low.key, off.key);
+    assert.ok(compareKeys(exact.key, off.key) < 0);
+    assert.equal(prix.score({}, p).idle, true);
+    // Payload hostile : borné, jamais d'exception.
+    assert.doesNotThrow(() => prix.score({ a: ['x', -5, 1e99, null, {}, 3] }, p));
   });
 });
 

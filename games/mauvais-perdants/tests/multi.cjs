@@ -123,7 +123,7 @@ async function tournamentDone(devs, tid, ms = 9 * 60000) {
     assert.match(err, /inconnu|invalide/i);
   });
   await check('seul au salon : le bouton propose le duel contre Gonzague', async () => {
-    assert.equal(await A.p.eval(`return document.querySelector('#btn-start').textContent;`), 'Jouer seul contre Gonzague');
+    assert.equal(await A.p.eval(`return document.querySelector('#btn-start').textContent;`), 'Jouer en solo');
   });
   await check('rejoindre : 2 joueurs + un écran de scène ; présentateur accueille', async () => {
     await join(B, code, 'Bob');
@@ -133,7 +133,8 @@ async function tournamentDone(devs, tid, ms = 9 * 60000) {
     const names = await A.p.eval(`return [...document.querySelectorAll('#roster .nm')].map(x => x.textContent);`);
     assert.ok(names.includes('Chloé b'), 'balise retirée du pseudo : ' + names);
     assert.equal(await A.p.eval(`return document.querySelectorAll('#roster b').length;`), 0, 'aucun HTML injecté');
-    await waitFor(A.p, `return document.querySelector('.caption p').textContent.length > 10;`, 10000, 'réplique du salon');
+    // Le présentateur n'est plus affiché, mais ses répliques sont toujours écrites (mc/).
+    await waitFor(A.p, `return Object.values(window.__mp.room.s.mc || {}).some(l => (l.t || '').length > 10);`, 10000, 'réplique du salon');
     await shot(A.p, '02-salon');
     await shot(B.p, '02b-salon-mobile');
   });
@@ -187,7 +188,8 @@ async function tournamentDone(devs, tid, ms = 9 * 60000) {
         await C.p.eval(BOT + '; return 1;');
         await bot(C, 'C');
       }
-      if (!reloaded && s.i === 1 && s.step === 'intro') {
+      // Fenêtre élargie au compte à rebours : l'intro peut ne durer qu'une seconde (tous prêts).
+      if (!reloaded && s.i === 1 && ['intro', 'count'].includes(s.step)) {
         reloaded = true;
         await C.p.goto(`${BASE}?emu&ai=${encodeURIComponent(AI)}`);
         await waitFor(C.p, `return document.querySelector('#app').dataset.screen === 'show';`, 15000, 'C revient dans l’émission');
@@ -275,7 +277,8 @@ async function tournamentDone(devs, tid, ms = 9 * 60000) {
     await A.p.eval(`window.__mpSeed = 'MULTI003'; return 1;`);
     await waitFor(A.p, `return !document.querySelector('#btn-start').disabled;`, 10000, 'bouton lancer');
     await A.p.eval(`document.querySelector('#btn-start').click(); return 1;`);
-    await waitFor(B.p, `const m = window.__mp.room.s.match; return m && m.tid !== ${js(T2)} && m.step === 'intro';`, 15000, '3e tournoi lancé');
+    // L'intro peut ne durer qu'une seconde (tous prêts) : l'intro ou le compte à rebours suffisent.
+    await waitFor(B.p, `const m = window.__mp.room.s.match; return m && m.tid !== ${js(T2)} && ['intro', 'count'].includes(m.step);`, 15000, '3e tournoi lancé');
     const hostUid = await A.p.eval(`return window.__mp.room.me;`);
     await A.b.close();
     browsers.splice(browsers.indexOf(A.b), 1);
