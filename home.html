@@ -208,49 +208,53 @@
   .admin-gate-box .gate-icon{background:var(--back) var(--die) center/58% no-repeat;}
   .adm-ghost-btn{width:100%;margin-top:6px;padding:11px;border-radius:var(--r-sm);border:none;background:transparent;color:var(--muted);font-size:14px;cursor:pointer;}
   .adm-ghost-btn:hover{color:var(--text);}
-  /* Jeux pas encore refaits : fenetre d'explication avant d'ouvrir l'ancienne version. */
-  #wip{position:fixed;inset:0;z-index:150;display:grid;place-items:center;padding:16px;background:rgba(8,7,12,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:opacity var(--d-3) var(--e-out),visibility 0s linear var(--d-3);}
+  /* Jeux pas encore refaits : le fond du hub se voile, l'affiche du jeu vient se poser, le texte reste sobre. */
+  #wip{position:fixed;inset:0;z-index:150;overflow-y:auto;overscroll-behavior:contain;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(18px) saturate(.8);-webkit-backdrop-filter:blur(18px) saturate(.8);opacity:0;visibility:hidden;transition:opacity var(--d-3) var(--e-out),visibility 0s linear var(--d-3);}
   #wip.open{opacity:1;visibility:visible;transition:opacity var(--d-3) var(--e-out);}
-  .wip-box{position:relative;width:100%;max-width:640px;max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:28px 28px 22px;box-shadow:var(--shadow-hi);transform:translateY(14px) scale(.98);transition:transform var(--d-3) var(--e-out);}
-  #wip.open .wip-box{transform:none;}
-  .wip-x{position:absolute;top:14px;right:14px;width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:50%;background:var(--surface2);color:var(--muted);cursor:pointer;}
-  .wip-x:hover{color:var(--text);}
-  .wip-x svg{width:16px;height:16px;}
-  .wip-tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);}
-  .wip-tag i{width:8px;height:8px;border-radius:50%;background:var(--wip-c,#F5B83D);box-shadow:0 0 0 3px color-mix(in srgb,var(--wip-c,#F5B83D) 25%,transparent);}
-  .wip-box h2{margin:8px 40px 6px 0;font-size:clamp(24px,4vw,30px);font-weight:600;letter-spacing:-.03em;line-height:1.1;}
-  .wip-box .wip-lede{color:var(--muted);font-size:15px;line-height:1.5;}
-  .wip-prog{margin:20px 0 4px;}
-  .wip-prog-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:13px;color:var(--muted);margin-bottom:8px;}
-  .wip-prog-head b{color:var(--text);font-size:15px;font-weight:600;}
-  .wip-bar{position:relative;height:12px;border-radius:99px;background:var(--surface2);overflow:hidden;box-shadow:inset 0 0 0 1px var(--border);}
-  .wip-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#E5484D 0%,#F5B83D 50%,#2FB36B 100%);transition:width 1100ms var(--e-out) 200ms;}
-  .wip-scale{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--muted);}
-  .wip-next{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px;}
-  .wip-card{padding:14px;border-radius:16px;background:var(--surface2);border:1px solid var(--border);}
-  .wip-card svg{width:22px;height:22px;color:var(--wip-c,var(--text));margin-bottom:8px;}
-  .wip-card b{display:block;font-size:14px;font-weight:600;letter-spacing:-.01em;margin-bottom:3px;}
-  .wip-card span{display:block;font-size:13px;line-height:1.4;color:var(--muted);}
-  .wip-teaser{margin-top:14px;padding:14px 14px 12px;border-radius:16px;background:var(--surface2);border:1px solid var(--border);}
-  .wip-teaser > p{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
-  .wip-chars{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;perspective:700px;}
-  .wip-char{position:relative;cursor:pointer;touch-action:manipulation;text-align:center;}
-  .wip-pic{position:relative;aspect-ratio:4/5;border-radius:14px;overflow:hidden;background:radial-gradient(120% 90% at 50% 100%,var(--k) 0%,color-mix(in srgb,var(--k) 35%,var(--surface)) 70%);box-shadow:inset 0 0 0 1px var(--border);transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .25s var(--e-out);}
+  .wip-in{min-height:100%;display:flex;flex-direction:column;justify-content:center;gap:34px;max-width:960px;margin:0 auto;padding:72px var(--gutter) 48px;}
+  .wip-x{position:fixed;top:16px;right:max(16px,calc(var(--gutter) - 8px));z-index:2;display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 10px;border-radius:999px;border:1px solid var(--border2);background:transparent;color:var(--text);font-size:14px;font-weight:500;cursor:pointer;transition:border-color var(--d-2);}
+  .wip-x:hover{border-color:var(--text);}
+  .wip-x svg{width:15px;height:15px;}
+  .wip-main{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:clamp(28px,5vw,64px);align-items:center;}
+  .wip-poster{position:relative;aspect-ratio:3/4;border-radius:var(--r);perspective:900px;}
+  .wip-poster .sheet{position:absolute;inset:0;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-hi);transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .35s var(--e-out);}
+  :root[data-theme="dark"] .wip-poster .sheet{box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),0 0 0 1px rgba(255,255,255,.05),var(--shadow-hi);}
+  .wip-poster img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.55) brightness(.8);transition:filter .6s var(--e-out);}
+  .wip-poster:hover img{filter:none;}
+  .wip-poster .sheet::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 40% at var(--mx,30%) var(--my,10%),rgba(255,255,255,.2),transparent 70%);pointer-events:none;}
+  .wip-text h2{font-weight:600;font-size:clamp(30px,3.4vw,46px);line-height:1.02;letter-spacing:-.04em;}
+  .wip-lede{margin-top:10px;font-size:16px;line-height:1.5;color:var(--muted);max-width:44ch;}
+  .wip-lede b{color:var(--text);font-weight:600;}
+  .wip-prog{margin-top:30px;}
+  .wip-prog-top{display:flex;align-items:baseline;gap:12px;}
+  .wip-pct{font-weight:600;font-size:clamp(44px,5vw,64px);line-height:1;letter-spacing:-.05em;font-variant-numeric:tabular-nums;}
+  .wip-step{font-size:14.5px;color:var(--muted);}
+  .wip-bar{position:relative;height:6px;margin-top:14px;border-radius:99px;background:var(--border2);}
+  .wip-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#E5484D 0%,#F5B83D 50%,#2FB36B 100%);transition:width 1200ms var(--e-out) 350ms;}
+  .wip-bar::after{content:"";position:absolute;top:-3px;left:var(--p,0%);width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--wip-c);box-shadow:0 0 0 3px var(--bg);transition:left 1200ms var(--e-out) 350ms;}
+  .wip-next{margin-top:26px;list-style:none;border-top:1px solid var(--border);}
+  .wip-next li{display:flex;gap:16px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--border);font-size:15px;}
+  .wip-next b{flex:none;width:11.5em;font-weight:600;letter-spacing:-.01em;}
+  .wip-next span{color:var(--muted);}
+  .wip-actions{display:flex;align-items:center;gap:22px;margin-top:28px;flex-wrap:wrap;}
+  .wip-go{height:46px;padding:0 24px;border-radius:999px;border:none;background:var(--accent);color:var(--on-accent);font-size:15px;font-weight:600;cursor:pointer;transition:opacity var(--d-2),transform var(--d-1) var(--e-out);}
+  .wip-go:hover{opacity:.88;}
+  .wip-go:active{transform:scale(.97);}
+  .wip-later{border:none;background:none;padding:6px 0;font-size:15px;font-weight:500;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--border2);}
+  .wip-later:hover{color:var(--text);}
+  .wip-teaser > p{font-size:13.5px;color:var(--muted);margin-top:12px;}
+  .wip-chars{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;perspective:900px;}
+  .wip-char{cursor:pointer;touch-action:manipulation;}
+  .wip-pic{position:relative;aspect-ratio:4/5;border-radius:20px;overflow:hidden;background:radial-gradient(90% 70% at 25% 0%,color-mix(in srgb,var(--k) 55%,#000) 0%,#0D0B12 78%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),var(--shadow);transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s var(--e-out);}
   .wip-pic .stage{position:absolute;inset:6% 3% 0;transform:translate(var(--tx,0px),var(--ty,0px));transition:transform .3s var(--e-out);}
   .wip-pic img{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .12s linear;}
   .wip-pic img.on{opacity:1;}
   .wip-pic .eyes{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .12s linear;}
   .wip-pic .eyes.on{opacity:1;}
   .wip-pic .eyes i{position:absolute;left:28.333%;top:53.333%;width:43.5%;height:11.467%;background-size:700% 300%;background-repeat:no-repeat;-webkit-mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent),linear-gradient(0deg,transparent,#000 18%,#000 82%,transparent);-webkit-mask-composite:source-in;mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent),linear-gradient(0deg,transparent,#000 18%,#000 82%,transparent);mask-composite:intersect;}
-  .wip-char .name{font:600 12px var(--f);color:var(--muted);margin-top:6px;}
-  .wip-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;}
-  .wip-actions button{flex:1 1 200px;padding:13px 16px;border-radius:var(--r-sm);font:600 15px var(--f);cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text);transition:opacity var(--d-2),transform var(--d-1) var(--e-out);}
-  .wip-actions .go{background:var(--accent);color:var(--on-accent);border-color:transparent;}
-  .wip-actions button:hover{opacity:.88;}
-  .wip-actions button:active{transform:scale(.98);}
-  .wip-note{margin-top:10px;font-size:12px;color:var(--muted);text-align:center;}
-  @media (max-width:560px){.wip-box{padding:22px 18px 18px;border-radius:20px;}.wip-next{grid-template-columns:1fr;}.wip-card{display:grid;grid-template-columns:22px 1fr;column-gap:12px;}.wip-card svg{margin:2px 0 0;grid-row:span 2;}}
-  @media (prefers-reduced-motion:reduce){#wip,.wip-box,.wip-fill{transition:none;}.wip-pic,.wip-pic .stage,.wip-pic img,.wip-pic .eyes{transition:none;}}
+  .wip-char .name{margin-top:6px;font-size:14px;font-weight:600;letter-spacing:-.01em;}
+  @media (max-width:720px){.wip-main{grid-template-columns:1fr;justify-items:start;}.wip-left{width:min(70vw,300px);}.wip-poster{width:min(46vw,200px);}.wip-next li{flex-direction:column;gap:2px;}.wip-next b{width:auto;}.wip-in{padding-top:64px;}}
+  @media (prefers-reduced-motion:reduce){#wip,.wip-fill,.wip-bar::after,.wip-poster .sheet,.wip-poster img,.wip-pic,.wip-pic .stage,.wip-pic img,.wip-pic .eyes{transition:none;}}
   #admin-panel{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;}
   #admin-panel.hidden{display:none;}
   .adm-top{position:sticky;top:0;z-index:600;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
@@ -561,26 +565,30 @@
 <div id="warp" aria-hidden="true"></div>
 
 <div id="wip" role="dialog" aria-modal="true" aria-labelledby="wip-title" aria-hidden="true">
-  <div class="wip-box">
-    <button class="wip-x" type="button" id="wip-x" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-    <span class="wip-tag"><i></i>Nouvelle version en préparation</span>
-    <h2 id="wip-title"></h2>
-    <p class="wip-lede">Ce jeu est en cours de refonte. Tu peux y jouer dès maintenant, mais ce sera l’<b>ancienne version</b> : plus simple, avec moins de soin visuel. La nouvelle arrive.</p>
-    <div class="wip-prog">
-      <div class="wip-prog-head"><span>Avancement du développement</span><b id="wip-pct"></b></div>
-      <div class="wip-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="wip-bar" aria-label="Avancement de la nouvelle version"><div class="wip-fill" id="wip-fill"></div></div>
-      <div class="wip-scale"><span>Début</span><span id="wip-step"></span><span>Terminé</span></div>
+  <button class="wip-x" type="button" id="wip-x"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>Retour</button>
+  <div class="wip-in">
+    <div class="wip-main">
+      <div class="wip-left">
+        <div class="wip-poster" id="wip-poster"><div class="sheet"><img id="wip-img" alt=""></div></div>
+        <div class="wip-teaser" id="wip-teaser" hidden>
+          <div class="wip-chars" id="wip-chars"></div>
+          <p>Passe la souris sur eux.</p>
+        </div>
+      </div>
+      <div class="wip-text">
+        <h2 id="wip-title"></h2>
+        <p class="wip-lede">La nouvelle version est en préparation. En attendant, tu peux jouer à l’<b>ancienne</b> : même jeu, avec moins de soin.</p>
+        <div class="wip-prog">
+          <div class="wip-prog-top"><span class="wip-pct" id="wip-pct"></span><span class="wip-step" id="wip-step"></span></div>
+          <div class="wip-bar" id="wip-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Avancement de la nouvelle version"><div class="wip-fill" id="wip-fill"></div></div>
+        </div>
+        <ul class="wip-next" id="wip-next"></ul>
+        <div class="wip-actions">
+          <button class="wip-go" type="button" id="wip-go">Jouer à l’ancienne version</button>
+          <button class="wip-later" type="button" id="wip-later">Plus tard</button>
+        </div>
+      </div>
     </div>
-    <div class="wip-next" id="wip-next"></div>
-    <div class="wip-teaser" id="wip-teaser" hidden>
-      <p>Un avant-goût</p>
-      <div class="wip-chars" id="wip-chars"></div>
-    </div>
-    <div class="wip-actions">
-      <button class="go" type="button" id="wip-go">Jouer à l’ancienne version</button>
-      <button type="button" id="wip-later">Plus tard</button>
-    </div>
-    <p class="wip-note">Tes parties fonctionnent normalement, rien n’est perdu.</p>
   </div>
 </div>
 
@@ -750,25 +758,16 @@
   let launching = false;
 
   // ── Jeux pas encore refaits : une fenetre explique ce qui arrive, puis on ouvre l'ancienne version ──
-  const I = {
-    face: '<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM8.5 10h.01M15.5 10h.01M8.5 14.5c1 1.4 2.2 2 3.5 2s2.5-.6 3.5-2" />',
-    brush: '<path d="M4 20c3 0 5-1.5 5-4 0-1.5-1-2.5-2.5-2.500S4 14.5 4 16.500V20ZM9.5 14l9-9a2 2 0 0 1 3 3l-9 9" />',
-    cube: '<path d="M12 3l8 4.500v9L12 21l-8-4.500v-9L12 3ZM12 12l8-4.500M12 12v9M12 12L4 7.5" />',
-    spark: '<path d="M12 3l1.8 5.200L19 10l-5.2 1.800L12 17l-1.8-5.200L5 10l5.2-1.800L12 3ZM19 16l.8 2.200L22 19l-2.2.8L19 22l-.8-2.200L16 19l2.2-.8L19 16Z" />',
-    hand: '<path d="M8 12V6.500a1.5 1.5 0 0 1 3 0V11M11 11V5a1.5 1.5 0 0 1 3 0v6M14 11V6.500a1.5 1.5 0 0 1 3 0V14c0 4-2.5 7-6 7-2.5 0-4-1.2-5-3l-2-3.500a1.5 1.5 0 0 1 2.5-1.500L8 14" />',
-    moon: '<path d="M20 14.500A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.500Z" />',
-    bolt: '<path d="M13 3L5 13.500h6L10 21l8-10.500h-6L13 3Z" />'
-  };
   const WIP = {
-    undercover: { name: 'Undercover', pct: 10, soon: [['brush', 'Une nouvelle ambiance', 'Une affiche et un décor à la hauteur du bluff.'], ['spark', 'Des révélations soignées', 'Les rôles et les votes mis en scène.'], ['bolt', 'Des manches plus rythmées', 'Moins d’attente entre deux tours de table.']] },
-    uno: { name: 'UNO', pct: 10, soon: [['brush', 'Des cartes retravaillées', 'Un tapis, des cartes qui se posent pour de vrai.'], ['hand', 'Une main plus agréable', 'Choisir et jouer une carte devient un plaisir.'], ['spark', 'Des animations de table', 'Pioche, +4, sens inversé : tout se voit.']] },
-    puissance4: { name: 'Puissance 4', pct: 60, step: 'Bien avancé', soon: [['cube', 'Un plateau en 3D', 'Noyer verni, ouvertures cerclées d’acier, pions en émail.'], ['moon', 'Un observatoire', 'La partie se joue sous la lune, ou à l’aube en thème clair.'], ['brush', 'Tes couleurs', 'Tu choisis la couleur de tes pions.']] },
-    quiestce: { name: 'Qui est-ce ?', pct: 15, soon: [['face', 'De vrais personnages', 'Chaque visage a son caractère, son style, sa tête.'], ['hand', 'Ils réagissent', 'Passe la souris dessus : ils se tournent vers toi, sourient ou se méfient.'], ['spark', 'Un plateau vivant', 'Rabattre un visage devient un geste satisfaisant.']] },
-    bataille: { name: 'Bataille Navale', pct: 5, soon: [['brush', 'Une mer retravaillée', 'Un plateau qui a de la profondeur.'], ['spark', 'Des tirs qui se voient', 'Eau, touché, coulé : chaque coup a son effet.'], ['bolt', 'Un placement plus fluide', 'Poser sa flotte sans se battre avec l’écran.']] },
-    roulette: { name: 'Roulette', pct: 5, soon: [['cube', 'Une roue plus vraie', 'Une bille, un bol, un vrai tour de roue.'], ['spark', 'Un suspense mis en scène', 'Le ralenti avant le numéro gagnant.'], ['brush', 'Un tapis soigné', 'Mises et jetons lisibles à plusieurs.']] },
-    minigolf: { name: 'Mini Golf', pct: 5, soon: [['cube', 'Des parcours repensés', 'Des pistes avec du relief et des obstacles.'], ['bolt', 'Un tir plus précis', 'Viser et doser la puissance, sans approximation.'], ['spark', 'Une partie à plusieurs', 'Voir la balle de chacun rouler sur le green.']] }
+    undercover: { name: 'Undercover', pct: 10, soon: [['Une nouvelle ambiance', 'Une affiche et un décor à la hauteur du bluff.'], ['Des révélations soignées', 'Les rôles et les votes mis en scène.'], ['Des manches plus rythmées', 'Moins d’attente entre deux tours de table.']] },
+    uno: { name: 'UNO', pct: 10, soon: [['Des cartes retravaillées', 'Un tapis, des cartes qui se posent pour de vrai.'], ['Une main plus agréable', 'Choisir et jouer une carte devient un plaisir.'], ['Des animations de table', 'Pioche, +4, sens inversé : tout se voit.']] },
+    puissance4: { name: 'Puissance 4', pct: 60, step: 'Bien avancé', soon: [['Un plateau en 3D', 'Noyer verni, ouvertures cerclées d’acier, pions en émail.'], ['Un observatoire', 'La partie se joue sous la lune, ou à l’aube en thème clair.'], ['Tes couleurs', 'Tu choisis la couleur de tes pions.']] },
+    quiestce: { name: 'Qui est-ce ?', pct: 15, soon: [['De vrais personnages', 'Chaque visage a son caractère, son style, sa tête.'], ['Ils réagissent', 'Passe la souris dessus : ils se tournent vers toi, sourient ou se méfient.'], ['Un plateau vivant', 'Rabattre un visage devient un geste satisfaisant.']] },
+    bataille: { name: 'Bataille Navale', pct: 5, soon: [['Une mer retravaillée', 'Un plateau qui a de la profondeur.'], ['Des tirs qui se voient', 'Eau, touché, coulé : chaque coup a son effet.'], ['Un placement plus fluide', 'Poser sa flotte sans se battre avec l’écran.']] },
+    roulette: { name: 'Roulette', pct: 5, soon: [['Une roue plus vraie', 'Une bille, un bol, un vrai tour de roue.'], ['Un suspense mis en scène', 'Le ralenti avant le numéro gagnant.'], ['Un tapis soigné', 'Mises et jetons lisibles à plusieurs.']] },
+    minigolf: { name: 'Mini Golf', pct: 5, soon: [['Des parcours repensés', 'Des pistes avec du relief et des obstacles.'], ['Un tir plus précis', 'Viser et doser la puissance, sans approximation.'], ['Une partie à plusieurs', 'Voir la balle de chacun rouler sur le green.']] }
   };
-  const wip = document.getElementById('wip'), wipBox = wip.querySelector('.wip-box');
+  const wip = document.getElementById('wip');
   const wipFill = document.getElementById('wip-fill'), wipBar = document.getElementById('wip-bar');
   const wipChars = document.getElementById('wip-chars'), wipTeaser = document.getElementById('wip-teaser');
   let wipCard = null, wipBack = null;
@@ -837,6 +836,7 @@
       setTimeout(() => { if (pressed === ch) pressed = null; ch.classList.remove('hi'); rest(); }, 1100);
     });
   });
+  const wipPoster = document.getElementById('wip-poster'), wipImg = document.getElementById('wip-img');
   function openWip(card) {
     const g = card.dataset.game, d = WIP[g];
     const [col, lab] = stage(d.pct);
@@ -848,16 +848,32 @@
     wipBar.setAttribute('aria-valuenow', d.pct);
     // Le degrade couvre toute la piste : la barre ne montre que son debut jusqu'a d.pct.
     wipFill.style.backgroundSize = `${10000 / d.pct}% 100%`;
-    wipFill.style.width = '0';
-    document.getElementById('wip-next').innerHTML = d.soon.map(([ic, t, s]) =>
-      `<div class="wip-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[ic]}</svg><b>${t}</b><span>${s}</span></div>`).join('');
-    wipTeaser.hidden = g !== 'quiestce';
+    wipFill.style.width = '0'; wipBar.style.setProperty('--p', '0%');
+    document.getElementById('wip-next').innerHTML = d.soon.map(([t, s]) => `<li><b>${t}</b><span>${s}</span></li>`).join('');
+    wipImg.src = card.querySelector('.front img').src;
+    wipTeaser.hidden = g !== 'quiestce'; wipPoster.hidden = g === 'quiestce';
     if (g === 'quiestce') { over = pressed = null; loadChars(); rest(); }
     wip.classList.add('open'); wip.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
-    requestAnimationFrame(() => { wipFill.style.width = `${d.pct}%`; });
+    document.body.style.overflow = 'hidden'; wip.scrollTop = 0;
+    requestAnimationFrame(() => {
+      wipFill.style.width = `${d.pct}%`; wipBar.style.setProperty('--p', `${d.pct}%`);
+      if (reduce.matches) return;
+      // L'affiche part de la carte du hub et vient se poser ; le texte suit en fondu.
+      const from = card.querySelector('.media').getBoundingClientRect(), to = (g === 'quiestce' ? wipTeaser : wipPoster).getBoundingClientRect();
+      (g === 'quiestce' ? wipTeaser : wipPoster).animate([{ transform: `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width})` }, { transform: 'none' }], { duration: 760, easing: 'cubic-bezier(.22,1,.36,1)' });
+      wip.querySelectorAll('.wip-text > *, .wip-x').forEach((el, k) =>
+        el.animate([{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], { duration: 560, delay: 160 + k * 70, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'backwards' }));
+    });
     document.getElementById('wip-go').focus({ preventScroll: true });
   }
+  // L'affiche s'incline sous le pointeur, comme les cartes du hub.
+  wipPoster.addEventListener('pointermove', e => {
+    if (reduce.matches || !fine.matches) return;
+    const r = wipPoster.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height, st = wipPoster.style;
+    st.setProperty('--rx', `${(0.5 - y) * 10}deg`); st.setProperty('--ry', `${(x - 0.5) * 12}deg`);
+    st.setProperty('--mx', `${x * 100}%`); st.setProperty('--my', `${y * 100}%`);
+  });
+  wipPoster.addEventListener('pointerleave', () => ['--rx', '--ry'].forEach(p => wipPoster.style.removeProperty(p)));
   function closeWip() {
     if (!wip.classList.contains('open')) return;
     wip.classList.remove('open'); wip.setAttribute('aria-hidden', 'true');
@@ -867,7 +883,6 @@
   }
   document.getElementById('wip-x').addEventListener('click', closeWip);
   document.getElementById('wip-later').addEventListener('click', closeWip);
-  wip.addEventListener('click', e => { if (!wipBox.contains(e.target)) closeWip(); });
   document.addEventListener('keydown', e => {
     if (!wip.classList.contains('open')) return;
     if (e.key === 'Escape') { closeWip(); return; }
