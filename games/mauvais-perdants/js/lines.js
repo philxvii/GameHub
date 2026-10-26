@@ -29,6 +29,38 @@ export const LINES = {
     L(c => `Bonsoir à tous ! Je promets d'être juste. Juste méchant, mais juste.`, 's'),
     L(c => `Cinq manches pour briller. Ou pour vous ridiculiser avec constance. Les deux font de l'audience.`),
   ],
+  solo_welcome: [
+    L(c => `${c.P}, seul face à moi. Cinq manches, et à chaque fois mon score à battre. Je joue très bien. Surtout contre les autres.`),
+    L(c => `Un duel, ${c.P} ? Contre Gonzague Stentor ? J'admire le courage. Je doute du reste.`),
+    L(c => `Entraînement privé avec le maître. ${c.P}, prends des notes : je ne répéterai pas.`, 's'),
+    L(c => `Personne n'a voulu jouer avec toi, ${c.P} ? Ne t'en fais pas, moi, je suis payé pour.`, 'h'),
+  ],
+  solo_win: [
+    L(c => `${c.P} fait ${c.label}, mieux que mes ${c.ref}. Je conteste. Pour la forme.`),
+    L(c => `${c.label}. Tu m'as battu, ${c.P}. J'étais distrait par ma propre élégance.`),
+    L(c => `${c.P} passe devant moi avec ${c.label}. Le chronomètre doit être mal réglé.`, 'h'),
+    L(c => `Bravo, ${c.label} contre mes ${c.ref}. Ne le répète à personne.`),
+  ],
+  solo_lose: [
+    L(c => `${c.label} pour toi, ${c.ref} pour moi. ${c.P}, la hiérarchie est respectée.`),
+    L(c => `${c.P} fait ${c.label}. Moi, ${c.ref}. Tu t'entraînes, c'est bien. Continue. Longtemps.`),
+    L(c => `${c.label} ? J'ai fait ${c.ref} en racontant une anecdote. ${c.P}, c'est vexant pour toi.`, 'h'),
+    L(c => `Raté, ${c.P} : ${c.label} contre ${c.ref}. Recommence, je ne me lasse pas de gagner.`),
+  ],
+  solo_tie: [
+    L(c => `Égalité, ${c.P}. Toi et moi au même niveau. C'est la chose la plus flatteuse qui te soit arrivée.`),
+  ],
+  solo_absent: [
+    L(c => `${c.P} n'a rien joué. Victoire par forfait pour moi. Je la prends quand même.`),
+  ],
+  solo_final_win: [
+    L(c => `${c.P} me bat, ${c.total} points contre ${c.gtotal}. Je demande une revanche. Immédiatement.`),
+    L(c => `${c.total} à ${c.gtotal}. ${c.P}, tu es prêt pour de vrais adversaires. Enfin, presque.`),
+  ],
+  solo_final_lose: [
+    L(c => `${c.gtotal} à ${c.total}, Gonzague l'emporte. ${c.P}, l'entraînement continue. La revanche est à un clic.`),
+    L(c => `Je gagne ${c.gtotal} à ${c.total}. ${c.P}, ne le prends pas mal : je gagne contre tout le monde.`),
+  ],
   lobby: [
     L(c => `Salon ouvert. J'attends des candidats. Des vrais, si possible.`),
     L(c => `Bienvenue dans les coulisses. Partagez le code, et préparez vos excuses.`),

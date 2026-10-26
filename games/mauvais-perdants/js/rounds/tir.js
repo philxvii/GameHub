@@ -27,6 +27,7 @@ export default {
     }
     return { targets: pts, radius: RADIUS };
   },
+  ghost: () => ({ key: [0, 110, 1], label: secs(11000) }),
   tieText: () => 'Égalité au dixième de seconde près, puis moins de tirs ratés.',
   score(payload, p) {
     const hits = int(payload && payload.hits, 0, TARGETS, 0);

@@ -41,6 +41,7 @@ export default {
   unit: 'chiffres retenus',
   eligible: () => true,
   params(seed, i) { return { seed, i, start: START, lives: LIVES }; },
+  ghost: () => ({ key: [-7, 60], label: '7 chiffres' }),
   tieText: () => 'À longueur égale, le plus rapide (à 0,5 s près).',
   score(payload, p) {
     const answers = arr(payload && payload.a, 40).map(x => String(x == null ? '' : x).slice(0, 24));

@@ -28,6 +28,14 @@ Un écran de scène (télé, ordinateur) peut afficher l'émission sans jouer.
 6. Podium, titres calculés sur la partie (meilleur réflexe, remontée, grande gueule
    punie…), puis **Revanche** (même groupe, nouveau tirage) ou **Retour au salon**.
 
+## Solo : duel contre Gonzague
+
+« Jouer seul contre Gonzague », sur l'accueil (ou « Lancer » avec un seul candidat au salon).
+Le présentateur affiche avant chaque manche un **score de référence** de niveau moyen. Le
+barème est celui d'un duel : 10 points si tu le bats, 2 sinon, et la finale vaut double. Le
+Petit Bac est retiré du tirage solo tant que le correcteur IA n'est pas déployé, puisque
+personne ne pourrait contester les réponses.
+
 ## Les 11 manches
 
 | Famille | Manche | Ce qu'on fait | Résultat |

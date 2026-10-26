@@ -8,6 +8,7 @@
 | `../../../firebase/tests/mauvais-perdants.test.js` | règles de la base `mp/` (13 cas) | émulateur |
 | `multi.cjs` | **4 Chrome réels** (3 joueurs, dont un mobile, + 1 écran de scène), 3 tournois : salon, mauvais code, tirage commun, 5 manches jouées par l'interface, Petit Bac avec IA simulée et vote, rechargement d'un joueur, podium identique, revanche avec IA en panne (jury), retour au salon, relève de l'hôte | émulateurs + site + IA simulée |
 | `rounds.cjs` | 3 Chrome, 2 tournois choisis pour jouer par l'interface les manches que `multi.cjs` ne tire pas | émulateurs + site |
+| `solo.cjs` | 1 Chrome mobile : « Jouer seul », 5 manches contre Gonzague, podium, revanche | émulateurs + site |
 | `bot.js` | joueur automatique injecté par les deux précédents : il joue par les vrais éléments de l'interface | — |
 | `ai-mock.mjs` | le vrai Worker exécuté dans Node, fournisseurs simulés (`/mode?m=ok\|slow\|bad\|down\|quota`) | — |
 | `cover.cjs` | génère `cover.webp` (affiche du hub) | Chrome |

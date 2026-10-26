@@ -64,6 +64,7 @@ export default {
   unit: 'bonnes réponses',
   eligible: () => true,
   params(seed, i) { return { words: stream(seed, i), lives: LIVES }; },
+  ghost: () => ({ key: [-20, 2, 100], label: '20 bonnes' }),
   tieText: () => 'À score égal, moins d’erreurs, puis le plus rapide.',
   score(payload, p) {
     const answers = arr(payload && payload.a, LENGTH).map(x => (x === 1 || x === true ? 1 : 0));

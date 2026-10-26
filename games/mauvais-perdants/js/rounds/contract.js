@@ -6,7 +6,8 @@
 //   playMs    durée maximale de l'action (le chrono commun)
 //   unit      ce que mesure le résultat, en clair
 //   tie       comment on départage, en clair (affiché avant la manche)
-//   eligible(room)          false si la manche serait injuste pour ce salon (appareils)
+//   eligible(room)          false si la manche serait injuste pour ce salon (appareils, solo)
+//   ghost(params)           score de référence de Gonzague en solo : { key, label }
 //   params(seed, i, room)   contenu de la manche, déterministe (même graine -> même contenu)
 //   score(payload, params)  -> { key:[...], label, valid, stats, idle }
 //                           idle = le joueur n'a rien fait : il est compté absent (0 point)

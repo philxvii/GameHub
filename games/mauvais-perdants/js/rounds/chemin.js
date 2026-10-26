@@ -35,6 +35,7 @@ export default {
     }
     return { seq, flash: FLASH_MS, gap: GAP_MS };
   },
+  ghost: () => ({ key: [-7, 60], label: 'niveau 7' }),
   tieText: () => 'À niveau égal, le plus rapide à l’atteindre (à 0,5 s près).',
   score(payload, p) {
     const inputs = arr(payload && payload.in, MAX_LEVEL).map(x => ints(x, MAX_LEVEL, 0, 8));

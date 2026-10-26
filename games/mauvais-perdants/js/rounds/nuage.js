@@ -36,6 +36,8 @@ export default {
   unit: 'écart moyen à la vraie valeur',
   eligible: () => true,
   params(seed, i) { return { clouds: clouds(seed, i), show: SHOW_MS }; },
+  // Écart moyen de 20 % : 3 × ln(1,2).
+  ghost: () => ({ key: [Math.round(3 * Math.log(1.2) * 100)], label: 'écart 20 %' }),
   tieText: () => 'Égalité à 1 % d’écart près.',
   score(payload, p) {
     const answers = arr(payload && payload.a, CLOUDS).map(x => int(x, 0, 100000, 0));

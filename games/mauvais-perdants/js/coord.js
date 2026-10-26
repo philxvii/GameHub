@@ -12,12 +12,12 @@ import { drawPlan, ROUNDS_PER_TOURNAMENT } from './draw.js';
 import { round, TIEBREAK } from './rounds/index.js';
 import { rankRound, standings, needsTiebreak, tiebreakOrder, awards, FINAL_MULT, MIN_PLAYERS } from './scoring.js';
 import { prepare, aiItems, triage, resolve, scoreBac, voteList } from './petitbac.js';
-import { roundEvents, boardEvents, speakFor } from './presenter.js';
+import { roundEvents, boardEvents, speakFor, soloRoundEvents, soloFinal } from './presenter.js';
 import { pickLine } from './lines.js';
 import { newSeed } from './rng.js';
-import { hostLine, judge } from './ai.js';
+import { hostLine, judge, aiBase } from './ai.js';
 import { serverNow } from './net.js';
-import { roomInfo, paramsOf, namesOf, computeRound, computeBac } from './results.js';
+import { roomInfo, paramsOf, namesOf, computeRound, computeBac, GHOST, isSolo } from './results.js';
 export { paramsOf, namesOf, finalSummary } from './results.js';
 
 const parse = s => { try { return JSON.parse(s); } catch (_) { return null; } };
@@ -103,12 +103,15 @@ export class Coordinator {
     const now = serverNow();
     const online = room.onlineSet(now);
     const players = room.players().filter(p => online.has(p.uid));
-    if (players.length < MIN_PLAYERS) throw Object.assign(new Error('min'), { userMessage: `Il faut au moins ${MIN_PLAYERS} joueurs connectés.` });
+    if (players.length < 1) throw Object.assign(new Error('min'), { userMessage: `Il faut au moins ${MIN_PLAYERS} joueurs connectés.` });
     const prev = room.s.match;
     const roster = Object.fromEntries(players.map(p => [p.uid, { name: p.name, c: p.c, dev: p.dev }]));
+    // Seul : duel contre Gonzague, qui pose un score de référence à chaque manche.
+    const solo = players.length === 1;
+    if (solo) roster[GHOST] = { name: 'Gonzague', c: players[0].c === 1 ? 2 : 1, dev: players[0].dev };
     const seed = (typeof window !== 'undefined' && window.__mpSeed) || newSeed();
     const recent = prev && prev.plan ? prev.plan.map(x => x.g) : [];
-    const plan = drawPlan(seed, { devices: players.map(p => p.dev) }, recent);
+    const plan = drawPlan(seed, { devices: players.map(p => p.dev), solo, ai: !!aiBase() }, recent);
     // Revanche : numéro suivant ; nouveau salon ou retour au salon : numéro neuf (jamais réutilisé d'affilée).
     const tid = `t${prev && prev.tid ? (Number(prev.tid.slice(1)) % 9999) + 1 : 1 + Math.floor(Math.random() * 9999)}`;
     await room.clearRoundData();
@@ -122,7 +125,7 @@ export class Coordinator {
       const rows = standings(Object.keys(prev.roster), prev.res, ROUNDS_PER_TOURNAMENT);
       const pn = namesOf(prev);
       await this.sayType('rematch', { champ: pn[rows[0].uid], last: pn[rows[rows.length - 1].uid] });
-    } else await this.sayType('welcome', { n: names.length });
+    } else await this.sayType(solo ? 'solo_welcome' : 'welcome', { n: names.length, P: players[0].name });
     await this.introLine();
   }
   async backToLobby() {
@@ -325,6 +328,7 @@ export class Coordinator {
         }));
         bacInfo = { weird: weird[Math.floor(Math.random() * weird.length)] || null, bold: bold[Math.floor(Math.random() * bold.length)] || null };
       }
+      if (isSolo(after)) return this.say(speakFor(soloRoundEvents(rows, names), { ...cfg, used: this.used }, 1));
       const ev = roundEvents(g, rows, names, roster.length, { lastRound, streaks, bac: bacInfo });
       return this.say(speakFor(ev, { ...cfg, used: this.used }, 2));
     }
@@ -332,11 +336,13 @@ export class Coordinator {
     if (after.step === 'board') {
       const prev = standings(roster, Object.fromEntries(Object.entries(after.res || {}).filter(([k]) => Number(k) < before.i)), ROUNDS_PER_TOURNAMENT);
       const cur = standings(roster, after.res || {}, ROUNDS_PER_TOURNAMENT);
+      if (isSolo(after)) return null;
       return this.say(speakFor(boardEvents(prev, cur, names, before.i, ROUNDS_PER_TOURNAMENT), { ...cfg, used: this.used }, 1));
     }
     if (after.step === 'final') {
       const tbDet = parse((after.det || {})[ROUNDS_PER_TOURNAMENT] || '');
       const rows = standings(roster, after.res || {}, ROUNDS_PER_TOURNAMENT, tbDet && tbDet.order);
+      if (isSolo(after)) return this.say(soloFinal(rows, names, { ...cfg, used: this.used }));
       const winners = rows.filter(r => r.place === 1);
       const lines = [];
       const w = pickLine('final_win', { P: winners.map(r => names[r.uid]).join(' et '), total: rows[0].total, gap: rows[1] ? rows[0].total - rows[1].total : 0, O: rows[1] && names[rows[1].uid], shared: winners.length > 1 }, { ...cfg, used: this.used });

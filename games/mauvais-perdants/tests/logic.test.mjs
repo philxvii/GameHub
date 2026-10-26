@@ -24,7 +24,8 @@ import { prepare, aiItems, parseJudge, triage, resolve, scoreBac, voteList } fro
 import { cleanName, cleanAnswer, answerKey, firstLetter, validName } from '../js/text.js';
 import { pickLine, LINES } from '../js/lines.js';
 import { roundEvents, boardEvents, speakFor } from '../js/presenter.js';
-import { computeRound, computeBac, finalSummary } from '../js/results.js';
+import { computeRound, computeBac, finalSummary, GHOST } from '../js/results.js';
+import { soloRoundEvents } from '../js/presenter.js';
 import { rng, hash } from '../js/rng.js';
 import { simulate } from './sim.mjs';
 
@@ -563,3 +564,31 @@ describe('Hasard', () => {
     for (let k = 0; k < 500; k++) { const v = r.int(1, 3); assert.ok(v >= 1 && v <= 3); }
   });
 });
+
+describe('Solo : duel contre Gonzague', () => {
+  test('chaque manche jouable en solo a un score de référence ; le Petit Bac est retiré sans IA', () => {
+    for (const r of ROUNDS.filter(x => x.id !== 'bac')) {
+      const g = r.ghost(P(r));
+      assert.ok(Array.isArray(g.key) && g.key.every(Number.isFinite) && g.label, r.id);
+    }
+    assert.equal(BY_ID.bac.eligible({ solo: true }), false);
+    assert.equal(BY_ID.bac.eligible({ solo: true, ai: true }), true);
+    for (let k = 0; k < 100; k++) {
+      const plan = drawPlan(`SOLO${k}`, { devices: ['touch'], solo: true });
+      assert.equal(plan.length, 5); assert.ok(!plan.some(x => x.g === 'bac'));
+      assert.equal(new Set(plan.map(x => x.g)).size, 5);
+    }
+  });
+  test('Gonzague joue toujours son score ; battre la référence rapporte 10, perdre 2', () => {
+    const m = { seed: SEED, i: 0, plan: [{ g: 'gong' }], roster: { a: { name: 'Ana', dev: 'mouse' }, [GHOST]: { name: 'Gonzague', dev: 'mouse' } } };
+    let { res } = computeRound(m, { a: { d: '{"t":[200,200,200,200,200]}' } }, {});
+    assert.equal(res.a.pts, 10); assert.equal(res[GHOST].pts, 2); assert.equal(res[GHOST].label, '290 ms');
+    ({ res } = computeRound(m, { a: { d: '{"t":[400,400,400,400,400]}' } }, {}));
+    assert.equal(res.a.pts, 2); assert.equal(res[GHOST].pts, 10);
+    ({ res } = computeRound(m, {}, {}));
+    assert.ok(res.a.absent); assert.equal(res[GHOST].rank, 1);
+    const ev = soloRoundEvents(Object.entries(res).map(([uid, x]) => ({ uid, ...x })), { a: 'Ana', [GHOST]: 'Gonzague' });
+    assert.equal(ev[0].type, 'solo_absent');
+  });
+});
+

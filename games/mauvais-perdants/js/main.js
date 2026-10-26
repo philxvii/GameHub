@@ -7,6 +7,7 @@ import { Stage, hostInto } from './ui/stage.js';
 import { sfx, isMuted, setMuted } from './sfx.js';
 import { createRoom, joinRoom, resumeRoom, serverNow, normalizeCode, ONLINE_MS } from './net.js';
 import { Coordinator, paramsOf, namesOf, finalSummary } from './coord.js';
+import { GHOST } from './results.js';
 import { round, FAMILIES } from './rounds/index.js';
 import { gameOf, contenders, COUNT_MS } from './machine.js';
 import { ROUNDS_PER_TOURNAMENT } from './draw.js';
@@ -48,6 +49,15 @@ $('#btn-create').addEventListener('click', e => busy(e.currentTarget, async () =
   if (!name) return;
   const roast = document.querySelector('input[name="roast"]:checked').value;
   enter(await createRoom({ name, scene, roast, crude: $('#crude').checked }));
+}));
+// Solo : un salon privé, lancé aussitôt (duel contre Gonzague).
+let autoSolo = false;
+$('#btn-solo').addEventListener('click', e => busy(e.currentTarget, async () => {
+  const name = readName();
+  if (!name) return;
+  const roast = document.querySelector('input[name="roast"]:checked').value;
+  autoSolo = true;
+  enter(await createRoom({ name, scene: false, roast, crude: $('#crude').checked }));
 }));
 $('#btn-join').addEventListener('click', e => busy(e.currentTarget, async () => {
   const scene = $('#scene-join').checked;
@@ -114,6 +124,10 @@ function elect() {
   if (!room || room.closed || !room.connected) return;
   if (room.isCoord) {
     if (!coord) { coord = new Coordinator(room); coord.start(); }
+    if (autoSolo && room.s.phase === 'lobby' && room.isPlayer && room.online(room.me)) {
+      autoSolo = false;
+      coord.startTournament().then(() => sfx.sting()).catch(() => { autoSolo = false; });
+    }
   } else if (coord) { coord.stop(); coord = null; }
   if (room.isCoord || room.takingOver) return;
   const grab = () => {
@@ -161,7 +175,7 @@ function renderLobby() {
   const n = players.filter(p => p.online).length;
   $('#count').textContent = String(n);
   $('#count-s').textContent = n > 1 ? 's' : '';
-  $('#count-min').textContent = n < MIN_PLAYERS ? `minimum ${MIN_PLAYERS}` : `${MAX_PLAYERS} au plus`;
+  $('#count-min').textContent = n < MIN_PLAYERS ? 'seul : duel contre Gonzague' : `${MAX_PLAYERS} au plus`;
   const cfg = s.cfg || {};
   $('#cfg-line').textContent = `Présentateur : ${cfg.roast === 'hard' ? 'Sans pitié' : 'Pièces rapportées'}${cfg.crude ? ', grossièretés autorisées' : ''}.`;
   const host = room.isHost;
@@ -174,8 +188,8 @@ function renderLobby() {
   if (ctl) {
     document.querySelectorAll('input[name="lroast"]').forEach(i => { i.checked = i.value === (cfg.roast || 'soft'); });
     $('#lcrude').checked = !!cfg.crude;
-    $('#btn-start').disabled = n < MIN_PLAYERS || !room.isCoord;
-    $('#btn-start').textContent = !room.isCoord ? 'Reprise de la coordination…' : n < MIN_PLAYERS ? `Il faut ${MIN_PLAYERS} candidats` : 'Lancer le tournoi';
+    $('#btn-start').disabled = n < 1 || !room.isCoord;
+    $('#btn-start').textContent = !room.isCoord ? 'Reprise de la coordination…' : n < MIN_PLAYERS ? 'Jouer seul contre Gonzague' : 'Lancer le tournoi';
   }
 }
 document.querySelectorAll('input[name="lroast"]').forEach(i => i.addEventListener('change', () => room && room.setCfg({ ...(room.s.cfg || {}), roast: i.value, crude: $('#lcrude').checked, v: 1 })));
@@ -242,6 +256,7 @@ const VIEWS = {
       h('div', { class: 'round-no' }, tb ? 'Départage' : `Manche ${m.i + 1} sur ${ROUNDS_PER_TOURNAMENT}`, h('span', { class: 'fam', text: `${fam.icon} ${fam.label}` }), last ? h('span', { class: 'x2', text: `points ×${FINAL_MULT}` }) : null),
       h('h1', { class: 'round-title', text: def.title }),
       h('ol', { class: 'round-rules' }, (tb ? ['Seuls les ex æquo jouent.', def.id === 'gong' ? 'Trois signaux : le temps moyen le plus bas remporte le tournoi.' : '20 secondes de calcul : le meilleur total remporte le tournoi.'] : def.rules).map(t => h('li', { text: t }))),
+      m.roster[GHOST] && def.ghost ? h('p', { class: 'kicker', text: `Score à battre (Gonzague) : ${def.ghost(p).label}` }) : null,
       h('div', { class: 'round-meta' }, h('span', {}, 'Durée max ', h('b', { text: `${Math.round(def.playMs / 1000 * (tb ? 0.5 : 1))} s` })), h('span', {}, 'Départage ', h('b', { text: def.tieText(p) }))),
     );
     deck.append(card);
@@ -491,6 +506,11 @@ function liveView(deck, m, title) {
       const vals = contenders(mm).map(u => { const pr = room.s.prog[u]; return pr && pr.k === tag(mm) ? pr.v : null; });
       const best = Math.max(1, ...vals.filter(v => v !== null));
       contenders(mm).forEach((u, k) => {
+        if (u === GHOST) {
+          const gs = round(g).ghost(p);
+          list.append(h('div', { class: 'lrow fin' }, h('span', { class: 'who' }, chip(mm.roster[u].c), h('b', { text: names[u] })), h('span', { class: 'st', text: `score à battre · ${gs.label}` }), h('span', { class: 'lbar', style: { '--w': '1', '--pc': `var(--p${mm.roster[u].c})` } })));
+          return;
+        }
         const done = !!room.s.subs[u];
         const v = vals[k];
         const on = room.online(u);

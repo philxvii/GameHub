@@ -7,7 +7,9 @@ import { round } from './rounds/index.js';
 import { rankRound, standings, tiebreakOrder, awards, FINAL_MULT } from './scoring.js';
 import { scoreBac } from './petitbac.js';
 
-export const roomInfo = m => ({ devices: Object.values(m.roster || {}).map(p => p.dev) });
+export const GHOST = 'gonzague';
+export const isSolo = m => !!(m.roster && m.roster[GHOST]);
+export const roomInfo = m => ({ devices: Object.entries(m.roster || {}).filter(([u]) => u !== GHOST).map(([, p]) => p.dev), solo: isSolo(m) });
 export const paramsOf = m => {
   const g = gameOf(m);
   return round(g).params(m.seed, m.i, roomInfo(m));
@@ -23,6 +25,8 @@ export function computeRound(m, subs, boasts) {
   const who = contenders(m);
   const scored = {};
   const entries = who.map(uid => {
+    // Solo : Gonzague « joue » toujours, avec son score de référence de la manche.
+    if (uid === GHOST) { const gs = def.ghost(p); scored[uid] = { ...gs, stats: {} }; return { uid, present: true, key: gs.key }; }
     const sub = subs[uid];
     const payload = sub ? parse(sub.d) : null;
     if (!payload) return { uid, present: false, key: [Infinity] };

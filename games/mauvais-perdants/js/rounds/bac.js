@@ -21,7 +21,8 @@ export default {
   rules: ['Une lettre, quatre catégories : un mot par case.', 'Valide et unique : 10. Valide mais trouvée par un autre : 5.', 'Correction par IA ; une réponse douteuse passe au vote (deux refus et la majorité pour la refuser).'],
   playMs: 70000,
   unit: 'points de Petit Bac',
-  eligible: () => true,
+  // En solo, sans correcteur IA, personne ne pourrait refuser une réponse : retiré du tirage.
+  eligible: room => !(room.solo && !room.ai),
   params(seed, i) {
     const r = roundRng(seed, i, 'bac');
     return { letter: r.pick(LETTERS), cats: r.shuffle(CATEGORIES).slice(0, SLOTS) };

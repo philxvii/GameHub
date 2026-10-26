@@ -30,6 +30,7 @@ export default {
   unit: 'nombre de numéros retenus',
   eligible: () => true,
   params(seed, i) { return { seed, i, start: START, lives: LIVES }; },
+  ghost: () => ({ key: [-8, 60], label: '8 numéros' }),
   tieText: () => 'À score égal, le plus rapide (à 0,5 s près).',
   score(payload, p) {
     const attempts = arr(payload && payload.at, 40).map(x => ({ c: ints(x && x.c, MAX_N, 0, CELLS - 1) }));

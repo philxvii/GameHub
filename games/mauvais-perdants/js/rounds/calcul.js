@@ -30,6 +30,7 @@ export default {
   unit: 'bonnes réponses moins les fausses',
   eligible: () => true,
   params(seed, i) { return { list: problems(seed, i) }; },
+  ghost: () => ({ key: [-12, -13], label: '12 pts' }),
   tieText: () => 'À total égal, le plus de bonnes réponses.',
   score(payload, p) {
     const answers = arr(payload && payload.a, COUNT);

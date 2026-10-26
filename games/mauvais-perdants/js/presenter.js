@@ -131,3 +131,21 @@ export function factsOf(e) {
 }
 
 export const roundTitle = id => (round(id) || {}).title || id;
+
+// Solo : duel contre Gonzague. rows : résultats de la manche (dont 'gonzague').
+export function soloRoundEvents(rows, names) {
+  const me = rows.find(r => r.uid !== 'gonzague'), g = rows.find(r => r.uid === 'gonzague');
+  if (!me || !g) return [];
+  const ctx = { P: names[me.uid], label: me.label, ref: g.label };
+  if (me.absent) return [{ type: 'solo_absent', pri: 5, ctx }];
+  if (me.tied) return [{ type: 'solo_tie', pri: 5, ctx }];
+  return [{ type: me.rank === 1 ? 'solo_win' : 'solo_lose', pri: 5, ctx }];
+}
+export function soloFinal(rows, names, opts) {
+  const me = rows.find(r => r.uid !== 'gonzague'), g = rows.find(r => r.uid === 'gonzague');
+  if (!me || !g) return [];
+  const ctx = { P: names[me.uid], wins: me.wins, total: me.total, gtotal: g.total };
+  const type = me.total > g.total ? 'solo_final_win' : me.total < g.total ? 'solo_final_lose' : 'solo_tie';
+  const line = pickLine(type, ctx, opts);
+  return line ? [{ ...line, ev: type }] : [];
+}

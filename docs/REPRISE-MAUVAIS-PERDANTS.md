@@ -40,6 +40,9 @@ L'utilisateur ne retient pas les commandes. **C'est toi qui les lances.** Il dir
   `AI_ENDPOINT = ''` dans `js/ai.js` : sans IA, le jeu tourne avec ses répliques locales et
   le Petit Bac en mode jury. Banqueroll n'a pas été modifié.
 
+Ajout du 26/10 : **mode solo** (duel contre un score de référence de Gonzague, `ghost()`
+dans chaque `rounds/*.js`), testé par `tests/solo.cjs` (4/4).
+
 ## Derniers résultats (sur le commit poussé)
 
 | Suite | Résultat |

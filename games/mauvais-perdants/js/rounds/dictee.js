@@ -40,6 +40,8 @@ export default {
     const r = roundRng(seed, i, 'dictee');
     return { phrase: r.pick(PHRASES) };
   },
+  // 45 mots/min sur la phrase tirée.
+  ghost: p => { const ms = Math.round((loose(p.phrase).length / 5) / 45 * 60000); return { key: [0, Math.round(ms / 100)], label: `${secs(ms)} · 45 mots/min` }; },
   tieText: () => 'Égalité au dixième de seconde près.',
   score(payload, p) {
     const typed = String((payload && payload.typed) || '').slice(0, 200);

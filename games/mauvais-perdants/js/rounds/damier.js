@@ -42,6 +42,7 @@ export default {
   unit: 'niveau atteint',
   eligible: () => true,
   params(seed, i) { return { seed, i, lives: LIVES, mistakes: MISTAKES }; },
+  ghost: () => ({ key: [-6, 60], label: 'niveau 6' }),
   tieText: () => 'À niveau égal, le plus rapide (à 0,5 s près).',
   score(payload, p) {
     const attempts = arr(payload && payload.at, 40).map(x => ({ c: ints(x && x.c, 60, 0, 35) }));

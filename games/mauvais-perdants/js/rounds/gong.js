@@ -25,6 +25,7 @@ export default {
     // Départage (après la 5e manche) : 3 signaux seulement.
     return { delays: Array.from({ length: 14 }, () => r.int(1300, 3300)), bucket: mixed ? 30 : 15, trials: i >= 5 ? 3 : TRIALS };
   },
+  ghost: p => ({ key: [Math.round(290 / p.bucket), 0], label: '290 ms' }),
   tieText: p => `Temps comparés par tranches de ${p.bucket} ms (même tranche = égalité), puis moins de faux départs.`,
   score(payload, p) {
     const n = p.trials || TRIALS;
