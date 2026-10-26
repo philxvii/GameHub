@@ -5,10 +5,18 @@
 import * as THREE from 'three';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
+// Le hub y branche sa barre de chargement : onBytes(n) est appele a chaque morceau recu.
+export const progress = { onBytes: null };
+
 export async function loadGlb(loader, url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Introuvable : ${url}`);
-  const buf = await res.arrayBuffer();
+  let buf;
+  if (res.body && progress.onBytes) {
+    const reader = res.body.getReader(), chunks = [];
+    for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); progress.onBytes(value.length); }
+    buf = await new Blob(chunks).arrayBuffer();
+  } else buf = await res.arrayBuffer();
   const t0 = performance.now();
   const gltf = await loader.parseAsync(buf, url.replace(/[^/]*$/, ''));
   return Object.assign(gltf, { bytes: buf.byteLength, parseMs: performance.now() - t0 });
