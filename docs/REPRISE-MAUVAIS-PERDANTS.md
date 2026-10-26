@@ -4,10 +4,25 @@
 > développement sur l'ancien PC (23/10/2026). Mets-la à jour (ou supprime-la, ainsi que son
 > renvoi dans `CLAUDE.md`) quand le jeu est en production.
 
+## Pour Claude : comment reprendre
+
+L'utilisateur ne retient pas les commandes. **C'est toi qui les lances.** Il dira simplement
+« reprends Mauvais Perdants », « on teste le jeu », « ça marche pas en ligne »…
+
+1. Vérifie si l'étape 2a ci-dessous (règles Firebase) est faite : demande-le-lui. Tant
+   qu'elle ne l'est pas, le jeu s'affiche sur roulia.me mais ne peut ni créer ni rejoindre
+   de salon (« Accès refusé »). Guide-le clic par clic dans la console.
+2. Pour un test local, lance toi-même l'environnement (section « Tester en local ») en tâche
+   de fond, puis donne-lui l'adresse. Pour jouer à plusieurs, il ouvre l'adresse dans des
+   navigateurs différents (Chrome, Edge, une fenêtre privée) : chacun est un joueur distinct.
+3. Ne pousse sur `main` (production) qu'à sa demande explicite.
+
 ## Où on en est
 
-- **Branche** : `feature/party-showdown`, poussée sur GitHub, rebasée sur `main` à `efb9d0c`.
-  **Pas encore fusionnée dans `main`** : rien n'est en production.
+- **Code** : fusionné dans `main` et poussé le 26/10/2026, donc visible sur roulia.me.
+  La branche `feature/party-showdown` contient la même chose.
+- **Il reste à publier les règles Firebase** (étape 2a). Sans elles, le jeu affiche
+  « Accès refusé » à la création d'un salon.
 - **Jeu** : `games/mauvais-perdants/`. C'est un tournoi de 5 mini-jeux entre amis (2 à 8
   joueurs, code de salon, sans compte), animé par Gonzague Stentor, un présentateur odieux.
   - 11 manches réparties en 5 familles, une manche par famille à chaque tournoi.
@@ -32,7 +47,7 @@
 | `node --test games/mauvais-perdants/tests/*.test.mjs` | 61/61 |
 | Règles Firebase (toute la suite du dépôt) | 365/365 |
 | `games/mauvais-perdants/tests/multi.cjs` (4 Chrome, 3 tournois, vraies règles) | 17/17 |
-| `games/mauvais-perdants/tests/rounds.cjs` | 5/5 sur la version d'avant le renommage ; en cours au moment du départ |
+| `games/mauvais-perdants/tests/rounds.cjs` (3 Chrome, les 6 manches que multi ne tire pas) | 5/5 |
 | Banqueroll, Mini Subway | 37/37, 77/77, 42/42 |
 | `tools/check-links.js` | 15/16 (« racine propre » : échec antérieur à cette branche) |
 
@@ -43,15 +58,16 @@ ont été corrigés et retestés. Restent assumés :
 
 ## Ce qu'il reste à faire, dans l'ordre
 
-1. Relancer `rounds.cjs` pour confirmer le 5/5 sur la version renommée (prérequis
-   ci-dessous). Les captures (`games/mauvais-perdants/docs/captures/`, non commitées) se
-   régénèrent avec `multi.cjs` et `rounds.cjs`.
-2. **Mise en production, sur demande explicite de l'utilisateur seulement** :
-   - a. l'utilisateur publie `firebase/database.rules.phase2.json` dans la console Firebase.
-     C'est **à faire avant** de fusionner : sans ces règles, la base refuse l'accès au salon.
-     Sur l'ancien PC pro, le CLI Firebase était bloqué, d'où la console ;
-   - b. fusionner `feature/party-showdown` dans `main` et pousser, ce qui déploie roulia.me.
-     Jamais de `--force`.
+1. Les captures (`games/mauvais-perdants/docs/captures/`, non commitées) se régénèrent avec
+   `multi.cjs` et `rounds.cjs`.
+2. **Mise en production** :
+   - a. **À FAIRE** : l'utilisateur publie le contenu de `firebase/database.rules.phase2.json`
+     dans la console Firebase (Realtime Database > Règles > coller > Publier). Le CLI Firebase
+     est bloqué sur le PC pro, d'où la console. Le fichier contient les règles **complètes**
+     du site : celles déjà en ligne, plus le nœud `mp`. Vérifie avant que les règles en ligne
+     sont bien celles de phase 2 : elles contiennent un nœud `ms` avec `cmds`, et pas encore
+     de nœud `mp`. Si ce n'est pas le cas, ne remplace rien sans comprendre l'écart ;
+   - b. **FAIT** le 26/10/2026 : branche fusionnée dans `main` et poussée.
 3. Plus tard, l'IA :
    - déployer le Worker (`games/mauvais-perdants/ai/README.md` : wrangler, ou
      `node games/mauvais-perdants/ai/build-bundle.mjs` puis coller le fichier dans le tableau
