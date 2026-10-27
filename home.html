@@ -270,6 +270,7 @@
   .wip-in{position:relative;z-index:1;min-height:100%;display:flex;flex-direction:column;justify-content:center;gap:34px;max-width:960px;margin:0 auto;padding:72px var(--gutter) 48px;}
   .wip-fly{position:fixed;z-index:160;pointer-events:none;perspective:1300px;transform-origin:0 0;}
   .wip-fly .c3d{transition:none;}
+  .wip-fly,.wip-fly .c3d{will-change:transform;}
   .wip-x{position:fixed;top:16px;right:max(16px,calc(var(--gutter) - 8px));z-index:2;display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 10px;border-radius:999px;border:1px solid var(--border2);background:transparent;color:var(--text);font-size:14px;font-weight:500;cursor:pointer;transition:border-color var(--d-2);}
   .wip-x:hover{border-color:var(--text);}
   .wip-x svg{width:15px;height:15px;}
@@ -1018,6 +1019,8 @@
     if (wipBack && wipBack.focus) wipBack.focus({ preventScroll: true });
     if (reduce.matches || !card) { wipReset(); return; }
     closing = true; wip.classList.remove('open'); const run = ++wipRun;   // le voile s'efface pendant le retour
+    // Les personnages 3D sont deja invisibles au bout de 140 ms : on libere le processeur pour le vol de la carte.
+    if (live) setTimeout(() => { if (run === wipRun) live.stop(); }, 160);
     // Depart : l'affiche (ou, pour Qui est-ce ?, une carte de meme format au centre de la grille des visages).
     const r = src.getBoundingClientRect();
     const h = isQ ? r.height * 0.86 : r.height, w = h * 3 / 4;
