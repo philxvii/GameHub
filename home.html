@@ -356,7 +356,9 @@
     h1{font-size:34px;}
     .lede{font-size:15.5px;margin-top:6px;}
     .controls{width:100%;flex-wrap:nowrap;gap:8px;}
-    .filters{flex:1;min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
+    .filters{flex:1;min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain;
+      -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 var(--fl,0px),#000 calc(100% - var(--fr,0px)),transparent 100%);
+      mask-image:linear-gradient(90deg,transparent 0,#000 var(--fl,0px),#000 calc(100% - var(--fr,0px)),transparent 100%);}
     .filters::-webkit-scrollbar{display:none;}
     .chip{flex:none;padding:0 12px;}
     .surprise{flex:none;width:38px;padding:0;justify-content:center;}
@@ -371,6 +373,34 @@
     .cap{display:block;padding:0 14px 13px;}
     .game-card[data-wide] .name{font-size:22px;}
     .face{border-radius:13px;}
+    /* Fenetre « nouvelle version » : affiche plus petite, bouton Retour lisible au-dessus du texte qui defile,
+       et le bouton pour jouer toujours a portee de pouce. */
+    .wip-in{gap:24px;padding-top:68px;padding-bottom:0;}
+    .wip-poster{width:min(38vw,160px);}
+    .wip-x{top:12px;background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}
+    .wip-prog{margin-top:22px;}
+    .wip-next{margin-top:20px;}
+    .wip-actions{position:sticky;bottom:0;z-index:1;margin-top:8px;padding:18px 0 20px;background:linear-gradient(to bottom,color-mix(in srgb,var(--bg) 0%,transparent),var(--bg) 30%);}
+  }
+  /* Ecrans tactiles : pas de rectangle de tap, pas d'effets de survol qui restent colles apres un toucher,
+     et la carte s'enfonce un peu sous le doigt. */
+  @media (hover:none){
+    a,button{-webkit-tap-highlight-color:transparent;}
+    .theme-toggle:hover{border-color:var(--border2);}
+    .theme-toggle:hover svg{transform:none;}
+    .surprise:hover{border-color:var(--border2);}
+    .chip:hover{color:var(--muted);}
+    .chip[aria-pressed="true"]:hover{color:var(--on-accent);}
+    .wip-x:hover{border-color:var(--border2);}
+    .admin-trigger:hover{opacity:.6;color:var(--muted);transform:none;}
+    .admin-trigger:hover::after{animation:none;}
+    .ft-link:hover,.ft-home:hover .ft-link{--ft-c:var(--muted);animation:none;}
+    .ft-home:hover i{opacity:.7;animation:none;}
+    .ft-me:hover span span{animation:none;}
+    .wip-poster:hover img{filter:saturate(.55) brightness(.8);}
+    .game-card:active .c3d{--sc:.97;transition-duration:.18s;}
+    .chip:active,.surprise:active,.theme-toggle:active{transform:scale(.94);}
+    .chip{transition:color var(--d-2),background-color var(--d-2),transform var(--d-1) var(--e-out);}
   }
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{animation-duration:1ms !important;animation-delay:0ms !important;transition-duration:1ms !important;transition-delay:0ms !important;}
@@ -553,6 +583,7 @@
 (() => {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
   const fine = matchMedia('(hover: hover) and (pointer: fine)');
+  const phone = matchMedia('(max-width: 640px)');   // meme seuil que la mise en page mobile
   const table = document.getElementById('table');
   const grid = document.getElementById('game-grid');
   let cards = [...grid.querySelectorAll('.game-card')];
@@ -575,10 +606,14 @@
     if (document.hidden) { addEventListener('visibilitychange', deal, { once: true }); return; }
     dealt = true;
     if (reduce.matches) return;
-    const shown = visible();   // affiches deja arrivees (chargement) et en cours de decodage : elles ne se montrent qu'apres ~1 s
-    const g = grid.getBoundingClientRect(), mobile = innerWidth < 640;
-    const ox = g.left + g.width / 2, oy = mobile ? g.top + 140 : Math.min(g.top + g.height * 0.62, g.top + innerHeight * 0.42);
+    const g = grid.getBoundingClientRect(), mobile = phone.matches;
+    // Telephone : seules les cartes de l'ecran sont distribuees, les autres attendent deja a leur place.
+    const shown = mobile ? visible().filter(c => c.getBoundingClientRect().top < innerHeight) : visible();
+    // Telephone : le paquet se forme au milieu de la partie visible de la table, loin des filtres.
+    const ox = g.left + g.width / 2, oy = mobile ? g.top + Math.max(140, (innerHeight - g.top) / 2) : Math.min(g.top + g.height * 0.62, g.top + innerHeight * 0.42);
     const step = mobile ? 70 : 85, dur = mobile ? 760 : 900, t0 = 380, lift = mobile ? 30 : 46;
+    // Dans le paquet, la carte large prend la largeur des autres : un paquet net, sans bord qui depasse.
+    const narrow = Math.min(...shown.map(c => c.getBoundingClientRect().width));
     // 1. L'en-tete arrive en douceur pendant que le paquet se forme.
     [...document.querySelectorAll('.top > *, .intro h1, .intro .lede, .intro .controls')].forEach((el, k) =>
       anim(el, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 560, delay: k * 60, easing: 'cubic-bezier(.22,1,.36,1)' }));
@@ -587,11 +622,11 @@
       const r = c.getBoundingClientRect();
       // 2. Le paquet : cartes face cachee, empilees et un peu de travers.
       const dx = ox - (r.left + r.width / 2), dy = oy - (r.top + r.height / 2) - (shown.length - k) * 2.5;
-      const deckRot = ((k * 37) % 9 - 4) * 1.1;
+      const deckRot = ((k * 37) % 9 - 4) * 1.1, deckScale = mobile ? 0.8 * Math.min(1, narrow / r.width) : 0.8;
       const o = { duration: dur, delay: t0 + k * step, easing: 'cubic-bezier(.33,0,.15,1)' };
       // 3. La carte decolle, decrit un arc, se retourne en vol et se pose avec un leger depassement.
       anim(c, [
-        { transform: `translate(${dx}px, ${dy}px) rotate(${deckRot}deg) scale(.8)` },
+        { transform: `translate(${dx}px, ${dy}px) rotate(${deckRot}deg) scale(${deckScale})` },
         { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - lift}px) rotate(${deckRot * 0.5 + (dx > 0 ? -5 : 5)}deg) scale(1.04)`, offset: 0.45 },
         { transform: 'translate(0, -6px) rotate(0deg) scale(1.01)', offset: 0.82 },
         { transform: 'none' }], o);
@@ -677,11 +712,30 @@
   // ── Surprends-moi : on retourne la table, on melange, une carte revient ──
   const btn = document.getElementById('surprise');
   let picked = null, last = null, run = 0;
+  const offscreen = c => { const r = c.getBoundingClientRect(); return r.top < 0 || r.bottom > innerHeight; };
   function clearPick() {
     run++; picked = null;
     cards.forEach(c => { c.classList.remove('is-picked', 'is-dim'); setDown(c, false); });
   }
-  chips.forEach(ch => ch.addEventListener('click', () => { if (filter === ch.dataset.filter && !picked) return; clearPick(); filter = ch.dataset.filter; applyFilter(); }));
+  chips.forEach(ch => ch.addEventListener('click', () => { if (filter === ch.dataset.filter && !picked) return; clearPick(); filter = ch.dataset.filter; applyFilter(); reveal(ch); }));
+  // Telephone : la rangee des filtres defile ; ses bords s'estompent quand il reste des filtres
+  // de ce cote, et le filtre touche vient au milieu s'il etait coupe.
+  const filtersRow = document.querySelector('.filters');
+  function edges() {
+    const f = filtersRow, max = f.scrollWidth - f.clientWidth;
+    f.style.setProperty('--fl', f.scrollLeft > 2 ? '22px' : '0px');
+    f.style.setProperty('--fr', f.scrollLeft < max - 2 ? '28px' : '0px');
+  }
+  function reveal(ch) {
+    const f = filtersRow;
+    if (f.scrollWidth <= f.clientWidth) return;
+    const a = f.getBoundingClientRect(), b = ch.getBoundingClientRect();
+    if (b.left >= a.left + 24 && b.right <= a.right - 28) return;
+    f.scrollBy({ left: b.left + b.width / 2 - (a.left + a.width / 2), behavior: reduce.matches ? 'auto' : 'smooth' });
+  }
+  filtersRow.addEventListener('scroll', edges, { passive: true });
+  addEventListener('resize', edges);
+  document.fonts.ready.then(edges);
   btn.addEventListener('click', async () => {
     const pool = visible().filter(matches).filter(c => !c.classList.contains('coming-soon'));
     const choices = pool.filter(c => c.dataset.game !== last);
@@ -696,9 +750,15 @@
         { transform: `translate(${(k % 2 ? -1 : 1) * 8}px, ${(k % 3 - 1) * 6}px) rotate(${(k % 2 ? 2.5 : -2.5)}deg)` }, { transform: 'none' }],
         { duration: 400, easing: 'cubic-bezier(.45,0,.2,1)', composite: 'add' }));
       await wait(420); if (id !== run) return;
+      // Ecran tactile : la carte tiree peut etre hors de l'ecran ; on l'amene au centre avant de la retourner.
+      if (!fine.matches && offscreen(pick)) {
+        pick.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        await wait(520); if (id !== run) return;
+      }
       setDown(pick, false);
       await wait(440); if (id !== run) return;
     }
+    else if (!fine.matches && offscreen(pick)) pick.scrollIntoView({ block: 'center' });
     picked = pick;
     pool.forEach((c, k) => { if (c !== pick) { setDown(c, false, k * 22); c.classList.add('is-dim'); } });
     pick.classList.add('is-picked');
@@ -971,7 +1031,9 @@
     const keep = { fill: 'forwards' };
     const r = a.querySelector('.media').getBoundingClientRect();
     const dx = innerWidth / 2 - (r.left + r.width / 2), dy = innerHeight / 2 - (r.top + r.height / 2);
-    const s1 = Math.min(1.45, (innerHeight * 0.62) / r.height), s2 = s1 * 1.18;
+    // Telephone : la carte (surtout la large) ne depasse jamais l'ecran, son titre reste entier.
+    const s1 = phone.matches ? Math.min(1.45, (innerHeight * 0.62) / r.height, (innerWidth * 0.86) / r.width) : Math.min(1.45, (innerHeight * 0.62) / r.height);
+    const s2 = s1 * (phone.matches ? 1.1 : 1.18);
     // Le reste de la page s'efface.
     cards.forEach(c => { if (c !== a) c.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.94)' }], { duration: 380, easing: 'cubic-bezier(.4,0,.2,1)', ...keep }); });
     document.querySelectorAll('.top, .intro, .hub-footer').forEach(el => el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 320, ...keep }));
@@ -984,7 +1046,8 @@
     a.querySelector('.c3d').animate([
       { transform: 'rotateY(0deg)' }, { transform: 'rotateY(360deg)', offset: 0.72 }, { transform: 'rotateY(360deg)' }],
       { duration: 1050, easing: 'cubic-bezier(.55,0,.2,1)', ...keep });
-    a.querySelector('.shade').animate([{ opacity: 0.55 }, { opacity: 0.2, transform: 'translateY(40px) scale(1.15)' }], { duration: 700, ...keep });
+    // Telephone : agrandie avec la carte, l'ombre ferait une tache grise sous elle ; elle s'efface.
+    a.querySelector('.shade').animate([{ opacity: 0.55 }, { opacity: phone.matches ? 0 : 0.2, transform: 'translateY(40px) scale(1.15)' }], { duration: phone.matches ? 400 : 700, ...keep });
     // Fondu au noir, puis le jeu.
     const veil = document.createElement('div'); veil.className = 'launch-veil';
     warp.replaceChildren(veil); warp.classList.add('go');
@@ -1084,7 +1147,7 @@
   window.hubRefresh = () => {
     const n = visible().filter(c => !c.classList.contains('coming-soon')).length;
     document.querySelectorAll('[data-count-words]').forEach(el => { el.textContent = WORDS[n] || n; });
-    applyFilter();
+    applyFilter(); edges();
   };
   window.hubRefresh();
 })();
