@@ -61,7 +61,6 @@
     '#mx .mx-glint{position:absolute;inset:-10% -40%;z-index:3;pointer-events:none;background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.1) 50%,transparent 58%);mix-blend-mode:screen;animation:mx-glint 7s 1.8s ease-in-out infinite}',
     '@keyframes mx-glint{0%,55%{transform:translateX(-60%)}85%,100%{transform:translateX(60%)}}',
     '@keyframes mx-drift{0%,100%{transform:translateY(0) rotateX(4deg) rotateY(-9deg)}50%{transform:translateY(-12px) rotateX(2deg) rotateY(9deg)}}',
-    '@media (hover:hover) and (pointer:fine){#mx .mx-media:hover .mx-art{animation-play-state:paused}}',
     '#mx .mx-status{display:inline-flex;align-items:center;gap:9px;font-size:13.5px;color:var(--muted)}',
     '#mx .mx-status i{width:7px;height:7px;border-radius:50%;background:var(--brand)}',
     '#mx h1{margin:12px 0 0;font-weight:600;font-size:clamp(40px,5.2vw,68px);line-height:1;letter-spacing:-.04em}',

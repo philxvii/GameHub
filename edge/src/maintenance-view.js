@@ -65,7 +65,6 @@ h1{margin:12px 0 0;font-weight:600;font-size:clamp(40px,5.2vw,68px);line-height:
 .glint{position:absolute;inset:-10% -40%;z-index:3;pointer-events:none;background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.1) 50%,transparent 58%);mix-blend-mode:screen;animation:glint 7s 1.8s ease-in-out infinite}
 @keyframes glint{0%,55%{transform:translateX(-60%)}85%,100%{transform:translateX(60%)}}
 @keyframes drift{0%,100%{transform:translateY(0) rotateX(4deg) rotateY(-9deg)}50%{transform:translateY(-12px) rotateX(2deg) rotateY(9deg)}}
-@media (hover:hover) and (pointer:fine){.media:hover .art{animation-play-state:paused}}
 .foot{border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 24px;min-height:68px;padding-top:12px;padding-bottom:12px;color:var(--muted)}
 .ft-id{display:inline-flex;align-items:center;gap:5px;font-size:14px}
 .ft-home{display:inline-flex;align-items:center;gap:10px}
