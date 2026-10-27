@@ -212,6 +212,11 @@
   .game-card.is-picked .c3d{--lift:-8px;}
   .game-card.is-picked .front{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--text),var(--shadow-hi);}
   .game-card.is-launch .c3d{--lift:-10px;--sc:1.03;transition:transform .2s var(--e-out);}
+  /* Le reflet du survol (mode de fusion) coute cher sur une carte qui vole : il s'eteint au lancement. */
+  .game-card.is-launch .front::after{opacity:0;}
+  /* Des l'appui, avant le clic : les cartes ont deja leur calque GPU quand l'animation part. */
+  #game-grid.prep .game-card,#game-grid.prep .c3d,#game-grid.prep .shade{will-change:transform,opacity;}
+  #wip.show .wip-poster,#wip.show .wip-teaser{will-change:transform;}
 
   #warp{position:fixed;inset:0;z-index:300;pointer-events:none;visibility:hidden;}
   #warp.go{visibility:visible;}
@@ -759,7 +764,7 @@
       row.forEach((x, j) => { if (x !== c && Math.abs(j - k) === 1) x.style.setProperty('--px', `${(j - k) * 8}px`); });
     });
     c.addEventListener('pointermove', e => {
-      if (!fine.matches) return;
+      if (!fine.matches || launching) return;   // pendant le lancement : pas de mise en page forcee a chaque mouvement
       const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height, s = c.style;
       if (!reduce.matches) {
         s.setProperty('--rx', `${(0.5 - y) * 10}deg`); s.setProperty('--ry', `${(x - 0.5) * 12}deg`);
@@ -776,7 +781,7 @@
   // La table s'incline un peu avec le pointeur.
   let raf = 0;
   table.addEventListener('pointermove', e => {
-    if (!fine.matches || reduce.matches || raf) return;
+    if (!fine.matches || reduce.matches || raf || launching) return;
     raf = requestAnimationFrame(() => {
       raf = 0; const r = table.getBoundingClientRect();
       grid.style.setProperty('--ty', `${((e.clientX - r.left) / r.width - 0.5) * 3}deg`);
@@ -1103,16 +1108,21 @@
     a.querySelector('.c3d').animate([
       { transform: 'rotateY(0deg)' }, { transform: 'rotateY(360deg)', offset: 0.72 }, { transform: 'rotateY(360deg)' }],
       { duration: 1050, easing: 'cubic-bezier(.55,0,.2,1)', ...keep });
-    a.querySelector('.shade').animate([{ opacity: 0.55 }, { opacity: 0.2, transform: 'translateY(40px) scale(1.15)', filter: 'blur(30px)' }], { duration: 700, ...keep });
+    a.querySelector('.shade').animate([{ opacity: 0.55 }, { opacity: 0.2, transform: 'translateY(40px) scale(1.15)' }], { duration: 700, ...keep });
     // Fondu au noir, puis le jeu.
     const veil = document.createElement('div'); veil.className = 'launch-veil';
     warp.replaceChildren(veil); warp.classList.add('go');
     veil.animate([{ opacity: 0 }, { opacity: 0, offset: 0.7 }, { opacity: 1 }], { duration: 1150, easing: 'cubic-bezier(.4,0,1,1)', ...keep });
     setTimeout(() => { location.href = a.href; }, 1150);
   });
+  grid.addEventListener('pointerdown', e => {
+    if (!e.target.closest('a.game-card') || reduce.matches) return;
+    grid.classList.add('prep');
+    setTimeout(() => { if (!launching) grid.classList.remove('prep'); }, 1500);   // appui sans lancement (fenetre ou glisse)
+  });
   // Retour arriere (cache de navigation) : la page revient telle quelle.
   addEventListener('pageshow', () => {
-    launching = false;
+    launching = false; grid.classList.remove('prep');
     warp.classList.remove('go'); warp.replaceChildren();
     document.querySelectorAll('.game-card, .game-card .c3d, .game-card .shade, .top, .intro, .hub-footer').forEach(el => el.getAnimations().forEach(x => { if (x.effect && x.effect.getTiming().fill === 'forwards') x.cancel(); }));
     cards.forEach(c => { c.classList.remove('is-launch'); c.style.removeProperty('z-index'); });
