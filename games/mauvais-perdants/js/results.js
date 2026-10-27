@@ -2,7 +2,7 @@
 // utilisé par le coordinateur, et par tous les clients pour l'écran de fin.
 
 import { gameOf, contenders } from './machine.js';
-import { ROUNDS_PER_TOURNAMENT } from './draw.js';
+import { ROUNDS_PER_TOURNAMENT, roundsOf } from './draw.js';
 import { round } from './rounds/index.js';
 import { rankRound, standings, tiebreakOrder, awards, FINAL_MULT } from './scoring.js';
 import { scoreBac } from './petitbac.js';
@@ -38,7 +38,7 @@ export function computeRound(m, subs, boasts) {
   if (m.i >= ROUNDS_PER_TOURNAMENT) {
     return { res: null, order: tiebreakOrder(entries), scored };
   }
-  const ranked = rankRound(entries, who.length, new Set(Object.keys(boasts || {})), m.i === ROUNDS_PER_TOURNAMENT - 1 ? FINAL_MULT : 1);
+  const ranked = rankRound(entries, who.length, new Set(Object.keys(boasts || {})), m.i === roundsOf(m) - 1 && m.i > 0 ? FINAL_MULT : 1);
   const res = {};
   for (const uid of who) {
     const r = ranked[uid];
@@ -54,7 +54,7 @@ export function computeBac(m, prep, final, boasts) {
   const bac = scoreBac(prep, final, who);
   const played = uid => !!prep.present[uid] && prep.answers[uid].some(a => a.status !== 'empty');
   const entries = who.map(uid => ({ uid, present: played(uid), key: bac[uid].key }));
-  const ranked = rankRound(entries, who.length, new Set(Object.keys(boasts || {})), m.i === ROUNDS_PER_TOURNAMENT - 1 ? FINAL_MULT : 1);
+  const ranked = rankRound(entries, who.length, new Set(Object.keys(boasts || {})), m.i === roundsOf(m) - 1 && m.i > 0 ? FINAL_MULT : 1);
   const res = {};
   for (const uid of who) {
     const r = ranked[uid];
@@ -68,7 +68,7 @@ export function finalSummary(m) {
   const roster = Object.keys(m.roster || {});
   const names = namesOf(m);
   const tbDet = parse((m.det || {})[ROUNDS_PER_TOURNAMENT] || '');
-  const rows = standings(roster, m.res || {}, ROUNDS_PER_TOURNAMENT, tbDet && tbDet.order);
+  const rows = standings(roster, m.res || {}, roundsOf(m), tbDet && tbDet.order);
   const extra = {};
   m.plan.forEach((p, i) => {
     const r = (m.res || {})[i];

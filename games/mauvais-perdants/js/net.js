@@ -28,11 +28,11 @@ const userErr = (m, cause) => Object.assign(new Error(m), { userMessage: m, caus
 const wrap = e => (e && e.userMessage ? e : isDenied(e) ? userErr('Accès refusé : salon fermé ou tournoi déjà lancé.', e) : userErr('Connexion impossible : vérifie le réseau et réessaie.', e));
 export const device = () => (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'touch' : 'mouse');
 
-export async function createRoom({ name, scene, roast, crude }) {
+export async function createRoom({ name, scene, roast, crude, v }) {
   try {
     const me = await ensureAuth();
     const code = await freeRoomCode(P, genCode);
-    const game = { phase: 'lobby', coord: me.uid, cfg: { roast: roast === 'hard' ? 'hard' : 'soft', crude: crude === true, v: 1 } };
+    const game = { phase: 'lobby', coord: me.uid, cfg: { roast: roast === 'hard' ? 'hard' : 'soft', crude: crude === true, v: Number.isInteger(v) && v >= 1 ? v : 1 } };
     if (!scene) game.players = { [me.uid]: { name: cleanName(name), c: 0, dev: device(), t: Date.now() } };
     await fbCreate(P, code, game);
     return new Room(code, me.uid);

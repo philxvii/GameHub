@@ -11,7 +11,7 @@ import { Coordinator, paramsOf, namesOf, finalSummary } from './coord.js';
 import { GHOST } from './results.js';
 import { round, FAMILIES } from './rounds/index.js';
 import { gameOf, contenders, COUNT_MS } from './machine.js';
-import { ROUNDS_PER_TOURNAMENT, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks } from './draw.js';
+import { ROUNDS_PER_TOURNAMENT, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks, roundsOf } from './draw.js';
 import { standings, MIN_PLAYERS, MAX_PLAYERS, FINAL_MULT } from './scoring.js';
 import { mountPlay } from './play/index.js';
 import { cleanName, validName } from './text.js';
@@ -78,7 +78,7 @@ $('#btn-create').addEventListener('click', e => busy(e.currentTarget, async () =
   const scene = $('#scene').checked;
   const name = scene ? 'Scène' : readName();
   if (!name) return;
-  enter(await createRoom({ name, scene, roast: 'soft', crude: false }));
+  enter(await createRoom({ name, scene, roast: 'soft', crude: false, v: encodePicks(homePicks()) }));
 }));
 // Solo : un salon privé, lancé aussitôt (duel contre un score de référence).
 let autoSolo = false;
@@ -86,7 +86,7 @@ $('#btn-solo').addEventListener('click', e => busy(e.currentTarget, async () => 
   const name = readName();
   if (!name) return;
   autoSolo = true;
-  enter(await createRoom({ name, scene: false, roast: 'soft', crude: false }));
+  enter(await createRoom({ name, scene: false, roast: 'soft', crude: false, v: encodePicks(homePicks()) }));
 }));
 $('#btn-join').addEventListener('click', e => busy(e.currentTarget, async () => {
   const scene = $('#scene-join').checked;
@@ -239,41 +239,60 @@ function renderLobby() {
     $('#btn-start').textContent = !room.isCoord ? 'Reprise de la coordination…' : n < MIN_PLAYERS ? 'Jouer en solo' : 'Lancer le tournoi';
   }
 }
-// Au programme : l'hôte choisit les manches du tirage (au moins cinq, une par famille si
-// possible) ; les autres voient la sélection. Rangée dans cfg.v (voir draw.js).
-function renderPicks() {
-  const cfg = room.s.cfg || {};
-  const chosen = new Set(decodePicks(cfg.v));
-  const host = room.isHost;
-  const box = $('#picks');
-  const order = PICK_ORDER.filter(id => round(id)).sort((a, b) => Object.keys(FAMILIES).indexOf(round(a).family) - Object.keys(FAMILIES).indexOf(round(b).family));
-  keyed(box, order, id => {
+// Au programme : les épreuves que l'on veut jouer, une seule suffit. Jusqu'à cinq, on les joue
+// toutes ; au-delà, cinq sont tirées au sort. Choisies dès l'accueil (mémorisées sur l'appareil),
+// modifiables par l'hôte au salon ; rangées dans cfg.v (voir draw.js).
+const PICKS_SHOWN = PICK_ORDER.filter(id => round(id)).sort((a, b) => Object.keys(FAMILIES).indexOf(round(a).family) - Object.keys(FAMILIES).indexOf(round(b).family));
+function programmeNote(n) {
+  if (n === 1) return 'Une seule épreuve : rien que celle-là.';
+  if (n <= ROUNDS_PER_TOURNAMENT) return `${n} épreuves, toutes jouées, dans un ordre tiré au sort.`;
+  return `${n === PICK_ORDER.length ? 'Toutes les épreuves' : `${n} épreuves`} : ${ROUNDS_PER_TOURNAMENT} seront tirées au sort.`;
+}
+// Dessine les cases dans `box` ; `toggle(id)` reçoit le clic (absent : lecture seule).
+function drawPicks(box, chosen, toggle) {
+  keyed(box, PICKS_SHOWN, id => {
     const def = round(id);
     const b = h('button', { type: 'button', class: 'pick' }, h('span', { class: 'pick-fam', text: FAMILIES[def.family].label }), h('span', { class: 'pick-name', text: def.title }));
-    b.addEventListener('click', () => {
-      if (!room || !room.isHost) return;
-      const now = new Set(decodePicks((room.s.cfg || {}).v));
-      if (now.has(id)) { if (now.size <= MIN_PICKS) return toast(`Il faut au moins ${MIN_PICKS} manches au programme.`); now.delete(id); } else now.add(id);
-      const c = room.s.cfg || {};
-      room.setCfg({ roast: c.roast || 'soft', crude: !!c.crude, v: encodePicks([...now]) }).catch(() => toast('Réglage refusé. Réessaie.'));
-    });
+    b.addEventListener('click', () => { if (b.__toggle) b.__toggle(id); });
     return b;
   }).forEach((b, k) => {
-    const on = chosen.has(order[k]);
+    const on = chosen.has(PICKS_SHOWN[k]);
     setClass(b, `pick${on ? ' on' : ''}`);
-    b.disabled = !host;
+    b.disabled = !toggle;
+    b.__toggle = toggle;
     b.setAttribute('aria-pressed', String(on));
   });
-  $('#picks-note').textContent = chosen.size === PICK_ORDER.length
-    ? (host ? `Toutes les épreuves. Retire celles que tu ne veux pas : ${ROUNDS_PER_TOURNAMENT} seront tirées au sort.` : 'Toutes les épreuves sont au programme. L’hôte choisit.')
-    : `${chosen.size} épreuves au choix, ${ROUNDS_PER_TOURNAMENT} seront tirées au sort${host ? '' : ' (choix de l’hôte)'}.`;
-  $('#picks-all').hidden = !host || chosen.size === PICK_ORDER.length;
 }
-$('#picks-all').addEventListener('click', () => {
+const flip = (set, id) => {
+  const now = new Set(set);
+  if (now.has(id)) { if (now.size <= MIN_PICKS) { toast('Garde au moins une épreuve.'); return null; } now.delete(id); } else now.add(id);
+  return now;
+};
+// Accueil : le choix vit sur l'appareil jusqu'à la création du plateau.
+const homePicks = () => decodePicks(store.get('mp-picks'));
+function renderHomePicks() {
+  const chosen = new Set(homePicks());
+  drawPicks($('#home-picks'), chosen, id => { const now = flip(chosen, id); if (now) { store.set('mp-picks', String(encodePicks([...now]))); renderHomePicks(); } });
+  $('#home-picks-note').textContent = programmeNote(chosen.size);
+  $('#home-picks-all').hidden = chosen.size === PICK_ORDER.length;
+}
+$('#home-picks-all').addEventListener('click', () => { store.set('mp-picks', null); renderHomePicks(); });
+renderHomePicks();
+// Salon : l'hôte peut encore changer d'avis ; les autres voient la sélection.
+function setPicks(ids) {
   if (!room || !room.isHost) return;
   const c = room.s.cfg || {};
-  room.setCfg({ roast: c.roast || 'soft', crude: !!c.crude, v: encodePicks(PICK_ORDER) }).catch(() => toast('Réglage refusé. Réessaie.'));
-});
+  store.set('mp-picks', String(encodePicks(ids)));
+  room.setCfg({ roast: c.roast || 'soft', crude: !!c.crude, v: encodePicks(ids) }).catch(() => toast('Réglage refusé. Réessaie.'));
+}
+function renderPicks() {
+  const chosen = new Set(decodePicks((room.s.cfg || {}).v));
+  const host = room.isHost;
+  drawPicks($('#picks'), chosen, host ? id => { const now = flip(decodePicks((room.s.cfg || {}).v), id); if (now) setPicks([...now]); } : null);
+  $('#picks-note').textContent = programmeNote(chosen.size) + (host ? '' : ' Choix de l’hôte.');
+  $('#picks-all').hidden = !host || chosen.size === PICK_ORDER.length;
+}
+$('#picks-all').addEventListener('click', () => setPicks(PICK_ORDER));
 $('#btn-start').addEventListener('click', async e => {
   if (!coord) return;
   e.currentTarget.disabled = true;
@@ -312,8 +331,8 @@ function renderPips(m) {
   const keys = m.plan.map((p, k) => `${k}:${p.g}`);
   if (m.i >= ROUNDS_PER_TOURNAMENT) keys.push('tb');
   keyed($('#pips'), keys, k => h('li', { title: k === 'tb' ? 'Départage' : round(k.split(':')[1]).title, text: k === 'tb' ? '⚡' : String(Number(k.split(':')[0]) + 1) })).forEach((li, k) => {
-    if (k >= ROUNDS_PER_TOURNAMENT) return setClass(li, 'pip now');
-    setClass(li, `pip${k < m.i || (k === m.i && ['reveal', 'board', 'final'].includes(m.step)) ? ' done' : ''}${k === m.i && m.step !== 'final' ? ' now' : ''}${k === ROUNDS_PER_TOURNAMENT - 1 ? ' x2' : ''}`);
+    if (k >= roundsOf(m)) return setClass(li, 'pip now');
+    setClass(li, `pip${k < m.i || (k === m.i && ['reveal', 'board', 'final'].includes(m.step)) ? ' done' : ''}${k === m.i && m.step !== 'final' ? ' now' : ''}${k === roundsOf(m) - 1 && k > 0 ? ' x2' : ''}`);
   });
 }
 
@@ -339,9 +358,9 @@ const VIEWS = {
     const def = round(gameOf(m));
     const p = paramsOf(m);
     const fam = FAMILIES[def.family];
-    const last = m.i === ROUNDS_PER_TOURNAMENT - 1;
+    const last = m.i === roundsOf(m) - 1 && m.i > 0;
     const card = h('div', { class: 'ecard' },
-      h('div', { class: 'top' }, h('span', { class: `fam ${last ? 'x2' : ''}`, text: tb ? 'Départage' : last ? `Finale · points ×${FINAL_MULT}` : fam.label }), h('span', { class: 'no', text: tb ? 'Ex æquo' : `${m.i + 1} / ${ROUNDS_PER_TOURNAMENT}` })),
+      h('div', { class: 'top' }, h('span', { class: `fam ${last ? 'x2' : ''}`, text: tb ? 'Départage' : last ? `Finale · points ×${FINAL_MULT}` : fam.label }), h('span', { class: 'no', text: tb ? 'Ex æquo' : `${m.i + 1} / ${roundsOf(m)}` })),
       h('h1', { text: def.title }),
       h('ol', { class: 'round-rules' }, (tb ? ['Seuls les ex æquo jouent.', def.id === 'gong' ? 'Trois signaux : le temps moyen le plus bas remporte le tournoi.' : '20 secondes de calcul : le meilleur total remporte le tournoi.'] : def.rules).map(t => h('li', { text: t }))),
       h('div', { class: 'meta' }, h('span', {}, 'Durée max ', h('b', { text: `${Math.round(def.playMs / 1000 * (tb ? 0.5 : 1))} s` })), h('span', {}, 'Égalité : ', h('b', { text: def.tieText(p) }))),
@@ -479,7 +498,7 @@ const VIEWS = {
     const res = (m.res || {})[m.i];
     const def = round(gameOf(m));
     const names = namesOf(m);
-    const wrap = h('div', { class: 'verdict-wrap' }, h('div', { class: 'v-head' }, h('h2', { text: def.title }), h('small', { text: `Manche ${m.i + 1} sur ${ROUNDS_PER_TOURNAMENT} · le verdict de la régie` })));
+    const wrap = h('div', { class: 'verdict-wrap' }, h('div', { class: 'v-head' }, h('h2', { text: def.title }), h('small', { text: `Manche ${m.i + 1} sur ${roundsOf(m)} · le verdict de la régie` })));
     deck.append(wrap);
     if (!res) { wrap.append(h('p', { class: 'fine', text: 'La régie recompte…' })); return {}; }
     const rows = Object.entries(res).map(([uid, r]) => ({ uid, ...r })).sort((a, b) => a.rank - b.rank || (a.uid < b.uid ? -1 : 1));
@@ -501,7 +520,7 @@ const VIEWS = {
     els.forEach(e => list.append(e));
     wrap.append(list);
     if (rows.some(r => r.tied)) wrap.append(h('p', { class: 'tied-note', text: 'Ex æquo : points partagés (moyenne des places).' }));
-    if (m.i === ROUNDS_PER_TOURNAMENT - 1) wrap.append(h('p', { class: 'tied-note', text: `Manche décisive : points de place ×${FINAL_MULT}.` }));
+    if (m.i === roundsOf(m) - 1 && m.i > 0) wrap.append(h('p', { class: 'tied-note', text: `Manche décisive : points de place ×${FINAL_MULT}.` }));
     if (gameOf(m) === 'bac') wrap.append(bacTable(m, names));
     if (gameOf(m) === 'prix') wrap.append(prixTable(m, names));
     // Du dernier au premier ; le vainqueur arrive détaché, après un court temps d'arrêt.
@@ -519,9 +538,9 @@ const VIEWS = {
   board(deck, m) {
     const roster = Object.keys(m.roster);
     const names = namesOf(m);
-    const prev = standings(roster, Object.fromEntries(Object.entries(m.res || {}).filter(([k]) => Number(k) < m.i)), ROUNDS_PER_TOURNAMENT);
-    const cur = standings(roster, m.res || {}, ROUNDS_PER_TOURNAMENT);
-    const left = ROUNDS_PER_TOURNAMENT - 1 - m.i;
+    const prev = standings(roster, Object.fromEntries(Object.entries(m.res || {}).filter(([k]) => Number(k) < m.i)), roundsOf(m));
+    const cur = standings(roster, m.res || {}, roundsOf(m));
+    const left = roundsOf(m) - 1 - m.i;
     const wrap = h('div', { class: 'verdict-wrap' }, h('div', { class: 'v-head' }, h('h2', { text: 'Classement' }), h('small', { text: left > 0 ? `${plural(left, 'manche')} à jouer${left === 1 ? ' · la dernière compte double' : ''}` : 'Fin du tournoi' })));
     deck.append(wrap);
     const course = parcours(m, prev, cur, names);
@@ -827,8 +846,8 @@ function openMenu() {
   const box = clear($('#menu-round'));
   if (m && m.step !== 'final') {
     const def = round(gameOf(m));
-    box.append(h('h3', { text: m.i >= ROUNDS_PER_TOURNAMENT ? 'Départage' : `Manche ${m.i + 1} sur ${ROUNDS_PER_TOURNAMENT}` }), h('p', { class: 'sheet-title', text: def.title }), h('ol', { class: 'round-rules' }, def.rules.map(t => h('li', { text: t }))));
-  } else box.append(h('h3', { text: 'Mauvais Perdants' }), h('p', { class: 'fine', text: 'Cinq épreuves, un seul gagnant.' }));
+    box.append(h('h3', { text: m.i >= ROUNDS_PER_TOURNAMENT ? 'Départage' : `Manche ${m.i + 1} sur ${roundsOf(m)}` }), h('p', { class: 'sheet-title', text: def.title }), h('ol', { class: 'round-rules' }, def.rules.map(t => h('li', { text: t }))));
+  } else box.append(h('h3', { text: 'Mauvais Perdants' }), h('p', { class: 'fine', text: 'Les épreuves que vous voulez, un seul gagnant.' }));
   $('#opt-calm').checked = calmPref();
   $('#opt-full').checked = !!document.fullscreenElement;
   $('#opt-full').closest('label').hidden = !document.documentElement.requestFullscreen;

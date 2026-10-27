@@ -17,7 +17,7 @@
 //            présents ont touché « Suite »).
 
 import { round } from './rounds/index.js';
-import { ROUNDS_PER_TOURNAMENT } from './draw.js';
+import { ROUNDS_PER_TOURNAMENT, roundsOf } from './draw.js';
 
 export const STEPS = ['intro', 'count', 'play', 'judge', 'vote', 'reveal', 'board', 'final'];
 export const INTRO_MS = 12000;
@@ -87,7 +87,7 @@ export function decide(m, f) {
       return null;
     case 'board':
       if (f.skip || now >= m.end || everyone(f.next || new Set())) {
-        if (m.i + 1 < ROUNDS_PER_TOURNAMENT) return { step: 'intro', at: now, end: now + INTRO_MS, i: m.i + 1 };
+        if (m.i + 1 < roundsOf(m)) return { step: 'intro', at: now, end: now + INTRO_MS, i: m.i + 1 };
         if (f.tiebreak) return { step: 'intro', at: now, end: now + INTRO_MS, i: ROUNDS_PER_TOURNAMENT, tb: f.tiebreak };
         return { step: 'final', at: now, end: now, action: 'final' };
       }

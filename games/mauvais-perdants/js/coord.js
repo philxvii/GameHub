@@ -8,7 +8,7 @@
 // point ne peut pas être compté deux fois.
 
 import { decide, contenders, gameOf, INTRO_MS, allowed, STALL_MS } from './machine.js';
-import { drawPlan, decodePicks, ROUNDS_PER_TOURNAMENT } from './draw.js';
+import { drawPlan, decodePicks, ROUNDS_PER_TOURNAMENT, roundsOf } from './draw.js';
 import { round, TIEBREAK } from './rounds/index.js';
 import { rankRound, standings, needsTiebreak, tiebreakOrder, awards, FINAL_MULT, MIN_PLAYERS } from './scoring.js';
 import { prepare, aiItems, triage, resolve, scoreBac, voteList } from './petitbac.js';
@@ -84,7 +84,7 @@ export class Coordinator {
   async enrich(id, line, ctx) {
     const m = this.room.s.match;
     const cfg = this.cfg();
-    const totals = m ? standings(Object.keys(m.roster || {}), m.res || {}, ROUNDS_PER_TOURNAMENT) : [];
+    const totals = m ? standings(Object.keys(m.roster || {}), m.res || {}, roundsOf(m)) : [];
     const names = m ? namesOf(m) : {};
     const reply = await hostLine({
       code: this.room.code, roast: cfg.roast, crude: !!cfg.crude, event: line.ev || '', facts: line.facts || '',
@@ -122,7 +122,7 @@ export class Coordinator {
     this.judging = null;
     const names = Object.values(roster).map(p => p.name);
     if (rematch && prev && prev.res) {
-      const rows = standings(Object.keys(prev.roster), prev.res, ROUNDS_PER_TOURNAMENT);
+      const rows = standings(Object.keys(prev.roster), prev.res, roundsOf(prev));
       const pn = namesOf(prev);
       await this.sayType('rematch', { champ: pn[rows[0].uid], last: pn[rows[rows.length - 1].uid] });
     } else await this.sayType(solo ? 'solo_welcome' : 'welcome', { n: names.length, P: players[0].name });
@@ -141,13 +141,13 @@ export class Coordinator {
       return this.sayType('tiebreak', { names: (m.tb ? Object.keys(m.tb) : []).map(u => names[u]).join(' et ') });
     }
     const def = round(gameOf(m));
-    const rows = standings(Object.keys(m.roster), m.res || {}, ROUNDS_PER_TOURNAMENT);
+    const rows = standings(Object.keys(m.roster), m.res || {}, roundsOf(m));
     const names = namesOf(m);
     const leader = m.i > 0 && rows.filter(r => r.place === 1).length === 1 ? names[rows[0].uid] : null;
     const last = m.i > 0 && rows.length > 2 ? names[rows[rows.length - 1].uid] : null;
-    const ctx = { no: m.i + 1, total: ROUNDS_PER_TOURNAMENT, title: def.title, hint: def.rules[0], leader, last, g: def.id };
+    const ctx = { no: m.i + 1, total: roundsOf(m), title: def.title, hint: def.rules[0], leader, last, g: def.id };
     // Dernière manche : l'annonce des points doublés passe avant tout le reste.
-    if (m.i === ROUNDS_PER_TOURNAMENT - 1) return this.sayType('intro_final', ctx);
+    if (m.i === roundsOf(m) - 1 && m.i > 0) return this.sayType('intro_final', ctx);
     return this.sayType(Math.random() < 0.6 ? 'intro_game' : 'intro', ctx);
   }
 
@@ -174,8 +174,8 @@ export class Coordinator {
     const key = `${m.tid}/${m.rk}`;
     const j = this.judging && this.judging.key === key ? this.judging : null;
     let tiebreak = null;
-    if (m.step === 'board' && m.i === ROUNDS_PER_TOURNAMENT - 1) {
-      tiebreak = needsTiebreak(standings(Object.keys(m.roster), m.res || {}, ROUNDS_PER_TOURNAMENT));
+    if (m.step === 'board' && m.i === roundsOf(m) - 1) {
+      tiebreak = needsTiebreak(standings(Object.keys(m.roster), m.res || {}, roundsOf(m)));
     }
     const skip = this.skipFlag; this.skipFlag = false;
     return { now, online, ready, next, voted, submitted, stalled, judged: !!(j && j.done), needsVote: j ? j.needsVote : true, tiebreak, skip };
@@ -334,14 +334,14 @@ export class Coordinator {
     }
     if (after.step === 'reveal' && before.i >= ROUNDS_PER_TOURNAMENT) return null;
     if (after.step === 'board') {
-      const prev = standings(roster, Object.fromEntries(Object.entries(after.res || {}).filter(([k]) => Number(k) < before.i)), ROUNDS_PER_TOURNAMENT);
-      const cur = standings(roster, after.res || {}, ROUNDS_PER_TOURNAMENT);
+      const prev = standings(roster, Object.fromEntries(Object.entries(after.res || {}).filter(([k]) => Number(k) < before.i)), roundsOf(after));
+      const cur = standings(roster, after.res || {}, roundsOf(after));
       if (isSolo(after)) return null;
-      return this.say(speakFor(boardEvents(prev, cur, names, before.i, ROUNDS_PER_TOURNAMENT), { ...cfg, used: this.used }, 1));
+      return this.say(speakFor(boardEvents(prev, cur, names, before.i, roundsOf(after)), { ...cfg, used: this.used }, 1));
     }
     if (after.step === 'final') {
       const tbDet = parse((after.det || {})[ROUNDS_PER_TOURNAMENT] || '');
-      const rows = standings(roster, after.res || {}, ROUNDS_PER_TOURNAMENT, tbDet && tbDet.order);
+      const rows = standings(roster, after.res || {}, roundsOf(after), tbDet && tbDet.order);
       if (isSolo(after)) return this.say(soloFinal(rows, names, { ...cfg, used: this.used }));
       const winners = rows.filter(r => r.place === 1);
       const lines = [];

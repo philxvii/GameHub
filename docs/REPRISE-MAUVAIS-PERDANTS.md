@@ -37,7 +37,7 @@ fictive de la fin des années 70. Pas de présentateur à l'écran (ses répliqu
 - Le 27/10, tests navigateur sur la version poussée : `multi.cjs` 17/17, `rounds.cjs` 5/5 (graines
   MAN00000 / MAN00006), `solo.cjs` 4/4. Corrigés ensuite en local (non poussés) : barre de défilement
   pendant la virgule d'antenne, un seul autocollant au salon.
-- Le 27/10 encore, **en local, NON poussé** (l'utilisateur doit donner son accord) :
+- Le 27/10 encore, **poussé** (commit 7f5047c, à la demande de l'utilisateur) :
   - **L'Étiquette refaite façon jeu télé** : 47 vrais produits de supermarché (prix médians
     Open Prices, photos Open Food Facts dans `img/prix/<code-barres>.jpg`, re-téléchargeables
     avec `node games/mauvais-perdants/img/prix/telecharger.mjs`). Même produit pour tous au même
@@ -51,6 +51,11 @@ fictive de la fin des années 70. Pas de présentateur à l'écran (ses répliqu
     confirmation, et pour le coordinateur « Arrêter le tournoi » (retour au salon).
   - **« Au programme »** déplacé dans une fiche sous le code du plateau, avec coches et bouton
     « Tout le programme » pour l'hôte.
+  - Ensuite (local, à pousser) : **choix des épreuves dès l'accueil** (mémorisé, envoyé dans
+    `cfg.v` à la création) et **tournoi de 1 à 5 manches** : `roundsOf(m)` dans `js/draw.js` =
+    longueur du tirage ; le départage garde l'indice 5 (aucune règle Firebase changée). Moins de
+    cinq épreuves cochées : toutes jouées, une fois chacune ; la dernière ne compte double que
+    s'il y en a au moins deux. Vérifié : solo avec une seule épreuve jusqu'au podium.
   - Tests : Node 68/68, `multi.cjs` 17/17, `rounds.cjs` 5/5, `solo.cjs` 4/4. Les suites
     navigateur visent le port 4174 par défaut : sur ce PC, préfixer
     `SA_URL=http://localhost:4173/games/mauvais-perdants/`.

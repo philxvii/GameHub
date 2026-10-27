@@ -19,7 +19,7 @@ import nuage, { errorOf, MISSING } from '../js/rounds/nuage.js';
 import prix, { CATALOG, parsePrice, ITEMS_PER_ROUND, slotAt, GUESS_MS, SLOT_MS, LEAD_MS } from '../js/rounds/prix.js';
 import bac from '../js/rounds/bac.js';
 import { rankRound, slotPoints, standings, needsTiebreak, tiebreakOrder, awards, FINAL_MULT } from '../js/scoring.js';
-import { drawPlan, eligibleRounds, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks } from '../js/draw.js';
+import { drawPlan, eligibleRounds, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks, roundsOf } from '../js/draw.js';
 import { decide, allowed, NEXT, GRACE_MS, INTRO_MS, COUNT_MS, gameOf, playMsOf, STALL_MS } from '../js/machine.js';
 import { prepare, aiItems, parseJudge, triage, resolve, scoreBac, voteList } from '../js/petitbac.js';
 import { cleanName, cleanAnswer, answerKey, firstLetter, validName } from '../js/text.js';
@@ -315,26 +315,39 @@ describe('Tirage des cinq manches', () => {
     for (let s = 0; s < 200; s++) drawPlan(`V${s}`, {}).forEach(x => seen.add(x.g));
     assert.equal(seen.size, ROUNDS.length);
   });
-  test('manches choisies par l’hôte : codage stable, au moins cinq, tirage limité au choix', () => {
+  test('manches choisies : codage stable, une seule suffit, tirage limité au choix', () => {
     assert.deepEqual([...PICK_ORDER].sort(), ROUNDS.map(r => r.id).sort(), 'toute manche est sélectionnable');
     assert.equal(encodePicks(PICK_ORDER), 1);
     assert.deepEqual(decodePicks(1), PICK_ORDER);
     assert.deepEqual(decodePicks(undefined), PICK_ORDER);
     const pick = ['gong', 'chemin', 'coffre', 'bac', 'prix', 'tir'];
     assert.deepEqual(decodePicks(encodePicks(pick)).sort(), pick.slice().sort());
-    assert.deepEqual(decodePicks(encodePicks(['gong', 'tir'])), PICK_ORDER, 'moins de cinq : tout le programme');
+    assert.deepEqual(decodePicks(encodePicks(['gong', 'tir'])), ['gong', 'tir']);
+    assert.deepEqual(decodePicks(2), PICK_ORDER, 'aucune coche : tout le programme');
     assert.deepEqual(decodePicks(-3), PICK_ORDER);
-    assert.equal(MIN_PICKS, 5);
+    assert.equal(MIN_PICKS, 1);
     for (let s = 0; s < 100; s++) {
       const plan = drawPlan(`P${s}`, { devices: ['mouse', 'mouse'] }, [], pick);
       assert.equal(plan.length, 5);
       assert.ok(plan.every(x => pick.includes(x.g)), plan.map(x => x.g).join(','));
       assert.equal(new Set(plan.map(x => x.g)).size, 5);
     }
-    // Choix réduit par l'équité (salon mixte : ni Gong ni Dictée) : le tirage complète.
+    // Une seule épreuve : le tournoi n'a qu'une manche.
+    const one = drawPlan('P-un', { devices: ['mouse', 'mouse'] }, [], ['prix']);
+    assert.deepEqual(one, [{ g: 'prix', f: 'chiffres' }]);
+    assert.equal(roundsOf({ plan: one }), 1);
+    // Moins de cinq : toutes jouées, une fois chacune, le Petit Bac jamais en ouverture.
+    for (let s = 0; s < 30; s++) {
+      const three = drawPlan(`P3-${s}`, { devices: ['mouse', 'mouse'] }, [], ['bac', 'tir', 'prix']);
+      assert.deepEqual(three.map(x => x.g).sort(), ['bac', 'prix', 'tir']);
+      assert.notEqual(three[0].g, 'bac');
+    }
+    // Choix réduit par l'équité (salon mixte : ni Gong ni Dictée) : il reste ce qui est jouable.
     const mixed = drawPlan('P-mixte', { devices: ['touch', 'mouse'] }, [], ['gong', 'dictee', 'tir', 'chemin', 'coffre']);
-    assert.equal(mixed.length, 5);
-    assert.ok(!mixed.some(x => x.g === 'gong' || x.g === 'dictee'));
+    assert.deepEqual(mixed.map(x => x.g).sort(), ['chemin', 'coffre', 'tir']);
+    // Plus rien de jouable : tirage complet.
+    assert.equal(drawPlan('P-vide', { devices: ['touch', 'mouse'] }, [], ['gong']).length, 5);
+    assert.equal(roundsOf({ plan: [] }), 5);
   });
 });
 

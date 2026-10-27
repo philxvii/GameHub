@@ -194,6 +194,15 @@ button { cursor: pointer; }
 .pick:not(:disabled):hover { transform: translateY(-2px); }
 .pick:not(:disabled):active { transform: translateY(2px); }
 .pick:disabled { cursor: default; }
+/* accueil : la même grille, en plus serré */
+.home-picks .picks-head h3 { font-size: 22px; }
+.home-picks .picks-note { margin: 4px 0 10px; font-size: 13px; }
+.picks-grid.mini { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.picks-grid.mini .pick { padding: 7px 26px 8px 10px; border-radius: 11px; }
+.picks-grid.mini .pick-fam { display: none; }
+.picks-grid.mini .pick-name { font-size: 15px; }
+.picks-grid.mini .pick::after { top: 50%; right: 7px; width: 14px; height: 14px; margin-top: -7px; font-size: 9px; }
+.picks-grid.mini .pick.on { box-shadow: 0 3px 0 var(--ink); }
 .launch { margin-top: 34px; display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
 .launch .host-ctl .btn { width: auto; min-width: 280px; }
 .wait-host { margin: 0; font-weight: 700; font-size: 17px; }

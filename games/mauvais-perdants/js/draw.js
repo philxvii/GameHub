@@ -9,8 +9,9 @@
 //  - à la revanche, on évite les manches du tournoi précédent quand c'est possible ;
 //  - le Petit Bac (la plus longue, et la seule jugée) n'ouvre ni ne clôt le tournoi : il ne
 //    vaut jamais double ;
-//  - l'hôte peut restreindre les manches proposées (au moins cinq) ; s'il en reste moins de
-//    cinq après les exclusions d'équité, le tirage complète avec les autres manches ;
+//  - l'hôte choisit les manches proposées, une seule suffit : moins de cinq choisies, le
+//    tournoi les joue toutes, une fois chacune, dans un ordre tiré au sort ; plus de cinq,
+//    cinq sont tirées comme ci-dessus. Si l'équité les retire toutes, on revient au tirage complet ;
 //  - aucune pondération cachée : seule la graine décide, et elle est enregistrée.
 
 import { ROUNDS, FAMILIES } from './rounds/index.js';
@@ -25,7 +26,10 @@ export const eligibleRounds = room => ROUNDS.filter(r => r.eligible(room || {}))
 // de la base pour cfg) : 1 = toutes ; sinon 2 + masque de bits, dans l'ordre FIXE ci-dessous.
 // Une nouvelle manche s'ajoute toujours EN FIN de liste (les masques déjà écrits restent justes).
 export const PICK_ORDER = ['gong', 'tir', 'dictee', 'chemin', 'numeros', 'damier', 'coffre', 'dejavu', 'bac', 'calcul', 'nuage', 'prix'];
-export const MIN_PICKS = ROUNDS_PER_TOURNAMENT;
+export const MIN_PICKS = 1;
+// Nombre de manches du tournoi (hors départage) : la longueur du tirage, 1 à 5.
+// Le départage garde l'indice ROUNDS_PER_TOURNAMENT, quel que soit ce nombre.
+export const roundsOf = m => Math.min(ROUNDS_PER_TOURNAMENT, ((m && m.plan) || []).length) || ROUNDS_PER_TOURNAMENT;
 export function encodePicks(ids) {
   const set = new Set(ids);
   if (PICK_ORDER.every(id => set.has(id))) return 1;
@@ -48,8 +52,13 @@ export function drawPlan(seed, room = {}, recent = [], allowed = null) {
   const r = rng(hash(`plan:${seed}`));
   const eligible = eligibleRounds(room);
   const chosen = allowed ? eligible.filter(x => allowed.includes(x.id)) : eligible;
-  // Choix trop court après les exclusions d'équité : on complète avec les autres manches.
-  const pool = chosen.length >= ROUNDS_PER_TOURNAMENT ? chosen : chosen.concat(eligible.filter(x => !chosen.includes(x)));
+  // Choix court : on joue exactement les manches choisies. Rien de jouable : tirage complet.
+  if (chosen.length && chosen.length < ROUNDS_PER_TOURNAMENT) {
+    const few = r.shuffle(chosen.map(x => ({ g: x.id, f: x.family })));
+    if (few.length > 2 && few[0].g === 'bac') few.push(few.shift());
+    return few;
+  }
+  const pool = chosen.length ? chosen : eligible;
   const picks = [];
   for (const fam of FAMILY_ORDER) {
     const inFam = pool.filter(x => x.family === fam);

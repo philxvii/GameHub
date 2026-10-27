@@ -42,11 +42,16 @@
       <div class="home-title">
         <span class="slot">Canal 7 · ce soir 20.45</span>
         <h1 class="logo"><span class="logo-a">Mauvais</span><span class="logo-b">Perdants</span></h1>
-        <p class="tagline">Cinq épreuves entre amis, un seul gagnant. Les autres repartent avec leur dignité. Enfin, ce qu’il en reste.</p>
+        <p class="tagline">Les épreuves de ton choix, entre amis, un seul gagnant. Les autres repartent avec leur dignité. Enfin, ce qu’il en reste.</p>
       </div>
       <div class="card home-panel">
         <label class="field"><span>Ton nom de candidat</span><input id="name" maxlength="16" autocomplete="nickname" placeholder="Ex. le futur perdant" enterkeyhint="go"></label>
         <p class="quip" id="name-quip" aria-live="polite"></p>
+        <section class="home-picks" aria-labelledby="home-picks-title">
+          <div class="picks-head"><h3 id="home-picks-title">Au programme</h3><button class="link-btn" id="home-picks-all" type="button" hidden>Tout cocher</button></div>
+          <p class="picks-note" id="home-picks-note"></p>
+          <div class="picks-grid mini" id="home-picks"></div>
+        </section>
         <button class="btn btn-main btn-xl" id="btn-create" type="button">Créer un plateau</button>
         <div class="or"><span>ou</span></div>
         <div class="join-row">
@@ -84,7 +89,7 @@
         <p class="ticket-note" id="code-hint">Envoie-le à tes amis. Ou à tes ennemis : ils perdront plus volontiers.</p>
       </div>
       <section class="card picks" aria-labelledby="picks-title">
-        <div class="picks-head"><h3 id="picks-title">Au programme</h3><button class="link-btn" id="picks-all" type="button" hidden>Tout le programme</button></div>
+        <div class="picks-head"><h3 id="picks-title">Au programme</h3><button class="link-btn" id="picks-all" type="button" hidden>Tout cocher</button></div>
         <p class="picks-note" id="picks-note"></p>
         <div class="picks-grid" id="picks"></div>
       </section>
@@ -101,7 +106,7 @@
         <details class="more rules-card">
           <summary>Comment ça marche</summary>
           <ol>
-            <li><b>5 manches</b> tirées au sort : vitesse, espace, mémoire, mots, chiffres.</li>
+            <li><b>Au programme</b> : coche les épreuves que tu veux, une seule suffit. Jusqu’à 5, on les joue toutes ; au-delà, 5 sont tirées au sort.</li>
             <li>Ta <b>place</b> rapporte des points : 10 au premier, 2 au dernier. La 5<sup>e</sup> compte double.</li>
             <li><b>Fanfaronner</b> avant une manche : +3 si tu la gagnes, −3 si tu finis dans la moitié basse.</li>
             <li><b>Petit Bac</b> corrigé par IA ; une réponse douteuse passe au vote des joueurs.</li>
