@@ -30,12 +30,14 @@ export const CSS = `
   --shadow:0 1px 2px rgba(14,16,22,.06),0 14px 28px -16px rgba(14,16,22,.38);
   --f:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
   --gutter:clamp(20px,4vw,56px);--e-out:cubic-bezier(.22,1,.36,1);
+  --dot:rgba(14,16,22,.13);--glow:.2;
 }
 :root[data-theme="dark"]{
   --bg:#0D0B12;--surface:#17141F;--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
   --text:#F3F1F7;--muted:#9A95A8;--accent:#F3F1F7;--on-accent:#0D0B12;--focus:#8EA6FF;--err:#FF7B63;
   --back:#1C1826;--back-line:rgba(255,255,255,.06);
   --shadow:0 1px 2px rgba(0,0,0,.5),0 18px 34px -16px rgba(0,0,0,.85);
+  --dot:rgba(255,255,255,.1);--glow:.3;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
@@ -52,13 +54,23 @@ button{font:inherit;color:inherit}
 .theme:hover{border-color:var(--text)}.theme:active{transform:scale(.92)}
 .theme svg{width:17px;height:17px}
 .theme .sun{display:none}:root[data-theme="dark"] .theme .sun{display:block}:root[data-theme="dark"] .theme .moon{display:none}
-main{flex:1;display:flex;align-items:center;justify-content:space-between;gap:48px 72px;padding-top:24px;padding-bottom:56px}
-.copy{max-width:470px}
-.status{display:inline-flex;align-items:center;gap:9px;font-size:13.5px;color:var(--muted)}
-.status i{width:7px;height:7px;border-radius:50%;background:var(--brand)}
-h1{margin:12px 0 0;font-weight:600;font-size:clamp(40px,5.2vw,68px);line-height:1;letter-spacing:-.04em}
-.lede{margin-top:14px;font-size:17px;color:var(--muted);letter-spacing:-.005em}
-.media{position:relative;flex:none;width:min(300px,34vw);aspect-ratio:3/4;perspective:1400px}
+main{flex:1;display:flex;align-items:center;justify-content:center;gap:48px clamp(72px,9vw,150px);padding-top:24px;padding-bottom:56px}
+.copy{max-width:660px}
+.status{display:inline-flex;align-items:center;gap:10px;padding:7px 15px 7px 13px;border:1px solid var(--border2);border-radius:999px;background:var(--surface);font-size:13.5px;font-weight:500;color:var(--muted)}
+.status i{width:7px;height:7px;border-radius:50%;background:var(--brand);animation:pulse 2.4s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,90,60,.55)}70%,100%{box-shadow:0 0 0 9px rgba(255,90,60,0)}}
+h1{margin:24px 0 0;font-weight:600;font-size:clamp(46px,6vw,88px);line-height:.98;letter-spacing:-.045em}
+.lede{margin-top:20px;max-width:420px;font-size:18px;color:var(--muted);letter-spacing:-.005em}
+.bar{position:relative;width:132px;height:3px;margin-top:34px;border-radius:3px;overflow:hidden;background:var(--border2)}
+.bar::after{content:"";position:absolute;top:0;bottom:0;width:42%;border-radius:3px;background:var(--brand);animation:sweep 2.2s var(--e-out) infinite}
+@keyframes sweep{0%{left:-45%}100%{left:105%}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.copy>*{animation:rise .9s var(--e-out) both}
+.copy>:nth-child(2){animation-delay:.08s}.copy>:nth-child(3){animation-delay:.16s}.copy>:nth-child(4){animation-delay:.26s}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(circle at 1px 1px,var(--dot) 1.2px,transparent 0) 0 0/30px 30px;-webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 50%,#000 15%,transparent 78%);mask-image:radial-gradient(ellipse 70% 60% at 50% 50%,#000 15%,transparent 78%)}
+.media{position:relative;flex:none;width:min(360px,34vw);aspect-ratio:3/4;perspective:1400px;animation:rise 1.1s .12s var(--e-out) both}
+.media::before{content:"";position:absolute;inset:-28%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,90,60,var(--glow)),transparent);filter:blur(28px);pointer-events:none}
+.tilt{position:absolute;inset:0;transition:transform .5s var(--e-out);transform:rotateX(var(--tx,0deg)) rotateY(var(--ty,0deg))}
 .art{position:absolute;inset:0;border-radius:24px;overflow:hidden;box-shadow:var(--shadow);animation:drift 7s ease-in-out infinite;
   background:repeating-linear-gradient(0deg,var(--back-line) 0 1px,transparent 1px 12px),repeating-linear-gradient(90deg,var(--back-line) 0 1px,transparent 1px 12px),var(--back)}
 .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -88,7 +100,7 @@ h1{margin:12px 0 0;font-weight:600;font-size:clamp(40px,5.2vw,68px);line-height:
   .media{width:min(190px,52vw);align-self:center}.art{border-radius:16px}
   h1{font-size:44px}.lede{font-size:16px}
 }
-@media (prefers-reduced-motion:reduce){.art{animation:none}.glint{animation:none;opacity:0}}
+@media (prefers-reduced-motion:reduce){.art,.copy>*,.media,.status i,.bar::after{animation:none}.bar::after{left:0}.tilt{transition:none;transform:none!important}.glint{animation:none;opacity:0}}
 `;
 
 const GEAR = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
@@ -108,8 +120,9 @@ export const BODY = `<header class="wrap top">
     <span class="status"><i></i>Maintenance en cours</span>
     <h1>On revient vite.</h1>
     <p class="lede">Une petite maintenance est en cours. Les parties reprennent dès que tout est prêt.</p>
+    <div class="bar" aria-hidden="true"></div>
   </div>
-  <div class="media" aria-hidden="true"><div class="art"><img src="${ART}" alt="" width="720" height="960"><div class="glint"></div></div></div>
+  <div class="media" aria-hidden="true"><div class="tilt" id="tilt"><div class="art"><img src="${ART}" alt="" width="720" height="960"><div class="glint"></div></div></div></div>
 </main>
 <div class="panel" id="admin" hidden>
   <h2>Administration</h2>
@@ -123,6 +136,15 @@ export const BODY = `<header class="wrap top">
   <button class="gear" id="gear" type="button" aria-label="Administration" aria-expanded="false" aria-controls="admin">${GEAR}</button>
 </footer>
 <script>
+(function () {
+  var t = document.getElementById('tilt');
+  addEventListener('pointermove', function (e) {
+    if (e.pointerType !== 'mouse') return;
+    t.style.setProperty('--ty', ((e.clientX / innerWidth - .5) * 14) + 'deg');
+    t.style.setProperty('--tx', ((.5 - e.clientY / innerHeight) * 10) + 'deg');
+  });
+  document.addEventListener('pointerleave', function () { t.style.removeProperty('--ty'); t.style.removeProperty('--tx'); });
+})();
 document.getElementById('theme').onclick = function () {
   var d = document.documentElement, t = d.dataset.theme === 'dark' ? 'light' : 'dark';
   d.dataset.theme = t;
