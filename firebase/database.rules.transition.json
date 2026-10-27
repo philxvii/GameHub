@@ -64,6 +64,45 @@
             ".validate": false
           }
         }
+      },
+      "layout": {
+        ".read": true,
+        ".write": "auth != null && root.child('admins').child(auth.uid).val() === true",
+        "order": {
+          ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9,]{0,400}$/)"
+        },
+        "games": {
+          "$id": {
+            ".validate": "$id.matches(/^[a-z0-9]{1,24}$/)",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length <= 40 && !newData.val().contains('<') && newData.val().length >= 1"
+            },
+            "sub": {
+              ".validate": "newData.isString() && newData.val().length <= 40 && !newData.val().contains('<')"
+            },
+            "tags": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-z ]{0,80}$/)"
+            },
+            "wide": {
+              ".validate": "newData.isBoolean()"
+            },
+            "aband": {
+              ".validate": "newData.isBoolean()"
+            },
+            "wip": {
+              ".validate": "newData.isNumber() && newData.val() >= -1 && newData.val() <= 100"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "v": {
+          ".validate": "newData.isNumber()"
+        },
+        "$other": {
+          ".validate": false
+        }
       }
     },
     "games": {
@@ -251,8 +290,8 @@
       ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
       ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
       "$code": {
-        ".read": "(auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('undercover').val() !== true) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
-        ".write": "(auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('undercover').val() !== true) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".read": "(auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('undercover').val() !== true && !root.child('bans').child(auth.uid).exists()) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".write": "(auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('undercover').val() !== true && !root.child('bans').child(auth.uid).exists()) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
         ".validate": "newData.hasChildren(['civilWord', 'undercoverWord', 'roles'])",
         "civilWord": {
           ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60"
@@ -274,10 +313,10 @@
       ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
       ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists()",
       "$code": {
-        ".read": "(auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('undercover').val() !== true) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
-        ".write": "(auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('undercover').val() !== true) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".read": "(auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('undercover').val() !== true && !root.child('bans').child(auth.uid).exists()) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".write": "(auth != null && root.child('games').child($code).child('hostUid').val() === auth.uid && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('undercover').val() !== true && !root.child('bans').child(auth.uid).exists()) || (auth != null && root.child('admins').child(auth.uid).val() === true)",
         "$uid": {
-          ".read": "auth != null && auth.uid === $uid && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('undercover').val() !== true",
+          ".read": "auth != null && auth.uid === $uid && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('undercover').val() !== true && !root.child('bans').child(auth.uid).exists()",
           ".validate": "newData.hasChildren(['role'])",
           "role": {
             ".validate": "newData.isString() && newData.val().matches(/^(civil|undercover|mrwhite)$/)"

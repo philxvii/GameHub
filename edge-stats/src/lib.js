@@ -3,13 +3,14 @@
 // Principe : un événement = un chargement de page. Il n'est jamais stocké : il incrémente des
 // compteurs (heure, portée, dimension, valeur). Pas d'IP, pas d'identifiant, pas de cookie.
 
-export const PAGES = ['home', 'banqueroll', 'bataille-navale', 'mini-golf', 'mini-subway',
+export const PAGES = ['home', 'banqueroll', 'bataille-navale', 'mauvais-perdants', 'mini-golf', 'mini-subway',
   'puissance4', 'qui-est-ce', 'roulette', 'undercover', 'uno', 'wikirace'];
 export const DIMS = ['page', 'entry', 'country', 'city', 'device', 'browser', 'os', 'ref'];
 export const K_MIN = 5;                    // seuil d'affichage : une valeur sous ce seuil est regroupée
 export const TZ = 'Europe/Paris';
 export const OWN_HOSTS = ['roulia.me', 'www.roulia.me'];
-export const RANGES = { '24h': 24, '7d': 7 * 24, '30d': 30 * 24 };
+// 24 h : heures glissantes. Les autres : jours calendaires de Paris, aujourd'hui compris (en cours).
+export const RANGES = { '24h': 24, '7d': 7, '30d': 30, '90d': 90, '365d': 365 };
 export const HOUR = 3600000;
 
 // ── Événement entrant ─────────────────────────────────────────────────────────────────────
@@ -124,8 +125,28 @@ export function parseQuery(params, now = Date.now()) {
   const range = params.get('range') || '7d';
   const game = params.get('game') || 'all';
   if (!(range in RANGES) || (game !== 'all' && !PAGES.includes(game))) return null;
-  const to = Math.floor(now / HOUR), from = to - RANGES[range] + 1;
+  const to = Math.floor(now / HOUR);
+  const from = range === '24h' ? to - 23 : parisMidnightHour(now, RANGES[range] - 1);
   return { range, game, from, to };
+}
+
+// Heure (époque / 3600000) du minuit de Paris, `back` jours avant aujourd'hui. Minuit à Paris tombe
+// toujours sur une heure UTC pleine (décalage d'une ou deux heures).
+export function parisMidnightHour(now, back) {
+  const d = new Date(parisDay(now) + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() - back);
+  const day = d.toISOString().slice(0, 10);
+  let h = Math.floor(d.getTime() / HOUR) - 14;
+  while (parisDay(h * HOUR) !== day) h++;
+  return h;
+}
+
+// Jour de la semaine (0 = lundi) et heure, à Paris.
+const wdFmt = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, weekday: 'short', hour: '2-digit', hourCycle: 'h23' });
+const WD = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+export function parisSlot(ms) {
+  const parts = Object.fromEntries(wdFmt.formatToParts(ms).map(p => [p.type, p.value]));
+  return [WD[parts.weekday], Number(parts.hour) % 24];
 }
 
 export async function summarize(db, q, now = Date.now()) {
@@ -140,6 +161,15 @@ export async function summarize(db, q, now = Date.now()) {
   const entryRows = scoped ? dimRows : await all(db.prepare(
     "SELECT key, SUM(n) AS n FROM counters WHERE scope = 'all' AND dim = 'entry' AND key = ? AND hour BETWEEN ? AND ? GROUP BY key")
     .bind(q.game, q.from, q.to));
+
+  // Période précédente de même durée, juste avant : pour les tendances.
+  const len = q.to - q.from + 1, pFrom = q.from - len, pTo = q.from - 1;
+  const prevPages = await all(db.prepare(
+    `SELECT key, SUM(n) AS n FROM counters WHERE scope = 'all' AND dim = 'page' AND hour BETWEEN ? AND ?${scoped ? '' : ' AND key = ?'} GROUP BY key`)
+    .bind(...(scoped ? [pFrom, pTo] : [pFrom, pTo, q.game])));
+  const prevEntries = await all(db.prepare(
+    `SELECT SUM(n) AS n FROM counters WHERE scope = 'all' AND dim = 'entry' AND hour BETWEEN ? AND ?${scoped ? '' : ' AND key = ?'}`)
+    .bind(...(scoped ? [pFrom, pTo] : [pFrom, pTo, q.game])));
 
   const views = pageRows.reduce((s, r) => s + r.n, 0);
   const byHour = new Map();
@@ -159,6 +189,10 @@ export async function summarize(db, q, now = Date.now()) {
   };
   const pages = new Map();
   for (const r of pageRows) pages.set(r.key, (pages.get(r.key) || 0) + r.n);
+  const prevByPage = new Map(prevPages.map(r => [r.key, r.n]));
+  // Carte de chaleur : jour de la semaine (lundi d'abord) × heure de Paris, pages vues.
+  const heat = Array.from({ length: 7 }, () => Array(24).fill(0));
+  for (const [h, n] of byHour) { const [d, hh] = parisSlot(h * HOUR); heat[d][hh] += n; }
   const entries = scoped ? dimRows.filter(r => r.dim === 'entry') : entryRows;
   const entryTotal = entries.reduce((s, r) => s + r.n, 0);
 
@@ -168,8 +202,10 @@ export async function summarize(db, q, now = Date.now()) {
     query: { range: q.range, game: q.game, from: q.from * HOUR, to: (q.to + 1) * HOUR, granularity: hourly ? 'hour' : 'day' },
     kMin: K_MIN,
     totals: { views, entries: entryTotal },
+    previous: { from: pFrom * HOUR, to: (pTo + 1) * HOUR, views: prevPages.reduce((s, r) => s + r.n, 0), entries: (prevEntries[0] && prevEntries[0].n) || 0 },
     series: points,
-    pages: [...pages].map(([key, n]) => ({ key, n })).sort((a, b) => b.n - a.n),
+    heat,
+    pages: [...pages].map(([key, n]) => ({ key, n, prev: prevByPage.get(key) || 0 })).sort((a, b) => b.n - a.n),
     entries: entries.map(r => ({ key: r.key, n: r.n })).sort((a, b) => b.n - a.n),
     countries: dim('country'),
     devices: dim('device'),

@@ -336,65 +336,7 @@
   .wip-char .name{margin-top:6px;font-size:14px;font-weight:600;letter-spacing:-.01em;}
   @media (max-width:720px){.wip-main{grid-template-columns:1fr;justify-items:start;}.wip-left{width:min(88vw,500px);}.wip-poster{width:min(46vw,200px);}.wip-next li{flex-direction:column;gap:2px;}.wip-next b{width:auto;}.wip-in{padding-top:64px;}}
   @media (prefers-reduced-motion:reduce){.wip-chars.loading .wip-pic::after{animation:none;display:none;}#wip::before,.wip-fill,.wip-bar::after,.wip-poster .sheet,.wip-poster img,.wip-pic,.wip-pic .stage,.wip-pic img,.wip-pic .eyes{transition:none;}}
-  #admin-panel{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;}
-  #admin-panel.hidden{display:none;}
-  .adm-top{position:sticky;top:0;z-index:600;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
-  .adm-brand{display:inline-flex;align-items:center;gap:10px;font-size:19px;font-weight:600;letter-spacing:-.04em;}
-  .adm-brand i{width:30px;height:30px;border-radius:9px;background:var(--back) var(--die) center/62% no-repeat;box-shadow:var(--shadow);}
-  .adm-brand span{font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--muted);border:1px solid var(--border2);border-radius:999px;padding:3px 9px;}
-  .adm-back svg{width:16px;height:16px;}
-  .adm-pulse{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;padding:4px 0 34px;border-bottom:1px solid var(--border);margin-bottom:34px;}
-  .adm-pulse b{display:block;font-weight:600;font-size:clamp(26px,2.6vw,34px);line-height:1.05;letter-spacing:-.04em;font-variant-numeric:tabular-nums;}
-  .adm-pulse span{display:inline-flex;align-items:center;gap:7px;margin-top:6px;font-size:13.5px;color:var(--muted);}
-  .adm-pulse span i{width:6px;height:6px;border-radius:50%;background:#2EB872;}
-  .adm-pane{padding-bottom:72px;}
-  .adm-pane[hidden]{display:none;}
-  .adm-h{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px 16px;margin-bottom:10px;}
-  .adm-h h2{font-weight:600;font-size:19px;letter-spacing:-.02em;}
-  .adm-sub{font-size:14px;color:var(--muted);margin-bottom:22px;max-width:62ch;}
-  .adm-group+.adm-group{margin-top:48px;}
-  .adm-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid var(--border);}
-  .adm-row:last-child{border-bottom:none;}
-  .adm-row .t{font-size:15px;font-weight:500;}
-  .adm-row .d{font-size:13px;color:var(--muted);margin-top:2px;}
-  .adm-games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:48px;}
-  .adm-games .adm-row:last-child{border-bottom:1px solid var(--border);}
-  .game-row{display:flex;align-items:center;gap:14px;min-width:0;}
-  .game-row img{width:36px;height:48px;border-radius:8px;object-fit:cover;flex:none;box-shadow:var(--shadow);background:var(--surface2);transition:filter var(--d-2),opacity var(--d-2);}
-  .game-row.off img{filter:grayscale(1);opacity:.45;}
-  .toggle{position:relative;width:42px;height:24px;cursor:pointer;flex-shrink:0;}
-  .toggle input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:1;}
-  .toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:24px;transition:background-color var(--d-2);}
-  .toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform var(--d-2) var(--e-out);}
-  .toggle input:checked+.toggle-slider{background:var(--accent);}
-  .toggle input:checked+.toggle-slider::before{transform:translateX(18px);background:var(--on-accent);}
-  .toggle input:focus-visible+.toggle-slider{outline:2px solid var(--focus);outline-offset:3px;}
-  .btn-admin{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 15px;border-radius:999px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text);transition:border-color var(--d-2),background-color var(--d-2);white-space:nowrap;}
-  .btn-admin:hover{border-color:var(--text);}
-  .btn-admin-danger{border-color:rgba(210,64,42,.4);color:#D2402A;}
-  .btn-admin-danger:hover{border-color:#D2402A;background:rgba(210,64,42,.07);}
-  .btn-admin-sm{height:30px;padding:0 12px;font-size:13px;}
-  .party-item{padding:18px 0;border-bottom:1px solid var(--border);}
-  .party-item:last-child{border-bottom:none;}
-  .party-head{display:flex;align-items:center;justify-content:space-between;gap:12px;}
-  .party-code{font-weight:600;font-size:16px;letter-spacing:.06em;font-variant-numeric:tabular-nums;}
-  .party-game{font-size:13px;color:var(--muted);margin-left:10px;}
-  .party-info{font-size:13px;color:var(--muted);margin-top:2px;}
-  .party-players{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
-  .player-badge{display:flex;align-items:center;gap:6px;background:var(--surface2);border-radius:999px;padding:4px 6px 4px 12px;font-size:13px;}
-  .player-kick{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;}
-  .player-kick:hover{color:#D2402A;background:rgba(210,64,42,.1);}
-  .adm-empty{font-size:14px;color:var(--muted);padding:12px 0;}
-  .adm-danger{margin-top:48px;padding-top:24px;border-top:1px solid rgba(210,64,42,.25);}
-  .adm-danger h2{color:#D2402A;}
-  .adm-actions{display:flex;gap:10px;flex-wrap:wrap;}
   @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
-  @media (max-width:640px){
-    .adm-pulse{gap:12px;}
-    .adm-games{grid-template-columns:1fr;}
-      .adm-back span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
-    .adm-back{width:38px;padding:0;justify-content:center;}
-  }
 
   /* ── Tablette ── */
   @media (max-width:1100px){
@@ -468,90 +410,8 @@
   </div>
 </div>
 
-<!-- ── ADMIN PANEL ── -->
-<div id="admin-panel" class="hidden" role="dialog" aria-modal="true" aria-labelledby="admin-title">
-  <header class="adm-top">
-    <div class="wrap top">
-      <div class="adm-brand"><i aria-hidden="true"></i>GameHub <span>Admin</span></div>
-      <div class="top-right">
-        <button class="surprise adm-back" type="button" onclick="closeAdmin()" aria-label="Retour au site">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span>Retour au site</span>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <main class="wrap">
-    <div class="intro">
-      <div>
-        <h1 id="admin-title">Administration</h1>
-        <p class="lede">L’audience, les jeux et les parties de GameHub.</p>
-      </div>
-      <div class="controls"><div class="filters" role="group" aria-label="Rubriques de l’administration" id="adm-tabs">
-        <button class="chip" type="button" data-pane="audience" aria-pressed="true">Audience</button>
-        <button class="chip" type="button" data-pane="jeux" aria-pressed="false">Jeux</button>
-        <button class="chip" type="button" data-pane="parties" aria-pressed="false">Parties</button>
-        <button class="chip" type="button" data-pane="reglages" aria-pressed="false">Réglages</button>
-        <button class="chip" type="button" data-pane="journal" aria-pressed="false">Journal</button>
-      </div></div>
-    </div>
-
-    <div class="adm-pulse">
-      <div><b id="stat-online">—</b><span><i aria-hidden="true"></i>En ligne maintenant</span></div>
-      <div><b id="stat-parties">—</b><span>Parties ouvertes</span></div>
-      <div><b id="stat-players">—</b><span>Joueurs dans ces parties</span></div>
-    </div>
-
-    <section class="adm-pane" data-pane="audience" id="audience-section" aria-label="Audience">
-      <div id="audience-root"><p class="adm-empty">Chargement…</p></div>
-    </section>
-
-    <section class="adm-pane" data-pane="jeux" aria-label="Jeux" hidden>
-      <div class="adm-h"><h2>Jeux affichés sur l’accueil</h2></div>
-      <p class="adm-sub">Un jeu masqué disparaît de l’accueil et sa page se ferme pour les visiteurs.</p>
-      <div id="game-toggles" class="adm-games"></div>
-    </section>
-
-    <section class="adm-pane" data-pane="parties" aria-label="Parties" hidden>
-      <div class="adm-h"><h2>Parties ouvertes</h2><button class="btn-admin btn-admin-sm" type="button" onclick="loadParties()">Actualiser</button></div>
-      <p class="adm-sub">Toutes les parties présentes dans la base, tous jeux confondus.</p>
-      <div id="parties-list"><p class="adm-empty">Chargement…</p></div>
-    </section>
-
-    <section class="adm-pane" data-pane="reglages" aria-label="Réglages" hidden>
-      <div class="adm-group">
-        <div class="adm-h"><h2>Accès au site</h2></div>
-        <div class="adm-row">
-          <div><div class="t">Vérification d’âge</div><div class="d">Demande la date de naissance avant d’entrer.</div></div>
-          <label class="toggle"><input type="checkbox" id="age-gate-toggle" checked onchange="toggleAgeGate(this.checked)" aria-label="Vérification d’âge"/><span class="toggle-slider"></span></label>
-        </div>
-        <div class="adm-row">
-          <div><div class="t">Maintenance</div><div class="d">Toutes les pages affichent l’écran de maintenance, les parties sont gelées.</div></div>
-          <label class="toggle"><input type="checkbox" id="maintenance-toggle" onchange="toggleMaintenance(this.checked)" aria-label="Maintenance"/><span class="toggle-slider"></span></label>
-        </div>
-      </div>
-      <div class="adm-group">
-        <div class="adm-h"><h2>Compteur historique</h2></div>
-        <div class="adm-row">
-          <div><div class="t">Visites comptées : <span id="stat-visits">—</span></div><div class="d">Ancien compteur de l’accueil, sans période. L’onglet Audience le remplace.</div></div>
-          <button class="btn-admin btn-admin-sm" type="button" onclick="adminResetStats()">Remettre à zéro</button>
-        </div>
-      </div>
-      <div class="adm-danger">
-        <div class="adm-h"><h2>Zone sensible</h2></div>
-        <p class="adm-sub">Irréversible : toutes les parties en cours sont supprimées pour tous les joueurs.</p>
-        <div class="adm-actions"><button class="btn-admin btn-admin-danger" type="button" onclick="adminClearAllParties()">Supprimer toutes les parties</button></div>
-      </div>
-    </section>
-
-    <section class="adm-pane" data-pane="journal" aria-label="Journal" hidden>
-      <div class="adm-h"><h2>Journal de l’administration</h2></div>
-      <p class="adm-sub">Toutes les actions faites depuis ce panneau, conservées en entier. Personne, pas même l’admin, ne peut modifier ou effacer une entrée.</p>
-      <div id="journal-root"><p class="adm-empty">Chargement…</p></div>
-    </section>
-  </main>
-</div>
+<!-- ── ADMIN PANEL : rempli par shared/admin-panel.js ── -->
+<div id="admin-panel" class="hidden" role="dialog" aria-modal="true" aria-label="Administration"></div>
 
 <!-- ── HUB ── -->
 <div id="hub">
@@ -691,14 +551,15 @@
   const fine = matchMedia('(hover: hover) and (pointer: fine)');
   const table = document.getElementById('table');
   const grid = document.getElementById('game-grid');
-  const cards = [...grid.querySelectorAll('.game-card')];
+  let cards = [...grid.querySelectorAll('.game-card')];
+  const allCards = [...document.querySelectorAll('#hub .game-card')];   // accueil et rangée des abandonnés
   const announce = document.getElementById('announce');
   const WORDS = ['Aucun', 'Un', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit', 'Neuf', 'Dix'];
   const visible = () => cards.filter(c => !c.classList.contains('hidden-game'));
   const nameOf = c => c.querySelector('.name').textContent;
   const wait = ms => new Promise(r => setTimeout(r, ms));
   const anim = (el, frames, opts) => el.animate(frames, { fill: 'backwards', ...opts });
-  cards.forEach(c => c.querySelector('.front').insertAdjacentHTML('beforeend', '<span class="dim" aria-hidden="true"></span><span class="glint" aria-hidden="true"></span>'));
+  allCards.forEach(c => c.querySelector('.front').insertAdjacentHTML('beforeend', '<span class="dim" aria-hidden="true"></span><span class="glint" aria-hidden="true"></span>'));
 
   // ── Distribution : les cartes partent du paquet face cachee, tournent avec leur
   //    trajectoire, se retournent et se posent ; l'ombre suit leur hauteur ──
@@ -756,7 +617,7 @@
 
   // ── Survol : la carte vient vers soi, s'incline sous le pointeur, ses voisines s'ecartent ──
   const sameRow = (a, b) => Math.abs(a.offsetTop - b.offsetTop) < 8;
-  cards.forEach(c => {
+  allCards.forEach(c => {
     c.addEventListener('pointerenter', () => {
       if (!fine.matches) return;
       c.classList.add('is-hover');
@@ -983,7 +844,7 @@
     const [col, lab] = stage(d.pct);
     wipCard = card; wipBack = document.activeElement;
     wip.style.setProperty('--wip-c', col);
-    document.getElementById('wip-title').textContent = d.name;
+    document.getElementById('wip-title').textContent = nameOf(card);
     document.getElementById('wip-pct').textContent = `${d.pct} %`;
     document.getElementById('wip-step').textContent = lab;
     wipBar.setAttribute('aria-valuenow', d.pct);
@@ -1088,7 +949,7 @@
   // Interception : les clics sur les jeux de la liste WIP ouvrent la fenetre (sauf une fois confirmé).
   document.addEventListener('click', e => {
     const a = e.target.closest('a.game-card');
-    if (!a || !WIP[a.dataset.game]) return;
+    if (!a || !WIP[a.dataset.game] || WIP[a.dataset.game].off) return;
     if (a.dataset.wipOk) { delete a.dataset.wipOk; return; }
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault(); e.stopImmediatePropagation();
@@ -1156,6 +1017,39 @@
   });
   syncToggle();
 
+  // ── Mise en page reglee dans l'admin (hub/layout) : ordre des cartes et, par jeu, nom,
+  //    sous-titre, filtres, carte large sur mobile, rangee des abandonnes, fenetre « nouvelle
+  //    version » (wip : pourcentage, -1 pour aucune). Sans reglage, la page reste telle qu'ecrite.
+  const abandRow = document.querySelector('#abandoned .cards');
+  const DEF = {};
+  allCards.forEach((c, i) => {
+    const id = c.dataset.game;
+    DEF[id] = { i, name: nameOf(c), sub: c.querySelector('.players').textContent, tags: c.dataset.tags, wide: c.hasAttribute('data-wide'),
+      aband: !!c.closest('#abandoned'), wip: WIP[id] ? WIP[id].pct : null, cover: c.querySelector('.front img').getAttribute('src'),
+      href: c.getAttribute('href'), color: c.style.getPropertyValue('--c').trim() };
+  });
+  window.hubDefaults = () => JSON.parse(JSON.stringify(DEF));
+  let applied = '';
+  window.hubLayout = layout => {
+    const key = JSON.stringify(layout || null);
+    if (key === applied) return;
+    applied = key;
+    const L = layout || {}, over = L.games || {};
+    const order = String(L.order || '').split(',').filter(id => DEF[id]);
+    const rank = id => { const k = order.indexOf(id); return k < 0 ? 1000 + DEF[id].i : k; };
+    [...allCards].sort((a, b) => rank(a.dataset.game) - rank(b.dataset.game)).forEach(c => {
+      const id = c.dataset.game, d = DEF[id], o = over[id] || {};
+      c.querySelector('.name').textContent = o.name || d.name;
+      c.querySelector('.players').textContent = o.sub ?? d.sub;
+      c.dataset.tags = o.tags ?? d.tags;
+      c.toggleAttribute('data-wide', o.wide ?? d.wide);
+      ((o.aband ?? d.aband) ? abandRow : grid).appendChild(c);
+      if (WIP[id]) { const w = o.wip ?? d.wip; WIP[id].off = w < 0; if (w >= 0) WIP[id].pct = w; }
+    });
+    cards = [...grid.querySelectorAll('.game-card')];
+    window.hubRefresh();
+  };
+
   // Appele par le module Firebase quand la liste des jeux masques change.
   window.hubRefresh = () => {
     const n = visible().length;
@@ -1182,6 +1076,7 @@
   let mem = {};
   try { mem = JSON.parse(localStorage.getItem('gh-hub')) || {}; } catch (e) {}
   window.hubRemember = (k, v) => { mem[k] = v; try { localStorage.setItem('gh-hub', JSON.stringify(mem)); } catch (e) {} };
+  if (mem.layout) window.hubLayout?.(mem.layout);
   if (mem.hidden) {
     document.querySelectorAll('[data-game]').forEach(el => el.classList.toggle('hidden-game', !!mem.hidden[el.dataset.game]));
     window.hubRefresh?.();
@@ -1285,24 +1180,8 @@
 })();
 </script>
 <script type="module">
-import { ref, set, get, update, onValue, remove, increment, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { ref, set, update, onValue, remove, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { db, adminSignIn } from './shared/firebase.js';
-import { logAdmin, mountJournal } from './shared/admin-journal.js';
-
-// All games with Firebase db paths
-const GAMES = [
-  {id:'undercover', name:'Undercover',      dir:'undercover', emoji:'🕵️', db:'games'},
-  {id:'puissance4', name:'Puissance 4',     dir:'puissance4', emoji:'🔴', db:'p4'},
-  {id:'quiestce',   name:'Qui est-ce ?',    dir:'qui-est-ce', emoji:'🤔', db:'qec2'},
-  {id:'bataille',   name:'Bataille Navale', dir:'bataille-navale', emoji:'⚓', db:'bn'},
-  {id:'roulette',   name:'Roulette',        dir:'roulette', emoji:'🎰', db:'rl'},
-  {id:'minigolf',   name:'Mini Golf',       dir:'mini-golf', emoji:'⛳', db:'mg'},
-  {id:'banqueroll', name:'Banqueroll',      dir:'banqueroll', emoji:'💼', db:'banqueroll'},
-  {id:'uno',        name:'UNO',             dir:'uno', emoji:'🃏', db:'uno'},
-  {id:'wikirace',   name:'WikiRace',        dir:'wikirace', emoji:'🌍', db:'wr'},
-  {id:'minisubway', name:'Mini Subway',     dir:'mini-subway', emoji:'🚇'},
-  {id:'mauvaisperdants',  name:'Mauvais Perdants',      dir:'mauvais-perdants', emoji:'🎤'},
-];
 
 // ── Presence ──
 // onDisconnect ne part pas toujours (onglet tué, mobile en veille, maintenance) : chaque
@@ -1338,16 +1217,10 @@ function renderOnline(){
   if(el) el.textContent = `${count} en ligne`;
   const mini = document.getElementById('live-mini');
   if(mini){ mini.lastElementChild.textContent = `${count} en ligne`; mini.hidden = false; }
-  const statEl = document.getElementById('stat-online');
-  if(statEl) statEl.textContent = count;
 }
 
 // ── Visit counter ──
 update(ref(db, 'hub/stats'), {visits: increment(1)});
-onValue(ref(db, 'hub/stats/visits'), snap => {
-  const el = document.getElementById('stat-visits');
-  if(el && snap.exists()) el.textContent = snap.val();
-});
 
 // ── Jeux abandonnés : le bouton n'existe que si un de ses jeux reste coché dans l'admin ──
 function syncAbandoned(){
@@ -1373,34 +1246,32 @@ document.getElementById('aband-toggle')?.addEventListener('click', e => {
 // Chaque jeu apparait deux fois (affiche + carte de la main) : on suit data-game.
 onValue(ref(db, 'hub/hidden'), snap => {
   const hidden = snap.exists() ? snap.val() : {};
-  GAMES.forEach(g => {
-    document.querySelectorAll(`[data-game="${g.id}"]`).forEach(el => el.classList.toggle('hidden-game', !!hidden[g.id]));
-  });
+  document.querySelectorAll('#hub [data-game]').forEach(el => el.classList.toggle('hidden-game', !!hidden[el.dataset.game]));
   window.hubRefresh?.();
   syncAbandoned();
   window.hubRemember?.('hidden', hidden);
   document.dispatchEvent(new Event('hub:data'));
 });
 
+// ── Mise en page de l'accueil (ordre, noms…) réglée dans l'admin ──
+// Lecture refusée tant que les règles de la base ne la prévoient pas : l'accueil garde alors sa mise en page d'origine.
+onValue(ref(db, 'hub/layout'), snap => {
+  window.hubLayout?.(snap.val());
+  window.hubRemember?.('layout', snap.val());
+  syncAbandoned();
+}, () => {});
 
 // ── Vérification d'âge : réglage de l'admin, gardé en mémoire pour la visite suivante ──
 onValue(ref(db, 'hub/settings/ageGate'), snap => {
   const enabled = snap.exists() ? snap.val() : true;
-  const toggle = document.getElementById('age-gate-toggle');
-  if(toggle) toggle.checked = enabled;
   window.hubRemember?.('ageGate', enabled);
   document.dispatchEvent(new CustomEvent('hub:age', { detail: enabled }));
 });
 
-// ── Maintenance setting (shared/maintenance.js affiche l'écran) ──
-onValue(ref(db, 'hub/settings/maintenance'), snap => {
-  const toggle = document.getElementById('maintenance-toggle');
-  if(toggle) toggle.checked = snap.val() === true;
-});
-
-// ── Admin ──
+// ── Admin : le panneau (shared/admin-panel.js) n'est chargé qu'après la connexion ──
 window.openAdminGate = () => {
   document.getElementById('admin-gate').classList.remove('hidden');
+  import('./shared/admin-panel.js').catch(() => {});   // préchargé pendant la connexion Google
 };
 window.closeAdminGate = () => {
   document.getElementById('admin-gate').classList.add('hidden');
@@ -1419,184 +1290,11 @@ window.adminLogin = async () => {
     return;
   }
   errEl.textContent = '';
+  let panel;
+  try { panel = await import('./shared/admin-panel.js'); }
+  catch (e) { errEl.textContent = 'Panneau indisponible, réessaie.'; return; }
   document.getElementById('admin-gate').classList.add('hidden');
-  logAdmin('connexion', 'Connexion au panneau d’administration', 'Google');
-  openAdminPanel();
-};
-window.closeAdmin = () => {
-  document.getElementById('admin-panel').classList.add('hidden');
-  document.documentElement.style.overflow = '';
-};
-// Onglets : mêmes puces que les filtres de l'accueil.
-document.getElementById('adm-tabs')?.addEventListener('click', e => {
-  const b = e.target.closest('[data-pane]'); if(!b) return;
-  document.querySelectorAll('#adm-tabs [data-pane]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-  document.querySelectorAll('.adm-pane').forEach(p => { p.hidden = p.dataset.pane !== b.dataset.pane; });
-  if(b.dataset.pane === 'parties') loadParties();
-  if(b.dataset.pane === 'jeux') loadGameToggles();
-});
-document.addEventListener('keydown', e => {
-  if(e.key === 'Escape' && !document.getElementById('admin-panel').classList.contains('hidden')) closeAdmin();
-});
-
-function openAdminPanel(){
-  document.getElementById('admin-panel').classList.remove('hidden');
-  document.documentElement.style.overflow = 'hidden';
-  loadAdminStats();
-  loadAudience();
-  loadGameToggles();
-  loadParties();
-  if(!journal) journal = mountJournal(document.getElementById('journal-root'));
-  journal.start();
-}
-let journal;
-
-let audience;
-async function loadAudience(){
-  try {
-    if (!audience) {
-      const dev = location.hostname === 'localhost' ? new URLSearchParams(location.search).get('audience-dev') : null;
-      const { mountAudience } = await import('./shared/admin-audience.js');
-      audience = mountAudience(document.getElementById('audience-root'), { devEndpoint: dev || undefined });
-    }
-    audience.load();
-  } catch (e) {
-    document.getElementById('audience-root').textContent = 'Module Audience indisponible.';
-  }
-}
-
-async function loadAdminStats(){
-  let totalParties=0, totalPlayers=0;
-  for(const g of GAMES){
-    if(!g.db) continue;
-    const snap = await get(ref(db, g.db));
-    if(snap.exists()){
-      const parties = Object.values(snap.val());
-      totalParties += parties.length;
-      parties.forEach(p => {
-        const players = p.players || [];
-        totalPlayers += players.filter(Boolean).length;
-      });
-    }
-  }
-  document.getElementById('stat-parties').textContent = totalParties;
-  document.getElementById('stat-players').textContent = totalPlayers;
-}
-
-function loadGameToggles(){
-  const container = document.getElementById('game-toggles'); if(!container) return;
-  get(ref(db, 'hub/hidden')).then(snap => {
-    const hidden = snap.exists() ? snap.val() : {};
-    container.innerHTML = '';
-    GAMES.forEach(g => {
-      const row = document.createElement('div'); row.className = 'adm-row';
-      const isVisible = !hidden[g.id];
-      row.innerHTML = `
-        <div class="game-row${isVisible?'':' off'}">
-          <img src="games/${g.dir}/cover.webp" alt="" width="36" height="48" loading="lazy" decoding="async">
-          <div>
-            <div class="t">${g.name}</div>
-            <div class="d">${isVisible?'Affiché':'Masqué'}</div>
-          </div>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" ${isVisible?'checked':''} aria-label="Afficher ${g.name}" onchange="toggleGame('${g.id}', this.checked); const r=this.closest('.adm-row'); r.querySelector('.game-row').classList.toggle('off', !this.checked); r.querySelector('.d').textContent = this.checked ? 'Affiché' : 'Masqué';"/>
-          <span class="toggle-slider"></span>
-        </label>`;
-      container.appendChild(row);
-    });
-  });
-}
-
-window.toggleGame = async (gameId, visible) => {
-  await update(ref(db, 'hub/hidden'), {[gameId]: !visible});
-  const g = GAMES.find(x => x.id === gameId);
-  logAdmin('jeu', `${g ? g.name : gameId} ${visible ? 'affiché sur' : 'masqué de'} l’accueil`, gameId);
-};
-
-
-window.toggleAgeGate = async (enabled) => {
-  await update(ref(db, 'hub/settings'), {ageGate: enabled});
-  logAdmin('reglage', `Vérification d’âge ${enabled ? 'activée' : 'désactivée'}`);
-};
-
-window.toggleMaintenance = async (enabled) => {
-  if(enabled && !confirm('Mettre tout le site en maintenance ? Les parties en cours seront gelées.')){
-    document.getElementById('maintenance-toggle').checked = false;
-    return;
-  }
-  // L'admin qui l'active garde l'accès dans cet onglet (badge en bas à gauche).
-  if(enabled){ try { sessionStorage.setItem('gh-mx-admin', '1'); } catch(e) {} }
-  await update(ref(db, 'hub/settings'), {maintenance: enabled});
-  logAdmin('reglage', `Maintenance ${enabled ? 'activée' : 'désactivée'}`);
-};
-
-const escHtml = v => String(v ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
-window.loadParties = async () => {
-  const container = document.getElementById('parties-list'); if(!container) return;
-  container.innerHTML = '<p class="adm-empty">Chargement…</p>';
-  let html = ''; let found = false;
-  for(const g of GAMES){
-    if(!g.db) continue;
-    const snap = await get(ref(db, g.db));
-    if(!snap.exists()) continue;
-    Object.entries(snap.val()).forEach(([code, party]) => {
-      if(!/^[A-Za-z0-9-]{1,16}$/.test(code)) return;   // clé inattendue : jamais injectée dans la page
-      found = true;
-      const players = (party.players||[]).filter(Boolean);
-      html += `<div class="party-item">
-        <div class="party-head">
-          <div>
-            <span class="party-code">${code}</span><span class="party-game">${g.name}</span>
-            <div class="party-info">Phase : ${escHtml(party.phase||'?')} · ${players.length} joueur${players.length>1?'s':''}</div>
-          </div>
-          <button class="btn-admin btn-admin-danger btn-admin-sm" type="button" onclick="adminDeleteParty('${g.db}','${code}')">Supprimer</button>
-        </div>
-        ${players.length ? `<div class="party-players">
-          ${players.map((p,i)=>`<div class="player-badge">${escHtml(p.name)}<button class="player-kick" type="button" onclick="adminKickPlayer('${g.db}','${code}',${i})" aria-label="Exclure ${escHtml(p.name)}" title="Exclure">✕</button></div>`).join('')}
-        </div>` : ''}
-      </div>`;
-    });
-  }
-  container.innerHTML = found ? html : '<p class="adm-empty">Aucune partie ouverte.</p>';
-};
-
-window.adminDeleteParty = async (dbPath, code) => {
-  if(!confirm(`Supprimer la partie ${code} ?`)) return;
-  if(dbPath === 'games'){
-    await remove(ref(db, `ucSecret/${code}`));
-    await remove(ref(db, `ucHost/${code}`));
-  }
-  await remove(ref(db, `${dbPath}/${code}`));
-  logAdmin('partie', `Partie ${code} supprimée`, GAMES.find(g => g.db === dbPath)?.name || dbPath);
-  loadParties(); loadAdminStats();
-};
-
-window.adminKickPlayer = async (dbPath, code, playerIdx) => {
-  const snap = await get(ref(db, `${dbPath}/${code}`));
-  if(!snap.exists()) return;
-  const party = snap.val();
-  const players = [...(party.players||[])];
-  const playerName = players[playerIdx]?.name || '?';
-  if(!confirm(`Exclure ${playerName} de ${code} ?`)) return;
-  players[playerIdx] = null;
-  await update(ref(db, `${dbPath}/${code}`), {players});
-  logAdmin('joueur', `${playerName} exclu de la partie ${code}`, GAMES.find(g => g.db === dbPath)?.name || dbPath);
-  loadParties();
-};
-
-window.adminClearAllParties = async () => {
-  if(!confirm('Supprimer TOUTES les parties ? Irréversible.')) return;
-  for(const g of GAMES){ if(!g.db) continue; await remove(ref(db, g.db)); }
-  await remove(ref(db, 'ucSecret')); await remove(ref(db, 'ucHost'));
-  logAdmin('global', 'Toutes les parties supprimées', 'tous les jeux');
-  loadParties(); loadAdminStats();
-};
-
-window.adminResetStats = async () => {
-  if(!confirm('Remettre les stats à zéro ?')) return;
-  await set(ref(db, 'hub/stats/visits'), 0);
-  logAdmin('stats', 'Compteur historique de visites remis à zéro');
+  panel.openAdmin(document.getElementById('admin-panel'), { login: true });
 };
 
 // ── Age gate ──

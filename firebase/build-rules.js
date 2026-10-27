@@ -30,7 +30,12 @@ const OPEN = "root.child('hub').child('settings').child('maintenance').val() !==
 // Les pages d'un jeu sont publiques (dépôt public) : seule la base peut vraiment l'interdire.
 // Identifiant du jeu dans hub/hidden, par nœud de la base (liste GAMES de home.html).
 const HUB_ID = { games: 'undercover', banqueroll: 'banqueroll', p4: 'puissance4', qec2: 'quiestce', bn: 'bataille', rl: 'roulette', mg: 'minigolf', uno: 'uno', ms: 'minisubway', mp: 'mauvaisperdants' };
-const openFor = prefix => `${OPEN} && root.child('hub').child('hidden').child('${HUB_ID[prefix]}').val() !== true`;
+// Compte banni du site par l'admin (bans/<uid>) : plus aucun accès aux parties. Toujours évalué
+// après `auth != null`.
+const openFor = prefix => `${OPEN} && root.child('hub').child('hidden').child('${HUB_ID[prefix]}').val() !== true && !root.child('bans').child(auth.uid).exists()`;
+// Exclu d'une partie par l'admin (<préfixe>/<code>/banned/<uid>) : ne peut plus y rentrer.
+const NOT_BANNED = prefix => `!root.child('${prefix}').child($code).child('banned').child(auth.uid).exists()`;
+const BANNED = { $uid: { '.validate': 'newData.val() === true' } };
 const NAME ="newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')";
 
 function gameRules(prefix, { code, joinAnyPhase, texts }) {
@@ -55,10 +60,11 @@ function gameRules(prefix, { code, joinAnyPhase, texts }) {
     members: {
       $uid: {
         // Entrer dans une partie : s'inscrire soi-même, tant que la phase le permet.
-        '.write': `auth != null && auth.uid === $uid && !data.exists() && ${OPEN} && ${joinAnyPhase ? `${phase}.exists()` : `${phase}.val() === 'lobby'`}`,
+        '.write': `auth != null && auth.uid === $uid && !data.exists() && ${OPEN} && ${NOT_BANNED(prefix)} && ${joinAnyPhase ? `${phase}.exists()` : `${phase}.val() === 'lobby'`}`,
         '.validate': `newData.val() === true && ($uid === auth.uid || data.exists() || (${ADMIN}))`,
       },
     },
+    banned: BANNED,
     // La phase seule est visible de tout compte : « code introuvable » ou « déjà lancée ».
     phase: { '.read': `auth != null && ${OPEN}`, '.validate': 'newData.isString() && newData.val().length <= 32' },
     players: { $i: { name: { '.validate': NAME } } },
@@ -96,6 +102,27 @@ const rules = {
     },
     hidden: { '.read': true, '.write': ADMIN, $id: { '.validate': 'newData.isBoolean()' } },
     settings: { '.write': ADMIN, ageGate: { '.read': true, '.validate': 'newData.isBoolean()' }, maintenance: { '.read': true, '.validate': 'newData.isBoolean()' }, $other: { '.validate': false } },
+    // Mise en page de l'accueil, réglée par l'admin : ordre des cartes et, par jeu, nom, sous-titre,
+    // filtres, carte large sur mobile, rangée des abandonnés, fenêtre « nouvelle version » (-1 : aucune).
+    layout: {
+      '.read': true,
+      '.write': ADMIN,
+      order: { '.validate': "newData.isString() && newData.val().matches(/^[a-z0-9,]{0,400}$/)" },
+      games: {
+        $id: {
+          '.validate': '$id.matches(/^[a-z0-9]{1,24}$/)',
+          name: { '.validate': `${SHORT_TEXT(40)} && newData.val().length >= 1` },
+          sub: { '.validate': SHORT_TEXT(40) },
+          tags: { '.validate': "newData.isString() && newData.val().matches(/^[a-z ]{0,80}$/)" },
+          wide: { '.validate': 'newData.isBoolean()' },
+          aband: { '.validate': 'newData.isBoolean()' },
+          wip: { '.validate': 'newData.isNumber() && newData.val() >= -1 && newData.val() <= 100' },
+          $other: { '.validate': false },
+        },
+      },
+      v: { '.validate': 'newData.isNumber()' },
+      $other: { '.validate': false },
+    },
     // Ancien journal (20 dernières entrées) : n'est plus écrit ; lisible par l'admin seul (il contenait des pseudos).
     updateLog: {
       '.read': ADMIN,
@@ -123,6 +150,19 @@ const rules = {
       msg: { '.validate': SHORT_TEXT(300) },
       target: { '.validate': SHORT_TEXT(60) },
       by: { '.validate': 'newData.val() === auth.uid' },
+      $other: { '.validate': false },
+    },
+  },
+
+  // Comptes bannis du site par l'admin : lisibles et modifiables par lui seul ; voir openFor.
+  bans: {
+    '.read': ADMIN,
+    $uid: {
+      '.write': ADMIN,
+      '.validate': "newData.hasChildren(['at'])",
+      at: { '.validate': 'newData.isNumber()' },
+      name: { '.validate': SHORT_TEXT(40) },
+      why: { '.validate': SHORT_TEXT(120) },
       $other: { '.validate': false },
     },
   },
@@ -158,10 +198,11 @@ function msRules() {
     hostUid: { '.validate': 'newData.isString() && (!data.exists() || newData.val() === data.val())' },
     members: {
       $uid: {
-        '.write': `auth != null && auth.uid === $uid && !data.exists() && ${OPEN} && ${R}.child('phase').val() === 'lobby'`,
+        '.write': `auth != null && auth.uid === $uid && !data.exists() && ${OPEN} && ${NOT_BANNED('ms')} && ${R}.child('phase').val() === 'lobby'`,
         '.validate': `newData.val() === true && ($uid === auth.uid || data.exists() || (${ADMIN}))`,
       },
     },
+    banned: BANNED,
     phase: { '.read': `auth != null && ${OPEN}`, '.write': `${AUTH} && ${HOST}`, '.validate': "newData.isString() && newData.val().matches(/^(lobby|playing|ended)$/)" },
     cfg: {
       '.write': `${AUTH} && ${HOST}`,
@@ -249,10 +290,11 @@ function mpRules() {
     hostUid: { '.validate': 'newData.isString() && (!data.exists() || newData.val() === data.val())' },
     members: {
       $uid: {
-        '.write': `auth != null && auth.uid === $uid && !data.exists() && ${OPEN} && ${R}.child('phase').val() === 'lobby'`,
+        '.write': `auth != null && auth.uid === $uid && !data.exists() && ${OPEN} && ${NOT_BANNED('mp')} && ${R}.child('phase').val() === 'lobby'`,
         '.validate': `newData.val() === true && ($uid === auth.uid || data.exists() || (${ADMIN}))`,
       },
     },
+    banned: BANNED,
     phase: { '.read': `auth != null && ${OPEN}`, '.write': `${AUTH} && (${HOST} || ${COORD})`, '.validate': "newData.isString() && newData.val().matches(/^(lobby|playing|ended)$/)" },
     // Reprise : un membre prend la coordination si celle de l'actuel coordinateur est éteinte ; l'hôte la reprend quand il veut.
     coord: {
@@ -424,7 +466,7 @@ for (const prefix of Object.keys(GAMES)) {
   transition[prefix] = { '.read': ADMIN, '.write': `${ADMIN} && !newData.exists()`, $code: room };
 }
 // Anciens clients : ils lisent encore hub/updateLog au chargement, la lecture reste publique ici.
-transition.hub = { ...phase1.hub, hidden: rules.hub.hidden, settings: rules.hub.settings, updateLog: { ...rules.hub.updateLog, '.read': true }, stats: rules.hub.stats };
+transition.hub = { ...phase1.hub, hidden: rules.hub.hidden, settings: rules.hub.settings, layout: rules.hub.layout, updateLog: { ...rules.hub.updateLog, '.read': true }, stats: rules.hub.stats };
 transition.adminLog = rules.adminLog;
 writeFileSync(new URL('./database.rules.transition.json', import.meta.url), JSON.stringify({ rules: transition }, null, 2) + '\n');
 console.log('database.rules.transition.json écrit');

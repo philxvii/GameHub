@@ -218,3 +218,47 @@ test('purge : les villes sans compteur disparaissent', async () => {
   await L.purge(e.DB, 395, T0);
   assert.equal(e.DB.raw.prepare('SELECT COUNT(*) AS c FROM places').get().c, 0);
 });
+
+test('jours calendaires : 7 j = 7 barres, aujourd’hui compris ; 90 j et 365 j acceptés', async () => {
+  const e = env();
+  await seed(e, 2, { at: T0 });
+  await seed(e, 1, { at: Date.UTC(2026, 9, 12, 22, 30) });   // 13 oct. 00:30 à Paris : premier jour de la fenêtre
+  await seed(e, 1, { at: Date.UTC(2026, 9, 12, 21, 30) });   // 12 oct. 23:30 à Paris : hors fenêtre
+  const s = await summarize(e, '7d');
+  assert.equal(s.series.length, 7);
+  assert.equal(s.series[0].label, '2026-10-13'); assert.equal(s.series[6].label, '2026-10-19');
+  assert.equal(s.totals.views, 3);
+  assert.equal((await summarize(e, '30d')).series.length, 30);
+  assert.equal((await summarize(e, '90d')).series.length, 90);
+  assert.equal((await summarize(e, '365d')).totals.views, 4);
+});
+
+test('période précédente de même durée et tendance par jeu', async () => {
+  const e = env();
+  await seed(e, 3, { at: T0, page: '/games/uno/' });
+  await seed(e, 1, { at: T0 - 30 * L.HOUR, page: '/games/uno/' });      // hier : période précédente du 24 h
+  await seed(e, 2, { at: T0 - 30 * L.HOUR, page: '/home', r: 'google.com' });
+  const s = await summarize(e, '24h');
+  assert.equal(s.totals.views, 3);
+  assert.equal(s.previous.views, 3); assert.equal(s.previous.entries, 3);   // sans référent : arrivée directe
+  assert.deepEqual(s.pages.map(p => [p.key, p.n, p.prev]), [['uno', 3, 1]]);
+  const uno = await summarize(e, '24h', 'uno');
+  assert.equal(uno.previous.views, 1);
+});
+
+test('carte de chaleur : jour de la semaine × heure de Paris, même total', async () => {
+  const e = env();
+  await seed(e, 2, { at: T0 });                                    // lundi 19 oct., 14:30 à Paris
+  await seed(e, 1, { at: Date.UTC(2026, 9, 18, 22, 30) });         // lundi 00:30 à Paris
+  const s = await summarize(e, '7d');
+  assert.equal(s.heat.length, 7); assert.equal(s.heat[0].length, 24);
+  assert.equal(s.heat[0][14], 2); assert.equal(s.heat[0][0], 1);
+  assert.equal(s.heat.flat().reduce((a, b) => a + b, 0), s.totals.views);
+});
+
+test('Mauvais Perdants est compté', async () => {
+  const e = env();
+  const res = await handleCollect(post('{"p":"/games/mauvais-perdants/"}'), e, T0);
+  assert.equal(res.status, 204);
+  assert.deepEqual((await summarize(e, '24h', 'mauvais-perdants')).totals.views, 1);
+});

@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 const read = f => readFileSync(new URL(f, import.meta.url), 'utf8');
 const lib = read('./src/lib.js').replace(/^export (const|function|async function) /gm, '$1 ');
-const worker = read('./src/worker.js').replace(/^import \{[^}]+\} from '\.\/lib\.js';\n/m, '');
+const worker = read('./src/worker.js').replace(/^import \{[^}]+\} from '\.\/lib\.js';\r?\n/m, '');
 if (/from '\.\/lib\.js'/.test(worker)) throw new Error('import de lib.js non retiré');
 mkdirSync(new URL('./dist/', import.meta.url), { recursive: true });
 writeFileSync(new URL('./dist/worker.bundle.js', import.meta.url),

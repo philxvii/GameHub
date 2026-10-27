@@ -24,13 +24,8 @@ const DEAD = [
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.json': 'application/json',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.webp': 'image/webp', '.jpg': 'image/jpeg' };
 const OPEN_ADMIN = `<script type="module">
-document.getElementById('admin-panel').classList.remove('hidden');
-document.documentElement.style.overflow = 'hidden';
-const { mountAudience } = await import('/shared/admin-audience.js');
-mountAudience(document.getElementById('audience-root'), { devEndpoint: 'http://127.0.0.1:8788' }).load();
-const { mountJournal } = await import('/shared/admin-journal.js');
-mountJournal(document.getElementById('journal-root')).start();
-document.getElementById('parties-list') && window.loadParties && window.loadParties();
+const { openAdmin } = await import('/shared/admin-panel.js');
+openAdmin(document.getElementById('admin-panel'), { devEndpoint: 'http://127.0.0.1:8788' });
 </script>`;
 
 http.createServer(async (req, res) => {
