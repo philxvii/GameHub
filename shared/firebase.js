@@ -127,6 +127,18 @@ export async function closeRoom(prefix, code) {
 export async function adminSignIn() {
   const provider = new GoogleAuthProvider();
   await auth.authStateReady();
+  // Session Google déjà ouverte (Firebase la garde dans le navigateur) et reconnue admin
+  // par les règles : pas de nouvelle fenêtre. Sinon, on retombe sur la connexion normale.
+  const cur = auth.currentUser;
+  if (cur && !cur.isAnonymous) {
+    try {
+      if ((await get(ref(db, `admins/${cur.uid}`))).val() === true) {
+        try { localStorage.setItem(SIGNED, cur.uid); } catch (_) {}
+        ready = Promise.resolve(cur);
+        return { uid: cur.uid, isAdmin: true };
+      }
+    } catch (_) {}
+  }
   let user;
   if (auth.currentUser && auth.currentUser.isAnonymous) {
     try { ({ user } = await linkWithPopup(auth.currentUser, provider)); }
