@@ -145,7 +145,7 @@
     });
   }
 
-  function open(admin) {
+  function open(admin, note) {
     if (mx) { location.reload(); return; }
     state = admin ? 'admin' : 'open';
     unguard();
@@ -153,7 +153,7 @@
       if (document.getElementById('mx-badge')) return;
       var b = document.createElement('div');
       b.id = 'mx-badge';
-      b.textContent = 'Maintenance : visible par l\'admin seulement';
+      b.textContent = note || 'Maintenance : visible par l\'admin seulement';
       document.body.appendChild(b);
     });
   }
@@ -170,14 +170,18 @@
 
   // Accès admin : le compte Google connecté doit figurer dans admins/ côté base.
   // Pendant la vérification, la page reste masquée.
-  function verifyAdmin() {
-    loadFb().then(function (m) {
+  function fbAdmin() {
+    return loadFb().then(function (m) {
       return m[0].auth.authStateReady().then(function () {
         var u = m[0].auth.currentUser;
         if (!u || u.isAnonymous) return false;
         return m[1].get(m[1].ref(m[0].db, 'admins/' + u.uid)).then(function (s) { return s.val() === true; });
       });
-    }).then(function (ok) {
+    });
+  }
+
+  function verifyAdmin() {
+    fbAdmin().then(function (ok) {
       if (ok) { open(true); return; }
       store(sessionStorage, ADMIN_HINT, null);
       lock('locked');
@@ -258,6 +262,14 @@
       .then(function (v) { clearTimeout(t); return v === true; }, function (err) { clearTimeout(t); throw err; });
   }
 
+  // Jeu masqué : fermé pour les visiteurs, ouvert pour l'admin (cookie du Worker ou compte Google connecté).
+  function hiddenGame() {
+    workerAdmin().then(function (ok) { return ok || fbAdmin().catch(function () { return false; }); }).then(function (ok) {
+      if (ok) { if (!isOpen()) open(true, 'Jeu masqué : visible par l\'admin seulement'); }
+      else lock('hidden');
+    });
+  }
+
   // Écoute en direct (flux Firebase) : la page se ferme dès que l'admin masque le jeu.
   // Si le flux tombe, le contrôle périodique ci-dessous prend le relais.
   var watching = false;
@@ -267,7 +279,7 @@
     var es = new EventSource(DB + 'hub/hidden/' + encodeURIComponent(GAME) + '.json' + NS);
     es.addEventListener('put', function (e) {
       var d; try { d = JSON.parse(e.data); } catch (x) { return; }
-      if (d && d.data === true && isOpen()) lock('hidden');
+      if (d && d.data === true && state === 'open') hiddenGame();
     });
     es.onerror = function () { es.close(); watching = false; };
   }
@@ -280,7 +292,7 @@
       if (v === false || v === null) {               // ouvert (ou jamais réglé)
         store(sessionStorage, ADMIN_HINT, null);
         return isHidden(first).then(function (hid) {
-          if (hid) lock('hidden');
+          if (hid) { if (state !== 'admin') hiddenGame(); }
           else {
             if (state !== 'open') open(false);
             watchHidden();
