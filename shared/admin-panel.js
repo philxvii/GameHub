@@ -69,6 +69,9 @@ const P = {
   broom: '<path d="M14 4l-4 8M6 13h10l2 7H4l2-7Z"/>',
   arrowl: '<path d="M14 6l-6 6 6 6"/>', arrowr: '<path d="M10 6l6 6-6 6"/>', first: '<path d="M7 5v14M17 6l-6 6 6 6"/>',
   undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/>',
+  moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/>',
+  auto: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17Z" fill="currentColor"/>',
 };
 const icon = (k, cls = '') => `<svg viewBox="0 0 24 24" class="${cls}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k]}</svg>`;
 
@@ -102,7 +105,7 @@ const isDenied = e => /permission/i.test(String(e && (e.code || e.message) || e)
 // ── État ──
 const S = {
   el: null, sec: 'overview', offs: [], timers: [], open: false, dev: null,
-  offset: 0, visitors: 0, online: {},
+  offset: 0, visitors: 0, online: {}, waiting: {}, waitingN: 0,
   rooms: new Map(),              // "prefix/code" -> { g, prefix, code, f: {champ: valeur}, offs }
   settings: { ageGate: true, maintenance: false }, hidden: {}, layout: null, layoutDenied: false,
   bans: {}, bansDenied: false, visits: null, recent: [], today: null,
@@ -137,7 +140,7 @@ export async function openAdmin(el, { login = false, devEndpoint } = {}) {
 }
 
 async function closeAdmin() {
-  if (S.pv && pvChanges().length && !(await ask({ title: 'Quitter sans publier ?', text: 'Les modifications de l’accueil ne sont pas encore publiées. Elles restent en brouillon jusqu’à ce que tu fermes la page.', ok: 'Quitter' }))) return;
+  if (S.pv && pvChanges().length) notify('Brouillon de l’accueil gardé', { icon: 'home', sub: 'Non publié · il t’attend jusqu’au rechargement de la page' });
   stop();
   S.el.classList.add('hidden');
   document.documentElement.style.overflow = '';
@@ -155,18 +158,28 @@ function build() {
         ${SECTIONS.map((s, i) => `${i === 4 ? '<div class="ap-nav-h">Gestion</div>' : ''}<button class="ap-item" type="button" data-go="${s.id}"><span class="ap-ico" style="background:${s.c}">${icon(s.ico)}</span>${s.label}<span class="ap-badge" data-badge="${s.id}" hidden></span></button>`).join('')}
       </nav>
       <div class="ap-side-foot">
+        <div class="ap-theme" role="group" aria-label="Apparence">${[['auto', 'Auto'], ['light', 'Clair'], ['dark', 'Sombre']].map(([k, t]) => `<button type="button" data-theme-set="${k}" aria-pressed="false">${icon(k === 'light' ? 'sun' : k === 'dark' ? 'moon' : 'auto')}${t}</button>`).join('')}</div>
         <div class="ap-me"><b>${esc(initial(who))}</b><span title="${esc(who)}">${esc(who)}</span></div>
         <button class="ap-back" type="button" data-act="close">${icon('back')}Retour au site</button>
       </div>
     </aside>
     <div class="ap-main">
       <header class="ap-bar"><h1 id="ap-title"></h1><span class="ap-sub" id="ap-sub"></span><div class="ap-tools" id="ap-tools"></div>
+        <button class="ap-icon-btn ap-th" type="button" data-theme-toggle aria-label="Changer d’apparence">${icon('moon')}</button>
         <button class="ap-icon-btn ap-x" type="button" data-act="close" aria-label="Retour au site">${icon('close')}</button></header>
       <div class="ap-scroll" id="ap-scroll">${SECTIONS.map(s => `<section class="ap-sec" data-sec="${s.id}" hidden aria-label="${s.label}"></section>`).join('')}</div>
     </div>
     <nav class="ap-tabs" aria-label="Rubriques">${SECTIONS.map(s => `<button type="button" data-go="${s.id}">${icon(s.ico)}<span>${s.short}</span>${s.id === 'live' ? '<i hidden></i>' : ''}</button>`).join('')}</nav>
   </div>`;
   const root = S.el;
+  root.addEventListener('click', e => {
+    const t = e.target.closest('[data-theme-set], [data-theme-toggle]');
+    if (!t) return;
+    e.stopPropagation();
+    setTheme(t.dataset.themeSet || (document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+  }, true);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (themePref() === 'auto') setTheme('auto', true); });
+  syncTheme();
   root.addEventListener('click', onClick);
   root.addEventListener('change', onChange);
   root.addEventListener('input', onInput);
@@ -183,14 +196,45 @@ function build() {
   document.addEventListener('keydown', onKey);
 }
 
+// ── Apparence : même réglage que le site (gh-theme) ; « Auto » suit l'appareil ──
+function themePref() { try { const t = localStorage.getItem('gh-theme'); return t === 'light' || t === 'dark' ? t : 'auto'; } catch (_) { return 'auto'; } }
+function setTheme(pref, quiet = false) {
+  const html = document.documentElement;
+  const t = pref === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : pref;
+  try { if (pref === 'auto') localStorage.removeItem('gh-theme'); else localStorage.setItem('gh-theme', pref); } catch (_) {}
+  if (html.dataset.theme !== t) {
+    html.classList.add('ap-theming', 'theming');
+    html.dataset.theme = t;
+    clearTimeout(setTheme.t); setTheme.t = setTimeout(() => html.classList.remove('ap-theming', 'theming'), 520);
+  }
+  const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = t === 'dark' ? '#0D0B12' : '#F5F6F8';
+  const hubBtn = document.getElementById('theme-toggle'); if (hubBtn) hubBtn.setAttribute('aria-label', t === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre');
+  syncTheme();
+  if (!quiet) notify(pref === 'auto' ? 'Apparence automatique' : t === 'dark' ? 'Mode sombre' : 'Mode clair',
+    { icon: pref === 'auto' ? 'auto' : t === 'dark' ? 'moon' : 'sun', sub: pref === 'auto' ? 'Suit le réglage de l’appareil' : 'Appliqué aussi au site' });
+}
+function syncTheme() {
+  const pref = themePref();
+  S.el.querySelectorAll('[data-theme-set]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeSet === pref)));
+  const tg = S.el.querySelector('[data-theme-toggle]');
+  if (tg) tg.innerHTML = icon(document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon');
+}
+
 function onKey(e) {
   if (!S.open || S.el.classList.contains('hidden')) return;
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); const q = S.el.querySelector(innerWidth > 820 ? '#ap-q' : '#ap-live-q') || S.el.querySelector('#ap-q'); if (innerWidth <= 820 && S.sec !== 'live') go('live'); setTimeout(() => (S.el.querySelector(innerWidth > 820 ? '#ap-q' : '#ap-live-q'))?.focus(), 30); return; }
+  const inField = e.target.matches && e.target.matches('input, textarea, select');
+  if (S.sec === 'home' && S.pv && !inField) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); pvUndo(e.shiftKey); return; }
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); pvUndo(true); return; }
+    if (e.altKey && S.pv.sel && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); moveSel(e.key === 'ArrowLeft' ? -1 : 1); return; }
+  }
   if (e.key !== 'Escape') return;
-  if (document.querySelector('.ap-veil, .ap-menu')) return;   // la fenêtre ouverte se ferme d'abord
+  if (document.querySelector('.ap-veil:not([data-sheet]), .ap-menu')) return;   // la fenêtre ouverte se ferme d'abord
   e.stopImmediatePropagation();
   if (S.live.sel && S.sec === 'live') { S.live.sel = null; draw('live'); return; }
-  if (S.pv && S.pv.sel && S.sec === 'home') { S.pv.sel = null; drawHome(); return; }
+  if (S.pv && (S.pv.sel || S.pv.sheet) && S.sec === 'home') { S.pv.sel = null; S.pv.sheet = false; closeSheet(); drawHome(); return; }
+  if (S.live.sel && document.querySelector('.ap-sheet')) { S.live.sel = null; closeSheet(); draw('live'); return; }
   closeAdmin();
 }
 
@@ -221,6 +265,7 @@ function start() {
   if (S.offs.length) return;
   sub('.info/serverTimeOffset', v => { S.offset = v || 0; });
   sub('hub/online', v => { S.online = v || {}; countVisitors(); schedule(); });
+  sub('hub/waiting', v => { S.waiting = v || {}; countVisitors(); purgeWaiting(); schedule(); });   // écran de maintenance
   sub('hub/settings', v => { S.settings = { ageGate: true, maintenance: false, ...(v || {}) }; schedule(); });
   sub('hub/hidden', v => { S.hidden = v || {}; schedule(); });
   sub('hub/layout', v => { S.layout = v; S.layoutDenied = false; schedule(); }, e => { S.layoutDenied = isDenied(e); schedule(); });
@@ -244,6 +289,13 @@ function stop() {
 function countVisitors() {
   const t = now();
   S.visitors = Object.values(S.online).filter(v => v && t - v.t < 180000).length;
+  S.waitingN = Object.values(S.waiting).filter(v => v && t - v.t < 180000).length;
+}
+
+// Entrées de l'écran de maintenance abandonnées (onglet tué sans pouvoir se retirer) : effacées après 10 min.
+function purgeWaiting() {
+  const t = now();
+  for (const [k, v] of Object.entries(S.waiting)) if (!(v && t - v.t < 600000)) remove(ref(db, `hub/waiting/${k}`)).catch(() => {});
 }
 
 // Codes des parties d'un nœud, sans leur contenu (REST, shallow). Repli : lecture complète.
@@ -346,7 +398,7 @@ function totals() {
 
 let raf = 0;
 function schedule() {
-  if (raf || !S.open) return;
+  if (raf || !S.open || S.editing) return;
   raf = requestAnimationFrame(() => { raf = 0; draw(S.sec); badges(); });
 }
 
@@ -412,7 +464,7 @@ function drawOverview(box) {
   paint(box, `
     ${maint ? `<div class="ap-note red">${icon('warn')}<div><b>Le site est en maintenance.</b><br>Les visiteurs voient l’écran de maintenance, les parties sont gelées.</div><button class="ap-btn danger" type="button" data-act="maint-off">Rouvrir le site</button></div>` : ''}
     <div class="ap-kpis">
-      <button class="ap-kpi" type="button" data-go="live"><span class="k"><span class="ap-dot on"></span>Sur le site maintenant</span><span class="n">${nf.format(S.visitors + t.onNow)}</span><span class="s">${plural(S.visitors, 'sur l’accueil', 'sur l’accueil')} · ${plural(t.onNow, 'en partie', 'en partie')}</span></button>
+      <button class="ap-kpi" type="button" data-go="live"><span class="k"><span class="ap-dot on"></span>${maint ? 'Sur l’écran de maintenance' : 'Sur le site maintenant'}</span><span class="n">${nf.format(maint ? S.waitingN : S.visitors + t.onNow)}</span><span class="s">${maint ? 'personnes devant l’écran, en direct' : `${plural(S.visitors, 'sur l’accueil', 'sur l’accueil')} · ${plural(t.onNow, 'en partie', 'en partie')}`}</span></button>
       <button class="ap-kpi" type="button" data-go="live"><span class="k">Joueurs en partie</span><span class="n">${nf.format(t.inGame)}</span><span class="s">${t.onNow} connecté${t.onNow > 1 ? 's' : ''}, présence vérifiée</span></button>
       <button class="ap-kpi" type="button" data-go="live"><span class="k">Parties actives</span><span class="n">${nf.format(t.active.length)}</span><span class="s">${t.idle ? `${plural(t.idle, 'inactive')} à nettoyer` : 'aucune partie fantôme'}</span></button>
       <button class="ap-kpi" type="button" data-go="audience"><span class="k">Pages vues · 24 h</span><span class="n">${d ? nf.format(d.totals.views) : '—'}</span><span class="s">${d ? (d.previous ? `${delta(d.totals.views, d.previous.views)} vs les 24 h d’avant` : `${nf.format(d.totals.entries)} arrivées`) : (S.todayErr || 'Chargement…')}</span></button>
@@ -484,7 +536,7 @@ function drawLive(box) {
     `${plural(t.active.length, 'partie active', 'parties actives')} · temps réel`);
   const sel = S.el.querySelector('[data-act="lv-game"]'); if (sel) sel.value = S.live.game;
   const rooms = liveFilter(t.rooms);
-  const strip = `<div class="ap-strip"><span><b>${S.visitors}</b>sur l’accueil</span><span><b>${t.onNow}</b>connectés en partie</span><span><b>${t.inGame}</b>joueurs dans les parties actives</span><span><b>${t.idle}</b>parties inactives</span>
+  const strip = `<div class="ap-strip">${S.settings.maintenance === true ? `<span><b>${S.waitingN}</b>sur l’écran de maintenance</span>` : `<span><b>${S.visitors}</b>sur l’accueil</span>`}<span><b>${t.onNow}</b>connectés en partie</span><span><b>${t.inGame}</b>joueurs dans les parties actives</span><span><b>${t.idle}</b>parties inactives</span>
     <label style="margin-left:auto;display:inline-flex;align-items:center;gap:8px">Montrer les inactives ${sw('lv-idle', S.live.idle, 'Montrer les parties inactives')}</label></div>`;
   if (S.live.sel && !S.rooms.has(S.live.sel)) S.live.sel = null;
   if (S.live.view === 'players') {
@@ -566,200 +618,381 @@ function drawSettings(box) {
     </div>
     <div class="ap-group-h"><h2 style="color:var(--ap-red)">Zone sensible</h2></div>
     <div class="ap-group">
-      <button class="ap-row ico danger" type="button" data-act="del-all">${tile('trash', '#E5484D')}<div class="main"><div class="t">Supprimer toutes les parties</div><div class="d">Irréversible : toutes les parties de tous les jeux, pour tous les joueurs</div></div></button>
+      <button class="ap-row ico danger" type="button" data-act="del-all">${tile('trash', '#E5484D')}<div class="main"><div class="t">Supprimer toutes les parties</div><div class="d">Toutes les parties de tous les jeux, annulable quelques secondes</div></div></button>
     </div>`);
 }
 
 // ════════════════════════════════════════════════════════════════════════════════════════════
 // Accueil : aperçu modifiable
 // ════════════════════════════════════════════════════════════════════════════════════════════
+// Brouillon S.pv = { order, g: { id: fiche }, site, base (version en ligne), sel, sheet, device,
+// showHidden, filter, hist, fut }. Rien ne part en ligne avant « Publier ». Chaque changement
+// est annulable (Ctrl Z / Ctrl Maj Z, ou les flèches de la barre).
 const defaults = () => (window.hubDefaults ? window.hubDefaults() : {});
+const siteDefaults = () => (window.hubSiteDefaults ? window.hubSiteDefaults() : { title: 'On joue ?', lede: '{n} jeux en ligne, sans compte.', surprise: true, chips: TAGS.map(([k]) => k).join(' ') });
+const BADGES = ['Nouveau', 'Populaire', 'Mis à jour', 'Exclusif'];
+const clone = v => JSON.parse(JSON.stringify(v));
+const defaultOrder = () => { const D = defaults(); return Object.keys(D).sort((a, b) => D[a].i - D[b].i); };
+const nextOf = (d, o) => d.next ? d.next.map((x, k) => (o && o[k] && o[k].t) ? { t: o[k].t, s: o[k].s || '' } : { ...x }) : null;
+
 function order() {
-  const D = defaults(), ids = Object.keys(D).sort((a, b) => D[a].i - D[b].i);
   if (S.pv) return S.pv.order;
-  const o = String((S.layout && S.layout.order) || '').split(',').filter(id => D[id]);
-  return [...o, ...ids.filter(id => !o.includes(id))];
+  const D = defaults(), o = String((S.layout && S.layout.order) || '').split(',').filter(id => D[id]);
+  return [...o, ...defaultOrder().filter(id => !o.includes(id))];
 }
 function nameFor(id) { return (S.pv && S.pv.g[id] && S.pv.g[id].name) || (S.layout && S.layout.games && S.layout.games[id] && S.layout.games[id].name) || (defaults()[id] || {}).name || BY_ID[id]?.name || id; }
 
-// Valeurs publiées (défauts du hub + hub/layout + hub/hidden), une fiche par jeu.
+// Version en ligne : défauts du hub + hub/layout + hub/hidden.
 function published() {
   const D = defaults(), L = S.layout || {}, over = L.games || {}, g = {};
   for (const [id, d] of Object.entries(D)) {
     const o = over[id] || {};
     g[id] = { name: o.name || d.name, sub: o.sub ?? d.sub, tags: o.tags ?? d.tags, wide: o.wide ?? d.wide, aband: o.aband ?? d.aband,
-      wip: d.wip == null ? null : (o.wip ?? d.wip), hidden: !!S.hidden[id] };
+      wip: d.wip == null ? null : (o.wip ?? d.wip), hidden: !!S.hidden[id], badge: o.badge || '', soon: !!o.soon, next: nextOf(d, o.next) };
   }
-  const ids = Object.keys(D).sort((a, b) => D[a].i - D[b].i);
   const o = String(L.order || '').split(',').filter(id => D[id]);
-  return { order: [...o, ...ids.filter(id => !o.includes(id))], g };
+  return { order: [...o, ...defaultOrder().filter(id => !o.includes(id))], g, site: { ...siteDefaults(), ...(L.site || {}) } };
 }
 
 function initPreview() {
-  if (!S.pv) S.pv = { ...published(), base: published(), sel: null, device: 'desktop', showHidden: true, filter: 'all' };
+  if (!S.pv) { const p = published(); S.pv = { ...clone(p), base: p, sel: null, sheet: false, device: innerWidth <= 820 ? 'mobile' : innerWidth <= 1100 ? 'tablet' : 'desktop', showHidden: true, filter: 'all', hist: [], fut: [] }; }
 }
-// Le brouillon suit les changements publiés ailleurs tant qu'il n'a pas été modifié.
+// Le brouillon suit la version en ligne tant qu'il n'a pas été modifié.
 function refreshBase() {
   if (!S.pv) return;
   const fresh = published();
-  if (!pvChanges().length) Object.assign(S.pv, { order: fresh.order, g: fresh.g });
+  if (!pvChanges().length) Object.assign(S.pv, clone(fresh));
   S.pv.base = fresh;
 }
 
-const FIELD_LABEL = { name: 'nom', sub: 'sous-titre', tags: 'filtres', wide: 'carte large', aband: 'rangée', wip: 'fenêtre « nouvelle version »', hidden: 'visibilité' };
+// Historique du brouillon.
+const draftOf = () => clone({ order: S.pv.order, g: S.pv.g, site: S.pv.site });
+function pvRecord() { S.pv.hist.push(draftOf()); if (S.pv.hist.length > 80) S.pv.hist.shift(); S.pv.fut = []; }
+function pvEdit(fn) { pvRecord(); fn(); drawHome(); refreshSheet(); }
+function pvUndo(redo = false) {
+  const from = redo ? S.pv.fut : S.pv.hist, to = redo ? S.pv.hist : S.pv.fut;
+  if (!from.length) return;
+  to.push(draftOf()); Object.assign(S.pv, from.pop());
+  drawHome(); refreshSheet();
+}
+
+const FIELD_LABEL = { name: 'nom', sub: 'sous-titre', tags: 'filtres', wide: 'carte large', aband: 'rangée', wip: 'fenêtre « nouvelle version »', hidden: 'visibilité',
+  badge: 'pastille', soon: 'statut', next: 'textes « à venir »' };
+const SITE_LABEL = { title: 'titre', lede: 'phrase d’accroche', surprise: 'bouton « Surprends-moi »', chips: 'filtres affichés' };
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 function pvChanges() {
   if (!S.pv) return [];
-  const { base, g, order: o } = S.pv, out = [];
+  const { base, g, order: o, site } = S.pv, out = [];
   if (o.join() !== base.order.join()) out.push({ k: 'order' });
-  for (const id of Object.keys(g)) for (const f of Object.keys(FIELD_LABEL)) if (String(g[id][f]) !== String(base.g[id][f])) out.push({ k: f, id });
+  for (const id of Object.keys(g)) for (const f of Object.keys(FIELD_LABEL)) if (!same(g[id][f], base.g[id][f])) out.push({ k: f, id });
+  for (const f of Object.keys(SITE_LABEL)) if (!same(site[f], base.site[f])) out.push({ k: 'site', f });
   return out;
 }
+
+const STATUS = v => v.hidden ? 'off' : v.soon ? 'soon' : 'on';
 
 function drawHome() {
   const box = S.el.querySelector('.ap-sec[data-sec="home"]');
   if (!box || !S.pv) return;
   refreshBase();
-  const pv = S.pv, n = pvChanges().length;
-  tools(`<div class="ap-seg" role="group" aria-label="Appareil"><button type="button" data-act="pv-device" data-v="desktop" aria-pressed="${pv.device === 'desktop'}">Ordinateur</button><button type="button" data-act="pv-device" data-v="mobile" aria-pressed="${pv.device === 'mobile'}">Mobile</button></div>
-    <label style="display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)">Jeux masqués ${sw('pv-hidden', pv.showHidden, 'Montrer les jeux masqués dans l’aperçu')}</label>
-    <button class="ap-btn" type="button" data-act="pv-reset" title="Revenir à la mise en page d’origine du site">Tout réinitialiser</button>`,
-    'Glisse les cartes pour les ranger, touche-en une pour la modifier');
+  const pv = S.pv, n = pvChanges().length, wide = innerWidth > 1100;
+  tools(`<div class="ap-seg" role="group" aria-label="Historique"><button type="button" data-act="pv-undo" aria-label="Annuler (Ctrl Z)" title="Annuler (Ctrl Z)" ${pv.hist.length ? '' : 'disabled'}>${icon('undo')}</button><button type="button" data-act="pv-redo" aria-label="Rétablir (Ctrl Maj Z)" title="Rétablir (Ctrl Maj Z)" ${pv.fut.length ? '' : 'disabled'} style="transform:scaleX(-1)">${icon('undo')}</button></div>
+    <div class="ap-seg" role="group" aria-label="Appareil">${[['desktop', 'Ordinateur'], ['tablet', 'Tablette'], ['mobile', 'Mobile']].map(([k, t]) => `<button type="button" data-act="pv-device" data-v="${k}" aria-pressed="${pv.device === k}">${t}</button>`).join('')}</div>
+    <button class="ap-btn" type="button" data-act="pv-page">Haut de page</button>
+    <a class="ap-btn" href="./" target="_blank" rel="noopener">Voir le site ↗</a>`,
+    'Glisse les cartes pour les ranger, touche-en une pour la régler');
   const card = id => {
     const v = pv.g[id], d = defaults()[id] || {};
     if (!d.cover || (v.hidden && !pv.showHidden)) return '';
     const changed = pvChanges().some(c => c.id === id);
     const out = pv.filter !== 'all' && !String(v.tags).split(' ').includes(pv.filter);
-    const badges = [v.hidden ? `<span>${icon('eyeoff')}Masqué</span>` : '', v.wip != null && v.wip >= 0 ? `<span>${v.wip} %</span>` : ''].join('');
-    return `<div class="pv-card${v.hidden ? ' off' : ''}${pv.sel === id ? ' sel' : ''}${v.wide ? ' wide' : ''}${changed ? ' changed' : ''}${out ? ' out' : ''}" data-id="${id}" tabindex="0" role="button" aria-label="${esc(v.name)}${v.hidden ? ', masqué' : ''}">
-      <img src="${esc(d.cover)}" alt="" draggable="false" decoding="async"><span class="pv-badges">${badges}</span>
+    const badge = v.badge || (v.soon ? 'Bientôt' : '');
+    const flags = [v.hidden ? `<span>${icon('eyeoff')}Masqué</span>` : '', v.wip != null && v.wip >= 0 ? `<span>${v.wip} %</span>` : ''].join('');
+    return `<div class="pv-card${v.hidden ? ' off' : ''}${v.soon ? ' soon' : ''}${pv.sel === id ? ' sel' : ''}${v.wide ? ' wide' : ''}${changed ? ' changed' : ''}${out ? ' out' : ''}" data-id="${id}" tabindex="0" role="button" aria-label="${esc(v.name)}${v.hidden ? ', masqué' : v.soon ? ', bientôt' : ''}">
+      <img src="${esc(d.cover)}" alt="" draggable="false" decoding="async">${badge ? `<span class="pv-pill">${esc(badge)}</span>` : ''}<span class="pv-badges">${flags}</span>
       <span class="pv-cap"><b>${esc(v.name)}</b><small>${esc(v.sub)}</small></span></div>`;
   };
   const main = pv.order.filter(id => pv.g[id] && !pv.g[id].aband), ab = pv.order.filter(id => pv.g[id] && pv.g[id].aband);
-  const count = main.filter(id => !pv.g[id].hidden).length;
-  const insp = pv.sel && innerWidth > 1100 ? inspector(pv.sel) : '';
+  const count = main.filter(id => !pv.g[id].hidden && !pv.g[id].soon).length;
+  const lede = esc(pv.site.lede).split('{n}').join(WORDS[count] || count);
+  const shownChips = pv.site.chips.split(' ');
+  const panel = wide ? `<aside class="pv-insp ap-card" aria-label="${pv.sel ? 'Réglages du jeu' : 'Haut de page'}">${pv.sel ? inspector(pv.sel) : pagePanel()}</aside>` : '';
   const html = `
     ${S.layoutDenied ? rulesNote() : ''}
-    <div class="pv-wrap${insp ? '' : ' closed'}">
-      <div class="pv-window${pv.device === 'mobile' ? ' mobile' : ''}">
+    <div class="pv-wrap">
+      <div class="pv-stage"><div class="pv-window ${pv.device}">
         <div class="pv-chrome"><i></i><i></i><i></i><span>roulia.me</span></div>
         <div class="pv-page">
           <div class="pv-top"><i></i>GameHub<em>${S.visitors} en ligne</em></div>
-          <div class="pv-intro"><div><h2>On joue ?</h2><p>${WORDS[count] || count} jeu${count > 1 ? 'x' : ''} en ligne, sans compte. Crée une partie, partage le code.</p></div>
-            <div class="pv-chips">${[['all', 'Tous'], ...TAGS].map(([k, t]) => `<button type="button" data-act="pv-filter" data-v="${k}" aria-pressed="${pv.filter === k}">${t}</button>`).join('')}</div></div>
+          <div class="pv-intro"><div><h2>${esc(pv.site.title)}</h2><p>${lede}</p></div>
+            <div class="pv-controls"><div class="pv-chips">${[['all', 'Tous'], ...TAGS.filter(([k]) => shownChips.includes(k))].map(([k, t]) => `<button type="button" data-act="pv-filter" data-v="${k}" aria-pressed="${pv.filter === k}">${t}</button>`).join('')}</div>
+            ${pv.site.surprise ? '<span class="pv-surprise">Surprends-moi</span>' : ''}</div></div>
           <div class="pv-grid" data-zone="main">${main.map(card).join('')}</div>
           <div class="pv-aband-h">Abandonnés · bouton discret, visible s’il reste un jeu affiché</div>
           <div class="pv-grid pv-aband" data-zone="aband">${ab.map(card).join('')}</div>
         </div>
-      </div>
-      ${insp ? `<aside class="pv-insp ap-card" aria-label="Réglages du jeu">${insp}</aside>` : ''}
+      </div></div>
+      ${panel}
     </div>
     <div class="pv-publish${n ? '' : ' gone'}" role="status"><span><b>${n}</b> modification${n > 1 ? 's' : ''} non publiée${n > 1 ? 's' : ''}</span>
-      <button class="ap-btn ghost" type="button" data-act="pv-discard">Annuler</button><button class="ap-btn primary" type="button" data-act="pv-publish">Publier</button></div>`;
+      <button class="ap-btn ghost" type="button" data-act="pv-discard">Tout annuler</button><button class="ap-btn primary" type="button" data-act="pv-publish">Publier</button></div>`;
   if (!drag.on) {
-    const keepInsp = box.querySelector('.pv-insp');
-    const focusInInsp = keepInsp && keepInsp.contains(document.activeElement) && document.activeElement.matches('input[type=text]');
-    if (focusInInsp && insp) {
-      // Saisie en cours : on ne retouche que l'aperçu et la barre de publication.
+    const aside = box.querySelector('.pv-insp');
+    const typing = aside && aside.contains(document.activeElement) && document.activeElement.matches('input[type=text], textarea');
+    if (typing && panel) {
+      // Saisie en cours : l'aperçu et la barre se mettent à jour, le panneau reste tel quel.
       const tmp = document.createElement('div'); tmp.innerHTML = html;
-      box.querySelector('.pv-window').replaceWith(tmp.querySelector('.pv-window'));
+      box.querySelector('.pv-stage').replaceWith(tmp.querySelector('.pv-stage'));
       box.querySelector('.pv-publish').replaceWith(tmp.querySelector('.pv-publish'));
       box.__html = null;
     } else paint(box, html);
     wireDrag(box);
   }
-  if (pv.sel && innerWidth <= 1100 && !document.querySelector('.ap-sheet[data-k="game"]')) sheet(`<div class="pv-insp">${inspector(pv.sel)}</div>`, 'game');
+  if (pv.sheet && !wide && !document.querySelector('.ap-sheet[data-k="game"]')) sheet(`<div class="pv-insp">${pv.sel ? inspector(pv.sel) : pagePanel()}</div>`, 'game');
   badges();
 }
 
+const sectionH = t => `<div class="ap-group-h"><h2 style="font-size:12.5px;color:var(--muted);font-weight:600">${t}</h2></div>`;
+
+function pagePanel() {
+  const pv = S.pv, shown = pv.site.chips.split(' '), all = Object.values(pv.g);
+  return `
+    <div class="pv-insp-h"><span class="pv-page-ico">${icon('home')}</span><div style="flex:1;min-width:0"><h3>Haut de page</h3><p>${all.filter(v => !v.hidden && !v.soon).length} jeux jouables · ${all.filter(v => v.soon && !v.hidden).length} bientôt · ${all.filter(v => v.hidden).length} masqués</p></div>
+      ${innerWidth > 1100 ? '' : `<button class="ap-icon-btn" type="button" data-act="pv-close" aria-label="Fermer">${icon('close')}</button>`}</div>
+    <div style="padding:0 12px 14px">
+      <div class="ap-group">
+        <label class="ap-row"><span class="t" style="flex:none">Titre</span><input type="text" data-site="title" maxlength="40" value="${esc(pv.site.title)}"></label>
+        <label class="ap-row pv-col"><span class="t">Phrase d’accroche</span><textarea data-site="lede" maxlength="160" rows="2">${esc(pv.site.lede)}</textarea><span class="d">{n} devient le nombre de jeux en lettres</span></label>
+        <label class="ap-row"><div class="main"><div class="t">Bouton « Surprends-moi »</div><div class="d">Tire un jeu au hasard</div></div>${sw('pv-site-surprise', pv.site.surprise, 'Bouton Surprends-moi')}</label>
+      </div>
+      ${sectionH('Filtres proposés aux visiteurs')}
+      <div class="ap-group"><div class="pv-tags">${TAGS.map(([k, t]) => `<button type="button" data-act="pv-chip" data-v="${k}" aria-pressed="${shown.includes(k)}">${t}</button>`).join('')}</div></div>
+      ${sectionH('Aperçu')}
+      <div class="ap-group">
+        <label class="ap-row"><div class="main"><div class="t">Montrer les jeux masqués</div><div class="d">Grisés dans l’aperçu, invisibles pour les visiteurs</div></div>${sw('pv-hidden', pv.showHidden, 'Montrer les jeux masqués')}</label>
+      </div>
+      <button class="ap-btn ghost" style="width:100%;margin-top:12px" type="button" data-act="pv-reset">Revenir à l’accueil d’origine</button>
+      <p class="ap-foot" style="text-align:center">Touche une carte de l’aperçu pour régler ce jeu.</p>
+    </div>`;
+}
+
 function inspector(id) {
-  const v = S.pv.g[id], d = defaults()[id] || {}, D = d;
+  const v = S.pv.g[id], d = defaults()[id] || {};
   const idx = S.pv.order.indexOf(id);
   const live = totals().rooms.filter(x => x.r.g.id === id && !x.idle);
   const players = live.reduce((s, x) => s + x.players.length, 0);
   const tags = String(v.tags).split(' ').filter(Boolean);
+  const st = STATUS(v);
+  const custom = v.badge && !BADGES.includes(v.badge);
   return `
     <div class="pv-insp-h"><img src="${esc(d.cover)}" alt=""><div style="flex:1;min-width:0"><h3>${esc(v.name)}</h3><p>${live.length ? `${plural(live.length, 'partie')} · ${plural(players, 'joueur')} en ce moment` : 'Aucune partie en cours'}</p></div>
       <button class="ap-icon-btn" type="button" data-act="pv-close" aria-label="Fermer">${icon('close')}</button></div>
     <div style="padding:0 12px 14px">
+      <div class="ap-seg pv-status" role="group" aria-label="Statut">
+        ${[['on', 'Disponible'], ['soon', 'Bientôt'], ['off', 'Masqué']].map(([k, t]) => `<button type="button" data-act="pv-status" data-v="${k}" aria-pressed="${st === k}">${t}</button>`).join('')}</div>
+      <p class="ap-foot" style="margin:6px 4px 0">${st === 'on' ? 'Visible et jouable.' : st === 'soon' ? 'Visible, grisé, ne s’ouvre pas encore.' : 'Retiré de l’accueil ; sa page se ferme aussi.'}</p>
+      ${sectionH('Carte')}
       <div class="ap-group">
-        <label class="ap-row"><div class="main"><div class="t">Affiché sur l’accueil</div><div class="d">Masqué, sa page se ferme aussi</div></div>${sw('pv-f-hidden', !v.hidden, 'Affiché sur l’accueil')}</label>
-      </div>
-      <div class="ap-group-h"><h2 style="font-size:13px;color:var(--muted);font-weight:600">Carte</h2></div>
-      <div class="ap-group">
-        <label class="ap-row"><span class="t" style="flex:none">Nom</span><input type="text" id="pv-name" data-f="name" maxlength="40" value="${esc(v.name)}" placeholder="${esc(D.name)}"></label>
-        <label class="ap-row"><span class="t" style="flex:none">Sous-titre</span><input type="text" id="pv-sub" data-f="sub" maxlength="40" value="${esc(v.sub)}" placeholder="${esc(D.sub)}"></label>
-        <label class="ap-row"><div class="main"><div class="t">Grande carte sur mobile</div><div class="d">Occupe toute la largeur</div></div>${sw('pv-f-wide', v.wide, 'Grande carte sur mobile')}</label>
+        <label class="ap-row"><span class="t" style="flex:none">Nom</span><input type="text" data-f="name" maxlength="40" value="${esc(v.name)}" placeholder="${esc(d.name)}"></label>
+        <label class="ap-row"><span class="t" style="flex:none">Sous-titre</span><input type="text" data-f="sub" maxlength="40" value="${esc(v.sub)}" placeholder="${esc(d.sub)}"></label>
+        <label class="ap-row"><div class="main"><div class="t">Grande carte sur mobile</div><div class="d">Toute la largeur de l’écran</div></div>${sw('pv-f-wide', v.wide, 'Grande carte sur mobile')}</label>
         <div class="ap-row"><span class="t" style="flex:1">Rangée</span><div class="ap-seg"><button type="button" data-act="pv-aband" data-v="0" aria-pressed="${!v.aband}">Principale</button><button type="button" data-act="pv-aband" data-v="1" aria-pressed="${!!v.aband}">Abandonnés</button></div></div>
       </div>
-      <div class="ap-group-h"><h2 style="font-size:13px;color:var(--muted);font-weight:600">Filtres de l’accueil</h2></div>
+      ${sectionH('Pastille')}
+      <div class="ap-group"><div class="pv-tags">
+        <button type="button" data-act="pv-badge" data-v="" aria-pressed="${!v.badge}">Aucune</button>
+        ${BADGES.map(b => `<button type="button" data-act="pv-badge" data-v="${esc(b)}" aria-pressed="${v.badge === b}">${esc(b)}</button>`).join('')}</div>
+        <label class="ap-row"><span class="t" style="flex:none">Autre</span><input type="text" data-badge maxlength="16" value="${custom ? esc(v.badge) : ''}" placeholder="Texte libre, 16 caractères"></label></div>
+      ${sectionH('Filtres de l’accueil')}
       <div class="ap-group"><div class="pv-tags">${TAGS.map(([k, t]) => `<button type="button" data-act="pv-tag" data-v="${k}" aria-pressed="${tags.includes(k)}">${t}</button>`).join('')}</div></div>
-      ${v.wip != null ? `<div class="ap-group-h"><h2 style="font-size:13px;color:var(--muted);font-weight:600">Nouvelle version en préparation</h2></div>
+      ${v.wip != null ? `${sectionH('Nouvelle version en préparation')}
       <div class="ap-group">
         <label class="ap-row"><div class="main"><div class="t">Fenêtre avant le jeu</div><div class="d">Annonce la refonte, propose l’ancienne version</div></div>${sw('pv-f-wip', v.wip >= 0, 'Fenêtre nouvelle version')}</label>
-        ${v.wip >= 0 ? `<div class="pv-range"><span style="font-size:13px;color:var(--muted)">Avancement</span><input type="range" min="0" max="100" step="5" value="${v.wip}" data-act="pv-wip" aria-label="Avancement de la nouvelle version"><b>${v.wip} %</b></div>` : ''}
+        ${v.wip >= 0 ? `<div class="pv-range"><span style="font-size:13px;color:var(--muted)">Avancement</span><input type="range" min="0" max="100" step="5" value="${v.wip}" data-act="pv-wip" aria-label="Avancement de la nouvelle version"><b>${v.wip} %</b></div>
+        ${(v.next || []).map((x, k) => `<div class="ap-row pv-col"><span class="d">À venir ${k + 1}</span><input type="text" class="pv-next-t" data-next="${k}" data-part="t" maxlength="40" value="${esc(x.t)}" placeholder="Titre"><input type="text" class="pv-next-s" data-next="${k}" data-part="s" maxlength="120" value="${esc(x.s)}" placeholder="Détail"></div>`).join('')}` : ''}
       </div>` : ''}
-      <div class="ap-group-h"><h2 style="font-size:13px;color:var(--muted);font-weight:600">Position · ${idx + 1} sur ${S.pv.order.length}</h2></div>
+      ${sectionH(`Position · ${idx + 1} sur ${S.pv.order.length}`)}
       <div class="ap-group"><div class="pv-pos">
         <button class="ap-btn" type="button" data-act="pv-move" data-v="first" ${idx === 0 ? 'disabled' : ''} aria-label="Placer en premier">${icon('first')}</button>
         <button class="ap-btn" type="button" data-act="pv-move" data-v="-1" ${idx === 0 ? 'disabled' : ''}>${icon('arrowl')}Avant</button>
         <button class="ap-btn" type="button" data-act="pv-move" data-v="1" ${idx === S.pv.order.length - 1 ? 'disabled' : ''}>Après${icon('arrowr')}</button>
       </div></div>
-      <button class="ap-btn ghost" style="width:100%;margin-top:12px" type="button" data-act="pv-restore">Valeurs d’origine pour ce jeu</button>
+      <p class="ap-foot">Astuce : Alt + ← / → déplace la carte sélectionnée.</p>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <a class="ap-btn" style="flex:1" href="${esc(d.href)}" target="_blank" rel="noopener">Ouvrir le jeu ↗</a>
+        <button class="ap-btn ghost" style="flex:1" type="button" data-act="pv-restore">Valeurs d’origine</button>
+      </div>
     </div>`;
 }
 
-function pvSet(id, f, v) { S.pv.g[id][f] = v; drawHome(); refreshSheet(); }
 function refreshSheet() {
   const sh = document.querySelector('.ap-sheet[data-k="game"]');
-  if (sh && S.pv.sel) sh.innerHTML = `<div class="pv-insp">${inspector(S.pv.sel)}</div>`;
+  if (sh) sh.innerHTML = `<div class="pv-insp">${S.pv.sel ? inspector(S.pv.sel) : pagePanel()}</div>`;
+  // Panneau latéral : redessiné sauf pendant une saisie.
+  const aside = S.el.querySelector('.ap-sec[data-sec="home"] aside.pv-insp');
+  if (aside && !aside.contains(document.activeElement?.matches?.('input[type=text], textarea') ? document.activeElement : null)) aside.innerHTML = S.pv.sel ? inspector(S.pv.sel) : pagePanel();
 }
 
+function moveSel(delta) {
+  const id = S.pv.sel; if (!id) return;
+  pvEdit(() => {
+    const o = S.pv.order, i = o.indexOf(id);
+    o.splice(i, 1);
+    o.splice(delta === 'first' ? 0 : Math.max(0, Math.min(o.length, i + delta)), 0, id);
+  });
+}
+
+// Évènements de l'éditeur. Renvoie true si l'évènement le concernait.
+function homeClick(e) {
+  if (!S.pv) return false;
+  const card = e.target.closest('.pv-card');
+  if (card && !drag.on && !e.target.closest('.pv-ghost')) {
+    S.pv.sel = S.pv.sel === card.dataset.id && innerWidth > 1100 ? null : card.dataset.id;
+    S.pv.sheet = true; closeSheet(); drawHome(); return true;
+  }
+  const a = e.target.closest('[data-act^="pv-"]');
+  if (!a || a.tagName === 'INPUT') return false;
+  const pv = S.pv, id = pv.sel, v = a.dataset.v;
+  switch (a.dataset.act) {
+    case 'pv-undo': pvUndo(); break;
+    case 'pv-redo': pvUndo(true); break;
+    case 'pv-device': pv.device = v; drawHome(); break;
+    case 'pv-filter': pv.filter = v; drawHome(); break;
+    case 'pv-page': pv.sel = null; pv.sheet = true; closeSheet(); drawHome(); break;
+    case 'pv-close': pv.sel = null; pv.sheet = false; closeSheet(); drawHome(); break;
+    case 'pv-status': pvEdit(() => { pv.g[id].hidden = v === 'off'; pv.g[id].soon = v === 'soon'; }); break;
+    case 'pv-aband': pvEdit(() => { pv.g[id].aband = v === '1'; }); break;
+    case 'pv-badge': pvEdit(() => { pv.g[id].badge = v; }); break;
+    case 'pv-tag': pvEdit(() => {
+      const t = new Set(String(pv.g[id].tags).split(' ').filter(Boolean));
+      t.has(v) ? t.delete(v) : t.add(v);
+      pv.g[id].tags = TAGS.map(([k]) => k).filter(k => t.has(k)).join(' ');
+    }); break;
+    case 'pv-chip': pvEdit(() => {
+      const t = new Set(pv.site.chips.split(' ').filter(Boolean));
+      t.has(v) ? t.delete(v) : t.add(v);
+      pv.site.chips = TAGS.map(([k]) => k).filter(k => t.has(k)).join(' ');
+      if (pv.filter !== 'all' && !t.has(pv.filter)) pv.filter = 'all';
+    }); break;
+    case 'pv-move': moveSel(v === 'first' ? 'first' : Number(v)); break;
+    case 'pv-restore': {
+      const d = defaults()[id];
+      pvEdit(() => Object.assign(pv.g[id], { name: d.name, sub: d.sub, tags: d.tags, wide: d.wide, aband: d.aband, wip: d.wip, badge: '', soon: false, next: nextOf(d), hidden: false }));
+      notify('Valeurs d’origine rétablies', { icon: 'undo', sub: `${d.name} · brouillon, à publier`, undo: () => pvUndo() });
+      break;
+    }
+    case 'pv-reset': {
+      const D = defaults();
+      pvEdit(() => {
+        pv.order = defaultOrder(); pv.site = siteDefaults();
+        for (const [k, d] of Object.entries(D)) pv.g[k] = { name: d.name, sub: d.sub, tags: d.tags, wide: d.wide, aband: d.aband, wip: d.wip, hidden: false, badge: '', soon: false, next: nextOf(d) };
+      });
+      notify('Accueil d’origine', { icon: 'home', sub: 'Brouillon : rien n’est en ligne avant Publier', undo: () => pvUndo() });
+      break;
+    }
+    case 'pv-discard':
+      pvEdit(() => Object.assign(pv, clone({ order: pv.base.order, g: pv.base.g, site: pv.base.site })));
+      notify('Modifications annulées', { icon: 'undo', sub: 'L’aperçu revient à la version en ligne', undo: () => pvUndo() });
+      break;
+    case 'pv-publish': publishHome(); break;
+    default: return false;
+  }
+  return true;
+}
+
+function homeChange(a, v) {
+  if (!S.pv) return false;
+  const pv = S.pv, id = pv.sel;
+  switch (a.dataset.act) {
+    case 'pv-hidden': pv.showHidden = v; drawHome(); refreshSheet(); break;
+    case 'pv-site-surprise': pvEdit(() => { pv.site.surprise = v; }); break;
+    case 'pv-f-wide': pvEdit(() => { pv.g[id].wide = v; }); break;
+    case 'pv-f-wip': pvEdit(() => { pv.g[id].wip = v ? Math.max(0, (defaults()[id] || {}).wip || 0) : -1; }); break;
+    case 'pv-wip': break;   // déjà pris en compte pendant le glissement
+    default: return false;
+  }
+  return true;
+}
+
+// Saisie : une seule entrée d'historique par champ, au premier caractère tapé.
+let typingIn = null;
+function homeInput(t) {
+  if (!S.pv) return false;
+  const pv = S.pv, id = pv.sel;
+  const key = t.dataset.f || t.dataset.site || (t.dataset.next != null ? 'n' + t.dataset.next + t.dataset.part : '') || (t.hasAttribute('data-badge') ? 'badge' : '') || (t.dataset.act === 'pv-wip' ? 'wip' : '');
+  if (!key) return false;
+  if (typingIn !== t) { pvRecord(); typingIn = t; }
+  const val = t.value.replace(/</g, '');
+  if (t.dataset.f) pv.g[id][t.dataset.f] = val;
+  else if (t.dataset.site) pv.site[t.dataset.site] = val;
+  else if (t.dataset.next != null) pv.g[id].next[+t.dataset.next][t.dataset.part] = val;
+  else if (key === 'badge') pv.g[id].badge = val.trim();
+  else if (key === 'wip') { pv.g[id].wip = Number(t.value); t.nextElementSibling.textContent = t.value + ' %'; }
+  drawHome();
+  return true;
+}
+addEventListener('focusout', () => { typingIn = null; }, true);
+
 async function publishHome() {
-  const pv = S.pv, D = defaults(), changes = pvChanges();
+  const pv = S.pv, D = defaults(), SD = siteDefaults(), changes = pvChanges();
   if (!changes.length) return;
   for (const id of Object.keys(pv.g)) {
     const v = pv.g[id];
     v.name = String(v.name || '').replace(/</g, '').trim().slice(0, 40) || D[id].name;
     v.sub = String(v.sub || '').replace(/</g, '').trim().slice(0, 40);
+    v.badge = String(v.badge || '').replace(/</g, '').trim().slice(0, 16);
   }
+  pv.site.title = String(pv.site.title || '').replace(/</g, '').trim().slice(0, 40) || SD.title;
+  pv.site.lede = String(pv.site.lede || '').replace(/</g, '').trim().slice(0, 160);
   // Seules les valeurs qui diffèrent du site d'origine sont écrites.
   const games = {};
   for (const [id, v] of Object.entries(pv.g)) {
     const d = D[id], o = {};
-    if (v.name !== d.name) o.name = v.name;
-    if (v.sub !== d.sub) o.sub = v.sub;
-    if (v.tags !== d.tags) o.tags = v.tags;
-    if (v.wide !== d.wide) o.wide = v.wide;
-    if (v.aband !== d.aband) o.aband = v.aband;
+    for (const f of ['name', 'sub', 'tags', 'wide', 'aband']) if (v[f] !== d[f]) o[f] = v[f];
     if (d.wip != null && v.wip !== d.wip) o.wip = v.wip;
+    if (v.badge) o.badge = v.badge;
+    if (v.soon) o.soon = true;
+    if (v.next && !same(v.next, d.next)) o.next = Object.fromEntries(v.next.map((x, k) => [k, { t: String(x.t).trim().slice(0, 40) || d.next[k].t, s: String(x.s).trim().slice(0, 120) }]));
     if (Object.keys(o).length) games[id] = o;
   }
-  const layout = { order: pv.order.join(','), v: Date.now(), ...(Object.keys(games).length ? { games } : {}) };
+  const site = {};
+  for (const f of Object.keys(SITE_LABEL)) if (!same(pv.site[f], SD[f])) site[f] = pv.site[f];
+  const layout = { order: pv.order.join(','), v: Date.now(), ...(Object.keys(games).length ? { games } : {}), ...(Object.keys(site).length ? { site } : {}) };
   const hidden = {};
   for (const c of changes) if (c.k === 'hidden') hidden[c.id] = pv.g[c.id].hidden;
+  const prevLayout = S.layout || null, prevHidden = {};
+  for (const id of Object.keys(hidden)) prevHidden[id] = !!S.hidden[id];
   const btn = S.el.querySelector('[data-act="pv-publish"]'); if (btn) btn.disabled = true;
   try {
     if (Object.keys(hidden).length) await update(ref(db, 'hub/hidden'), hidden);
     if (changes.some(c => c.k !== 'hidden')) await set(ref(db, 'hub/layout'), layout);
   } catch (e) {
     if (btn) btn.disabled = false;
-    if (isDenied(e)) { await ask({ title: 'Publication refusée', text: 'Les règles de la base ne permettent pas encore de changer l’ordre, les noms ou les filtres. Publie d’abord firebase/database.rules.phase2.json dans la console Firebase. Les jeux masqués ou affichés, eux, ont été enregistrés.', ok: 'Compris', single: true }); return; }
-    toast('Échec de la publication', true); return;
+    notify('Publication refusée', { kind: 'err', sub: isDenied(e) ? 'Règles de la base à publier (les jeux masqués, eux, sont enregistrés)' : 'Réessaie dans un instant' }); return;
   }
   for (const c of describe(changes)) logAdmin('jeu', c.msg, c.id);
   S.hidden = { ...S.hidden, ...hidden };
   S.layout = layout;
-  S.pv.base = published();
-  toast('Accueil publié');
+  pv.base = published();
+  notify('Accueil publié', { kind: 'ok', icon: 'home', sub: `${plural(changes.length, 'modification')} en ligne`,
+    undo: async () => {
+      await update(ref(db, 'hub/hidden'), prevHidden).catch(() => {});
+      if (changes.some(c => c.k !== 'hidden')) await set(ref(db, 'hub/layout'), prevLayout).catch(() => {});
+      logAdmin('jeu', 'Publication de l’accueil annulée', 'accueil');
+    } });
   drawHome();
 }
 
 function describe(changes) {
   const out = [], seen = new Set(), pv = S.pv;
+  const site = changes.filter(c => c.k === 'site').map(c => SITE_LABEL[c.f]);
+  if (site.length) out.push({ msg: `Haut de l’accueil modifié (${site.join(', ')})`, id: 'accueil' });
   for (const c of changes) {
+    if (c.k === 'site') continue;
     if (c.k === 'order') { out.push({ msg: 'Ordre des jeux de l’accueil modifié', id: 'accueil' }); continue; }
     const name = pv.g[c.id].name;
     if (c.k === 'hidden') out.push({ msg: `${name} ${pv.g[c.id].hidden ? 'masqué de' : 'affiché sur'} l’accueil`, id: c.id });
+    else if (c.k === 'soon') out.push({ msg: `${name} ${pv.g[c.id].soon ? 'passé en « Bientôt »' : 'de nouveau disponible'}`, id: c.id });
     else if (!seen.has(c.id + c.k)) { seen.add(c.id + c.k); out.push({ msg: `${name} : ${FIELD_LABEL[c.k]} modifié${c.k === 'name' ? ` (« ${pv.base.g[c.id].name} » → « ${name} »)` : ''}`, id: c.id }); }
   }
   return out;
@@ -845,6 +1078,7 @@ function startDrag(card, x, y) {
         const main = ids('main'), ab = ids('aband');
         // Les jeux masqués absents de l'aperçu gardent leur place relative, en fin de liste.
         const hiddenOut = S.pv.order.filter(id => !main.includes(id) && !ab.includes(id));
+        pvRecord();
         ab.forEach(id => { S.pv.g[id].aband = true; }); main.forEach(id => { S.pv.g[id].aband = false; });
         S.pv.order = [...main, ...ab, ...hiddenOut];
         drawHome();
@@ -901,56 +1135,26 @@ function mountJournalSec() {
 async function onClick(e) {
   const g = e.target.closest('[data-go]');
   if (g && S.el.contains(g)) { go(g.dataset.go); return; }
-  const card = e.target.closest('.pv-card');
-  if (card && !drag.on && !e.target.closest('.pv-ghost')) { S.pv.sel = S.pv.sel === card.dataset.id && innerWidth > 1100 ? null : card.dataset.id; drawHome(); return; }
+  if (homeClick(e)) return;
   const a = e.target.closest('[data-act]');
   if (!a || a.tagName === 'INPUT' || a.tagName === 'SELECT') return;
   const act = a.dataset.act, room = a.dataset.key && S.rooms.get(a.dataset.key);
   switch (act) {
     case 'close': closeAdmin(); break;
-    case 'refresh': syncRooms(); loadToday(); toast('Actualisé'); break;
+    case 'refresh': syncRooms(); loadToday(); notify('Actualisé', { icon: 'undo' }); break;
     case 'room': S.live.sel = S.live.sel === a.dataset.key && innerWidth > 1100 ? null : a.dataset.key; if (S.sec !== 'live') { S.live.view = 'rooms'; go('live'); } else { S.live.view = 'rooms'; draw('live'); } break;
     case 'room-close': S.live.sel = null; closeSheet(); draw('live'); break;
     case 'lv-view': S.live.view = a.dataset.v; draw('live'); break;
-    case 'copy': try { await navigator.clipboard.writeText(a.dataset.v); toast('Code copié'); } catch (_) {} break;
+    case 'copy': try { await navigator.clipboard.writeText(a.dataset.v); notify('Code copié', { icon: 'copy', sub: a.dataset.v }); } catch (_) {} break;
     case 'pmenu': playerMenu(a, room, a.dataset.p); break;
     case 'del-room': deleteRoom(room); break;
-    case 'unban-room': if (room) { await update(ref(db, room.key), { banned: null }).catch(() => toast('Refusé', true)); logAdmin('joueur', `Exclusions levées pour la partie ${room.code}`, room.g.name); toast('Exclusions levées'); } break;
+    case 'unban-room': if (room) unbanRoom(room); break;
     case 'cleanup': cleanup(); break;
     case 'maint-off': setMaintenance(false); break;
     case 'unban': unban(a.dataset.uid); break;
-    case 'reset-visits': if (await ask({ title: 'Remettre le compteur à zéro ?', text: 'L’ancien compteur de visites repart de 0. Les statistiques d’audience ne changent pas.', ok: 'Remettre à zéro', danger: true })) { await set(ref(db, 'hub/stats/visits'), 0); logAdmin('stats', 'Compteur historique de visites remis à zéro'); toast('Compteur remis à zéro'); } break;
+    case 'reset-visits': resetVisits(); break;
     case 'del-all': deleteAll(); break;
-    case 'edit-game': initPreview(); S.pv.sel = a.dataset.id; go('home'); break;
-    case 'pv-device': S.pv.device = a.dataset.v; drawHome(); break;
-    case 'pv-filter': S.pv.filter = a.dataset.v; drawHome(); break;
-    case 'pv-close': S.pv.sel = null; closeSheet(); drawHome(); break;
-    case 'pv-aband': pvSet(S.pv.sel, 'aband', a.dataset.v === '1'); break;
-    case 'pv-tag': {
-      const id = S.pv.sel, t = new Set(String(S.pv.g[id].tags).split(' ').filter(Boolean));
-      t.has(a.dataset.v) ? t.delete(a.dataset.v) : t.add(a.dataset.v);
-      pvSet(id, 'tags', TAGS.map(([k]) => k).filter(k => t.has(k)).join(' ')); break;
-    }
-    case 'pv-move': {
-      const o = S.pv.order, id = S.pv.sel, i = o.indexOf(id);
-      o.splice(i, 1);
-      o.splice(a.dataset.v === 'first' ? 0 : Math.max(0, Math.min(o.length, i + Number(a.dataset.v))), 0, id);
-      drawHome(); refreshSheet(); break;
-    }
-    case 'pv-restore': {
-      const id = S.pv.sel, d = defaults()[id];
-      Object.assign(S.pv.g[id], { name: d.name, sub: d.sub, tags: d.tags, wide: d.wide, aband: d.aband, wip: d.wip });
-      drawHome(); refreshSheet(); toast('Valeurs d’origine rétablies (non publiées)'); break;
-    }
-    case 'pv-reset': {
-      if (!(await ask({ title: 'Réinitialiser l’accueil ?', text: 'Ordre, noms, sous-titres et filtres reviennent à ceux du site d’origine, et tous les jeux sont affichés. Rien n’est publié tant que tu n’as pas cliqué sur Publier.', ok: 'Réinitialiser' }))) return;
-      const D = defaults();
-      S.pv.order = Object.keys(D).sort((x, y) => D[x].i - D[y].i);
-      for (const [id, d] of Object.entries(D)) S.pv.g[id] = { name: d.name, sub: d.sub, tags: d.tags, wide: d.wide, aband: d.aband, wip: d.wip, hidden: false };
-      drawHome(); break;
-    }
-    case 'pv-discard': S.pv.order = [...S.pv.base.order]; S.pv.g = JSON.parse(JSON.stringify(S.pv.base.g)); closeSheet(); drawHome(); break;
-    case 'pv-publish': publishHome(); break;
+    case 'edit-game': initPreview(); S.pv.sel = a.dataset.id; S.pv.sheet = true; go('home'); break;
   }
 }
 
@@ -960,38 +1164,63 @@ function onChange(e) {
   const v = a.type === 'checkbox' ? a.checked : a.value;
   switch (a.dataset.act) {
     case 'maint': setMaintenance(v, a); break;
-    case 'age': update(ref(db, 'hub/settings'), { ageGate: v }).then(() => { logAdmin('reglage', `Vérification d’âge ${v ? 'activée' : 'désactivée'}`); toast(`Vérification d’âge ${v ? 'activée' : 'désactivée'}`); }, () => { a.checked = !v; toast('Refusé', true); }); break;
+    case 'age': setAgeGate(v, a); break;
     case 'lv-game': S.live.game = v; draw('live'); break;
     case 'lv-idle': S.live.idle = v; draw('live'); break;
-    case 'pv-hidden': S.pv.showHidden = v; drawHome(); break;
-    case 'pv-f-hidden': pvSet(S.pv.sel, 'hidden', !v); break;
-    case 'pv-f-wide': pvSet(S.pv.sel, 'wide', v); break;
-    case 'pv-f-wip': pvSet(S.pv.sel, 'wip', v ? Math.max(0, (defaults()[S.pv.sel] || {}).wip || 0) : -1); break;
+    default: homeChange(a, v);
   }
 }
 
 function onInput(e) {
   const t = e.target;
   if (t.id === 'ap-live-q') { S.live.q = t.value.trim(); const q = S.el.querySelector('#ap-q'); if (q) q.value = t.value; draw('live'); return; }
-  if (t.dataset.f && S.pv && S.pv.sel) { S.pv.g[S.pv.sel][t.dataset.f] = t.value.replace(/</g, ''); drawHome(); return; }
-  if (t.dataset.act === 'pv-wip') { S.pv.g[S.pv.sel].wip = Number(t.value); t.nextElementSibling.textContent = t.value + ' %'; drawHome(); }
+  homeInput(t);
 }
 
+// Actions immédiates, sans confirmation : chaque action importante affiche une notification, avec
+// « Annuler » quand on peut revenir en arrière (l'état d'avant est relu juste avant l'action).
 async function setMaintenance(on, input) {
-  if (on && !(await ask({ title: 'Mettre le site en maintenance ?', text: 'Toutes les pages affichent l’écran de maintenance et les parties en cours sont gelées. Toi seul gardes l’accès dans cet onglet.', ok: 'Mettre en maintenance', danger: true }))) { if (input) input.checked = false; return; }
   if (on) { try { sessionStorage.setItem('gh-mx-admin', '1'); } catch (_) {} }
-  try { await update(ref(db, 'hub/settings'), { maintenance: on }); } catch (_) { if (input) input.checked = !on; toast('Refusé', true); return; }
+  try { await update(ref(db, 'hub/settings'), { maintenance: on }); } catch (_) { if (input) input.checked = !on; notify('Action refusée', { kind: 'err' }); return; }
   logAdmin('reglage', `Maintenance ${on ? 'activée' : 'désactivée'}`);
-  toast(on ? 'Site en maintenance' : 'Site rouvert');
+  notify(on ? 'Site en maintenance' : 'Site rouvert', {
+    kind: on ? 'warn' : 'ok', icon: on ? 'warn' : 'live',
+    sub: on ? 'Les visiteurs voient l’écran de maintenance, les parties sont gelées' : 'Les visiteurs ont de nouveau accès au site',
+    undo: () => setMaintenance(!on),
+  });
+}
+
+async function setAgeGate(on, input) {
+  try { await update(ref(db, 'hub/settings'), { ageGate: on }); } catch (_) { if (input) input.checked = !on; notify('Action refusée', { kind: 'err' }); return; }
+  logAdmin('reglage', `Vérification d’âge ${on ? 'activée' : 'désactivée'}`);
+  notify(`Vérification d’âge ${on ? 'activée' : 'désactivée'}`, { icon: 'lock', sub: on ? 'La date de naissance est demandée à l’entrée' : 'Le site s’ouvre sans vérification', undo: () => setAgeGate(!on) });
+}
+
+// Copie d'une partie (et des secrets d'Undercover) avant suppression, pour pouvoir la remettre.
+async function snapshot(r) {
+  const [room, sec, host] = await Promise.all([get(ref(db, r.key)),
+    r.prefix === 'games' ? get(ref(db, `ucSecret/${r.code}`)) : null, r.prefix === 'games' ? get(ref(db, `ucHost/${r.code}`)) : null]);
+  return { key: r.key, code: r.code, room: room.val(), sec: sec && sec.val(), host: host && host.val() };
+}
+async function restore(snaps) {
+  for (const x of snaps) {
+    if (!x.room) continue;
+    // Mauvais Perdants : présence et réponses doivent porter l'heure du serveur, on ne les remet pas.
+    if (x.key.startsWith('mp/')) { delete x.room.presence; delete x.room.start; delete x.room.subs; }
+    await set(ref(db, x.key), x.room).catch(() => {});
+    if (x.sec) await set(ref(db, `ucSecret/${x.code}`), x.sec).catch(() => {});
+    if (x.host) await set(ref(db, `ucHost/${x.code}`), x.host).catch(() => {});
+  }
+  syncRooms();
 }
 
 async function deleteRoom(r) {
   if (!r) return;
-  if (!(await ask({ title: `Supprimer la partie ${r.code} ?`, text: `${r.g.name} · ${plural(playersOf(r).length, 'joueur')}. Les joueurs sont renvoyés à l’accueil du jeu.`, ok: 'Supprimer', danger: true }))) return;
-  try { await removeRoom(r); } catch (_) { toast('Suppression refusée', true); return; }
+  let snap;
+  try { snap = await snapshot(r); await removeRoom(r); } catch (_) { notify('Suppression refusée', { kind: 'err' }); return; }
   logAdmin('partie', `Partie ${r.code} supprimée`, r.g.name);
   if (S.live.sel === r.key) { S.live.sel = null; closeSheet(); }
-  toast('Partie supprimée');
+  notify('Partie supprimée', { icon: 'trash', sub: `${r.g.name} · ${r.code}`, undo: async () => { await restore([snap]); logAdmin('partie', `Partie ${r.code} restaurée`, r.g.name); } });
 }
 async function removeRoom(r) {
   if (r.prefix === 'games') { await remove(ref(db, `ucSecret/${r.code}`)); await remove(ref(db, `ucHost/${r.code}`)); }
@@ -1002,23 +1231,23 @@ async function removeRoom(r) {
 async function cleanup() {
   const idle = totals().rooms.filter(x => x.idle);
   if (!idle.length) return;
-  const byGame = {};
-  idle.forEach(x => { byGame[x.r.g.name] = (byGame[x.r.g.name] || 0) + 1; });
-  if (!(await ask({ title: `Supprimer ${plural(idle.length, 'partie inactive', 'parties inactives')} ?`, text: `${Object.entries(byGame).map(([k, v]) => `${k} : ${v}`).join(' · ')}. Aucune n’a de joueur connecté ni de signe de vie depuis 3 h (ou elle est terminée).`, ok: 'Supprimer', danger: true }))) return;
-  let n = 0;
-  for (const x of idle) { try { await removeRoom(x.r); n++; } catch (_) {} }
-  logAdmin('global', `${plural(n, 'partie inactive supprimée', 'parties inactives supprimées')}`, 'nettoyage');
-  toast(`${plural(n, 'partie supprimée', 'parties supprimées')}`);
+  const snaps = [];
+  for (const x of idle) { try { snaps.push(await snapshot(x.r)); await removeRoom(x.r); } catch (_) {} }
+  logAdmin('global', `${plural(snaps.length, 'partie inactive supprimée', 'parties inactives supprimées')}`, 'nettoyage');
+  notify(`${plural(snaps.length, 'partie inactive supprimée', 'parties inactives supprimées')}`, { icon: 'broom', sub: 'Sans joueur connecté ni signe de vie',
+    undo: async () => { await restore(snaps); logAdmin('global', `${plural(snaps.length, 'partie restaurée', 'parties restaurées')}`, 'nettoyage'); } });
 }
 
 async function deleteAll() {
-  if (!(await ask({ title: 'Supprimer TOUTES les parties ?', text: 'Irréversible : toutes les parties de tous les jeux, pour tous les joueurs. Écris SUPPRIMER pour confirmer.', ok: 'Tout supprimer', danger: true, input: { placeholder: 'SUPPRIMER', check: v => v === 'SUPPRIMER' ? '' : 'Écris SUPPRIMER en majuscules.' } }))) return;
+  const snaps = [];
+  for (const r of [...S.rooms.values()]) { try { snaps.push(await snapshot(r)); } catch (_) {} }
   for (const g of CATALOG) { try { await remove(ref(db, g.db)); } catch (_) {} }
   await remove(ref(db, 'ucSecret')).catch(() => {}); await remove(ref(db, 'ucHost')).catch(() => {});
   for (const r of S.rooms.values()) r.offs.forEach(f => f());
   S.rooms.clear(); S.live.sel = null; schedule();
   logAdmin('global', 'Toutes les parties supprimées', 'tous les jeux');
-  toast('Toutes les parties ont été supprimées');
+  notify('Toutes les parties supprimées', { kind: 'warn', icon: 'trash', sub: `${plural(snaps.length, 'partie')}, tous jeux confondus`,
+    undo: async () => { await restore(snaps); logAdmin('global', 'Parties restaurées après suppression globale', 'tous les jeux'); } });
 }
 
 // ── Joueurs ──
@@ -1027,8 +1256,8 @@ function playerMenu(anchor, r, key) {
   const p = playersOf(r).find(x => x.key === key);
   if (!p) return;
   const items = [
-    { t: 'Renommer', i: 'edit', f: () => renamePlayer(r, p) },
-    { t: 'Exclure de la partie', i: 'kick', f: () => kick(r, p, {}), off: p.host, why: p.host ? 'L’hôte ne peut pas être exclu : supprime la partie.' : '' },
+    { t: 'Renommer', i: 'edit', f: () => renamePlayer(r, p, anchor) },
+    { t: 'Exclure de la partie', i: 'kick', f: () => kick(r, p, {}), off: p.host },
     { t: 'Exclure pour de bon', i: 'lock', f: () => kick(r, p, { ban: true }), off: p.host || !p.uid },
     '-',
     { t: 'Bannir du site', i: 'bans', danger: true, f: () => banSite(r, p), off: !p.uid },
@@ -1049,84 +1278,94 @@ const kickUpdates = (r, p) => {
   return u;
 };
 
+// Exclut le joueur ; renvoie de quoi le remettre (valeurs d'avant), ou null en cas d'échec.
 async function kick(r, p, { ban = false, silent = false } = {}) {
-  if (!silent && !(await ask({ title: ban ? `Exclure ${p.name} pour de bon ?` : `Exclure ${p.name} ?`, text: ban ? `Retiré de la partie ${r.code} (${r.g.name}) et ne pourra plus y revenir.` : `Retiré de la partie ${r.code} (${r.g.name}). Il peut la rejoindre à nouveau tant qu’elle est dans le salon.`, ok: 'Exclure', danger: true }))) return false;
   const u = kickUpdates(r, p);
   if (ban && p.uid) u[`banned/${p.uid}`] = true;
+  const before = {};
+  await Promise.all(Object.keys(u).map(async k => { const snap = await get(ref(db, `${r.key}/${k}`)).catch(() => null); before[k] = snap ? snap.val() : null; }));
+  let partial = false;
   try { await update(ref(db, r.key), u); }
   catch (e) {
-    if (ban && isDenied(e)) {   // règles pas encore publiées : on exclut au moins
-      delete u[`banned/${p.uid}`];
-      try { await update(ref(db, r.key), u); toast('Exclu (l’exclusion définitive attend les nouvelles règles)', true); } catch (_) { toast('Exclusion refusée', true); return false; }
-    } else { toast('Exclusion refusée', true); return false; }
+    if (!(ban && isDenied(e))) { notify('Exclusion refusée', { kind: 'err' }); return null; }
+    delete u[`banned/${p.uid}`]; delete before[`banned/${p.uid}`]; partial = true;   // règles pas encore publiées : on exclut au moins
+    try { await update(ref(db, r.key), u); } catch (_) { notify('Exclusion refusée', { kind: 'err' }); return null; }
   }
-  logAdmin('joueur', `${p.name} exclu de la partie ${r.code}${ban ? ' pour de bon' : ''}`, r.g.name);
-  if (!silent) toast(`${p.name} exclu`);
-  return true;
+  logAdmin('joueur', `${p.name} exclu de la partie ${r.code}${ban && !partial ? ' pour de bon' : ''}`, r.g.name);
+  if (r.prefix === 'mp') for (const k of Object.keys(before)) if (k.startsWith('presence/')) before[k] = null;
+  const undo = async () => { await update(ref(db, r.key), before).catch(() => {}); logAdmin('joueur', `${p.name} réintégré dans la partie ${r.code}`, r.g.name); };
+  if (!silent) notify(`${p.name} exclu`, { icon: ban ? 'lock' : 'kick', kind: partial ? 'warn' : '', undo,
+    sub: partial ? 'Exclusion définitive impossible : règles de la base à publier' : `${r.g.name} · ${r.code}${ban ? ' · ne peut plus revenir' : ''}` });
+  return { undo };
 }
 
-async function renamePlayer(r, p) {
+// Renommage sur place : le nom devient un champ dans sa ligne. Entrée enregistre, Échap annule.
+function inlineEdit(anchor, value, max) {
+  return new Promise(resolve => {
+    const row = anchor && anchor.closest('.ap-row, tr');
+    const slot = row && (row.querySelector('.who') || row.querySelector('.t'));
+    if (!slot) return resolve(null);
+    S.editing = true;
+    const keep = slot.innerHTML;
+    slot.innerHTML = `<input class="ap-inline" type="text" maxlength="${max}" value="${esc(value)}" aria-label="Nouveau nom">`;
+    const f = slot.querySelector('input');
+    f.focus(); f.select();
+    let done = false;
+    const end = v => { if (done) return; done = true; S.editing = false; slot.innerHTML = keep; resolve(v); schedule(); };
+    f.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); const v = f.value.trim(); if (!v || /</.test(v)) { f.classList.remove('bad'); void f.offsetWidth; f.classList.add('bad'); return; } end(v); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); end(null); }
+    });
+    f.addEventListener('blur', () => { const v = f.value.trim(); end(v && !/</.test(v) && v !== value ? v : null); });
+  });
+}
+
+async function renamePlayer(r, p, anchor) {
   const max = NAME_MAX[r.prefix] || 30;
-  const name = await ask({ title: `Renommer ${p.name}`, text: 'Pour un pseudo déplacé. Le joueur garde sa place dans la partie.', ok: 'Renommer',
-    input: { value: p.name, max, check: v => !v.trim() ? 'Le nom ne peut pas être vide.' : /</.test(v) ? 'Caractère < interdit.' : v.trim().length > max ? `${max} caractères au plus.` : '' } });
-  if (!name) return;
-  const v = name.trim(), u = { [`${p.path}/name`]: v };
+  const name = await inlineEdit(anchor, p.name, max);
+  if (!name || name === p.name) return;
+  const v = name.trim(), u = { [`${p.path}/name`]: v }, back = { [`${p.path}/name`]: p.name };
   if (r.prefix === 'mp' && p.uid) {
     const roster = await get(ref(db, `${r.key}/match/roster/${p.uid}`)).catch(() => null);
-    if (roster && roster.exists()) u[`match/roster/${p.uid}/name`] = v;
+    if (roster && roster.exists()) { u[`match/roster/${p.uid}/name`] = v; back[`match/roster/${p.uid}/name`] = roster.val().name; }
   }
-  try { await update(ref(db, r.key), u); } catch (_) { toast('Renommage refusé', true); return; }
+  try { await update(ref(db, r.key), u); } catch (_) { notify('Renommage refusé', { kind: 'err' }); return; }
   logAdmin('joueur', `${p.name} renommé « ${v} » dans la partie ${r.code}`, r.g.name);
-  toast('Joueur renommé');
+  notify('Joueur renommé', { icon: 'edit', sub: `${p.name} → ${v}`, undo: () => update(ref(db, r.key), back).catch(() => {}) });
 }
 
 async function banSite(r, p) {
-  const why = await ask({ title: `Bannir ${p.name} du site ?`, text: 'Il est retiré de cette partie et ne peut plus créer, rejoindre ni lire aucune partie, sur tous les jeux. Tu peux lever le bannissement dans « Bannis ».', ok: 'Bannir', danger: true,
-    input: { value: '', placeholder: 'Motif (facultatif)', max: 120, optional: true, check: v => /</.test(v) ? 'Caractère < interdit.' : '' } });
-  if (why === false) return;
-  try { await set(ref(db, `bans/${p.uid}`), { at: Date.now(), name: String(p.name || '').replace(/</g, '').slice(0, 40), ...(why && why.trim() ? { why: why.trim() } : {}) }); }
-  catch (e) { await ask({ title: 'Bannissement refusé', text: isDenied(e) ? 'Les règles de la base ne prévoient pas encore les bannissements : publie d’abord firebase/database.rules.phase2.json dans la console Firebase.' : 'Réessaie dans un instant.', ok: 'Compris', single: true }); return; }
-  if (!p.host) await kick(r, p, { ban: true, silent: true });
-  logAdmin('joueur', `${p.name} banni du site${why && why.trim() ? ` (${why.trim()})` : ''}`, r.g.name);
-  toast(`${p.name} banni du site`);
+  try { await set(ref(db, `bans/${p.uid}`), { at: Date.now(), name: String(p.name || '').replace(/</g, '').slice(0, 40) }); }
+  catch (e) { notify('Bannissement refusé', { kind: 'err', sub: isDenied(e) ? 'Règles de la base à publier' : 'Réessaie dans un instant' }); return; }
+  const k = p.host ? null : await kick(r, p, { ban: true, silent: true });
+  logAdmin('joueur', `${p.name} banni du site`, r.g.name);
+  notify(`${p.name} banni du site`, { kind: 'warn', icon: 'bans', sub: 'Plus aucun accès aux parties, sur tous les jeux',
+    undo: async () => { await remove(ref(db, `bans/${p.uid}`)).catch(() => {}); if (k) await k.undo(); logAdmin('joueur', `Bannissement de ${p.name} annulé`); } });
 }
 
 async function unban(uid) {
   const b = S.bans[uid] || {};
-  if (!(await ask({ title: `Lever le bannissement de ${b.name || 'ce compte'} ?`, text: 'Il pourra de nouveau jouer à tous les jeux.', ok: 'Lever' }))) return;
-  try { await remove(ref(db, `bans/${uid}`)); } catch (_) { toast('Refusé', true); return; }
+  try { await remove(ref(db, `bans/${uid}`)); } catch (_) { notify('Action refusée', { kind: 'err' }); return; }
   logAdmin('joueur', `Bannissement de ${b.name || 'un compte'} levé`);
-  toast('Bannissement levé');
+  notify('Bannissement levé', { icon: 'bans', sub: `${b.name || 'Ce compte'} peut de nouveau jouer`, undo: () => set(ref(db, `bans/${uid}`), b).catch(() => {}) });
+}
+
+async function unbanRoom(r) {
+  const before = r.f.banned;
+  try { await update(ref(db, r.key), { banned: null }); } catch (_) { notify('Action refusée', { kind: 'err' }); return; }
+  logAdmin('joueur', `Exclusions levées pour la partie ${r.code}`, r.g.name);
+  notify('Exclusions levées', { icon: 'lock', sub: `${r.g.name} · ${r.code}`, undo: () => update(ref(db, r.key), { banned: before }).catch(() => {}) });
+}
+
+async function resetVisits() {
+  try { await set(ref(db, 'hub/stats/visits'), 0); } catch (_) { notify('Action refusée', { kind: 'err' }); return; }
+  logAdmin('stats', 'Compteur historique de visites remis à zéro');
+  notify('Compteur remis à zéro', { icon: 'audience', sub: 'Les statistiques d’audience ne changent pas' });
 }
 
 // ════════════════════════════════════════════════════════════════════════════════════════════
 // Alertes, menus, feuilles, messages
 // ════════════════════════════════════════════════════════════════════════════════════════════
-// Alerte façon iOS. Renvoie true / false, ou le texte saisi (false si annulé).
-function ask({ title, text = '', ok = 'OK', danger = false, single = false, input = null }) {
-  return new Promise(resolve => {
-    const veil = document.createElement('div');
-    veil.className = 'ap-veil';
-    veil.innerHTML = `<div class="ap-alert" role="alertdialog" aria-modal="true" aria-labelledby="ap-al-t"><div class="body"><h3 id="ap-al-t">${esc(title)}</h3><p>${esc(text)}</p>
-      ${input ? `<input type="text" maxlength="${input.max || 60}" value="${esc(input.value || '')}" placeholder="${esc(input.placeholder || '')}" aria-label="${esc(title)}"><div class="err"></div>` : ''}</div>
-      <div class="acts${single ? ' one' : ''}">${single ? '' : '<button type="button" data-r="0">Annuler</button>'}<button type="button" data-r="1" class="${danger ? 'danger' : ''}">${esc(ok)}</button></div></div>`;
-    S.el.append(veil);
-    const field = veil.querySelector('input'), err = veil.querySelector('.err');
-    const done = v => { veil.remove(); document.removeEventListener('keydown', key, true); resolve(v); };
-    const confirm = () => {
-      if (!field) return done(true);
-      const m = input.check ? input.check(field.value) : '';
-      if (m) { err.textContent = m; field.focus(); return; }
-      done(input.optional ? field.value : field.value || false);
-    };
-    const key = e => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); done(false); } else if (e.key === 'Enter') { e.preventDefault(); confirm(); } };
-    document.addEventListener('keydown', key, true);
-    veil.addEventListener('click', e => { const b = e.target.closest('[data-r]'); if (b) b.dataset.r === '1' ? confirm() : done(false); else if (e.target === veil) done(false); });
-    (field || veil.querySelector('[data-r="1"]')).focus();
-    if (field) field.select();
-  });
-}
-
 function menu(anchor, items, note = '') {
   closeMenu();
   const m = document.createElement('div');
@@ -1155,16 +1394,27 @@ function sheet(html, k) {
   const veil = document.createElement('div'); veil.className = 'ap-veil'; veil.style.background = 'rgba(0,0,0,.35)'; veil.dataset.sheet = k;
   sh = document.createElement('div'); sh.className = 'ap-sheet'; sh.dataset.k = k; sh.innerHTML = html;
   S.el.append(veil, sh);
-  const close = () => { if (k === 'room') S.live.sel = null; else if (S.pv) S.pv.sel = null; closeSheet(); draw(S.sec); };
+  const close = () => { if (k === 'room') S.live.sel = null; else if (S.pv) { S.pv.sel = null; S.pv.sheet = false; } closeSheet(); draw(S.sec); };
   veil.addEventListener('click', close);
 }
 function closeSheet() { document.querySelectorAll('.ap-sheet, .ap-veil[data-sheet]').forEach(x => x.remove()); }
 
-let toastTimer = 0;
-function toast(text, err = false) {
-  let t = S.el.querySelector('.ap-toast');
-  if (!t) { t = document.createElement('div'); t.className = 'ap-toast'; t.setAttribute('role', 'status'); S.el.append(t); }
-  t.textContent = text; t.classList.toggle('err', err);
-  requestAnimationFrame(() => t.classList.add('show'));
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+// Notification façon iOS : descend du haut, icône, titre, détail, « Annuler » quelques secondes.
+let notifTimer = 0;
+function notify(title, { sub = '', kind = '', icon: ic = 'info', undo = null } = {}) {
+  let n = S.el.querySelector('.ap-notif');
+  if (!n) { n = document.createElement('div'); n.className = 'ap-notif'; n.setAttribute('role', 'status'); n.setAttribute('aria-live', 'polite'); S.el.append(n); }
+  n.dataset.kind = kind;
+  n.innerHTML = `<span class="ico">${icon(kind === 'err' ? 'warn' : ic)}</span><span class="txt"><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span>${undo ? '<button type="button" class="undo">Annuler</button>' : ''}`;
+  n.classList.remove('show'); void n.offsetWidth; n.classList.add('show');
+  if (undo) n.querySelector('.undo').addEventListener('click', async () => {
+    n.classList.remove('show'); clearTimeout(notifTimer);
+    await undo();
+    notify('Action annulée', { icon: 'undo' });
+  }, { once: true });
+  const hide = ms => { clearTimeout(notifTimer); notifTimer = setTimeout(() => n.classList.remove('show'), ms); };
+  hide(undo ? 6000 : 3200);
+  n.onmouseenter = () => clearTimeout(notifTimer);
+  n.onmouseleave = () => hide(2200);
 }
+const toast = (text, err = false) => notify(text, { kind: err ? 'err' : '' });

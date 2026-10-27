@@ -283,6 +283,20 @@ describe('Maintenance', () => {
     await assertSucceeds(set(ref(admin, 'hub/settings/maintenance'), true));
     await assertFails(set(ref(admin, 'hub/settings/maintenance'), 'oui'));
   });
+  test("hub/waiting : l'écran de maintenance s'y signale, seulement en maintenance ; l'admin seul le lit", async () => {
+    await assertFails(set(ref(anon, 'hub/waiting/abc123'), { t: 1 }));                 // site ouvert
+    await on();
+    await assertSucceeds(set(ref(anon, 'hub/waiting/abc123'), { t: 1 }));
+    await assertFails(set(ref(anon, 'hub/waiting/ABC'), { t: 1 }));                    // clé invalide
+    await assertFails(set(ref(anon, 'hub/waiting/abc123'), { t: 'x' }));
+    await assertFails(set(ref(anon, 'hub/waiting/abc123'), { t: 1, x: 1 }));
+    await assertFails(get(ref(anon, 'hub/waiting')));
+    await assertFails(get(ref(alice, 'hub/waiting')));
+    await assertSucceeds(get(ref(admin, 'hub/waiting')));
+    await assertSucceeds(remove(ref(anon, 'hub/waiting/abc123')));                     // l'onglet part
+    await seed('hub/waiting/old1', { t: 1 });
+    await assertSucceeds(remove(ref(admin, 'hub/waiting/old1')));
+  });
   for (const [P, code] of Object.entries(GAMES)) {
     test(`${P} : ni créer, ni rejoindre, ni lire, ni jouer, ni supprimer ; l'admin si`, async () => {
       await seed(`${P}/${code}`, { ...lobby(code), members: { alice: true, bob: true } });

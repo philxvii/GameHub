@@ -41,6 +41,16 @@ describe('Mise en page de l’accueil', () => {
     await assertFails(set(ref(alice, 'hub/layout/order'), 'uno'));
     await assertFails(set(ref(anon, 'hub/layout/games/uno/name'), 'Pirate'));
   });
+  test('haut de page, pastille, « Bientôt » et textes à venir', async () => {
+    await assertSucceeds(set(ref(admin, 'hub/layout/site'), { title: 'On joue ?', lede: '{n} jeux, sans compte.', surprise: false, chips: 'amis duel' }));
+    await assertSucceeds(set(ref(admin, 'hub/layout/games/uno'), { badge: 'Nouveau', soon: true, next: { 0: { t: 'Un tapis', s: 'Des cartes posées.' } } }));
+    await assertFails(set(ref(admin, 'hub/layout/site/title'), ''));
+    await assertFails(set(ref(admin, 'hub/layout/site/chips'), 'amis,<b>'));
+    await assertFails(set(ref(admin, 'hub/layout/site/autre'), 1));
+    await assertFails(set(ref(admin, 'hub/layout/games/uno/badge'), 'Beaucoup trop long pour une pastille'));
+    await assertFails(set(ref(admin, 'hub/layout/games/uno/next/3'), { t: 'x' }));
+    await assertFails(set(ref(alice, 'hub/layout/site/title'), 'Pirate'));
+  });
   test('valeurs hors format refusées, même pour l’admin', async () => {
     await assertFails(set(ref(admin, 'hub/layout/order'), 'uno;<script>'));
     await assertFails(set(ref(admin, 'hub/layout/games/uno/name'), '<b>UNO</b>'));

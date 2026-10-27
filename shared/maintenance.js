@@ -186,7 +186,26 @@
       document.body.replaceChildren(mx);
       root.classList.add('mx-on');
       unguard();
+      if (kind === 'locked') beatWaiting();
     });
+  }
+
+  // Présence sur l'écran de maintenance : l'admin compte les personnes devant (hub/waiting).
+  // Les règles de la base n'acceptent cette écriture qu'en maintenance ; une entrée non
+  // rafraîchie expire côté admin. Même principe dans le Worker (edge/src/worker.js).
+  var waitUrl = null;
+  function beatWaiting() {
+    if (waitUrl) return;
+    waitUrl = DB + 'hub/waiting/' + Math.random().toString(36).slice(2, 12) + '.json' + NS;
+    var beat = function () {
+      if (document.hidden) return;
+      fetch(waitUrl, { method: 'PUT', body: '{"t":{".sv":"timestamp"}}' }).catch(function () {});
+    };
+    beat();
+    setInterval(beat, 60000);
+    document.addEventListener('visibilitychange', beat);
+    window.addEventListener('pageshow', beat);
+    window.addEventListener('pagehide', function () { fetch(waitUrl, { method: 'DELETE', keepalive: true }).catch(function () {}); });
   }
 
   function open(admin, note) {

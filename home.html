@@ -159,6 +159,7 @@
   .chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);}
   .surprise{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 15px 0 12px;border-radius:999px;border:1px solid var(--border2);background:transparent;font-size:14.5px;font-weight:500;color:var(--text);cursor:pointer;transition:border-color var(--d-2),background-color var(--d-2),transform var(--d-1) var(--e-out);}
   .surprise:hover{border-color:var(--text);}
+  .surprise[hidden],.chip[hidden]{display:none;}
   .surprise:active{transform:scale(.97);}
   .surprise svg{width:18px;height:18px;transition:transform .5s var(--e-out);}
   .surprise.rolling svg{transform:rotate(360deg);transition:transform .9s var(--e-in-out);}
@@ -169,7 +170,10 @@
   /* Une rangee incomplete (9 jeux a 5 par rangee) reste centree. */
   .game-card{position:relative;min-width:0;flex:0 0 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));display:flex;flex-direction:column;container-type:inline-size;transition:opacity var(--d-3) var(--e-out);}
   .game-card.hidden-game{display:none;}
-  .game-card.coming-soon{opacity:.45;pointer-events:none;}
+  .game-card.coming-soon{opacity:.6;pointer-events:none;}
+  .game-card.coming-soon .front img{filter:saturate(.35);}
+  /* Pastille reglee dans l'admin (« Nouveau », « Bientot »…). */
+  .card-badge{position:absolute;top:clamp(10px,5cqi,16px);left:clamp(10px,5cqi,16px);z-index:3;display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,.94);color:#0E1016;font-size:12px;font-weight:600;letter-spacing:-.005em;box-shadow:0 4px 14px -4px rgba(0,0,0,.4);pointer-events:none;}
   .ghost{height:36px;padding:0 8px;border:none;background:transparent;font-size:12px;color:var(--muted);opacity:.45;cursor:pointer;}
   .ghost:hover,.ghost[aria-expanded="true"]{opacity:.9;}
   .abandoned{margin:0 auto;padding-bottom:56px;}
@@ -679,7 +683,7 @@
   }
   chips.forEach(ch => ch.addEventListener('click', () => { if (filter === ch.dataset.filter && !picked) return; clearPick(); filter = ch.dataset.filter; applyFilter(); }));
   btn.addEventListener('click', async () => {
-    const pool = visible().filter(matches);
+    const pool = visible().filter(matches).filter(c => !c.classList.contains('coming-soon'));
     const choices = pool.filter(c => c.dataset.game !== last);
     if (!choices.length) return;
     const pick = choices[Math.floor(Math.random() * choices.length)];
@@ -1026,9 +1030,14 @@
     const id = c.dataset.game;
     DEF[id] = { i, name: nameOf(c), sub: c.querySelector('.players').textContent, tags: c.dataset.tags, wide: c.hasAttribute('data-wide'),
       aband: !!c.closest('#abandoned'), wip: WIP[id] ? WIP[id].pct : null, cover: c.querySelector('.front img').getAttribute('src'),
-      href: c.getAttribute('href'), color: c.style.getPropertyValue('--c').trim() };
+      href: c.getAttribute('href'), color: c.style.getPropertyValue('--c').trim(), badge: '', soon: false,
+      next: WIP[id] ? WIP[id].soon.map(([t, s]) => ({ t, s })) : null };
   });
+  const NEXT = Object.fromEntries(Object.entries(WIP).map(([k, v]) => [k, v.soon]));
+  const h1 = document.querySelector('.intro h1'), lede = document.querySelector('.intro .lede'), surpriseBtn = document.getElementById('surprise');
+  const SITE = { title: h1.textContent, lede: '{n} jeux en ligne, sans compte. Crée une partie, partage le code.', surprise: true, chips: chips.map(c => c.dataset.filter).filter(f => f !== 'all').join(' ') };
   window.hubDefaults = () => JSON.parse(JSON.stringify(DEF));
+  window.hubSiteDefaults = () => ({ ...SITE });
   let applied = '';
   window.hubLayout = layout => {
     const key = JSON.stringify(layout || null);
@@ -1044,15 +1053,36 @@
       c.dataset.tags = o.tags ?? d.tags;
       c.toggleAttribute('data-wide', o.wide ?? d.wide);
       ((o.aband ?? d.aband) ? abandRow : grid).appendChild(c);
-      if (WIP[id]) { const w = o.wip ?? d.wip; WIP[id].off = w < 0; if (w >= 0) WIP[id].pct = w; }
+      if (WIP[id]) {
+        const w = o.wip ?? d.wip; WIP[id].off = w < 0; if (w >= 0) WIP[id].pct = w;
+        WIP[id].soon = NEXT[id].map(([t, s], k) => { const x = o.next && o.next[k]; return x && x.t ? [x.t, x.s || ''] : [t, s]; });
+      }
+      const soon = !!o.soon, badge = o.badge || (soon ? 'Bientôt' : '');
+      c.classList.toggle('coming-soon', soon);
+      if (soon) c.tabIndex = -1; else if (c.tabIndex === -1 && !c.classList.contains('is-out')) c.removeAttribute('tabindex');
+      let b = c.querySelector('.card-badge');
+      if (badge && !b) { b = document.createElement('span'); b.className = 'card-badge'; c.querySelector('.front').appendChild(b); }
+      if (b) { b.hidden = !badge; b.textContent = badge; }
     });
+    // Haut de la page.
+    const site = { ...SITE, ...(L.site || {}) };
+    h1.textContent = site.title;
+    lede.textContent = '';
+    site.lede.split('{n}').forEach((part, k) => {
+      if (k) { const w = document.createElement('span'); w.dataset.countWords = ''; lede.appendChild(w); }
+      lede.appendChild(document.createTextNode(part));
+    });
+    surpriseBtn.hidden = site.surprise === false;
+    const shown = site.chips.split(' ');
+    chips.forEach(ch => { if (ch.dataset.filter !== 'all') ch.hidden = !shown.includes(ch.dataset.filter); });
+    if (filter !== 'all' && !shown.includes(filter)) { filter = 'all'; clearPick(); }
     cards = [...grid.querySelectorAll('.game-card')];
     window.hubRefresh();
   };
 
   // Appele par le module Firebase quand la liste des jeux masques change.
   window.hubRefresh = () => {
-    const n = visible().length;
+    const n = visible().filter(c => !c.classList.contains('coming-soon')).length;
     document.querySelectorAll('[data-count-words]').forEach(el => { el.textContent = WORDS[n] || n; });
     applyFilter();
   };
@@ -1191,7 +1221,7 @@ const presenceKey = Math.random().toString(36).slice(2);
 const onlineRef = ref(db, `hub/online/${presenceKey}`);
 import { onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 const HEARTBEAT = 60_000, STALE = 3 * HEARTBEAT, PURGE = 10 * HEARTBEAT;
-let serverOffset = 0, onlineList = {};
+let serverOffset = 0, onlineList = {}, presenceDenied = false;
 onValue(ref(db, '.info/serverTimeOffset'), snap => { serverOffset = snap.val() || 0; renderOnline(); });
 const beat = () => set(onlineRef, {t:serverTimestamp()}).catch(() => {});
 onValue(ref(db, '.info/connected'), snap => {
@@ -1202,21 +1232,22 @@ onValue(ref(db, '.info/connected'), snap => {
 });
 setInterval(beat, HEARTBEAT);
 onValue(ref(db, 'hub/online'), snap => {
+  presenceDenied = false;
   onlineList = snap.val() || {};
   const now = Date.now() + serverOffset;
   for(const [k, v] of Object.entries(onlineList)){
     if(k !== presenceKey && !(now - (v && v.t) < PURGE)) remove(ref(db, `hub/online/${k}`)).catch(() => {});
   }
   renderOnline();
-});
+}, () => { presenceDenied = true; renderOnline(); });   // lecture refusée (maintenance) : pas de compteur plutôt qu'un faux « 0 en ligne »
 setInterval(renderOnline, HEARTBEAT);
 function renderOnline(){
   const now = Date.now() + serverOffset;
   const count = Object.entries(onlineList).filter(([k, v]) => k === presenceKey || now - (v && v.t) < STALE).length;
   const el = document.getElementById('online-count');
-  if(el) el.textContent = `${count} en ligne`;
+  if(el){ el.textContent = presenceDenied ? '' : `${count} en ligne`; el.closest('.live').hidden = presenceDenied; }
   const mini = document.getElementById('live-mini');
-  if(mini){ mini.lastElementChild.textContent = `${count} en ligne`; mini.hidden = false; }
+  if(mini){ mini.lastElementChild.textContent = `${count} en ligne`; mini.hidden = presenceDenied; }
 }
 
 // ── Visit counter ──

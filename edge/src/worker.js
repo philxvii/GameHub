@@ -131,6 +131,13 @@ ${BODY}
 <script type="module">
 const $ = id => document.getElementById(id);
 const msg = $('msg');
+// Présence : l'admin compte les personnes devant cet écran (hub/waiting). Les règles de la base
+// n'acceptent cette écriture qu'en maintenance ; une entrée non rafraîchie expire côté admin.
+const waitUrl = ${JSON.stringify(DB)} + '/hub/waiting/' + Math.random().toString(36).slice(2, 12) + '.json';
+const waitBeat = () => { if (!document.hidden) fetch(waitUrl, { method: 'PUT', body: '{"t":{".sv":"timestamp"}}' }).catch(() => {}); };
+waitBeat(); setInterval(waitBeat, 60000);
+addEventListener('visibilitychange', waitBeat); addEventListener('pageshow', waitBeat);
+addEventListener('pagehide', () => { fetch(waitUrl, { method: 'DELETE', keepalive: true }).catch(() => {}); });
 $('gear').onclick = () => { $('admin').hidden = !$('admin').hidden; $('gear').setAttribute('aria-expanded', String(!$('admin').hidden)); };
 let fb;
 const load = () => fb || (fb = Promise.all([

@@ -92,9 +92,46 @@
             "wip": {
               ".validate": "newData.isNumber() && newData.val() >= -1 && newData.val() <= 100"
             },
+            "badge": {
+              ".validate": "newData.isString() && newData.val().length <= 16 && !newData.val().contains('<')"
+            },
+            "soon": {
+              ".validate": "newData.isBoolean()"
+            },
+            "next": {
+              "$i": {
+                ".validate": "$i.matches(/^[0-2]$/)",
+                "t": {
+                  ".validate": "newData.isString() && newData.val().length <= 40 && !newData.val().contains('<')"
+                },
+                "s": {
+                  ".validate": "newData.isString() && newData.val().length <= 120 && !newData.val().contains('<')"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              }
+            },
             "$other": {
               ".validate": false
             }
+          }
+        },
+        "site": {
+          "title": {
+            ".validate": "newData.isString() && newData.val().length <= 40 && !newData.val().contains('<') && newData.val().length >= 1"
+          },
+          "lede": {
+            ".validate": "newData.isString() && newData.val().length <= 160 && !newData.val().contains('<')"
+          },
+          "surprise": {
+            ".validate": "newData.isBoolean()"
+          },
+          "chips": {
+            ".validate": "newData.isString() && newData.val().matches(/^[a-z ]{0,80}$/)"
+          },
+          "$other": {
+            ".validate": false
           }
         },
         "v": {
@@ -102,6 +139,19 @@
         },
         "$other": {
           ".validate": false
+        }
+      },
+      "waiting": {
+        ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+        "$key": {
+          ".write": "(!(root.child('hub').child('settings').child('maintenance').val() !== true) && $key.matches(/^[a-z0-9]{1,16}$/)) || (auth != null && root.child('admins').child(auth.uid).val() === true && !newData.exists())",
+          ".validate": "newData.hasChildren(['t'])",
+          "t": {
+            ".validate": "newData.isNumber()"
+          },
+          "$other": {
+            ".validate": false
+          }
         }
       }
     },

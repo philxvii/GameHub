@@ -94,6 +94,18 @@ const rules = {
         $other: { '.validate': false },
       },
     },
+    // Écran de maintenance : chaque onglet qui l'affiche y signale sa présence (l'inverse de
+    // online, qui se ferme en maintenance). Écriture permise seulement en maintenance ; lecture
+    // et nettoyage réservés à l'admin.
+    waiting: {
+      '.read': ADMIN,
+      $key: {
+        '.write': `(!(${OPEN}) && $key.matches(/^[a-z0-9]{1,16}$/)) || (${ADMIN} && !newData.exists())`,
+        '.validate': "newData.hasChildren(['t'])",
+        t: { '.validate': 'newData.isNumber()' },
+        $other: { '.validate': false },
+      },
+    },
     stats: {
       visits: {
         '.read': true,
@@ -117,8 +129,20 @@ const rules = {
           wide: { '.validate': 'newData.isBoolean()' },
           aband: { '.validate': 'newData.isBoolean()' },
           wip: { '.validate': 'newData.isNumber() && newData.val() >= -1 && newData.val() <= 100' },
+          badge: { '.validate': SHORT_TEXT(16) },
+          soon: { '.validate': 'newData.isBoolean()' },   // « Bientôt » : visible, pas encore ouvrable
+          next: { $i: { '.validate': "$i.matches(/^[0-2]$/)", t: { '.validate': SHORT_TEXT(40) }, s: { '.validate': SHORT_TEXT(120) }, $other: { '.validate': false } } },
           $other: { '.validate': false },
         },
+      },
+      // Haut de la page : titre, phrase d'accroche ({n} = nombre de jeux en lettres), bouton
+      // « Surprends-moi », filtres affichés.
+      site: {
+        title: { '.validate': `${SHORT_TEXT(40)} && newData.val().length >= 1` },
+        lede: { '.validate': SHORT_TEXT(160) },
+        surprise: { '.validate': 'newData.isBoolean()' },
+        chips: { '.validate': "newData.isString() && newData.val().matches(/^[a-z ]{0,80}$/)" },
+        $other: { '.validate': false },
       },
       v: { '.validate': 'newData.isNumber()' },
       $other: { '.validate': false },
@@ -466,7 +490,7 @@ for (const prefix of Object.keys(GAMES)) {
   transition[prefix] = { '.read': ADMIN, '.write': `${ADMIN} && !newData.exists()`, $code: room };
 }
 // Anciens clients : ils lisent encore hub/updateLog au chargement, la lecture reste publique ici.
-transition.hub = { ...phase1.hub, hidden: rules.hub.hidden, settings: rules.hub.settings, layout: rules.hub.layout, updateLog: { ...rules.hub.updateLog, '.read': true }, stats: rules.hub.stats };
+transition.hub = { ...phase1.hub, hidden: rules.hub.hidden, settings: rules.hub.settings, layout: rules.hub.layout, updateLog: { ...rules.hub.updateLog, '.read': true }, stats: rules.hub.stats, waiting: rules.hub.waiting };
 transition.adminLog = rules.adminLog;
 writeFileSync(new URL('./database.rules.transition.json', import.meta.url), JSON.stringify({ rules: transition }, null, 2) + '\n');
 console.log('database.rules.transition.json écrit');
