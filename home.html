@@ -909,6 +909,14 @@
   document.addEventListener('pointerleave', () => { ptr = null; if (live) live.point(null); aim(); });
   // 3D temps reel (modules et modeles charges a la demande) ; les portraits ci-dessus restent le repli.
   let live = null, liveTried = false, liveReady = false, loadPct = 0;
+  // Fin du vol de l'affiche a l'ouverture : la 3D (construction, rendu) attend jusque-la pour ne pas le saccader.
+  // En attendant, les portraits (ou la derniere pose) restent affiches.
+  let flightEnd = 0;
+  function startLive() {
+    const left = flightEnd - performance.now();
+    if (left > 0) { setTimeout(startLive, left); return; }
+    if (live && wip.classList.contains('open') && !wipTeaser.hidden) live.start();
+  }
   const wipLoad = document.getElementById('wip-load'), wipHint = document.getElementById('wip-hint');
   function showLoad(p) { // barre « les personnages arrivent » : visible tant que la 3D n'est pas prete
     loadPct = p;
@@ -926,7 +934,7 @@
     try {
       const { createLive } = await import('./games/qui-est-ce/vivant/js/live.js');
       live = await createLive(chars.map(ch => ch.querySelector('.stage')), { reduced: reduce.matches, onProgress: showLoad, quiet: calm });
-      liveReady = true; showLoad(1); rest(); if (wip.classList.contains('open') && !wipTeaser.hidden) live.start();
+      liveReady = true; showLoad(1); rest(); startLive();
     } catch (err) { live = null; liveReady = true; showLoad(1); console.warn('Personnages 3D indisponibles, portraits utilisés', err); }
   }
   // Prechargement : chaque etape lourde de la 3D attend que l'utilisateur ne bouge plus depuis
@@ -935,7 +943,10 @@
   ['pointermove', 'pointerdown', 'wheel', 'scroll', 'keydown', 'touchstart'].forEach(ev =>
     addEventListener(ev, () => { lastInput = performance.now(); }, { passive: true, capture: true }));
   const calm = () => new Promise(function check(resolve) {
-    if (wip.classList.contains('open') && !wipTeaser.hidden) return requestAnimationFrame(() => setTimeout(resolve, 0));
+    if (wip.classList.contains('open') && !wipTeaser.hidden) {
+      const flying = flightEnd - performance.now();
+      return flying > 0 ? setTimeout(() => check(resolve), flying) : requestAnimationFrame(() => setTimeout(resolve, 0));
+    }
     const left = 700 - (performance.now() - lastInput);
     if (left > 0) return setTimeout(() => check(resolve), left);
     (window.requestIdleCallback || (f => setTimeout(f, 1)))(() => performance.now() - lastInput < 700 ? check(resolve) : resolve(), { timeout: 1000 });
@@ -982,7 +993,7 @@
     wipImg.src = card.querySelector('.front img').src;
     wipTeaser.hidden = g !== 'quiestce'; wipPoster.hidden = g === 'quiestce';
     wip.classList.toggle('q', g === 'quiestce');
-    if (g === 'quiestce') { over = pressed = null; loadChars(); rest(); showLoad(loadPct); if (live) live.start(); }
+    if (g === 'quiestce') { flightEnd = performance.now() + (reduce.matches ? 0 : 900); over = pressed = null; loadChars(); rest(); showLoad(loadPct); startLive(); }
     wip.classList.add('show', 'open'); wip.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden'; wip.scrollTop = 0;
     const flyer = g === 'quiestce' ? wipTeaser : wipPoster, media = card.querySelector('.media');
