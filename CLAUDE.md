@@ -13,3 +13,8 @@ Mets la note à jour à chaque étape ; supprime-la, ainsi que cette section, qu
 - Commits : `feat(scope): …` ou `fix(scope): …`, en français, en minuscules, sans point final,
   sans trailer ni co-auteur.
 - Rien ne se commite sans demande explicite de l'utilisateur.
+- Après un déploiement fait par l'utilisateur (règles Firebase, Worker Cloudflare, push), vérifie toi-même
+  que c'est bien en ligne (requête sur roulia.me, lecture de la base, Chrome) avant de dire que c'est fait.
+  Ne demande jamais à l'utilisateur de confirmer ce que tu peux contrôler.
+- Échanges avec une autre session Claude : dis à l'utilisateur en une phrase que tu lui as répondu ou
+  écrit, sans recopier ni résumer le contenu de l'échange. Assure-toi seulement que le message est parti.
