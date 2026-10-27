@@ -175,3 +175,16 @@ describe('Mauvais Perdants : réponses de manche', () => {
 });
 
 import assert from 'node:assert/strict';
+
+describe('Mauvais Perdants : jeu masqué', () => {
+  test("masqué par l'admin : ni créer, ni rejoindre, ni lire ; l'admin si ; réaffiché, ça reprend", async () => {
+    await seed(`mp/${CODE}`, lobby());
+    await seed('hub/hidden/mauvaisperdants', true);
+    await assertFails(set(ref(alice, 'mp/ABCD-11'), { ...lobby(), members: { alice: true } }));
+    await assertFails(set(r(bob, 'members/bob'), true));
+    await assertFails(get(r(eve, 'phase')));
+    await assertSucceeds(get(r(admin)));
+    await seed('hub/hidden/mauvaisperdants', false);
+    await assertSucceeds(set(r(bob, 'members/bob'), true));
+  });
+});

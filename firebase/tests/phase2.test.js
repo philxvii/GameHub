@@ -324,3 +324,40 @@ describe('Maintenance', () => {
     await assertSucceeds(set(ref(alice, 'p4/ABCD-11'), lobby('ABCD-11')));
   });
 });
+
+// Jeu masqué par l'admin (hub/hidden/<id>) : la base le ferme comme en maintenance, pour ce jeu seul.
+// Les pages des jeux sont publiques : sans cette règle, un jeu masqué restait entièrement jouable.
+describe('Jeu masqué', () => {
+  const HUB = { games: 'undercover', banqueroll: 'banqueroll', p4: 'puissance4', qec2: 'quiestce', bn: 'bataille', rl: 'roulette', mg: 'minigolf', uno: 'uno' };
+  for (const [P, code] of Object.entries(GAMES)) {
+    test(`${P} : masqué, ni créer, ni rejoindre, ni lire, ni jouer ; l'admin si ; les autres jeux restent ouverts`, async () => {
+      await seed(`${P}/${code}`, { ...lobby(code), members: { alice: true, bob: true } });
+      await seed(`hub/hidden/${HUB[P]}`, true);
+      await assertFails(set(ref(alice, `${P}/ABCD-11`), lobby('ABCD-11')));
+      await assertFails(set(ref(eve, `${P}/${code}/members/eve`), true));
+      await assertFails(update(ref(bob, `${P}/${code}`), { turnIndex: 1 }));
+      await assertFails(get(ref(bob, `${P}/${code}`)));
+      await assertFails(get(ref(eve, `${P}/${code}/phase`)));
+      await assertSucceeds(get(ref(admin, `${P}/${code}`)));
+      await assertSucceeds(update(ref(admin, `${P}/${code}`), { turnIndex: 1 }));
+      // Les autres jeux ne sont pas touchés.
+      const other = P === 'uno' ? 'p4' : 'uno';
+      await assertSucceeds(set(ref(alice, `${other}/ABCD-12`), lobby('ABCD-12')));
+      // Réaffiché : le jeu reprend.
+      await seed(`hub/hidden/${HUB[P]}`, false);
+      await assertSucceeds(set(ref(alice, `${P}/ABCD-11`), lobby('ABCD-11')));
+    });
+  }
+  test('Undercover masqué : secrets fermés aussi', async () => {
+    await seed('games/LOUP-42', { ...lobby('LOUP-42'), members: { alice: true } });
+    await seed('ucHost/LOUP-42', { civilWord: 'Café', undercoverWord: 'Thé', roles: ['civil'] });
+    await seed('hub/hidden/undercover', true);
+    await assertFails(get(ref(alice, 'ucHost/LOUP-42')));
+    await assertSucceeds(get(ref(admin, 'ucHost/LOUP-42')));
+  });
+  test("un visiteur ne peut pas démasquer un jeu", async () => {
+    await seed('hub/hidden/uno', true);
+    await assertFails(set(ref(alice, 'hub/hidden/uno'), false));
+    await assertFails(set(ref(anon, 'hub/hidden/uno'), false));
+  });
+});

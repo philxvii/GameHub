@@ -26,9 +26,15 @@ const GAMES = {
 const ADMIN = "auth != null && root.child('admins').child(auth.uid).val() === true";
 // Maintenance (hub/settings/maintenance) : plus aucune lecture ni écriture, sauf l'admin.
 const OPEN = "root.child('hub').child('settings').child('maintenance').val() !== true";
+// Jeu masqué par l'admin (hub/hidden/<id>) : fermé comme en maintenance, mais pour ce jeu seul.
+// Les pages d'un jeu sont publiques (dépôt public) : seule la base peut vraiment l'interdire.
+// Identifiant du jeu dans hub/hidden, par nœud de la base (liste GAMES de home.html).
+const HUB_ID = { games: 'undercover', banqueroll: 'banqueroll', p4: 'puissance4', qec2: 'quiestce', bn: 'bataille', rl: 'roulette', mg: 'minigolf', uno: 'uno', ms: 'minisubway', mp: 'mauvaisperdants' };
+const openFor = prefix => `${OPEN} && root.child('hub').child('hidden').child('${HUB_ID[prefix]}').val() !== true`;
 const NAME ="newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')";
 
 function gameRules(prefix, { code, joinAnyPhase, texts }) {
+  const OPEN = openFor(prefix);
   const phase = `root.child('${prefix}').child($code).child('phase')`;
   const room = {
     // Lecture : membres et admin. Jamais sur le préfixe entier (sauf admin).
@@ -134,6 +140,7 @@ for (const [prefix, opts] of Object.entries(GAMES)) rules[prefix] = gameRules(pr
 // porte l'auteur de la demande d'origine ; en Versus, elle ne vise que le réseau de son
 // auteur (siège attribué par l'hôte au lancement).
 function msRules() {
+  const OPEN = openFor('ms');
   const R = "root.child('ms').child($code)";
   const AUTH = `auth != null && ${OPEN}`;
   const MEMBER = `${R}.child('members').child(auth.uid).exists()`;
@@ -218,6 +225,7 @@ rules.ms = msRules();
 // réponse de manche — UNE fois, pendant l'étape `play`, jusqu'à l'échéance + 2,5 s
 // (horloge du serveur) : une réponse tardive ou rejouée est refusée par la base.
 function mpRules() {
+  const OPEN = openFor('mp');
   const R = "root.child('mp').child($code)";
   const M = `${R}.child('match')`;
   const AUTH = `auth != null && ${OPEN}`;
@@ -373,8 +381,8 @@ rules.ucHost = {
   '.read': ADMIN,
   '.write': `${ADMIN} && !newData.exists()`,
   $code: {
-    '.read': `(${UC_HOST} && ${OPEN}) || (${ADMIN})`,
-    '.write': `(${UC_HOST} && ${OPEN}) || (${ADMIN})`,
+    '.read': `(${UC_HOST} && ${openFor('games')}) || (${ADMIN})`,
+    '.write': `(${UC_HOST} && ${openFor('games')}) || (${ADMIN})`,
     '.validate': "newData.hasChildren(['civilWord', 'undercoverWord', 'roles'])",
     civilWord: { '.validate': WORD },
     undercoverWord: { '.validate': WORD },
@@ -387,10 +395,10 @@ rules.ucSecret = {
   '.read': ADMIN,
   '.write': `${ADMIN} && !newData.exists()`,
   $code: {
-    '.read': `(${UC_HOST} && ${OPEN}) || (${ADMIN})`,
-    '.write': `(${UC_HOST} && ${OPEN}) || (${ADMIN})`,
+    '.read': `(${UC_HOST} && ${openFor('games')}) || (${ADMIN})`,
+    '.write': `(${UC_HOST} && ${openFor('games')}) || (${ADMIN})`,
     $uid: {
-      '.read': `auth != null && auth.uid === $uid && ${OPEN}`,
+      '.read': `auth != null && auth.uid === $uid && ${openFor('games')}`,
       '.validate': "newData.hasChildren(['role'])",
       role: { '.validate': ROLE },
       word: { '.validate': WORD },
