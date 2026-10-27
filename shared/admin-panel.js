@@ -44,13 +44,15 @@ const AV_COLORS = ['#FF5A3C', '#2F6BFF', '#2FB36B', '#8B5CF6', '#E8A317', '#13A0
 
 // ── Icônes (traits 1,8, 24 × 24) ──
 const P = {
-  overview: '<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',
-  live: '<circle cx="12" cy="12" r="2.6" fill="currentColor"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>',
-  home: '<rect x="3.5" y="4" width="5" height="7" rx="1.4"/><rect x="9.5" y="4" width="5" height="7" rx="1.4"/><rect x="15.5" y="4" width="5" height="7" rx="1.4"/><rect x="3.5" y="13" width="5" height="7" rx="1.4"/><rect x="9.5" y="13" width="5" height="7" rx="1.4"/>',
-  audience: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
-  bans: '<circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/>',
-  settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>',
-  journal: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  // Rubriques : le contour du dé du logo, et ce qu'il contient dit la rubrique.
+  overview: '<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="8.8" cy="8.8" r="1.35" fill="currentColor" stroke="none"/><circle cx="15.2" cy="8.8" r="1.35" fill="currentColor" stroke="none"/><circle cx="8.8" cy="15.2" r="1.35" fill="currentColor" stroke="none"/><circle cx="15.2" cy="15.2" r="1.35" fill="currentColor" stroke="none"/>',
+  live: '<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><path d="M8.6 15.4a4.8 4.8 0 0 1 0-6.8M15.4 8.6a4.8 4.8 0 0 1 0 6.8"/>',
+  home: '<rect x="3.5" y="5.5" width="10" height="14" rx="2.6"/><path d="M13.5 8.5l3.6-1.4a2 2 0 0 1 2.6 1.2l2.6 7.4a2 2 0 0 1-1.2 2.6l-4 1.4"/><circle cx="8.5" cy="12.5" r="1.35" fill="currentColor" stroke="none"/>',
+  audience: '<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><path d="M8.5 16v-2M12 16v-5M15.5 16V8.5"/>',
+  bans: '<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="9" cy="9" r="1.35" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.35" fill="currentColor" stroke="none"/><path d="M5.5 18.5l13-13"/>',
+  settings: '<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><path d="M7.5 9.5h9M7.5 14.5h9"/><circle cx="14" cy="9.5" r="1.6" fill="var(--ap-card,#fff)"/><circle cx="10" cy="14.5" r="1.6" fill="var(--ap-card,#fff)"/>',
+  journal: '<path d="M6.5 3.5h8l3.5 3.5v11a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 4 18V6a2.5 2.5 0 0 1 2.5-2.5Z"/><path d="M8 11h8M8 14.5h8M8 18h5"/>',
+  pause: '<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><path d="M10 9v6M14 9v6"/>',
   search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
   back: '<path d="M15 5l-7 7 7 7"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
@@ -76,13 +78,13 @@ const P = {
 const icon = (k, cls = '') => `<svg viewBox="0 0 24 24" class="${cls}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k]}</svg>`;
 
 const SECTIONS = [
-  { id: 'overview', label: 'Vue d’ensemble', short: 'Aperçu', ico: 'overview', c: '#8E8E93' },
-  { id: 'live', label: 'En direct', short: 'Direct', ico: 'live', c: '#2FB36B' },
-  { id: 'home', label: 'Accueil', short: 'Accueil', ico: 'home', c: '#FF5A3C' },
-  { id: 'audience', label: 'Audience', short: 'Audience', ico: 'audience', c: '#2F6BFF' },
-  { id: 'bans', label: 'Bannis', short: 'Bannis', ico: 'bans', c: '#E5484D' },
-  { id: 'settings', label: 'Réglages', short: 'Réglages', ico: 'settings', c: '#6B6F7B' },
-  { id: 'journal', label: 'Journal', short: 'Journal', ico: 'journal', c: '#8B5CF6' },
+  { id: 'overview', label: 'Vue d’ensemble', short: 'Aperçu', ico: 'overview' },
+  { id: 'live', label: 'En direct', short: 'Direct', ico: 'live' },
+  { id: 'home', label: 'Accueil', short: 'Accueil', ico: 'home' },
+  { id: 'audience', label: 'Audience', short: 'Audience', ico: 'audience' },
+  { id: 'bans', label: 'Bannis', short: 'Bannis', ico: 'bans' },
+  { id: 'settings', label: 'Réglages', short: 'Réglages', ico: 'settings' },
+  { id: 'journal', label: 'Journal', short: 'Journal', ico: 'journal' },
 ];
 
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
@@ -108,7 +110,7 @@ const S = {
   offset: 0, visitors: 0, online: {}, waiting: {}, waitingN: 0,
   rooms: new Map(),              // "prefix/code" -> { g, prefix, code, f: {champ: valeur}, offs }
   settings: { ageGate: true, maintenance: false }, hidden: {}, layout: null, layoutDenied: false,
-  bans: {}, bansDenied: false, visits: null, recent: [], today: null,
+  bans: {}, bansDenied: false, visits: null, recent: [], today: null, mx: null, mxRange: '7d',
   live: { view: 'rooms', game: 'all', q: '', idle: true, sel: null },
   pv: null,                      // éditeur de l'accueil (voir initPreview)
   audience: null, journal: null,
@@ -155,7 +157,7 @@ function build() {
       <div class="ap-brand"><i aria-hidden="true"></i>GameHub<span>Admin</span></div>
       <label class="ap-search">${icon('search')}<input type="search" id="ap-q" placeholder="Joueur, partie, jeu…" aria-label="Rechercher un joueur, une partie ou un jeu" autocomplete="off"><kbd>${/Mac|iP/.test(navigator.platform) ? '⌘' : 'Ctrl'} K</kbd></label>
       <nav class="ap-nav" aria-label="Rubriques">
-        ${SECTIONS.map((s, i) => `${i === 4 ? '<div class="ap-nav-h">Gestion</div>' : ''}<button class="ap-item" type="button" data-go="${s.id}"><span class="ap-ico" style="background:${s.c}">${icon(s.ico)}</span>${s.label}<span class="ap-badge" data-badge="${s.id}" hidden></span></button>`).join('')}
+        ${SECTIONS.map((s, i) => `${i === 4 ? '<div class="ap-nav-h">Gestion</div>' : ''}<button class="ap-item" type="button" data-go="${s.id}"><span class="ap-ico">${icon(s.ico)}</span>${s.label}<span class="ap-badge" data-badge="${s.id}" hidden></span></button>`).join('')}
       </nav>
       <div class="ap-side-foot">
         <div class="ap-theme" role="group" aria-label="Apparence">${[['auto', 'Auto'], ['light', 'Clair'], ['dark', 'Sombre']].map(([k, t]) => `<button type="button" data-theme-set="${k}" aria-pressed="false">${icon(k === 'light' ? 'sun' : k === 'dark' ? 'moon' : 'auto')}${t}</button>`).join('')}</div>
@@ -446,7 +448,7 @@ function paint(box, html) {
 }
 
 const sw = (act, on, label, red = false) => `<label class="ap-switch${red ? ' red' : ''}"><input type="checkbox" data-act="${act}" ${on ? 'checked' : ''} aria-label="${esc(label)}"><i></i></label>`;
-const tile = (k, c) => `<span class="tile" style="background:${c}">${icon(k)}</span>`;
+const tile = k => `<span class="tile">${icon(k)}</span>`;
 
 // ── Vue d'ensemble ──
 function drawOverview(box) {
@@ -462,7 +464,8 @@ function drawOverview(box) {
   const rooms = t.active.slice(0, 6);
   const maint = S.settings.maintenance === true;
   paint(box, `
-    ${maint ? `<div class="ap-note red">${icon('warn')}<div><b>Le site est en maintenance.</b><br>Les visiteurs voient l’écran de maintenance, les parties sont gelées.</div><button class="ap-btn danger" type="button" data-act="maint-off">Rouvrir le site</button></div>` : ''}
+    ${maint ? `<div class="ap-note mxnote">${icon('pause')}<div><b>Le site est en maintenance.</b><br>Les visiteurs voient l’écran de maintenance, les parties sont gelées.</div><button class="ap-btn primary" type="button" data-act="maint-off">Rouvrir le site</button></div>` : ''}
+    ${maint ? mxCard(true) : ''}
     <div class="ap-kpis">
       <button class="ap-kpi" type="button" data-go="live"><span class="k"><span class="ap-dot on"></span>${maint ? 'Sur l’écran de maintenance' : 'Sur le site maintenant'}</span><span class="n">${nf.format(maint ? S.waitingN : S.visitors + t.onNow)}</span><span class="s">${maint ? 'personnes devant l’écran, en direct' : `${plural(S.visitors, 'sur l’accueil', 'sur l’accueil')} · ${plural(t.onNow, 'en partie', 'en partie')}`}</span></button>
       <button class="ap-kpi" type="button" data-go="live"><span class="k">Joueurs en partie</span><span class="n">${nf.format(t.inGame)}</span><span class="s">${t.onNow} connecté${t.onNow > 1 ? 's' : ''}, présence vérifiée</span></button>
@@ -479,19 +482,61 @@ function drawOverview(box) {
       <div>
         <div class="ap-group-h"><h2>Contrôles rapides</h2></div>
         <div class="ap-group">
-          <div class="ap-row ico">${tile('warn', '#E5484D')}<div class="main"><div class="t">Maintenance</div><div class="d">Ferme tout le site, gèle les parties</div></div>${sw('maint', maint, 'Maintenance', true)}</div>
-          <div class="ap-row ico">${tile('lock', '#2F6BFF')}<div class="main"><div class="t">Vérification d’âge</div><div class="d">Date de naissance avant d’entrer</div></div>${sw('age', S.settings.ageGate !== false, 'Vérification d’âge')}</div>
-          <button class="ap-row ico" type="button" data-go="home">${tile('home', '#FF5A3C')}<div class="main"><div class="t">Modifier l’accueil</div><div class="d">Ordre, noms, jeux masqués</div></div>${icon('chev', 'chev')}</button>
-          <button class="ap-row ico" type="button" data-go="bans">${tile('bans', '#E5484D')}<div class="main"><div class="t">Bannis</div><div class="d">${S.bansDenied ? 'Règles de la base à publier' : plural(Object.keys(S.bans).length, 'compte banni', 'comptes bannis')}</div></div>${icon('chev', 'chev')}</button>
-          ${t.idle ? `<button class="ap-row ico" type="button" data-act="cleanup">${tile('broom', '#E8A317')}<div class="main"><div class="t">Nettoyer les parties inactives</div><div class="d">${plural(t.idle, 'partie')} sans signe de vie</div></div>${icon('chev', 'chev')}</button>` : ''}
+          <div class="ap-row ico">${tile('pause')}<div class="main"><div class="t">Maintenance</div><div class="d">Ferme tout le site, gèle les parties</div></div>${sw('maint', maint, 'Maintenance', true)}</div>
+          <div class="ap-row ico">${tile('lock')}<div class="main"><div class="t">Vérification d’âge</div><div class="d">Date de naissance avant d’entrer</div></div>${sw('age', S.settings.ageGate !== false, 'Vérification d’âge')}</div>
+          <button class="ap-row ico" type="button" data-go="home">${tile('home')}<div class="main"><div class="t">Modifier l’accueil</div><div class="d">Ordre, noms, jeux masqués</div></div>${icon('chev', 'chev')}</button>
+          <button class="ap-row ico" type="button" data-go="bans">${tile('bans')}<div class="main"><div class="t">Bannis</div><div class="d">${S.bansDenied ? 'Règles de la base à publier' : plural(Object.keys(S.bans).length, 'compte banni', 'comptes bannis')}</div></div>${icon('chev', 'chev')}</button>
+          ${t.idle ? `<button class="ap-row ico" type="button" data-act="cleanup">${tile('broom')}<div class="main"><div class="t">Nettoyer les parties inactives</div><div class="d">${plural(t.idle, 'partie')} sans signe de vie</div></div>${icon('chev', 'chev')}</button>` : ''}
         </div>
+        ${maint ? '' : mxCard(false)}
         <div class="ap-group-h"><h2>Dernières actions</h2><button class="link" type="button" data-go="journal">Journal</button></div>
         <div class="ap-group">${S.recent.length ? S.recent.map(e => `<div class="ap-row"><div class="main"><div class="t">${esc(e.msg)}</div><div class="d">${esc(CATS[e.cat] || e.cat)}${e.target ? ' · ' + esc(e.target) : ''}</div></div><span class="v">${ago(e.ts)}</span></div>`).join('') : '<div class="ap-empty">Aucune action pour l’instant.</div>'}</div>
       </div>
     </div>`);
 }
 
+// ── Écran de maintenance : combien de personnes y sont tombées, et d'où (service de mesure, page « maintenance ») ──
+const MX_RANGES = [['24h', '24 h'], ['7d', '7 j'], ['30d', '30 j'], ['90d', '90 j']];
+async function loadMx() {
+  try {
+    const res = await fetch(`${S.dev || ''}/_stats/summary?range=${S.mxRange}&game=maintenance`, { headers: { Authorization: 'Bearer ' + await token() }, cache: 'no-store' });
+    if (res.status === 400) throw new Error('Nouvelle version du service de mesure à publier');
+    if (!res.ok) throw new Error('Service indisponible');
+    S.mx = await res.json(); S.mxErr = null;
+  } catch (e) { S.mx = null; S.mxErr = e.message || 'Indisponible'; }
+  schedule();
+}
+
+function mxCard(big) {
+  const d = S.mx, total = d ? d.totals.views : 0;
+  const row = (label, n, tot, av) => `<div class="mx-li"><span class="mx-av">${esc(av)}</span><span class="t">${esc(label)}</span><span class="v"><b>${nf.format(n)}</b>${tot ? Math.round(n / tot * 100) + ' %' : ''}</span><span class="mx-bar"><i style="width:${tot ? Math.max(3, n / tot * 100) : 0}%"></i></span></div>`;
+  const regions = (() => { try { return new Intl.DisplayNames('fr', { type: 'region' }); } catch (_) { return null; } })();
+  const country = c => c === 'ZZ' ? 'Inconnu' : (regions && regions.of(c)) || c;
+  const sum = x => x.rows.reduce((s, r) => s + r.n, 0) + x.other;
+  const block = (title, rows, tot, label, av, other) => `<div><h4>${title}</h4>${rows.length || other ? rows.slice(0, 5).map(r => row(label(r), r.n, tot, av(r))).join('') + (other ? row(`Autres (moins de ${d.kMin} chacun)`, other, tot, '…') : '') : '<p class="ap-foot" style="margin:6px 0">Rien d’assez fréquent pour être affiché.</p>'}</div>`;
+  const body = !d ? `<div class="ap-empty">${esc(S.mxErr || 'Chargement…')}</div>`
+    : !total ? `<div class="ap-empty"><b>Personne pour l’instant</b>Aucune vue de l’écran de maintenance sur cette période.</div>`
+    : `<div class="mx-grid">
+        ${block('Villes', d.cities.rows, total, r => r.name, r => r.country, d.cities.other)}
+        ${block('Pays', d.countries.rows, sum(d.countries), r => country(r.key), r => r.key === 'ZZ' ? '?' : r.key, d.countries.other)}
+        ${block('Venus de', d.refs.rows, sum(d.refs), r => r.key === 'direct' ? 'Accès direct (lien, favori, adresse tapée)' : r.key, r => (r.key === 'direct' ? '↗' : r.key[0].toUpperCase()), d.refs.other)}
+      </div>`;
+  return `
+    <div class="ap-group-h"><h2>Écran de maintenance</h2>
+      <div class="ap-seg" role="group" aria-label="Période">${MX_RANGES.map(([k, t]) => `<button type="button" data-act="mx-range" data-v="${k}" aria-pressed="${S.mxRange === k}">${t}</button>`).join('')}</div></div>
+    <div class="ap-card mx-card${big ? ' big' : ''}">
+      <div class="mx-head">
+        <div><span class="mx-n">${d ? nf.format(total) : '—'}</span><span class="mx-l">vue${total > 1 ? 's' : ''} de l’écran de maintenance${d ? ` · ${MX_RANGES.find(r => r[0] === S.mxRange)[1]}` : ''}</span>
+          ${d && d.previous ? `<span class="mx-l">${nf.format(d.totals.entries)} arrivée${d.totals.entries > 1 ? 's' : ''} depuis l’extérieur</span>` : ''}</div>
+        <div class="mx-live"><span class="ap-dot ${S.waitingN ? 'on' : ''}"></span><b>${nf.format(S.waitingN)}</b> devant l’écran en ce moment</div>
+      </div>
+      ${body}
+      <p class="ap-foot" style="margin:12px 0 0">Une vue = un chargement de l’écran (un rechargement compte de nouveau). Ville et pays approximatifs, déduits par Cloudflare ; aucun identifiant ni IP n’est gardé.</p>
+    </div>`;
+}
+
 async function loadToday() {
+  loadMx();
   try {
     const res = await fetch(`${S.dev || ''}/_stats/summary?range=24h&game=all`, { headers: { Authorization: 'Bearer ' + await token() }, cache: 'no-store' });
     if (!res.ok) throw new Error(res.status === 404 ? 'Service de mesure absent' : 'Service indisponible');
@@ -605,20 +650,20 @@ function drawSettings(box) {
   paint(box, `
     <div class="ap-group-h"><h2>Accès au site</h2></div>
     <div class="ap-group">
-      <div class="ap-row ico">${tile('warn', '#E5484D')}<div class="main"><div class="t">Maintenance</div><div class="d">Toutes les pages affichent l’écran de maintenance, les parties sont gelées</div></div>${sw('maint', S.settings.maintenance === true, 'Maintenance', true)}</div>
-      <div class="ap-row ico">${tile('lock', '#2F6BFF')}<div class="main"><div class="t">Vérification d’âge</div><div class="d">Demande la date de naissance avant d’entrer</div></div>${sw('age', S.settings.ageGate !== false, 'Vérification d’âge')}</div>
+      <div class="ap-row ico">${tile('pause')}<div class="main"><div class="t">Maintenance</div><div class="d">Toutes les pages affichent l’écran de maintenance, les parties sont gelées</div></div>${sw('maint', S.settings.maintenance === true, 'Maintenance', true)}</div>
+      <div class="ap-row ico">${tile('lock')}<div class="main"><div class="t">Vérification d’âge</div><div class="d">Demande la date de naissance avant d’entrer</div></div>${sw('age', S.settings.ageGate !== false, 'Vérification d’âge')}</div>
     </div>
     <div class="ap-group-h"><h2>Parties</h2></div>
     <div class="ap-group">
-      <div class="ap-row ico">${tile('broom', '#E8A317')}<div class="main"><div class="t">Parties inactives</div><div class="d">${t.idle ? `${plural(t.idle, 'partie')} sans joueur connecté ni signe de vie depuis 3 h` : 'Aucune pour l’instant'}</div></div><button class="ap-btn sm" type="button" data-act="cleanup" ${t.idle ? '' : 'disabled'}>Nettoyer</button></div>
+      <div class="ap-row ico">${tile('broom')}<div class="main"><div class="t">Parties inactives</div><div class="d">${t.idle ? `${plural(t.idle, 'partie')} sans joueur connecté ni signe de vie depuis 3 h` : 'Aucune pour l’instant'}</div></div><button class="ap-btn sm" type="button" data-act="cleanup" ${t.idle ? '' : 'disabled'}>Nettoyer</button></div>
     </div>
     <div class="ap-group-h"><h2>Compteur historique</h2></div>
     <div class="ap-group">
-      <div class="ap-row ico">${tile('audience', '#8E8E93')}<div class="main"><div class="t">Visites comptées : ${S.visits == null ? '—' : nf.format(S.visits)}</div><div class="d">Ancien compteur de l’accueil, sans période. La rubrique Audience le remplace.</div></div><button class="ap-btn sm" type="button" data-act="reset-visits">Remettre à zéro</button></div>
+      <div class="ap-row ico">${tile('audience')}<div class="main"><div class="t">Visites comptées : ${S.visits == null ? '—' : nf.format(S.visits)}</div><div class="d">Ancien compteur de l’accueil, sans période. La rubrique Audience le remplace.</div></div><button class="ap-btn sm" type="button" data-act="reset-visits">Remettre à zéro</button></div>
     </div>
     <div class="ap-group-h"><h2 style="color:var(--ap-red)">Zone sensible</h2></div>
     <div class="ap-group">
-      <button class="ap-row ico danger" type="button" data-act="del-all">${tile('trash', '#E5484D')}<div class="main"><div class="t">Supprimer toutes les parties</div><div class="d">Toutes les parties de tous les jeux, annulable quelques secondes</div></div></button>
+      <button class="ap-row ico danger" type="button" data-act="del-all">${tile('trash')}<div class="main"><div class="t">Supprimer toutes les parties</div><div class="d">Toutes les parties de tous les jeux, annulable quelques secondes</div></div></button>
     </div>`);
 }
 
@@ -1141,6 +1186,7 @@ async function onClick(e) {
   const act = a.dataset.act, room = a.dataset.key && S.rooms.get(a.dataset.key);
   switch (act) {
     case 'close': closeAdmin(); break;
+    case 'mx-range': S.mxRange = a.dataset.v; S.mx = null; loadMx(); schedule(); break;
     case 'refresh': syncRooms(); loadToday(); notify('Actualisé', { icon: 'undo' }); break;
     case 'room': S.live.sel = S.live.sel === a.dataset.key && innerWidth > 1100 ? null : a.dataset.key; if (S.sec !== 'live') { S.live.view = 'rooms'; go('live'); } else { S.live.view = 'rooms'; draw('live'); } break;
     case 'room-close': S.live.sel = null; closeSheet(); draw('live'); break;
@@ -1184,7 +1230,7 @@ async function setMaintenance(on, input) {
   try { await update(ref(db, 'hub/settings'), { maintenance: on }); } catch (_) { if (input) input.checked = !on; notify('Action refusée', { kind: 'err' }); return; }
   logAdmin('reglage', `Maintenance ${on ? 'activée' : 'désactivée'}`);
   notify(on ? 'Site en maintenance' : 'Site rouvert', {
-    kind: on ? 'warn' : 'ok', icon: on ? 'warn' : 'live',
+    kind: on ? 'warn' : 'ok', icon: on ? 'pause' : 'live',
     sub: on ? 'Les visiteurs voient l’écran de maintenance, les parties sont gelées' : 'Les visiteurs ont de nouveau accès au site',
     undo: () => setMaintenance(!on),
   });

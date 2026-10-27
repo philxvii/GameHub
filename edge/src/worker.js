@@ -138,6 +138,14 @@ const waitBeat = () => { if (!document.hidden) fetch(waitUrl, { method: 'PUT', b
 waitBeat(); setInterval(waitBeat, 60000);
 addEventListener('visibilitychange', waitBeat); addEventListener('pageshow', waitBeat);
 addEventListener('pagehide', () => { fetch(waitUrl, { method: 'DELETE', keepalive: true }).catch(() => {}); });
+// Mesure d'audience : une vue de « l'écran de maintenance » et le seul domaine du site d'origine,
+// comme shared/analytics.js (sans cookie ni identifiant ; Do Not Track, GPC et l'opposition respectés).
+(() => {
+  try { if (navigator.doNotTrack === '1' || navigator.globalPrivacyControl || localStorage.getItem('gh-stats-optout') === '1') return; } catch (_) {}
+  let r = '';
+  try { if (document.referrer) { const h = new URL(document.referrer).hostname; r = h === location.hostname ? '-' : h; } } catch (_) {}
+  try { navigator.sendBeacon('/_stats/e', new Blob([JSON.stringify(r ? { p: '/maintenance', r } : { p: '/maintenance' })], { type: 'text/plain' })); } catch (_) {}
+})();
 $('gear').onclick = () => { $('admin').hidden = !$('admin').hidden; $('gear').setAttribute('aria-expanded', String(!$('admin').hidden)); };
 let fb;
 const load = () => fb || (fb = Promise.all([

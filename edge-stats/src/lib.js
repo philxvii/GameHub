@@ -3,7 +3,8 @@
 // Principe : un événement = un chargement de page. Il n'est jamais stocké : il incrémente des
 // compteurs (heure, portée, dimension, valeur). Pas d'IP, pas d'identifiant, pas de cookie.
 
-export const PAGES = ['home', 'banqueroll', 'bataille-navale', 'mauvais-perdants', 'mini-golf', 'mini-subway',
+// 'maintenance' : l'écran de maintenance servi par le portier (roulia-gate), quelle que soit l'adresse demandée.
+export const PAGES = ['home', 'maintenance', 'banqueroll', 'bataille-navale', 'mauvais-perdants', 'mini-golf', 'mini-subway',
   'puissance4', 'qui-est-ce', 'roulette', 'undercover', 'uno', 'wikirace'];
 export const DIMS = ['page', 'entry', 'country', 'city', 'device', 'browser', 'os', 'ref'];
 export const K_MIN = 5;                    // seuil d'affichage : une valeur sous ce seuil est regroupée
@@ -20,6 +21,7 @@ export function pageOf(pathname) {
   if (/[?#\s]/.test(pathname)) return null;                       // pas de query ni de hash
   const p = pathname.replace(/\/index\.html$/, '/').replace(/\.html$/, '');
   if (p === '/' || p === '/home') return 'home';
+  if (p === '/maintenance') return 'maintenance';
   const m = p.match(/^\/games\/([a-z0-9-]+)\/?$/);
   return m && PAGES.includes(m[1]) ? m[1] : null;
 }

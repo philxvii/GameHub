@@ -262,3 +262,12 @@ test('Mauvais Perdants est compté', async () => {
   assert.equal(res.status, 204);
   assert.deepEqual((await summarize(e, '24h', 'mauvais-perdants')).totals.views, 1);
 });
+
+test('écran de maintenance : compté comme une page, avec sa provenance', async () => {
+  const e = env();
+  assert.equal((await handleCollect(post('{"p":"/maintenance","r":"discord.com"}'), e, T0)).status, 204);
+  assert.equal(L.pageOf('/maintenance'), 'maintenance');
+  const s = await summarize(e, '24h', 'maintenance');
+  assert.equal(s.totals.views, 1); assert.equal(s.totals.entries, 1);
+  assert.deepEqual(s.countries.other, 1);
+});

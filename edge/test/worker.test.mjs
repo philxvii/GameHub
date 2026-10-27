@@ -37,6 +37,14 @@ test('maintenance : écran 503, rien n\'est demandé à l\'origine', async () =>
   assert.deepEqual(origin, []);
 });
 
+test('maintenance : l\'écran compte sa vue (page « maintenance », oppositions respectées)', async () => {
+  await reset();
+  const html = await (await worker.fetch(req('/games/uno/'), env)).text();
+  assert.ok(html.includes("navigator.sendBeacon('/_stats/e'"));
+  assert.ok(html.includes("p: '/maintenance'"));
+  assert.ok(html.includes("navigator.doNotTrack === '1' || navigator.globalPrivacyControl"));
+});
+
 test('site ouvert : la requête passe à l\'origine', async () => {
   await reset(); flagValue = false;
   const res = await worker.fetch(req('/games/uno/index.html'), env);

@@ -303,6 +303,28 @@ html.pv-dragging,html.pv-dragging *{cursor:grabbing!important}
 .ap-seg button svg{width:15px;height:15px;vertical-align:-3px}
 a.ap-btn{text-decoration:none;color:inherit}
 
+
+/* Écran de maintenance : vues et provenance */
+.mx-card{padding:18px 20px}
+.mx-card.big{background:radial-gradient(120% 120% at 0% 0%,var(--ap-red-soft),transparent 60%),var(--ap-card)}
+.mx-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:10px 20px;margin-bottom:14px}
+.mx-n{display:block;font-size:40px;font-weight:600;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
+.mx-l{display:block;margin-top:5px;font-size:12.5px;color:var(--muted)}
+.mx-live{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.mx-live b{color:var(--text);font-size:15px}
+.mx-grid{display:grid;grid-template-columns:1fr;gap:16px}
+.mx-card.big .mx-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mx-grid h4{margin:0 0 4px;font-size:12px;font-weight:600;color:var(--muted)}
+.mx-li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:3px 10px;padding:7px 0;border-bottom:1px solid var(--ap-sep);font-size:13.5px}
+.mx-li:last-child{border-bottom:none}
+.mx-li .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.mx-li .v{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.mx-li .v b{color:var(--text);font-size:13.5px;margin-right:6px}
+.mx-av{display:grid;place-items:center;min-width:28px;height:22px;padding:0 5px;border-radius:6px;background:var(--ap-fill);font-size:10.5px;font-weight:700;color:var(--muted)}
+.mx-bar{grid-column:2/-1;height:3px;border-radius:3px;background:var(--ap-fill);overflow:hidden}
+.mx-bar i{display:block;height:100%;border-radius:3px;background:var(--ap-red)}
+@media (max-width:900px){.mx-card.big .mx-grid{grid-template-columns:1fr}}
+
 /* ── Feuilles, alertes, menus, toasts ── */
 .ap-veil{position:fixed;inset:0;z-index:500;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.28);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:ap-fade .2s ease}
 .ap-alert{width:min(320px,100%);border-radius:16px;background:color-mix(in srgb,var(--ap-card) 92%,transparent);backdrop-filter:blur(30px) saturate(1.8);-webkit-backdrop-filter:blur(30px) saturate(1.8);box-shadow:0 30px 70px -20px rgba(0,0,0,.5),0 0 0 .5px var(--ap-sep2);text-align:center;overflow:hidden;animation:ap-pop .32s var(--ap-ease)}
@@ -387,3 +409,94 @@ a.ap-btn{text-decoration:none;color:inherit}
 @media (prefers-reduced-motion:reduce){
   #admin-panel *,#admin-panel *::before,#admin-panel *::after{animation-duration:1ms!important;transition-duration:1ms!important}
 }
+
+
+/* ═══ Direction « encre + dé » ═══════════════════════════════════════════════════════════════
+   Comme le site : noir et blanc. L'orange de la marque n'apparaît qu'en un point, celui du dé
+   (rubrique active, élément modifié). Les couleurs d'état ne sont que de petits points. */
+#admin-panel{--ap-ink:var(--text);--ap-paper:var(--ap-card);--ap-pip:#FF5A3C;
+  --ap-tint:var(--text);--ap-tint-soft:color-mix(in srgb,var(--text) 8%,transparent)}
+#admin-panel ::selection{background:color-mix(in srgb,var(--text) 18%,transparent)}
+
+/* Barre latérale */
+.ap-item{position:relative;color:var(--text);font-weight:450}
+.ap-item:hover{background:color-mix(in srgb,var(--text) 5%,transparent)}
+.ap-item[aria-current=page]{background:var(--ap-card);color:var(--text);font-weight:600;box-shadow:0 0 0 1px var(--ap-sep),0 1px 2px rgba(0,0,0,.06)}
+.ap-ico{position:relative;width:26px;height:26px;border-radius:0;background:none!important;color:var(--muted)}
+.ap-ico svg{width:20px;height:20px;stroke-width:1.6}
+.ap-item[aria-current=page] .ap-ico{color:var(--text);box-shadow:none}
+.ap-item[aria-current=page] .ap-ico::after{content:"";position:absolute;right:-1px;top:-1px;width:7px;height:7px;border-radius:50%;background:var(--ap-pip);box-shadow:0 0 0 2px var(--ap-card)}
+.ap-badge,.ap-badge.live{background:transparent;color:var(--muted);font-weight:500;padding:0}
+.ap-item[aria-current=page] .ap-badge{background:transparent;color:var(--muted)}
+.ap-badge.live::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ap-green);margin-right:6px;display:inline-block;vertical-align:1px}
+.ap-badge.live{display:inline-flex;align-items:center}
+.ap-brand i{box-shadow:none}
+.ap-search input:focus{box-shadow:0 0 0 1.5px var(--text)}
+
+/* Boutons, champs, interrupteurs à l'encre */
+.ap-btn.primary{background:var(--text);color:var(--bg)}
+.ap-btn.primary:hover{background:var(--text);opacity:.86}
+.ap-btn.danger{background:transparent;color:var(--ap-red);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ap-red) 35%,transparent)}
+.ap-btn.danger:hover{background:var(--ap-red-soft)}
+.ap-field:focus{box-shadow:0 0 0 1.5px var(--text)}
+.ap-switch input:checked+i,.ap-switch.red input:checked+i{background:var(--text)}
+.ap-switch input:checked+i::after{background:var(--bg)}
+.ap-group-h button.link{color:var(--text);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--ap-sep2)}
+
+/* Lignes : pictos monochromes, plus de tuiles colorées */
+.ap-row .tile{width:26px;height:26px;border-radius:0;background:none!important;color:var(--text)}
+.ap-row .tile svg{width:21px;height:21px;stroke-width:1.6}
+.ap-row.danger .tile{color:var(--ap-red)}
+.ap-rooms .ap-row[aria-selected=true]{background:color-mix(in srgb,var(--text) 6%,transparent)}
+.ap-rooms .ap-row[aria-selected=true]::after{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:var(--text)}
+
+/* États : une pastille neutre et un petit point de couleur */
+.ap-pill,.ap-pill.green,.ap-pill.amber,.ap-pill.red,.ap-pill.tint{background:transparent;color:var(--muted);box-shadow:inset 0 0 0 1px var(--ap-sep2);font-weight:500}
+.ap-pill.green::before,.ap-pill.amber::before,.ap-pill.red::before,.ap-pill.tint::before{content:"";width:6px;height:6px;border-radius:50%}
+.ap-pill.green{color:var(--text)} .ap-pill.green::before{background:var(--ap-green)}
+.ap-pill.amber::before{background:var(--ap-amber)}
+.ap-pill.red::before{background:var(--ap-red)}
+.ap-pill.tint{color:var(--text)} .ap-pill.tint::before{background:var(--text)}
+.ap-dot.on{box-shadow:none}
+.ap-delta.up{color:var(--ap-green)} .ap-delta.down{color:var(--muted)}
+
+/* Bandeaux */
+.ap-note{background:var(--ap-card);box-shadow:0 0 0 1px var(--ap-sep)}
+.ap-note svg{color:var(--text)}
+.ap-note.mxnote{background:var(--text);color:var(--bg);box-shadow:none}
+.ap-note.mxnote svg{color:var(--bg)}
+.ap-note.mxnote .ap-btn.primary{background:var(--bg);color:var(--text)}
+
+/* Écran de maintenance : neutre */
+.mx-card.big{background:var(--ap-card)}
+.mx-bar i{background:var(--text);opacity:.7}
+
+/* Notifications : encre, et un point d'état */
+.ap-notif .ico,.ap-notif[data-kind=ok] .ico,.ap-notif[data-kind=warn] .ico,.ap-notif[data-kind=err] .ico{position:relative;background:var(--text);color:var(--bg)}
+.ap-notif[data-kind] .ico::after{content:"";position:absolute;right:-2px;top:-2px;width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 2px var(--ap-card)}
+.ap-notif[data-kind=ok] .ico::after{background:var(--ap-green)}
+.ap-notif[data-kind=warn] .ico::after{background:var(--ap-amber)}
+.ap-notif[data-kind=err] .ico::after{background:var(--ap-red)}
+.ap-notif .undo{color:var(--text)}
+.ap-notif .undo:hover{background:var(--text);color:var(--bg)}
+
+/* Menus */
+.ap-menu button:hover{background:var(--text);color:var(--bg)}
+.ap-menu button.danger:hover{background:var(--ap-red);color:#fff}
+
+/* Éditeur de l'accueil */
+.pv-card.sel{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--text),var(--shadow)}
+.pv-card.ph{outline-color:var(--text)}
+.pv-grid.drop{background:color-mix(in srgb,var(--text) 5%,transparent);box-shadow:0 0 0 1.5px var(--text)}
+.pv-card.changed .pv-badges::after{background:var(--ap-pip)}
+.pv-page-ico{background:var(--text);color:var(--bg)}
+.pv-range input{accent-color:var(--text)}
+.ap-inline{box-shadow:0 0 0 1.5px var(--text)}
+
+/* Onglets mobiles */
+.ap-tabs button[aria-current=page]{color:var(--text)}
+.ap-tabs button[aria-current=page]::after{content:"";position:absolute;top:3px;left:calc(50% + 8px);width:6px;height:6px;border-radius:50%;background:var(--ap-pip)}
+.ap-tabs i{background:var(--text);color:var(--bg)}
+
+/* Avatars neutres : initiale à l'encre sur fond doux */
+.ap-av{background:var(--ap-fill)!important;color:var(--text);font-weight:600;box-shadow:inset 0 0 0 1px var(--ap-sep)}

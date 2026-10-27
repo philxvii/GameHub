@@ -12,7 +12,7 @@
 import { auth } from './firebase.js';
 
 const RANGES = [['24h', '24 h'], ['7d', '7 jours'], ['30d', '30 jours'], ['90d', '90 jours'], ['365d', '1 an']];
-const PAGE_NAMES = { home: 'Accueil', banqueroll: 'Banqueroll', 'bataille-navale': 'Bataille Navale', 'mauvais-perdants': 'Mauvais Perdants', 'mini-golf': 'Mini Golf',
+const PAGE_NAMES = { home: 'Accueil', maintenance: 'Écran de maintenance', banqueroll: 'Banqueroll', 'bataille-navale': 'Bataille Navale', 'mauvais-perdants': 'Mauvais Perdants', 'mini-golf': 'Mini Golf',
   'mini-subway': 'Mini Subway', puissance4: 'Puissance 4', 'qui-est-ce': 'Qui est-ce ?', roulette: 'Roulette', undercover: 'Undercover', uno: 'UNO', wikirace: 'WikiRace' };
 const DEVICE = { desktop: 'Ordinateur', mobile: 'Mobile', tablet: 'Tablette' };
 const DEVICE_C = { desktop: '#EE4B2E', mobile: '#3A72FF', tablet: '#22A15D' };   // scripts/validate_palette.js : OK clair et sombre
@@ -20,13 +20,16 @@ const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dima
 const FRANCE = [[-5.2, 41.3], [9.6, 51.1]];   // [lon, lat]
 const MAPLIBRE = new URL('./vendor/maplibre-gl-4.7.1/', import.meta.url).href;
 const MAP_STYLE = { light: 'https://tiles.openfreemap.org/styles/positron', dark: 'https://tiles.openfreemap.org/styles/dark' };
-const BRAND = '#FF5A3C';
+// Direction « encre + dé » : les données sont à l'encre du thème (noir en clair, blanc en sombre).
+const BRAND = 'var(--text)';
 
 const regions = new Intl.DisplayNames('fr', { type: 'region' });
 const nf = new Intl.NumberFormat('fr-FR');
 const countryName = c => c === 'ZZ' ? 'Inconnu' : (() => { try { return regions.of(c) || c; } catch (_) { return c; } })();
 const when = (ms, o) => new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', ...o }).format(ms);
 const pct = (n, t) => t ? Math.round(n / t * 100) + ' %' : '—';
+// #rrggbb (couleur du thème) + opacité, pour la carte (MapLibre ne lit pas les variables CSS).
+const rgba = (hex, a) => { const m = /^#?([0-9a-f]{6})$/i.exec(String(hex).trim()); if (!m) return `rgba(128,128,128,${a})`; const n = parseInt(m[1], 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
 const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const STYLES = `
@@ -49,8 +52,7 @@ const STYLES = `
 .aud-label{font-size:12.5px;font-weight:500;color:var(--muted)}
 
 /* Panneau principal */
-.aud-hero{display:grid;grid-template-columns:250px minmax(0,1fr);gap:28px;align-items:stretch;padding:26px 26px 18px;
-  background:radial-gradient(120% 90% at 0% 0%,color-mix(in srgb,${BRAND} 9%,transparent),transparent 60%),var(--ap-card)}
+.aud-hero{display:grid;grid-template-columns:250px minmax(0,1fr);gap:28px;align-items:stretch;padding:26px 26px 18px;background:var(--ap-card)}
 .aud-big{display:block;margin:6px 0 10px;font-size:clamp(44px,5vw,60px);font-weight:600;letter-spacing:-.055em;line-height:.95;font-variant-numeric:tabular-nums}
 .aud-pill{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;font-size:12.5px;font-weight:600;background:var(--ap-fill);color:var(--muted)}
 .aud-pill.up{background:rgba(47,179,107,.14);color:var(--ap-green)}
@@ -75,7 +77,7 @@ const STYLES = `
 .aud-plot .x{position:absolute;top:calc(100% + 8px);font-size:11px;color:var(--muted);white-space:nowrap;transform:translateX(-50%)}
 .aud-plot .x.first{transform:none} .aud-plot .x.last{transform:translateX(-100%)}
 .aud-cross{position:absolute;top:0;bottom:0;width:0;border-left:1px solid var(--text);opacity:.18;pointer-events:none;transition:left .12s var(--ap-ease)}
-.aud-pt{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:${BRAND};box-shadow:0 0 0 3px var(--ap-card),0 0 0 7px color-mix(in srgb,${BRAND} 22%,transparent);pointer-events:none;transition:left .12s var(--ap-ease),top .12s var(--ap-ease)}
+.aud-pt{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:${BRAND};box-shadow:0 0 0 3px var(--ap-card),0 0 0 7px color-mix(in srgb,${BRAND} 12%,transparent);pointer-events:none;transition:left .12s var(--ap-ease),top .12s var(--ap-ease)}
 .aud-tip{position:absolute;z-index:3;pointer-events:none;padding:8px 11px;border-radius:12px;background:color-mix(in srgb,var(--ap-card) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 0 0 .5px var(--ap-sep2),0 10px 26px -10px rgba(0,0,0,.35);font-size:12px;line-height:1.35;white-space:nowrap;color:var(--muted);transition:left .12s var(--ap-ease),top .12s var(--ap-ease)}
 .aud-tip b{display:block;font-size:15px;color:var(--text);font-variant-numeric:tabular-nums}
 
@@ -91,8 +93,9 @@ const STYLES = `
 .aud-ins.poster>*:not(img){position:relative;z-index:1}
 .aud-ins.poster .aud-label,.aud-ins.poster small{color:rgba(255,255,255,.8)}
 .aud-spark{display:flex;align-items:flex-end;gap:2px;height:42px;margin-top:12px}
-.aud-spark i{flex:1;border-radius:3px 3px 1px 1px;background:color-mix(in srgb,${BRAND} 30%,var(--ap-fill));min-height:2px;transform-origin:bottom;animation:aud-grow .8s var(--ap-ease) both;animation-delay:calc(var(--k) * 18ms)}
+.aud-spark i{flex:1;border-radius:3px 3px 1px 1px;background:color-mix(in srgb,${BRAND} 18%,var(--ap-fill));min-height:2px;transform-origin:bottom;animation:aud-grow .8s var(--ap-ease) both;animation-delay:calc(var(--k) * 18ms)}
 .aud-spark i.hot{background:${BRAND}}
+.aud-spark i.hot::after{content:"";display:block;width:5px;height:5px;margin:-8px auto 0;border-radius:50%;background:#FF5A3C}
 @keyframes aud-grow{from{transform:scaleY(0)}}
 .aud-ring{display:flex;align-items:center;gap:16px;margin-top:10px}
 .aud-ring i{width:56px;height:56px;border-radius:50%;flex:none;background:conic-gradient(${BRAND} calc(var(--p) * 1%),var(--ap-fill) 0);-webkit-mask:radial-gradient(circle,transparent 58%,#000 59%);mask:radial-gradient(circle,transparent 58%,#000 59%)}
@@ -103,11 +106,12 @@ const STYLES = `
 .aud-game:hover{transform:translateY(-4px);box-shadow:0 0 0 1px var(--ap-sep),0 20px 34px -18px rgba(0,0,0,.55)}
 .aud-game img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .aud-game.home{background:linear-gradient(160deg,#2a2735,#121019)}
+.aud-game.mx{background:linear-gradient(160deg,#3a3646,#141219)}
 .aud-game::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(0,0,0,.82))}
 .aud-game .in{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:12px}
 .aud-game .rk{position:absolute;top:10px;left:10px;z-index:1;min-width:24px;height:24px;padding:0 7px;border-radius:999px;background:rgba(0,0,0,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:12px;font-weight:600;display:grid;place-items:center}
 .aud-game .tr{position:absolute;top:10px;right:10px;z-index:1;height:22px;padding:0 8px;border-radius:999px;font-size:11.5px;font-weight:600;display:grid;place-items:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.aud-game .tr.up{background:rgba(47,179,107,.85)} .aud-game .tr.down{background:rgba(229,72,77,.85)}
+.aud-game .tr{background:rgba(0,0,0,.5)} .aud-game .tr.up{color:#7EE2A8} .aud-game .tr.down{color:#FF9EA1}
 .aud-game b{display:block;font-size:14.5px;font-weight:600;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .aud-game span{display:block;font-size:12px;opacity:.8;font-variant-numeric:tabular-nums}
 .aud-game .bar{height:3px;margin-top:8px;border-radius:3px;background:rgba(255,255,255,.2);overflow:hidden}
@@ -133,10 +137,10 @@ const STYLES = `
 .aud-list .v{font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--muted);white-space:nowrap}
 .aud-list .v b{color:var(--text);font-weight:600;font-size:14px;margin-right:6px}
 .aud-list .bar{grid-column:2/-1;height:4px;border-radius:4px;background:var(--ap-fill);overflow:hidden}
-.aud-list .bar i{display:block;height:100%;border-radius:4px;background:${BRAND};opacity:.85;transform-origin:left;animation:aud-bar 1s .15s var(--ap-ease) both}
+.aud-list .bar i{display:block;height:100%;border-radius:4px;background:${BRAND};opacity:.7;transform-origin:left;animation:aud-bar 1s .15s var(--ap-ease) both}
 .aud-list li[data-k]{cursor:pointer;transition:background-color .2s}
-.aud-list li[data-k]:hover .t{color:${BRAND}}
-.aud-list li.sel .t{color:${BRAND}}
+.aud-list li[data-k]:hover .t{text-decoration:underline;text-underline-offset:3px}
+.aud-list li.sel .t{font-weight:700}
 .aud-sub{font-size:13px;color:var(--muted);font-weight:400}
 .aud-stack{display:flex;gap:2px;height:14px;border-radius:8px;overflow:hidden;margin:14px 0 14px}
 .aud-stack i{height:100%;transform-origin:left;animation:aud-bar 1s var(--ap-ease) both}
@@ -234,7 +238,7 @@ export function mountAudience(root, { devEndpoint } = {}) {
     seg.append(b); return [v, b];
   });
   const gameSel = el('select', { className: 'ap-field' },
-    [['all', 'Tout le site'], ['home', 'Accueil'], ...Object.entries(PAGE_NAMES).filter(([k]) => k !== 'home').sort((a, b) => a[1].localeCompare(b[1], 'fr'))]
+    [['all', 'Tout le site'], ['home', 'Accueil'], ['maintenance', 'Écran de maintenance'], ...Object.entries(PAGE_NAMES).filter(([k]) => k !== 'home' && k !== 'maintenance').sort((a, b) => a[1].localeCompare(b[1], 'fr'))]
       .map(([v, t]) => el('option', { value: v, textContent: t })));
   gameSel.setAttribute('aria-label', 'Page ou jeu');
   gameSel.addEventListener('change', () => { st.game = gameSel.value; st.sel = null; load(); });
@@ -317,7 +321,7 @@ export function mountAudience(root, { devEndpoint } = {}) {
     const s = svg('svg', { viewBox: '0 0 100 100', preserveAspectRatio: 'none', 'aria-hidden': 'true' });
     const id = 'aud-g' + Math.random().toString(36).slice(2, 7);
     const defs = svg('defs'), lg = svg('linearGradient', { id, x1: 0, y1: 0, x2: 0, y2: 1 });
-    lg.append(svg('stop', { offset: 0, 'stop-color': BRAND, 'stop-opacity': .22 }), svg('stop', { offset: 1, 'stop-color': BRAND, 'stop-opacity': 0 }));
+    lg.append(svg('stop', { offset: 0, style: `stop-color:${BRAND};stop-opacity:.14` }), svg('stop', { offset: 1, style: `stop-color:${BRAND};stop-opacity:0` }));
     defs.append(lg); s.append(defs);
     // Courbe lissée (Catmull-Rom → Bézier), sans dépasser zéro.
     const P = pts.map((p, i) => [X(i), Y(p.n)]);
@@ -328,7 +332,7 @@ export function mountAudience(root, { devEndpoint } = {}) {
       dPath += ` C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p2[0]},${p2[1]}`;
     }
     s.append(svg('path', { class: 'area', d: `${dPath} L100,100 L0,100 Z`, fill: `url(#${id})` }));
-    s.append(svg('path', { class: 'line', d: dPath, fill: 'none', stroke: BRAND, 'stroke-width': 2, 'vector-effect': 'non-scaling-stroke', 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+    s.append(svg('path', { class: 'line', d: dPath, fill: 'none', style: `stroke:${BRAND}`, 'stroke-width': 2, 'vector-effect': 'non-scaling-stroke', 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
     box.append(s);
     const ticks = n <= 2 ? [0, n - 1] : [0, Math.floor((n - 1) / 2), n - 1];
     [...new Set(ticks)].forEach((i, k, a) => box.append(el('span', { className: 'x' + (k === 0 ? ' first' : k === a.length - 1 ? ' last' : ''), style: `left:${X(i)}%`, textContent: short(pts[i]) })));
@@ -438,12 +442,12 @@ export function mountAudience(root, { devEndpoint } = {}) {
       'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 3, .8, 9, 2],
       'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 2, 18, 5, 42, 9, 70],
       'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 4, .55, 9, 0],
-      'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'], 0, 'rgba(255,90,60,0)', .3, 'rgba(255,90,60,.18)', .7, 'rgba(255,90,60,.4)', 1, 'rgba(255,90,60,.6)'],
+      'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'], 0, rgba(text, 0), .3, rgba(text, .08), .7, rgba(text, .18), 1, rgba(text, .3)],
     } });
     map.addLayer({ id: 'cities', type: 'circle', source: 'cities', paint: {
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 3, ['interpolate', ['linear'], ['sqrt', ['get', 'n']], 0, 4, Math.sqrt(max), 20], 8, ['interpolate', ['linear'], ['sqrt', ['get', 'n']], 0, 7, Math.sqrt(max), 34]],
-      'circle-color': BRAND,
-      'circle-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], .95, .78],
+      'circle-color': text,
+      'circle-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], .95, .72],
       'circle-stroke-color': ['case', ['boolean', ['feature-state', 'sel'], false], text, card],
       'circle-stroke-width': ['case', ['boolean', ['feature-state', 'sel'], false], 3, 2],
       'circle-blur': .05,
@@ -515,7 +519,7 @@ export function mountAudience(root, { devEndpoint } = {}) {
     countUp(big, d.totals.views);
 
     // ── Synthèse ──
-    const topGame = d.pages.find(p => p.key !== 'home');
+    const topGame = d.pages.find(p => p.key !== 'home' && p.key !== 'maintenance');
     let peak = null;
     if (d.heat) d.heat.forEach((row, di) => row.forEach((v, h) => { if (v && (!peak || v > peak.v)) peak = { v, di, h }; }));
     const byHour = d.heat ? Array.from({ length: 24 }, (_, h) => d.heat.reduce((s, row) => s + row[h], 0)) : null;
@@ -541,8 +545,9 @@ export function mountAudience(root, { devEndpoint } = {}) {
     const gmax = Math.max(1, ...d.pages.map(p => p.n));
     const games = el('div', { className: 'aud-games' }, d.pages.map((p, i) => {
       const t = 'prev' in p ? trend(p.n, p.prev) : null;
-      return el('div', { className: 'aud-game' + (p.key === 'home' ? ' home' : '') },
-        p.key === 'home' ? null : el('img', { src: `/games/${p.key}/cover.webp`, alt: '', loading: 'lazy', decoding: 'async' }),
+      const bare = p.key === 'home' || p.key === 'maintenance';
+      return el('div', { className: 'aud-game' + (bare ? ' home' : '') + (p.key === 'maintenance' ? ' mx' : '') },
+        bare ? null : el('img', { src: `/games/${p.key}/cover.webp`, alt: '', loading: 'lazy', decoding: 'async' }),
         el('span', { className: 'rk', textContent: String(i + 1) }),
         t ? el('span', { className: 'tr ' + t.cls, textContent: t.txt }) : null,
         el('div', { className: 'in' }, el('b', { textContent: PAGE_NAMES[p.key] || p.key }), el('span', { textContent: `${nf.format(p.n)} vues · ${pct(p.n, d.totals.views)}` }),
