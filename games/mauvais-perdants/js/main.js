@@ -210,14 +210,17 @@ function renderLobby() {
     const p = byUid[uid];
     const tagEl = h('span', { class: 'tag' });
     const el = h('li', {}, token(p.name, p.c), h('span', { class: 'desk' }, h('span', { class: 'nm', text: p.name }), tagEl));
-    el.__p = { tagEl };
-    if (newest && uid === newest.uid && uid !== room.me && lobbyKnown.size) el.append(h('span', { class: 'sticker red', text: pick(['Proie facile', 'Vient perdre', 'Favori ?'], uid) }));
+    const stk = h('span', { class: 'sticker red', text: pick(['Proie facile', 'Vient perdre', 'Favori ?'], uid), hidden: true });
+    el.append(stk);
+    el.__p = { tagEl, stk };
     return el;
-  }).forEach(el => {
+  }).forEach((el, k) => {
     if (!el.__p) return;
-    const p = players.find(x => el.__p && x.uid === [...$('#roster').__k].find(([, v]) => v === el)[0]);
+    const p = players[k];
     setClass(el, p.online ? '' : 'off');
     setText(el.__p.tagEl, p.uid === room.me ? (p.host ? 'toi · hôte' : 'toi') : p.host ? 'hôte' : p.online ? 'prêt à perdre' : 'parti se cacher');
+    // Un seul autocollant : pour le dernier arrivé (jamais pour soi).
+    el.__p.stk.hidden = !(newest && p.uid === newest.uid && p.uid !== room.me);
   });
   players.forEach(p => lobbyKnown.add(p.uid));
   renderPicks();
@@ -262,9 +265,15 @@ function renderPicks() {
     b.setAttribute('aria-pressed', String(on));
   });
   $('#picks-note').textContent = chosen.size === PICK_ORDER.length
-    ? (host ? 'Toutes les manches. Touche pour en retirer.' : 'Toutes les manches sont au programme.')
-    : `${chosen.size} manches au choix, ${ROUNDS_PER_TOURNAMENT} seront tirées${host ? '' : ' (choix de l’hôte)'}.`;
+    ? (host ? `Toutes les épreuves. Retire celles que tu ne veux pas : ${ROUNDS_PER_TOURNAMENT} seront tirées au sort.` : 'Toutes les épreuves sont au programme. L’hôte choisit.')
+    : `${chosen.size} épreuves au choix, ${ROUNDS_PER_TOURNAMENT} seront tirées au sort${host ? '' : ' (choix de l’hôte)'}.`;
+  $('#picks-all').hidden = !host || chosen.size === PICK_ORDER.length;
 }
+$('#picks-all').addEventListener('click', () => {
+  if (!room || !room.isHost) return;
+  const c = room.s.cfg || {};
+  room.setCfg({ roast: c.roast || 'soft', crude: !!c.crude, v: encodePicks(PICK_ORDER) }).catch(() => toast('Réglage refusé. Réessaie.'));
+});
 $('#btn-start').addEventListener('click', async e => {
   if (!coord) return;
   e.currentTarget.disabled = true;
@@ -284,7 +293,7 @@ function renderShow() {
   if (view.key !== key) {
     if (view.destroy) view.destroy();
     // Les grandes séquences s'ouvrent sur une virgule d'antenne.
-    if (['intro', 'reveal', 'final'].includes(m.step) && app.dataset.screen === 'show') wipe();
+    if (m.step === 'final' && app.dataset.screen === 'show') wipe();
     setScreen('show', PHASE[m.step] || 'onair');
     const deck = clear($('#deck'));
     deck.scrollTop = 0;
@@ -494,12 +503,13 @@ const VIEWS = {
     if (rows.some(r => r.tied)) wrap.append(h('p', { class: 'tied-note', text: 'Ex æquo : points partagés (moyenne des places).' }));
     if (m.i === ROUNDS_PER_TOURNAMENT - 1) wrap.append(h('p', { class: 'tied-note', text: `Manche décisive : points de place ×${FINAL_MULT}.` }));
     if (gameOf(m) === 'bac') wrap.append(bacTable(m, names));
+    if (gameOf(m) === 'prix') wrap.append(prixTable(m, names));
     // Du dernier au premier ; le vainqueur arrive détaché, après un court temps d'arrêt.
     const order = els.slice().reverse();
-    const step = reduced() ? 0 : Math.min(460, 2100 / order.length);
+    const step = reduced() ? 0 : Math.min(640, 2800 / order.length);
     order.forEach((e, k) => {
       const winner = k === order.length - 1 && order.length > 1;
-      e.style.animationDelay = `${Math.round(420 + k * step + (winner ? 380 : 0))}ms`;
+      e.style.animationDelay = `${Math.round(500 + k * step + (winner ? 600 : 0))}ms`;
       e.classList.add('in');
     });
     return {};
@@ -645,7 +655,7 @@ const PROG = {
   numeros: v => [`${v} numéros`, null], coffre: v => [`${v} chiffres`, null],
   dejavu: v => [`${v} bonnes`, null], calcul: v => [`${v} pt${Math.abs(v) > 1 ? 's' : ''}`, null],
   nuage: v => [`${v}/3 nuages`, v / 3], bac: v => [`${v}/4 cases`, v / 4],
-  prix: v => [`${v}/5 objets`, v / 5],
+  prix: v => [`${v}/5 produits`, v / 5],
 };
 // État de chaque candidat : valeur, part de la borne (0 à 1), texte, fini ou non.
 function race(mm, g, p) {
@@ -772,6 +782,25 @@ function tiebreakView(deck, m) {
   deck.append(wrap);
 }
 
+// L'Étiquette : produit par produit, le vrai prix et l'estimation de chacun ; le plus proche en avant.
+function prixTable(m, names) {
+  const p = paramsOf(m);
+  const who = contenders(m).filter(u => u !== GHOST && room.s.subs[u]);
+  const guesses = Object.fromEntries(who.map(u => { const d = parse((room.s.subs[u] || {}).d) || {}; return [u, Array.isArray(d.a) ? d.a.map(Number) : []]; }));
+  const eur = n => `${Number(n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+  const t = h('table', { class: 'prix-table' });
+  t.append(h('tr', {}, h('th', { text: 'Produit' }), h('th', { text: 'Prix' }), who.map(u => h('th', { text: names[u] }))));
+  p.items.forEach((it, k) => {
+    const errs = who.map(u => { const g = guesses[u][k]; return g > 0 ? Math.abs(Math.log(g / it.price)) : Infinity; });
+    const best = Math.min(...errs);
+    t.append(h('tr', {},
+      h('td', { class: 'pt-item' }, h('img', { src: `img/prix/${it.code}.jpg`, alt: '', loading: 'lazy', onerror: e => e.currentTarget.remove() }), h('span', {}, h('b', { text: it.name }), h('small', { text: `${it.brand} · ${it.qty}` }))),
+      h('td', { class: 'pt-price' }, h('span', { class: 'tagp', text: eur(it.price) })),
+      who.map((u, j) => { const g = guesses[u][k]; return h('td', { class: `pt-guess ${errs[j] === best && best < Infinity ? 'best' : ''}`, text: g > 0 ? eur(g) : '—' }); })));
+  });
+  return h('div', { class: 'bac-grid' }, t, h('p', { class: 'fine', text: 'Produits et prix : Open Food Facts et Open Prices (données libres). Prix = médiane des relevés en magasin.' }));
+}
+
 function bacTable(m, names) {
   const det = parse((m.det || {})[m.i] || '') || {};
   if (det.kind !== 'bac') return h('div');
@@ -786,6 +815,48 @@ function bacTable(m, names) {
     h('div', { class: 'legend' }, h('span', {}, h('i', { style: { background: 'var(--ok)' } }), 'unique 10'), h('span', {}, h('i', { style: { background: 'var(--mustard)' } }), 'partagée 5'), h('span', {}, h('i', { style: { background: 'var(--red)' } }), 'refusée 0'),
       h('span', { text: mode.startsWith('ia:') ? `Correction : IA (${mode.slice(3)}) + vote des joueurs sur les cas douteux` : 'Correction : vote des joueurs (IA indisponible)' })));
 }
+
+// ═════════════════════════════════════ menu de la partie
+// Reprendre, règles de la manche, réglages (animations réduites, plein écran), quitter.
+// La confirmation se fait dans le menu (jamais de fenêtre du navigateur).
+const menu = $('#menu'), menuBack = $('#menu-back');
+const calmPref = () => store.get('mp-calm') === '1';
+document.documentElement.classList.toggle('calm', calmPref());
+function openMenu() {
+  const m = room && room.s.match;
+  const box = clear($('#menu-round'));
+  if (m && m.step !== 'final') {
+    const def = round(gameOf(m));
+    box.append(h('h3', { text: m.i >= ROUNDS_PER_TOURNAMENT ? 'Départage' : `Manche ${m.i + 1} sur ${ROUNDS_PER_TOURNAMENT}` }), h('p', { class: 'sheet-title', text: def.title }), h('ol', { class: 'round-rules' }, def.rules.map(t => h('li', { text: t }))));
+  } else box.append(h('h3', { text: 'Mauvais Perdants' }), h('p', { class: 'fine', text: 'Cinq épreuves, un seul gagnant.' }));
+  $('#opt-calm').checked = calmPref();
+  $('#opt-full').checked = !!document.fullscreenElement;
+  $('#opt-full').closest('label').hidden = !document.documentElement.requestFullscreen;
+  $('#menu-stop').hidden = !(room && room.isCoord && m && m.step !== 'final');
+  $('#menu-confirm').hidden = true;
+  menu.hidden = false; menuBack.hidden = false;
+  requestAnimationFrame(() => { menu.classList.add('open'); menuBack.classList.add('open'); });
+  $('#menu-resume').focus();
+}
+function closeMenu() {
+  if (menu.hidden) return;
+  menu.classList.remove('open'); menuBack.classList.remove('open');
+  setTimeout(() => { menu.hidden = true; menuBack.hidden = true; }, reduced() ? 0 : 420);
+  $('#btn-menu').focus();
+}
+$('#btn-menu').addEventListener('click', openMenu);
+$('#menu-close').addEventListener('click', closeMenu);
+$('#menu-resume').addEventListener('click', closeMenu);
+menuBack.addEventListener('click', closeMenu);
+addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) closeMenu(); });
+$('#opt-calm').addEventListener('change', e => { store.set('mp-calm', e.target.checked ? '1' : null); document.documentElement.classList.toggle('calm', e.target.checked); });
+$('#opt-full').addEventListener('change', e => { (e.target.checked ? document.documentElement.requestFullscreen() : document.exitFullscreen()).catch(() => { e.target.checked = !!document.fullscreenElement; }); });
+let menuAction = null;
+const ask = (text, yes, fn) => { $('#menu-confirm-text').textContent = text; $('#menu-confirm-yes').textContent = yes; menuAction = fn; $('#menu-confirm').hidden = false; $('#menu-confirm-no').focus(); };
+$('#menu-quit').addEventListener('click', () => ask('Tu quittes l’émission : tu seras compté absent pour la suite. La lanterne rouge te tend les bras.', 'Oui, quitter', async () => { closeMenu(); const r = room; leaveUI(); if (r) await r.leave(); }));
+$('#menu-stop').addEventListener('click', () => ask('Le tournoi s’arrête pour tout le monde et vous revenez au salon. Les points en cours sont perdus.', 'Arrêter le tournoi', () => { closeMenu(); if (coord) coord.backToLobby(); }));
+$('#menu-confirm-no').addEventListener('click', () => { $('#menu-confirm').hidden = true; menuAction = null; });
+$('#menu-confirm-yes').addEventListener('click', () => { const f = menuAction; menuAction = null; if (f) f(); });
 
 // Accès de test (tests navigateur) : état lu seulement.
 window.__mp = { get room() { return room; }, get coord() { return coord; }, params: () => (room && room.s.match ? paramsOf(room.s.match) : null), serverNow, COUNT_MS, ONLINE_MS };

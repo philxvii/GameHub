@@ -16,7 +16,7 @@ import coffre, { numberFor, normalizeDigits, START as C_START } from '../js/roun
 import dejavu, { WORDS, stream, _fold } from '../js/rounds/dejavu.js';
 import calcul, { problems } from '../js/rounds/calcul.js';
 import nuage, { errorOf, MISSING } from '../js/rounds/nuage.js';
-import prix, { CATALOG, parsePrice, ITEMS_PER_ROUND } from '../js/rounds/prix.js';
+import prix, { CATALOG, parsePrice, ITEMS_PER_ROUND, slotAt, GUESS_MS, SLOT_MS, LEAD_MS } from '../js/rounds/prix.js';
 import bac from '../js/rounds/bac.js';
 import { rankRound, slotPoints, standings, needsTiebreak, tiebreakOrder, awards, FINAL_MULT } from '../js/scoring.js';
 import { drawPlan, eligibleRounds, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks } from '../js/draw.js';
@@ -339,14 +339,22 @@ describe('Tirage des cinq manches', () => {
 });
 
 describe('L’Étiquette (prix)', () => {
-  test('catalogue : prix positifs, objets uniques, cinq objets distincts par manche, reproductible', () => {
+  test('catalogue : codes-barres, prix positifs, produits uniques, cinq distincts par manche, reproductible', () => {
     assert.ok(CATALOG.length >= 30);
-    assert.ok(CATALOG.every(([n, h, p]) => n && h && p > 0));
+    assert.ok(CATALOG.every(([code, name, brand, qty, price]) => /^[0-9]{8,14}$/.test(code) && name && brand && qty && price > 0));
     assert.equal(new Set(CATALOG.map(c => c[0])).size, CATALOG.length);
     const p = prix.params('S1', 2);
     assert.equal(p.items.length, ITEMS_PER_ROUND);
     assert.equal(new Set(p.items.map(i => i.name)).size, ITEMS_PER_ROUND);
     assert.deepEqual(prix.params('S1', 2), p);
+  });
+  test('horloge : même produit pour tous au même instant, estimation puis étiquette, puis fin', () => {
+    assert.deepEqual(slotAt(0), { k: 0, reveal: false, left: 12 });
+    assert.equal(slotAt(LEAD_MS + GUESS_MS - 1).reveal, false);
+    assert.equal(slotAt(LEAD_MS + GUESS_MS).reveal, true);
+    assert.equal(slotAt(LEAD_MS + SLOT_MS).k, 1);
+    assert.equal(slotAt(LEAD_MS + ITEMS_PER_ROUND * SLOT_MS).done, true);
+    assert.ok(prix.playMs > LEAD_MS + ITEMS_PER_ROUND * SLOT_MS);
   });
   test('saisie : virgule, espaces, symbole euro ; refus du reste', () => {
     assert.equal(parsePrice('3,50 €'), 3.5);

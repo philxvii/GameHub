@@ -29,7 +29,8 @@ export function svg(markup) {
   t.innerHTML = markup.trim();
   return t.content.firstElementChild;
 }
-export const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Mouvement réduit : préférence du système, ou réglage « Animations réduites » du menu.
+export const reduced = () => document.documentElement.classList.contains('calm') || (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 let toastTimer = null;
 export function toast(msg) {

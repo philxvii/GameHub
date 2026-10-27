@@ -33,9 +33,33 @@ fictive de la fin des années 70. Pas de présentateur à l'écran (ses répliqu
 - Poussé le 26/10 à la demande de l'utilisateur AVANT les tests navigateur des derniers ajouts :
   animations ralenties, mises à jour sur place (fluidité), Gong vert/rouge, nouvelle manche
   « L'Étiquette » (`js/rounds/prix.js`, `js/play/prix.js`), choix des manches par l'hôte (codé dans
-  `cfg.v`, voir `encodePicks` dans `js/draw.js`). Node : 67/67. **À faire en premier** : relancer
-  `multi.cjs`, `rounds.cjs` (nouvelles graines MAN00000 / MAN00006) et `solo.cjs` sur le port 4173,
-  regarder les captures, corriger.
+  `cfg.v`, voir `encodePicks` dans `js/draw.js`). Node : 67/67.
+- Le 27/10, tests navigateur sur la version poussée : `multi.cjs` 17/17, `rounds.cjs` 5/5 (graines
+  MAN00000 / MAN00006), `solo.cjs` 4/4. Corrigés ensuite en local (non poussés) : barre de défilement
+  pendant la virgule d'antenne, un seul autocollant au salon.
+- Le 27/10 encore, **en local, NON poussé** (l'utilisateur doit donner son accord) :
+  - **L'Étiquette refaite façon jeu télé** : 47 vrais produits de supermarché (prix médians
+    Open Prices, photos Open Food Facts dans `img/prix/<code-barres>.jpg`, re-téléchargeables
+    avec `node games/mauvais-perdants/img/prix/telecharger.mjs`). Même produit pour tous au même
+    instant : 12 s pour estimer, puis 4 s d'étiquette rouge (`slotAt` dans `js/rounds/prix.js`).
+    Au verdict, tableau produit par produit avec l'estimation de chacun et le plus proche en vert.
+  - **Animations calmées** : plus de rebond, trajets courts, plus de clignotements rapides ni
+    d'objets qui tournent en boucle ; virgule d'antenne seulement à l'entrée et à la finale,
+    plus lente ; deux fois moins de confettis.
+  - **Menu de partie** (bouton ☰ en haut à droite pendant l'émission) : règles de la manche,
+    « Animations réduites » (mémorisé, classe `html.calm`), plein écran, quitter avec
+    confirmation, et pour le coordinateur « Arrêter le tournoi » (retour au salon).
+  - **« Au programme »** déplacé dans une fiche sous le code du plateau, avec coches et bouton
+    « Tout le programme » pour l'hôte.
+  - Tests : Node 68/68, `multi.cjs` 17/17, `rounds.cjs` 5/5, `solo.cjs` 4/4. Les suites
+    navigateur visent le port 4174 par défaut : sur ce PC, préfixer
+    `SA_URL=http://localhost:4173/games/mauvais-perdants/`.
+
+**Lancer les émulateurs sur ce PC** : le lanceur `npx firebase` est bloqué par une stratégie de
+groupe (pas Java). Utiliser Node directement, avec le JDK 21 installé en ZIP (hors PATH, Java 17
+reste le défaut) :
+`JAVA_HOME="$LOCALAPPDATA/Programs/Eclipse Adoptium/jdk-21.0.12.1+1" PATH="$JAVA_HOME/bin:$PATH" node node_modules/firebase-tools/lib/bin/firebase.js emulators:start --only database,auth --project demo-gamehub`
+(depuis `firebase/`).
   Le nom « Sans Appel » évoqué dans un prompt n'a pas été repris (le jeu reste Mauvais Perdants).
 
 **Pièges de cette session** : l'IA simulée n'accepte que les origines `localhost:4173` et
