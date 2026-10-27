@@ -15,9 +15,16 @@
   };
   var LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
   var EMU = LOCAL && (new URLSearchParams(location.search).has('emu') || store(sessionStorage, 'gh-emu'));
-  var FLAG = EMU
-    ? 'http://127.0.0.1:9000/hub/settings/maintenance.json?ns=undercover-game-b0d2a-default-rtdb'
-    : 'https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app/hub/settings/maintenance.json';
+  var DB = EMU
+    ? 'http://127.0.0.1:9000/'
+    : 'https://undercover-game-b0d2a-default-rtdb.europe-west1.firebasedatabase.app/';
+  var NS = EMU ? '?ns=undercover-game-b0d2a-default-rtdb' : '';
+  var FLAG = DB + 'hub/settings/maintenance.json' + NS;
+  // Jeu masqué par l'admin (hub/hidden/<id>) : la page du jeu se ferme comme en maintenance.
+  // Le dossier du jeu n'est pas toujours son identifiant dans hub/hidden (liste GAMES de home.html).
+  var DIR_ID = { 'qui-est-ce': 'quiestce', 'bataille-navale': 'bataille', 'mini-golf': 'minigolf', 'mini-subway': 'minisubway', 'mauvais-perdants': 'mauvaisperdants' };
+  var dir = (location.pathname.match(/\/games\/([^\/]+)\//) || [])[1];
+  var GAME = dir && (DIR_ID[dir] || dir);
   var ADMIN_HINT = 'gh-mx-admin';  // l'admin a demandé à entrer : revérifié à chaque chargement
   var root = document.documentElement;
   var state = 'pending';           // pending → open | admin | locked
@@ -78,6 +85,7 @@
   var TEXT = {
     locked: ['On revient vite.', 'Une petite maintenance est en cours. Les parties reprennent dès que tout est prêt.', 'Maintenance en cours'],
     error: ['Site indisponible.', 'Impossible de vérifier l\'état du site pour le moment. Vérifiez votre connexion, puis réessayez.', 'Vérification impossible'],
+    hidden: ['Jeu indisponible.', 'Ce jeu n\'est pas accessible pour le moment.', 'Jeu masqué'],
   };
 
   // Vide la page et la garde vide : seul l'écran reste, même si un script du jeu
@@ -113,7 +121,7 @@
         }).observe(document.body, { childList: true });
       }
       var t = TEXT[kind];
-      document.title = kind === 'error' ? 'Site indisponible' : 'Site en maintenance';
+      document.title = kind === 'error' ? 'Site indisponible' : kind === 'hidden' ? 'Jeu indisponible' : 'Site en maintenance';
       mx.innerHTML =
         '<div class="mx-card">' +
           '<div class="mx-art" aria-hidden="true">' + DIE + '<img src="' + new URL('maintenance.webp', base) + '" alt="" onerror="this.remove()"></div>' +
@@ -121,6 +129,8 @@
           '<h1>' + t[0] + '</h1><p>' + t[1] + '</p>' +
           (kind === 'error'
             ? '<div class="mx-admin"><button class="mx-btn mx-main" type="button" data-mx="retry">Réessayer</button></div>'
+            : kind === 'hidden'
+            ? '<div class="mx-admin"><button class="mx-btn mx-main" type="button" data-mx="home">Retour à l\'accueil</button></div>'
             : '<div class="mx-admin" hidden>' +
                 '<button class="mx-btn mx-main" type="button" data-mx="login">Se connecter avec Google</button>' +
                 '<button class="mx-btn mx-main" type="button" data-mx="reopen" hidden>Réactiver le site</button>' +
@@ -189,6 +199,7 @@
     if (!btn) return;
     var act = btn.getAttribute('data-mx');
     if (act === 'retry') { location.reload(); return; }
+    if (act === 'home') { location.href = new URL('../home.html', base).href; return; }
     var panel = mx.querySelector('.mx-admin');
     var msg = mx.querySelector('.mx-msg');
     if (act === 'gear') {
@@ -237,6 +248,30 @@
       });
   }
 
+  // Jeu masqué ? Sans page de jeu (accueil, 404…), toujours non. Réponse illisible : fermé.
+  function isHidden(first) {
+    if (!GAME) return Promise.resolve(false);
+    var ctl = window.AbortController ? new AbortController() : null;
+    var t = setTimeout(function () { if (ctl) ctl.abort(); }, 6000);
+    return fetch(DB + 'hub/hidden/' + encodeURIComponent(GAME) + '.json' + NS, { cache: 'no-store', signal: ctl && ctl.signal })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (v) { clearTimeout(t); return v === true; }, function (err) { clearTimeout(t); throw err; });
+  }
+
+  // Écoute en direct (flux Firebase) : la page se ferme dès que l'admin masque le jeu.
+  // Si le flux tombe, le contrôle périodique ci-dessous prend le relais.
+  var watching = false;
+  function watchHidden() {
+    if (!GAME || watching || !window.EventSource) return;
+    watching = true;
+    var es = new EventSource(DB + 'hub/hidden/' + encodeURIComponent(GAME) + '.json' + NS);
+    es.addEventListener('put', function (e) {
+      var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+      if (d && d.data === true && isOpen()) lock('hidden');
+    });
+    es.onerror = function () { es.close(); watching = false; };
+  }
+
   var busy = false;
   function check(first) {
     if (busy) return;
@@ -244,7 +279,13 @@
     read(first ? 3 : 1).then(function (v) {
       if (v === false || v === null) {               // ouvert (ou jamais réglé)
         store(sessionStorage, ADMIN_HINT, null);
-        if (state !== 'open') open(false);
+        return isHidden(first).then(function (hid) {
+          if (hid) lock('hidden');
+          else {
+            if (state !== 'open') open(false);
+            watchHidden();
+          }
+        }, function () { if (first) lock('error'); });
       } else if (state === 'pending' || state === 'open') {
         if (store(sessionStorage, ADMIN_HINT) === '1') verifyAdmin();
         else workerAdmin().then(function (ok) { if (ok) open(true); else lock('locked'); });
@@ -257,6 +298,6 @@
   }
 
   check(true);
-  setInterval(function () { if (!document.hidden) check(false); }, 20000);
+  setInterval(function () { if (!document.hidden) check(false); }, 20000);   // filet de sécurité
   document.addEventListener('visibilitychange', function () { if (!document.hidden) check(false); });
 })();
