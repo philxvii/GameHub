@@ -119,6 +119,7 @@ async function tournament(devs, seed, shotPrefix) {
         console.log(`      ${p.g.padEnd(8)} ${Object.values(r).map(x => `${x.rank}:${x.label}(+${x.pts})`).join('  ')}`);
       });
     });
+    await waitFor(A.p, `return [...document.querySelectorAll('.final-actions button')].some(b => b.textContent === 'Retour au salon');`, 20000, 'écran final');
     await A.p.eval(`[...document.querySelectorAll('.final-actions button')].find(b => b.textContent === 'Retour au salon').click(); return 1;`);
     await waitFor(B.p, `return document.querySelector('#app').dataset.screen === 'lobby';`, 15000, 'retour au salon');
   }

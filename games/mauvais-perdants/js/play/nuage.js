@@ -48,7 +48,7 @@ export default function mount(root, { p, submit, progress, sfx }) {
     open = false;
     const guess = Number(s), truth = p.clouds[k].n;
     answers.push(guess);
-    progress(answers.length);
+    progress(answers.length, `${k}${Math.min(99999, guess).toString(36)}`);   // sa réponse n'est visible des autres qu'une fois qu'ils ont répondu au même nuage
     // Le vrai compte, tout de suite : « C'était 73 points (tu as dit 60) ».
     row.style.visibility = 'hidden';
     line.textContent = `C’était ${truth} points · tu as dit ${guess}`;

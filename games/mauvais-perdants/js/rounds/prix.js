@@ -1,6 +1,6 @@
 // L'Étiquette — estimation de prix, façon jeu télévisé. Cinq produits de supermarché, le même
 // pour tout le monde au même instant (horloge du serveur) : 12 s pour écrire son prix, puis
-// 4 s d'étiquette rouge avec le vrai prix. L'écart se mesure en rapport (logarithme), comme au
+// 7 s d'étiquette rouge avec le vrai prix. L'écart se mesure en rapport (logarithme), comme au
 // Nuage. Le plus petit écart cumulé gagne.
 //
 // Produits et prix : Open Food Facts / Open Prices (données libres, ODbL ; photos CC BY-SA,
@@ -10,7 +10,7 @@
 import { arr, num, roundRng } from './_deps.js';
 
 export const ITEMS_PER_ROUND = 5;
-export const GUESS_MS = 12000, SHOW_MS = 4000, LEAD_MS = 600;
+export const GUESS_MS = 12000, SHOW_MS = 7000, LEAD_MS = 600;
 export const SLOT_MS = GUESS_MS + SHOW_MS;
 export const MISSING = Math.log(4);       // pas de réponse : comme se tromper d'un facteur 4
 
@@ -116,7 +116,7 @@ export const euros = n => `${Number(n).toLocaleString('fr-FR', { minimumFraction
 
 export default {
   id: 'prix', family: 'chiffres', title: 'L’Étiquette', verb: 'Estime',
-  rules: ['Un produit de supermarché s’affiche, le même pour tout le monde.', 'Tu as 12 secondes pour écrire son prix, puis l’étiquette tombe.', 'Cinq produits : le plus petit écart cumulé gagne.'],
+  rules: ['Un produit de supermarché s’affiche, le même pour tout le monde.', 'Tu as 12 secondes pour écrire son prix, puis l’étiquette tombe : tu vois le vrai prix, sa source et le prix des autres.', 'Cinq produits : le plus petit écart cumulé gagne.'],
   playMs: LEAD_MS + ITEMS_PER_ROUND * SLOT_MS + 2000,
   unit: 'écart moyen au vrai prix',
   eligible: () => true,

@@ -686,13 +686,19 @@ html.calm .demo-step { animation: none; opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .demo-step { animation: none; opacity: 1; } }
 .pts-note { margin: 8px 0 0; font-size: 13px; font-weight: 600; opacity: .85; }
 /* L'Étiquette : les prix des autres joueurs, une fois l'étiquette tombée */
-.peer-prices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.peer-prices .pp { padding: 4px 10px; border-radius: 999px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); font-size: 14px; font-weight: 700; }
+.peer-prices { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
+.peer-prices .pp { display: inline-flex; align-items: baseline; gap: 7px; padding: 7px 14px; border-radius: 14px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); font-size: 15px; font-weight: 700; }
+.peer-prices .pp b { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; opacity: .7; }
+.peer-prices .pp .pp-v { font-family: var(--display); font-size: 22px; font-weight: 400; }
+.peer-prices .pp small { font-size: 12px; opacity: .65; }
+.peer-prices .pp.me { background: var(--cream); }
+.peer-prices .pp.best { background: #e3f3e6; box-shadow: inset 0 -4px 0 var(--ok), 0 3px 0 var(--ink); }
 .peer-prices .pp.none { opacity: .55; }
 .pc-emoji { display: none; font-size: clamp(72px, 9vw, 120px); line-height: 1; }
 .price-card.has-emoji .pc-emoji { display: block; }
 .price-card.has-emoji .pc-media::after { content: none; }
-.pc-source { margin: 6px 0 0; font-size: 12px; font-weight: 600; opacity: .8; min-height: 2.6em; }
+.pc-source { margin: 8px auto 0; max-width: 640px; text-align: center; font-size: 13px; font-weight: 600; opacity: .9; min-height: 2.6em; }
+@media (max-height: 760px) { .pc-media { width: min(100%, 20vh); } .price-card { padding-top: 14px; padding-bottom: 14px; } }
 .prix-table .pt-src { font-size: 11px; font-style: italic; white-space: normal; max-width: 280px; }
 /* Le Coffre en élimination : à qui le tour */
 .turn-who { margin: 6px 0 10px; font-family: var(--display); text-transform: uppercase; font-size: clamp(20px, 2.4vw, 30px); line-height: 1.05; text-align: center; min-height: 1.1em; }
@@ -753,3 +759,12 @@ html.chat-dock #app { margin-right: 344px; }
 
 /* Vrais emojis : on force la police d'emojis du système (sinon la police du jeu les remplace par un glyphe vide). */
 .demo-step, .pc-emoji { font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', var(--display), sans-serif; }
+.rv .xtra { margin-top: 3px; font-size: 12px; line-height: 1.3; overflow-wrap: anywhere; }
+.rv .xtra:empty { display: none; }
+.rv .ph-done { color: var(--mustard); font-weight: 800; }
+.rv .ph-todo { opacity: .45; }
+.rv .lv-say { font-weight: 800; }
+.rv .lv-true { opacity: .6; }
+.rv .lv-hide { opacity: .5; font-style: italic; }
+.v-how { margin: 0 0 12px; font-size: 14px; font-weight: 600; opacity: .85; }
+.res-row .pts small { font-family: inherit; font-size: 13px; font-weight: 800; opacity: .6; }

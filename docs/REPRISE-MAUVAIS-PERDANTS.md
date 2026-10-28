@@ -79,6 +79,12 @@ fictive de la fin des années 70. Pas de présentateur à l'écran (ses répliqu
   Coffre) ; Nuage : vrai nombre de points après chaque réponse + tableau au verdict ; 7 nouvelles catégories
   de Petit Bac. À faire : correction douteuse du Petit Bac (demander un exemple précis à l'utilisateur ;
   l'IA n'est pas déployée, le jury vote), Ban.
+- 28/10 (nuit), poussé : chat réparé (`chatSend`, le nom `say` existait déjà) et collé à droite, ouvert par défaut ;
+  épreuves jamais répétées d'une partie à l'autre (y compris après retour au salon : `lastPlan` dans `coord.js`) ;
+  Nuage 4 s ; L'Étiquette : étiquette 7 s, source + prix de chacun + écart sous la carte ; panneau des adversaires
+  par jeu (`liveExtra` : phrase de la Dictée qui se remplit, réponse au Nuage visible une fois qu'on a répondu,
+  rien du contenu au Petit Bac) ; résultats en phrases simples (`plainLabel`). Reste : Petit Bac douteux
+  (en attente d'un exemple), Ban.
 
 **Lancer les émulateurs sur ce PC** : le lanceur `npx firebase` est bloqué par une stratégie de
 groupe (pas Java). Utiliser Node directement, avec le JDK 21 installé en ZIP (hors PATH, Java 17

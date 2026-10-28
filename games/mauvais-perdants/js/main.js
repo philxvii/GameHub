@@ -367,6 +367,21 @@ function demoOf(id) {
   return h('div', { class: 'demo', 'aria-hidden': 'true' }, steps.map((t, k) => h('span', { class: 'demo-step', style: { animationDelay: `${k * 1.4}s` }, text: t })));
 }
 
+// Le résultat de chacun en phrase simple (le moteur garde son format court, utile aux tests).
+function plainLabel(g, label) {
+  const t = String(label || '');
+  let x;
+  if ((x = /^écart (\d+) %$/.exec(t))) return `se trompe de ${x[1]} % en moyenne`;
+  if ((x = /^niveau (\d+)$/.exec(t))) return `niveau ${x[1]} atteint`;
+  if ((x = /^(\d+) bonnes$/.exec(t))) return `${x[1]} bonnes réponses`;
+  if (g === 'bac' && (x = /^(\d+) pts$/.exec(t))) return `${x[1]} points de mots`;
+  if (g === 'calcul' && (x = /^(-?\d+) pts$/.exec(t))) return `${x[1]} point${Math.abs(Number(x[1])) > 1 ? 's' : ''} au compteur`;
+  if (g === 'gong' && (x = /^(\d+) ms$/.exec(t))) return `réaction moyenne : ${x[1]} ms`;
+  if (g === 'tir' && /s$/.test(t)) return `20 cibles en ${t}`;
+  if (g === 'numeros' && (x = /^(\d+)/.exec(t))) return `${t}`;
+  return t;
+}
+
 function tickClock() {
   const el = $('#clock-num'), box = $('#clock');
   const m = room && room.s.match;
@@ -545,6 +560,7 @@ const VIEWS = {
     const rows = Object.entries(res).map(([uid, r]) => ({ uid, ...r })).sort((a, b) => a.rank - b.rank || (a.uid < b.uid ? -1 : 1));
     // La lanterne rouge : le dernier classé (présent), s'il n'est pas aussi premier.
     const worst = Math.max(...rows.filter(r => !r.absent).map(r => r.rank));
+    wrap.append(h('p', { class: 'v-how', text: `Classement : ${def.unit}. 1er = 10 points, dernier = 2${m.i === roundsOf(m) - 1 && m.i > 0 ? ', le tout doublé (manche décisive)' : ''}.` }));
     const list = h('div', { class: 'results' });
     const els = rows.map(r => {
       const lantern = !r.absent && r.rank === worst && worst > 1;
@@ -555,8 +571,8 @@ const VIEWS = {
         h('span', { class: 'who' }, h('b', { text: who.name }),
           r.boast ? h('span', { class: `bst ${r.boast > 0 ? 'up' : 'down'}`, text: `${signed(r.boast)} fanfaronnade` }) : null,
           lantern ? h('span', { class: 'sticker red', text: 'Lanterne rouge' }) : null),
-        h('span', { class: 'lab', text: r.label }),
-        h('span', { class: 'pts', text: signed(r.pts) }));
+        h('span', { class: 'lab', text: plainLabel(gameOf(m), r.label) }),
+        h('span', { class: 'pts' }, signed(r.pts), h('small', { text: ' pts' })));
     });
     els.forEach(e => list.append(e));
     // L'Étiquette : le tableau des estimations d'abord (sinon il est hors de l'écran à 6-8 joueurs).
@@ -735,8 +751,31 @@ function race(mm, g, p) {
       return { u, v: 0, txt: out ? 'éliminé' : mover ? 'à lui' : 'en lice', say: out ? `éliminé au tour ${d.out[u] + 1} (à ${d.failLen[u]} chiffres)` : mover ? 'retape le nombre…' : 'attend son tour', frac: out ? 0 : 1, done: !!room.s.subs[u], on: room.online(u), out };
     }
     const [txt, frac, say] = v === null ? ['', 0, 'n’a pas encore commencé'] : PROG[g](v, p);
-    return { u, v, txt, say, frac: Math.max(0, Math.min(1, frac === null ? v / best : frac)), done: !!room.s.subs[u], on: room.online(u) };
+    const pr = room.s.prog[u], pre = `${tag(mm)}.`;
+    const sub = pr && pr.k.startsWith(pre) ? pr.k.slice(pre.length) : null;      // « indice du nuage + réponse en base 36 »
+    return { u, v, txt, say, sub, frac: Math.max(0, Math.min(1, frac === null ? v / best : frac)), done: !!room.s.subs[u], on: room.online(u) };
   });
+}
+
+// Ce qu'on voit de l'adversaire PENDANT la manche, jeu par jeu. Règle : jamais de quoi recopier.
+//  - Dictée : sa phrase qui se remplit (on la connaît déjà, ça ne donne rien) ;
+//  - Nuage : ce qu'il a mis pour un nuage, seulement quand TOI aussi tu y as répondu ;
+//  - Petit Bac et le reste : rien du contenu, seulement l'avancement.
+function liveExtra(el, g, p, r, mine) {
+  let kids = [];
+  if (g === 'dictee' && r.v !== null && r.v !== undefined && !r.ghost) {
+    const n = Math.max(0, Math.min(p.phrase.length, r.v));
+    kids = [h('span', { class: 'ph-done', text: p.phrase.slice(0, n) }), h('span', { class: 'ph-todo', text: p.phrase.slice(n) })];
+  } else if (g === 'nuage' && r.sub && !r.ghost) {
+    const idx = Number(r.sub[0]), guess = parseInt(r.sub.slice(1), 36);
+    const myCount = mine && mine.v ? mine.v : 0;
+    if (guess > 0 && idx < myCount && p.clouds[idx]) kids = [h('span', { class: 'lv-say', text: `Nuage ${idx + 1} : il a mis ${guess}` }), h('span', { class: 'lv-true', text: ` (c’était ${p.clouds[idx].n})` })];
+    else if (guess > 0) kids = [h('span', { class: 'lv-hide', text: 'Sa réponse s’affichera quand tu auras répondu.' })];
+  }
+  const key = kids.map(k => k.textContent).join('|');
+  if (el.__k === key) return;
+  el.__k = key;
+  el.replaceChildren(...kids);
 }
 
 // Les rivaux pendant ta manche : un jeton, une valeur, une rampe de lampes.
@@ -753,9 +792,9 @@ function rivalsPanel(m) {
       myBest = mine && mine.v !== null && mine.v !== undefined ? mine.v : myBest;
       const others = rows.filter(r => r.u !== room.me);
       keyed(list, others.map(r => r.u), u => {
-        const val = h('small'), say = h('div', { class: 'say' }), lamps = h('div', { class: 'lamps', 'aria-hidden': 'true' }, Array.from({ length: 10 }, () => h('i'))), stk = h('span', { class: 'sticker', text: 'Te dépasse', hidden: true });
-        const el = h('div', { class: 'rv', style: { '--pc': pcol(mm.roster[u].c) } }, token(names[u], mm.roster[u].c, 'sm'), h('div', {}, h('div', { class: 'nm' }, h('span', { text: names[u] }), val), say, lamps), stk);
-        el.__p = { val, say, lamps: [...lamps.children], stk };
+        const val = h('small'), say = h('div', { class: 'say' }), xtra = h('div', { class: 'xtra' }), lamps = h('div', { class: 'lamps', 'aria-hidden': 'true' }, Array.from({ length: 10 }, () => h('i'))), stk = h('span', { class: 'sticker', text: 'Te dépasse', hidden: true });
+        const el = h('div', { class: 'rv', style: { '--pc': pcol(mm.roster[u].c) } }, token(names[u], mm.roster[u].c, 'sm'), h('div', {}, h('div', { class: 'nm' }, h('span', { text: names[u] }), val), say, xtra, lamps), stk);
+        el.__p = { val, say, xtra, lamps: [...lamps.children], stk };
         return el;
       }).forEach((el, k) => {
         const r = others[k], x = el.__p;
@@ -763,6 +802,7 @@ function rivalsPanel(m) {
         setClass(el, `rv${r.done ? ' fin' : ''}`);
         setText(x.val, r.ghost ? `à battre · ${r.txt}` : r.done ? 'fini' : r.on ? (r.txt || '…') : 'absent');
         setText(x.say, r.ghost ? 'score de référence' : r.done ? 'a terminé : réponse envoyée ✓' : !r.on ? 'déconnecté' : r.say);
+        liveExtra(x.xtra, g, p, r, mine);
         x.lamps.forEach((l, i) => setClass(l, i < lit ? 'on' : ''));
         x.stk.hidden = !(!r.ghost && !r.done && r.v !== null && r.v > 0 && r.v > myBest);
       });

@@ -29,9 +29,15 @@ export default function mount(root, { p, now, startAt, submit, progress, peers }
 
   // Partagé : valeur = nombre de produits répondus ; clé = « tag.produit + centimes en base 36 » (16 caractères max).
   const share = () => progress(answers.filter(x => x > 0).length, shown + Math.min(999999900, Math.round(answers[shown] * 100)).toString(36));
+  // Après l'étiquette : toi et chaque adversaire, avec l'écart au vrai prix ; le plus proche en vert.
   function showPeers(k) {
-    const list = peers(k);
-    others.replaceChildren(...list.map(o => h('span', { class: o.cents === null ? 'pp none' : 'pp' }, h('b', { text: o.name }), ` ${o.cents === null ? '—' : euros(o.cents / 100)}`)));
+    const it = p.items[k];
+    const rows = [{ name: 'Toi', cents: answers[k] > 0 ? Math.round(answers[k] * 100) : null, me: true }, ...peers(k)];
+    const errs = rows.map(o => (o.cents ? Math.abs(Math.log(o.cents / 100 / it.price)) : Infinity));
+    const best = Math.min(...errs);
+    const gap = o => { const d = Math.round((o.cents / 100 / it.price - 1) * 100); return `${d > 0 ? '+' : d < 0 ? '−' : ''}${Math.abs(d)} %`; };
+    others.replaceChildren(...rows.map((o, i) => h('span', { class: `pp${o.cents ? '' : ' none'}${errs[i] === best && best < Infinity ? ' best' : ''}${o.me ? ' me' : ''}` },
+      h('b', { text: o.name }), h('span', { class: 'pp-v', text: o.cents ? euros(o.cents / 100) : 'pas de réponse' }), o.cents ? h('small', { text: gap(o) }) : null)));
   }
   const lock = on => { input.disabled = on; btn.disabled = on; };
   function show(k) {
