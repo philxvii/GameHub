@@ -10,30 +10,28 @@
 
 <br>
 
-## Jouer en trois étapes
+## Les jeux
+
+<div align="center">
 
 <table>
 <tr>
-<td align="center" width="33%"><h3>1. Choisir</h3>Un jeu sur <a href="https://roulia.me">roulia.me</a></td>
-<td align="center" width="33%"><h3>2. Inviter</h3>Créez une partie et partagez le code</td>
-<td align="center" width="33%"><h3>3. Jouer</h3>Chacun sur son téléphone ou son ordinateur</td>
+<td align="center" width="20%"><a href="https://roulia.me/games/banqueroll/"><img src="docs/readme/banqueroll.png" width="150" alt="Banqueroll"></a><br><br><b><a href="https://roulia.me/games/banqueroll/">Banqueroll</a></b><br><sub>Enchères et échanges</sub><br><sub>2 à 8 joueurs</sub><br><br></td>
+<td align="center" width="20%"><a href="https://roulia.me/games/mauvais-perdants/"><img src="docs/readme/mauvais-perdants.png" width="150" alt="Mauvais Perdants"></a><br><br><b><a href="https://roulia.me/games/mauvais-perdants/">Mauvais Perdants</a></b><br><sub>Tournoi télé des années 70</sub><br><sub>1 à 8 joueurs</sub><br><br></td>
+<td align="center" width="20%"><a href="https://roulia.me/games/undercover/"><img src="docs/readme/undercover.png" width="150" alt="Undercover"></a><br><br><b><a href="https://roulia.me/games/undercover/">Undercover</a></b><br><sub>Démasque l'imposteur</sub><br><sub>3 à 9 joueurs</sub><br><br></td>
+<td align="center" width="20%"><a href="https://roulia.me/games/uno/"><img src="docs/readme/uno.png" width="150" alt="UNO"></a><br><br><b><a href="https://roulia.me/games/uno/">UNO</a></b><br><sub>Bloque et crie UNO</sub><br><sub>2 à 6 joueurs</sub><br><br></td>
+<td align="center" width="20%"><a href="https://roulia.me/games/mini-subway/"><img src="docs/readme/mini-subway.png" width="150" alt="Mini Subway"></a><br><br><b><a href="https://roulia.me/games/mini-subway/">Mini Subway</a></b><br><sub>Trace ton réseau de métro</sub><br><sub>1 à 4 joueurs</sub><br><br></td>
+</tr>
+<tr>
+<td align="center" width="20%"><a href="https://roulia.me/games/roulette/"><img src="docs/readme/roulette.png" width="150" alt="Roulette"></a><br><br><b><a href="https://roulia.me/games/roulette/">Roulette</a></b><br><sub>Misez, la roue tourne</sub><br><sub>2 à 8 joueurs</sub><br><br></td>
+<td align="center" width="20%"><a href="https://roulia.me/games/mini-golf/"><img src="docs/readme/mini-golf.png" width="150" alt="Mini Golf"></a><br><br><b><a href="https://roulia.me/games/mini-golf/">Mini Golf</a></b><br><sub>9 trous, le moins de coups</sub><br><sub>2 à 4 joueurs</sub><br><br></td>
+<td align="center" width="20%"><a href="https://roulia.me/games/puissance4/"><img src="docs/readme/puissance4.png" width="150" alt="Puissance 4"></a><br><br><b><a href="https://roulia.me/games/puissance4/">Puissance 4</a></b><br><sub>Aligne 4 jetons</sub><br><sub>2 joueurs</sub><br><br></td>
+<td align="center" width="20%"><a href="https://roulia.me/games/qui-est-ce/"><img src="docs/readme/qui-est-ce.png" width="150" alt="Qui est-ce ?"></a><br><br><b><a href="https://roulia.me/games/qui-est-ce/">Qui est-ce ?</a></b><br><sub>Devine le personnage</sub><br><sub>2 joueurs</sub><br><br></td>
+<td align="center" width="20%"><a href="https://roulia.me/games/bataille-navale/"><img src="docs/readme/bataille-navale.png" width="150" alt="Bataille navale"></a><br><br><b><a href="https://roulia.me/games/bataille-navale/">Bataille navale</a></b><br><sub>Coule la flotte adverse</sub><br><sub>2 joueurs</sub><br><br></td>
 </tr>
 </table>
 
-## Les jeux
-
-<table>
-<tr><td align="center" width="90"><img src="docs/readme/banqueroll.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/banqueroll/">Banqueroll</a></b><br>Plateau financier : enchères, échanges, bots et présentateur IA.</td><td align="right" nowrap>2 à 8 joueurs</td></tr>
-<tr><td align="center"><img src="docs/readme/mauvais-perdants.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/mauvais-perdants/">Mauvais Perdants</a></b><br>Une émission de télé des années 70 : un tournoi de mini-jeux et un solo contre le présentateur.</td><td align="right" nowrap>1 à 8 joueurs</td></tr>
-<tr><td align="center"><img src="docs/readme/undercover.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/undercover/">Undercover</a></b><br>Trouve l'imposteur avant qu'il ne te démasque.</td><td align="right" nowrap>3 à 9 joueurs</td></tr>
-<tr><td align="center"><img src="docs/readme/uno.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/uno/">UNO</a></b><br>Pose tes cartes, bloque les autres et crie UNO.</td><td align="right" nowrap>2 à 6 joueurs</td></tr>
-<tr><td align="center"><img src="docs/readme/mini-subway.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/mini-subway/">Mini Subway</a></b><br>Trace des lignes de métro et achemine les passagers avant la saturation.</td><td align="right" nowrap>1 à 4 joueurs</td></tr>
-<tr><td align="center"><img src="docs/readme/roulette.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/roulette/">Roulette</a></b><br>Misez vos jetons, la roue tourne.</td><td align="right" nowrap>2 à 8 joueurs</td></tr>
-<tr><td align="center"><img src="docs/readme/mini-golf.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/mini-golf/">Mini Golf</a></b><br>9 trous, le moins de coups gagne.</td><td align="right" nowrap>2 à 4 joueurs</td></tr>
-<tr><td align="center"><img src="docs/readme/puissance4.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/puissance4/">Puissance 4</a></b><br>Aligne 4 jetons avant l'adversaire.</td><td align="right" nowrap>2 joueurs</td></tr>
-<tr><td align="center"><img src="docs/readme/qui-est-ce.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/qui-est-ce/">Qui est-ce ?</a></b><br>Devine le personnage adverse.</td><td align="right" nowrap>2 joueurs</td></tr>
-<tr><td align="center"><img src="docs/readme/bataille-navale.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/bataille-navale/">Bataille navale</a></b><br>Place ta flotte et coule celle de l'adversaire.</td><td align="right" nowrap>2 joueurs</td></tr>
-</table>
+</div>
 
 ## Technologies
 
