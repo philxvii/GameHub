@@ -1,7 +1,7 @@
 // node --test edge/test/worker.test.mjs   — aucun réseau : fetch est simulé.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import worker, { signSession, checkSession } from '../src/worker.js';
+import worker, { signSession, checkSession, secure } from '../src/worker.js';
 
 const SECRET = 'x'.repeat(40);
 const UID = 'TestUid0123456789abcdefghij';
@@ -152,4 +152,11 @@ test("en-têtes de sécurité sur le site ouvert et sur l'écran de maintenance"
   res = await worker.fetch(req('/'), env);
   assert.equal(res.status, 503);
   assert.equal(res.headers.get('X-Content-Type-Options'), 'nosniff');
+});
+
+test('cache : admin revérifié, le reste servi du cache 5 min, images et polices inchangées', () => {
+  const res = (type, path) => secure(new Response('x', { headers: { 'Content-Type': type, 'Cache-Control': 'max-age=14400' } }), path);
+  for (const p of ['/shared/admin-panel.js', '/shared/admin-panel.css', '/shared/admin-audience.js']) assert.equal(res('text/javascript', p).headers.get('Cache-Control'), 'no-cache', p);
+  for (const p of ['/', '/home', '/home.html', '/games/uno/index.html', '/shared/firebase.js', '/games/uno/style.css']) assert.match(res('text/html', p).headers.get('Cache-Control'), /max-age=300, stale-while-revalidate=3600/, p);
+  for (const t of ['image/webp', 'font/woff2']) assert.equal(res(t, '/shared/maintenance.webp').headers.get('Cache-Control'), 'max-age=14400', t);
 });

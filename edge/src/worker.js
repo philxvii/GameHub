@@ -107,9 +107,17 @@ const SECURITY_HEADERS = {
   'Strict-Transport-Security': 'max-age=15552000',
   'Content-Security-Policy-Report-Only': CSP,
 };
-export function secure(res) {
+const HOT = /^\/shared\/admin-/;
+export function secure(res, pathname = '/') {
   const out = new Response(res.body, res);
   for (const [k, v] of Object.entries(SECURITY_HEADERS)) out.headers.set(k, v);
+  // Panneau d'admin : le navigateur revérifie à chaque visite (réponse 304 si rien n'a changé), une mise en ligne s'y
+  // voit tout de suite. Les autres pages, scripts et styles se servent depuis le cache 5 minutes, puis
+  // une copie un peu ancienne est affichée aussitôt pendant que la nouvelle se charge : les jeux s'ouvrent sans attente.
+  // Images et polices gardent leur cache habituel.
+  if (/text\/html|javascript|text\/css/.test(out.headers.get('Content-Type') || '')) {
+    out.headers.set('Cache-Control', HOT.test(pathname) ? 'no-cache' : 'public, max-age=300, stale-while-revalidate=3600');
+  }
   return out;
 }
 
@@ -207,11 +215,11 @@ export default {
     // Le calque de secours du site demande ici si le cookie admin est valide (HttpOnly : illisible côté page).
     if (pathname === '/__gh/session' && request.method === 'GET') return json(admin ? 200 : 401, { admin: !!admin });
 
-    if (admin || await siteOpen()) return secure(await fetch(request));
+    if (admin || await siteOpen()) return secure(await fetch(request), pathname);
 
     // Seule exception pendant la maintenance : les pages de Firebase Auth copiées dans __/auth/
     // (la connexion Google de l'admin y revient). Fichiers publics de Firebase, sans rien du site.
-    if (pathname.startsWith('/__/auth/')) return secure(await fetch(request));
+    if (pathname.startsWith('/__/auth/')) return secure(await fetch(request), pathname);
 
     return page(503, maintenancePage());
   },
