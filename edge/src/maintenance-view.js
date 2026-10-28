@@ -49,7 +49,15 @@ button{font:inherit;color:inherit}
 .top{display:flex;align-items:center;justify-content:space-between;height:68px}
 .logo{display:inline-flex;align-items:center;gap:10px;font-size:21px;line-height:1;letter-spacing:-.045em}
 .logo svg{width:34px;height:34px;flex:none}
-.logo span{font-weight:430}.logo b{font-weight:690}
+.logo svg{overflow:visible}.logo .g1{font-weight:430}.logo .g2{font-weight:690}
+.logo .l{display:inline-block;transform-origin:50% 62%}
+.die{transform-box:fill-box;transform-origin:center}
+.pips circle{transform-box:fill-box;transform-origin:center;transition:transform .38s cubic-bezier(.3,1.8,.5,1)}
+.pips circle:not(.on){transform:scale(0)}.pips .acc{fill:#FF5A3C}
+.logo.pop .die{animation:logo-pop .45s cubic-bezier(.3,1.6,.5,1)}
+.logo.tumble .l{animation:logo-tumble .85s cubic-bezier(.3,1.3,.5,1) both;animation-delay:calc(var(--i)*45ms)}
+@keyframes logo-pop{0%{transform:scale(1)}35%{transform:scale(.9,.94) rotate(-4deg)}70%{transform:scale(1.07) rotate(2deg)}100%{transform:scale(1)}}
+@keyframes logo-tumble{0%{transform:perspective(380px) rotateX(0) translateY(0)}45%{transform:perspective(380px) rotateX(200deg) translateY(-4px)}100%{transform:perspective(380px) rotateX(360deg) translateY(0)}}
 .theme{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;border:1px solid var(--border2);background:transparent;cursor:pointer;transition:border-color .22s,transform .12s}
 .theme:hover{border-color:var(--text)}.theme:active{transform:scale(.92)}
 .theme svg{width:17px;height:17px}
@@ -61,9 +69,13 @@ main{flex:1;display:flex;align-items:center;justify-content:center;gap:48px clam
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,90,60,.55)}70%,100%{box-shadow:0 0 0 9px rgba(255,90,60,0)}}
 h1{margin:24px 0 0;font-weight:600;font-size:clamp(46px,6vw,88px);line-height:.98;letter-spacing:-.045em}
 .lede{margin-top:20px;max-width:420px;font-size:18px;color:var(--muted);letter-spacing:-.005em}
-.bar{position:relative;width:132px;height:3px;margin-top:34px;border-radius:3px;overflow:hidden;background:var(--border2)}
-.bar::after{content:"";position:absolute;top:0;bottom:0;width:42%;border-radius:3px;background:var(--brand);animation:sweep 2.2s var(--e-out) infinite}
-@keyframes sweep{0%{left:-45%}100%{left:105%}}
+.bar{position:relative;width:min(230px,62vw);height:3px;margin-top:40px;border-radius:3px;background:var(--border2)}
+.bar::before{content:"";position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--brand);animation:roll-fill 3.2s cubic-bezier(.65,0,.35,1) infinite alternate}
+.bar i{position:absolute;left:0;top:50%;width:28px;height:28px;margin-top:-14px;animation:roll 3.2s cubic-bezier(.65,0,.35,1) infinite alternate;filter:drop-shadow(0 4px 6px rgba(14,16,22,.28))}
+.bar i svg{display:block;width:100%;height:100%;color:var(--text)}
+@keyframes roll{from{left:0;transform:rotate(0)}to{left:calc(100% - 28px);transform:rotate(540deg)}}
+@keyframes roll-fill{from{width:14px}to{width:calc(100% - 14px)}}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.96)}}
 @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .copy>*{animation:rise .9s var(--e-out) both}
 .copy>:nth-child(2){animation-delay:.08s}.copy>:nth-child(3){animation-delay:.16s}.copy>:nth-child(4){animation-delay:.26s}
@@ -87,7 +99,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .gear{display:inline-grid;place-items:center;width:28px;height:28px;border:0;background:transparent;color:var(--muted);opacity:.6;cursor:pointer;transition:opacity .22s,transform .7s var(--e-out)}
 .gear:hover,.gear[aria-expanded="true"]{opacity:1;color:var(--text)}.gear:hover{transform:rotate(60deg)}
 .gear svg{width:15px;height:15px}
-.panel{position:fixed;right:16px;bottom:72px;width:min(320px,calc(100vw - 32px));display:grid;gap:8px;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow)}
+.panel{position:fixed;right:var(--gutter);bottom:72px;width:min(320px,calc(100vw - 2 * var(--gutter)));transform-origin:100% 100%;animation:pop .32s var(--e-out);display:grid;gap:8px;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow)}
+.panel[hidden]{display:none}
 .panel h2{font-size:15px;font-weight:600;letter-spacing:-.01em;margin-bottom:2px}
 .btn{width:100%;padding:12px;border:1px solid var(--border2);border-radius:10px;background:transparent;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .22s,transform .12s}
 .btn:hover{opacity:.88}.btn:active{transform:scale(.98)}.btn:disabled{opacity:.5;cursor:wait}
@@ -100,16 +113,18 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
   .media{width:min(190px,52vw);align-self:center}.art{border-radius:16px}
   h1{font-size:44px}.lede{font-size:16px}
 }
-@media (prefers-reduced-motion:reduce){.art,.copy>*,.media,.status i,.bar::after{animation:none}.bar::after{left:0}.tilt{transition:none;transform:none!important}.glint{animation:none;opacity:0}}
+@media (prefers-reduced-motion:reduce){.logo *{animation:none!important}.art,.copy>*,.media,.status i,.bar::before,.bar i{animation:none}.bar::before{width:50%}.bar i{left:calc(50% - 14px)}.tilt{transition:none;transform:none!important}.glint{animation:none;opacity:0}}
 `;
 
 const GEAR = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
-const MARK = `<svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="8.4" fill="currentColor"/><g style="fill:var(--bg)"><circle cx="10.2" cy="9.2" r="2.5"/><circle cx="21.8" cy="22.8" r="2.5"/></g><circle cx="16" cy="16" r="2.7" fill="#FF5A3C"/></svg>`;
+const MARK = `<svg viewBox="0 0 32 32" aria-hidden="true"><g class="die"><rect x="3" y="3" width="26" height="26" rx="8.4" fill="currentColor"/><g class="pips" style="fill:var(--bg)"><circle class="on" data-k="TL" cx="10.2" cy="9.2" r="2.5"/><circle data-k="TR" cx="21.8" cy="9.2" r="2.5"/><circle data-k="ML" cx="10.2" cy="16" r="2.5"/><circle data-k="MR" cx="21.8" cy="16" r="2.5"/><circle data-k="BL" cx="10.2" cy="22.8" r="2.5"/><circle class="on" data-k="BR" cx="21.8" cy="22.8" r="2.5"/><circle class="on acc" data-k="C" cx="16" cy="16" r="2.7"/></g></g></svg>`;
+const letters = (s, from) => [...s].map((c, i) => `<span class="l" style="--i:${from + i}">${c}</span>`).join('');
+const WORD = `<span class="g1">${letters('Game', 0)}</span><span class="g2">${letters('Hub', 4)}</span>`;
 const DIE = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="none" stroke="#fff" stroke-width="1.4"/><circle cx="8" cy="8" r="1.7" fill="#fff"/><circle cx="12" cy="12" r="1.7" fill="#FF5A3C"/><circle cx="16" cy="16" r="1.7" fill="#fff"/></svg>`;
 
 // Les identifiants (admin, login, reopen, enter, msg, gear) sont ceux du script du Worker.
 export const BODY = `<header class="wrap top">
-  <span class="logo">${MARK}<span>Game<b>Hub</b></span></span>
+  <span class="logo">${MARK}<span aria-label="GameHub">${WORD}</span></span>
   <button class="theme" id="theme" type="button" aria-label="Changer de thème">
     <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
     <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
@@ -120,7 +135,7 @@ export const BODY = `<header class="wrap top">
     <span class="status"><i></i>Maintenance en cours</span>
     <h1>On revient vite.</h1>
     <p class="lede">Une petite maintenance est en cours. Les parties reprennent dès que tout est prêt.</p>
-    <div class="bar" aria-hidden="true"></div>
+    <div class="bar" aria-hidden="true"><i>${MARK}</i></div>
   </div>
   <div class="media" aria-hidden="true"><div class="tilt" id="tilt"><div class="art"><img src="${ART}" alt="" width="720" height="960"><div class="glint"></div></div></div></div>
 </main>
@@ -136,6 +151,27 @@ export const BODY = `<header class="wrap top">
   <button class="gear" id="gear" type="button" aria-label="Administration" aria-expanded="false" aria-controls="admin">${GEAR}</button>
 </footer>
 <script>
+(function () {
+  var logo = document.querySelector('.logo'); if (!logo) return;
+  var FACES = { 1: ['C'], 2: ['TL', 'BR'], 3: ['TL', 'C', 'BR'], 4: ['TL', 'TR', 'BL', 'BR'], 5: ['TL', 'TR', 'C', 'BL', 'BR'], 6: ['TL', 'TR', 'ML', 'MR', 'BL', 'BR'] };
+  var ACC = { 1: 'C', 2: 'BR', 3: 'C', 4: 'TR', 5: 'C', 6: 'TR' };
+  var calm = matchMedia('(prefers-reduced-motion: reduce)'), face = 3, idle = 0;
+  function setFace(n) {
+    face = n;
+    [].forEach.call(logo.querySelectorAll('.pips circle'), function (c) {
+      c.classList.toggle('on', FACES[n].indexOf(c.getAttribute('data-k')) > -1);
+      c.classList.toggle('acc', c.getAttribute('data-k') === ACC[n]);
+    });
+  }
+  function replay(cls, ms) { logo.classList.remove(cls); void logo.offsetWidth; logo.classList.add(cls); setTimeout(function () { logo.classList.remove(cls); }, ms); }
+  function rearm() { clearTimeout(idle); idle = setTimeout(function () { if (face !== 3) { setFace(3); if (!calm.matches) replay('pop', 480); } }, 3000); }
+  logo.addEventListener('pointerenter', function () {
+    if (calm.matches) { rearm(); return; }
+    var n; do { n = 1 + Math.floor(Math.random() * 6); } while (n === face);
+    setFace(n); replay('pop', 480); replay('tumble', 1250); rearm();
+  });
+  logo.addEventListener('pointermove', rearm);
+})();
 (function () {
   var t = document.getElementById('tilt');
   addEventListener('pointermove', function (e) {

@@ -2,6 +2,7 @@
 // (<préfixe>/<code>/banned/<uid>). Profils : alice (hôte), bob, eve, un visiteur sans compte, admin1.
 
 import { test, describe, before, after, beforeEach } from 'node:test';
+import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
 import { ref, get, set, update, remove } from 'firebase/database';
@@ -87,6 +88,31 @@ describe('Bannis du site', () => {
     await assertSucceeds(set(ref(bob, 'p4/DISC-42/members/bob'), true));
     await assertSucceeds(remove(ref(admin, 'bans/eve')));
     await assertSucceeds(set(ref(eve, 'p4/DISC-42/members/eve'), true));
+  });
+});
+
+describe('Réglages du site (maintenance, âge)', () => {
+  test('lus un par un par tous, jamais d’un bloc ; écrits par l’admin seul', async () => {
+    await seed('hub/settings', { maintenance: true, ageGate: false });
+    for (const who of [anon, eve, admin]) {
+      assert.equal((await get(ref(who, 'hub/settings/maintenance'))).val(), true);
+      assert.equal((await get(ref(who, 'hub/settings/ageGate'))).val(), false);
+    }
+    await assertFails(get(ref(admin, 'hub/settings')));   // c'est ce qui trompait le panneau
+    await assertFails(update(ref(eve, 'hub/settings'), { maintenance: false }));
+    await assertSucceeds(update(ref(admin, 'hub/settings'), { maintenance: false, ageGate: true }));
+    assert.equal((await get(ref(anon, 'hub/settings/maintenance'))).val(), false);
+    assert.equal((await get(ref(anon, 'hub/settings/ageGate'))).val(), true);
+  });
+});
+
+describe('Ancien WikiRace', () => {
+  test('l’admin supprime une partie sans toucher aux autres ; personne d’autre', async () => {
+    await seed('wr/WR-1111', { phase: 'x' }); await seed('wr/WR-2222', { phase: 'y' });
+    await assertFails(remove(ref(eve, 'wr/WR-1111')));
+    await assertSucceeds(remove(ref(admin, 'wr/WR-1111')));
+    await assertFails(set(ref(admin, 'wr/WR-3333'), { phase: 'z' }));   // lecture et suppression seulement
+    assert.equal((await get(ref(admin, 'wr/WR-2222/phase'))).val(), 'y');
   });
 });
 

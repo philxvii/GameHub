@@ -105,8 +105,7 @@ const STYLES = `
 .aud-game{position:relative;border-radius:18px;overflow:hidden;background:#0D0B12;color:#fff;aspect-ratio:3/4;box-shadow:0 0 0 1px var(--ap-sep);transition:transform .5s var(--ap-ease),box-shadow .4s}
 .aud-game:hover{transform:translateY(-4px);box-shadow:0 0 0 1px var(--ap-sep),0 20px 34px -18px rgba(0,0,0,.55)}
 .aud-game img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.aud-game.home{background:linear-gradient(160deg,#2a2735,#121019)}
-.aud-game.mx{background:linear-gradient(160deg,#3a3646,#141219)}
+.aud-game.home{background:var(--die) center 38%/40% no-repeat,repeating-linear-gradient(0deg,rgba(255,255,255,.06) 0 1px,transparent 1px 12px),repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 1px,transparent 1px 12px),#1C1826}
 .aud-game::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(0,0,0,.82))}
 .aud-game .in{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:12px}
 .aud-game .rk{position:absolute;top:10px;left:10px;z-index:1;min-width:24px;height:24px;padding:0 7px;border-radius:999px;background:rgba(0,0,0,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:12px;font-weight:600;display:grid;place-items:center}
@@ -249,10 +248,10 @@ export function mountAudience(root, { devEndpoint } = {}) {
   updated.setAttribute('aria-live', 'polite');
   const body = el('div', { className: 'aud-body' });
   root.classList.add('aud');
-  root.replaceChildren(
+  root.replaceChildren(...[
     demo ? el('div', { className: 'aud-demo' }, el('i'), 'Données synthétiques — démonstration locale') : null,
     el('div', { className: 'aud-bar' }, seg, gameSel, el('div', { className: 'aud-meta' }, updated, refresh)),
-    body);
+    body].filter(Boolean));
 
   // Thème changé : la carte reprend le fond clair ou sombre (le reste suit les variables CSS).
   let theme = document.documentElement.dataset.theme;
@@ -545,9 +544,10 @@ export function mountAudience(root, { devEndpoint } = {}) {
     const gmax = Math.max(1, ...d.pages.map(p => p.n));
     const games = el('div', { className: 'aud-games' }, d.pages.map((p, i) => {
       const t = 'prev' in p ? trend(p.n, p.prev) : null;
-      const bare = p.key === 'home' || p.key === 'maintenance';
-      return el('div', { className: 'aud-game' + (bare ? ' home' : '') + (p.key === 'maintenance' ? ' mx' : '') },
-        bare ? null : el('img', { src: `/games/${p.key}/cover.webp`, alt: '', loading: 'lazy', decoding: 'async' }),
+      // Accueil : dos de carte au dé (CSS) ; écran de maintenance : son affiche ; jeux : leur couverture.
+      const cover = p.key === 'maintenance' ? '/shared/maintenance.webp' : p.key === 'home' ? null : `/games/${p.key}/cover.webp`;
+      return el('div', { className: 'aud-game' + (p.key === 'home' ? ' home' : '') },
+        cover ? el('img', { src: cover, alt: '', loading: 'lazy', decoding: 'async' }) : null,
         el('span', { className: 'rk', textContent: String(i + 1) }),
         t ? el('span', { className: 'tr ' + t.cls, textContent: t.txt }) : null,
         el('div', { className: 'in' }, el('b', { textContent: PAGE_NAMES[p.key] || p.key }), el('span', { textContent: `${nf.format(p.n)} vues · ${pct(p.n, d.totals.views)}` }),
@@ -590,15 +590,15 @@ export function mountAudience(root, { devEndpoint } = {}) {
       el('div', { className: 'aud-mapwrap' }, mapBox, viewBtns, el('p', { className: 'aud-info', role: 'status' })),
       el('div', { className: 'aud-geo-side' },
         el('span', { className: 'aud-label', textContent: 'Villes' }),
-        d.cities.rows.length ? cityList : el('p', { className: 'aud-empty', textContent: `Aucune ville n’atteint ${d.kMin} pages vues.` }),
-        unplaced ? el('p', { className: 'aud-empty', textContent: `${nf.format(unplaced)} pages vues sans ville (moins de ${d.kMin} vues ou inconnue).` }) : null,
+        d.cities.rows.length ? cityList : el('p', { className: 'aud-empty', textContent: 'Aucune ville connue pour cette période.' }),
+        unplaced ? el('p', { className: 'aud-empty', textContent: `${nf.format(unplaced)} page${unplaced > 1 ? 's' : ''} vue${unplaced > 1 ? 's' : ''} sans ville connue (adresse non localisable, VPN…).` }) : null,
         el('div', { style: 'margin-top:18px' }, el('span', { className: 'aud-label', textContent: 'Pays' }),
           list(d.countries.rows, d.countries.other, countryName, sum(d.countries), k => k === 'ZZ' ? '?' : k))));
 
     body.replaceChildren(...[
       !d.heat ? html('div', 'ap-note aud-note', '<div><b>Service de mesure à mettre à jour.</b> Tendances, carte de chaleur, 90 jours et 1 an arrivent avec la nouvelle version.</div>') : null,
       hero,
-      appear(head('Où sont les joueurs', `Villes avec au moins ${d.kMin} pages vues · position à ~10 km près, jamais une personne`)), appear(geo),
+      appear(head('Où sont les joueurs', 'Chaque ville dès sa première vue · position à ~10 km près, jamais une personne')), appear(geo),
       insights,
       appear(head('Jeux et pages', prev ? 'Classement de la période, évolution par rapport à la période d’avant' : 'Classement de la période')), appear(games),
       d.heat ? appear(head('Quand viennent-ils', 'Jour de la semaine × heure de Paris')) : null,
@@ -614,7 +614,7 @@ export function mountAudience(root, { devEndpoint } = {}) {
           el('li', { textContent: 'Aucun visiteur unique : aucun identifiant n’est utilisé. Les joueurs présents en ce moment sont dans « En direct ».' }),
           el('li', { textContent: 'Tendances : comparées à la période de même durée juste avant.' }),
           el('li', { textContent: 'Villes et pays : déduits de l’adresse IP par Cloudflare, approximatifs (VPN, réseau mobile). Chaque point est une ville à ~10 km près, jamais une personne. L’IP n’est pas conservée.' }),
-          el('li', { textContent: `Groupes de moins de ${d.kMin} pages vues regroupés ; comptes conservés 13 mois. 24 h : heures glissantes ; autres périodes : jours de Paris, aujourd’hui compris.` })))))].filter(Boolean));
+          el('li', { textContent: `Pays, appareils, navigateurs et sources de moins de ${d.kMin} pages vues sont regroupés ; les villes sont toutes montrées. Comptes conservés 13 mois. 24 h : heures glissantes ; autres périodes : jours de Paris, aujourd’hui compris.` })))))].filter(Boolean));
     st.anim = false;   // les animations d'entrée ne jouent qu'au premier affichage
 
     try { await drawMap(mapBox, d); select(null); }

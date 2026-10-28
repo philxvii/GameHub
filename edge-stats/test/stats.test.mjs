@@ -186,7 +186,7 @@ test('aucun secret, jeton admin ni donnée de partie dans le script public', () 
   assert.ok(!/Bearer|COOKIE_SECRET|admins\/|getIdToken|firebase|localStorage\.getItem\(.gh-auth|location\.search|location\.hash/i.test(client));
 });
 
-test('villes : point arrondi à 0,1°, seuil de 5, pas de coordonnées brutes', async () => {
+test('villes : point arrondi à 0,1°, une vue suffit, pas de coordonnées brutes', async () => {
   const e = env();
   const lyon = { country: 'FR', city: 'Lyon', latitude: '45.7578', longitude: '4.8320' };
   const rare = { country: 'FR', city: 'Bourg-Perdu', latitude: '44.123', longitude: '5.456' };
@@ -196,8 +196,11 @@ test('villes : point arrondi à 0,1°, seuil de 5, pas de coordonnées brutes', 
   assert.ok(places.every(p => Math.round(p.lat * 10) === p.lat * 10 && Math.round(p.lon * 10) === p.lon * 10));
   assert.ok(!JSON.stringify(places).includes('45.7578'));
   const s = await summarize(e, '7d');
-  assert.deepEqual(s.cities.rows, [{ key: 'FR|Lyon', country: 'FR', name: 'Lyon', lat: 45.8, lon: 4.8, n: 6 }]);
-  assert.equal(s.cities.other, 2);                       // Bourg-Perdu : pas de point, reste dans la France
+  assert.deepEqual(s.cities.rows, [
+    { key: 'FR|Lyon', country: 'FR', name: 'Lyon', lat: 45.8, lon: 4.8, n: 6 },
+    { key: 'FR|Bourg-Perdu', country: 'FR', name: 'Bourg-Perdu', lat: 44.1, lon: 5.5, n: 2 }]);   // même sous 5 vues
+  assert.equal(s.cities.other, 0);
+  assert.equal(s.kCity, 1);
   assert.equal(s.countries.rows[0].n, 8);
 });
 

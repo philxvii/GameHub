@@ -9,6 +9,7 @@ const PAGES = ['home', 'maintenance', 'banqueroll', 'bataille-navale', 'mauvais-
   'puissance4', 'qui-est-ce', 'roulette', 'undercover', 'uno', 'wikirace'];
 const DIMS = ['page', 'entry', 'country', 'city', 'device', 'browser', 'os', 'ref'];
 const K_MIN = 5;                    // seuil d'affichage : une valeur sous ce seuil est regroupée
+const K_CITY = 1;                   // villes : une vue suffit (choix du propriétaire, lecture réservée à l'admin)
 const TZ = 'Europe/Paris';
 const OWN_HOSTS = ['roulia.me', 'www.roulia.me'];
 // 24 h : heures glissantes. Les autres : jours calendaires de Paris, aujourd'hui compris (en cours).
@@ -190,6 +191,7 @@ async function summarize(db, q, now = Date.now()) {
     const m = maskSmall(dimRows.filter(r => r.dim === name).map(r => ({ key: r.key, n: r.n })));
     return { rows: m.rows, other: m.other };
   };
+  const cityDim = () => { const m = maskSmall(dimRows.filter(r => r.dim === 'city').map(r => ({ key: r.key, n: r.n })), K_CITY); return { rows: m.rows, other: m.other }; };
   const pages = new Map();
   for (const r of pageRows) pages.set(r.key, (pages.get(r.key) || 0) + r.n);
   const prevByPage = new Map(prevPages.map(r => [r.key, r.n]));
@@ -204,6 +206,7 @@ async function summarize(db, q, now = Date.now()) {
     timezone: TZ,
     query: { range: q.range, game: q.game, from: q.from * HOUR, to: (q.to + 1) * HOUR, granularity: hourly ? 'hour' : 'day' },
     kMin: K_MIN,
+    kCity: K_CITY,
     totals: { views, entries: entryTotal },
     previous: { from: pFrom * HOUR, to: (pTo + 1) * HOUR, views: prevPages.reduce((s, r) => s + r.n, 0), entries: (prevEntries[0] && prevEntries[0].n) || 0 },
     series: points,
@@ -215,7 +218,7 @@ async function summarize(db, q, now = Date.now()) {
     browsers: dim('browser'),
     os: dim('os'),
     refs: dim('ref'),
-    cities: await cities(db, q, dim('city')),
+    cities: await cities(db, q, cityDim()),
   };
 }
 

@@ -196,6 +196,11 @@ export default {
       return json(200, { ok: true }, { 'Set-Cookie': cookie });
     }
 
+    // Déconnexion : le cookie admin est effacé (il est HttpOnly, la page ne peut pas le faire elle-même).
+    if (pathname === '/__gh/logout' && request.method === 'POST') {
+      return json(200, { ok: true }, { 'Set-Cookie': `${COOKIE}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax` });
+    }
+
     // Aperçu : l'écran de maintenance, tel que le voient les visiteurs, même pour l'admin ou site ouvert.
     if (pathname === '/__gh/maintenance' && request.method === 'GET') return page(200, maintenancePage());
 

@@ -119,6 +119,15 @@ export async function closeRoom(prefix, code) {
   try { await remove(ref(db, `${prefix}/${code}`)); } catch (e) { if (!isDenied(e)) throw e; }
 }
 
+// Déconnexion admin : quitte le compte Google (le prochain passage crée un nouveau compte anonyme).
+export async function adminSignOut() {
+  await auth.authStateReady();
+  try { localStorage.removeItem(SIGNED); } catch (_) {}
+  try { sessionStorage.removeItem('gh-mx-admin'); } catch (_) {}
+  ready = null;
+  await auth.signOut();
+}
+
 // Connexion admin par Google. L'uid doit figurer dans `admins/` (ajouté depuis la
 // console Firebase).
 // Le compte anonyme du navigateur est rattaché au compte Google (même uid) : les

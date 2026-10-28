@@ -14,7 +14,7 @@
 // suivie champ par champ (phase, joueurs, présence…) : jamais les gros nœuds d'un jeu.
 import { ref, get, set, update, remove, onValue, query, orderByKey, limitToLast }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-import { db, auth } from './firebase.js';
+import { db, auth, adminSignOut } from './firebase.js';
 import { logAdmin, mountJournal, CATS } from './admin-journal.js';
 
 // Jeux : identifiant de l'accueil, dossier, nœud de la base, présence suivie par le jeu,
@@ -111,7 +111,7 @@ const S = {
   rooms: new Map(),              // "prefix/code" -> { g, prefix, code, f: {champ: valeur}, offs }
   settings: { ageGate: true, maintenance: false }, hidden: {}, layout: null, layoutDenied: false,
   bans: {}, bansDenied: false, visits: null, recent: [], today: null, mx: null, mxRange: '7d',
-  live: { view: 'rooms', game: 'all', q: '', idle: true, sel: null },
+  live: { view: 'rooms', game: 'all', q: '', idle: false, sel: null },
   pv: null,                      // éditeur de l'accueil (voir initPreview)
   audience: null, journal: null,
 };
@@ -163,6 +163,7 @@ function build() {
         <div class="ap-theme" role="group" aria-label="Apparence">${[['auto', 'Auto'], ['light', 'Clair'], ['dark', 'Sombre']].map(([k, t]) => `<button type="button" data-theme-set="${k}" aria-pressed="false">${icon(k === 'light' ? 'sun' : k === 'dark' ? 'moon' : 'auto')}${t}</button>`).join('')}</div>
         <div class="ap-me"><b>${esc(initial(who))}</b><span title="${esc(who)}">${esc(who)}</span></div>
         <button class="ap-back" type="button" data-act="close">${icon('back')}Retour au site</button>
+        <button class="ap-out" type="button" data-act="logout">${icon('kick')}Se déconnecter</button>
       </div>
     </aside>
     <div class="ap-main">
@@ -268,7 +269,9 @@ function start() {
   sub('.info/serverTimeOffset', v => { S.offset = v || 0; });
   sub('hub/online', v => { S.online = v || {}; countVisitors(); schedule(); });
   sub('hub/waiting', v => { S.waiting = v || {}; countVisitors(); purgeWaiting(); schedule(); });   // écran de maintenance
-  sub('hub/settings', v => { S.settings = { ageGate: true, maintenance: false, ...(v || {}) }; schedule(); });
+  // Les règles de la base ne laissent lire que ces deux réglages, un par un (jamais hub/settings d'un bloc).
+  sub('hub/settings/maintenance', v => { S.settings.maintenance = v === true; schedule(); });
+  sub('hub/settings/ageGate', v => { S.settings.ageGate = v !== false; schedule(); });
   sub('hub/hidden', v => { S.hidden = v || {}; schedule(); });
   sub('hub/layout', v => { S.layout = v; S.layoutDenied = false; schedule(); }, e => { S.layoutDenied = isDenied(e); schedule(); });
   sub('bans', v => { S.bans = v || {}; S.bansDenied = false; schedule(); }, e => { S.bansDenied = isDenied(e); schedule(); });
@@ -465,21 +468,18 @@ function drawOverview(box) {
   const maint = S.settings.maintenance === true;
   paint(box, `
     ${maint ? `<div class="ap-note mxnote">${icon('pause')}<div><b>Le site est en maintenance.</b><br>Les visiteurs voient l’écran de maintenance, les parties sont gelées.</div><button class="ap-btn primary" type="button" data-act="maint-off">Rouvrir le site</button></div>` : ''}
-    ${maint ? mxCard(true) : ''}
     <div class="ap-kpis">
       <button class="ap-kpi" type="button" data-go="live"><span class="k"><span class="ap-dot on"></span>${maint ? 'Sur l’écran de maintenance' : 'Sur le site maintenant'}</span><span class="n">${nf.format(maint ? S.waitingN : S.visitors + t.onNow)}</span><span class="s">${maint ? 'personnes devant l’écran, en direct' : `${plural(S.visitors, 'sur l’accueil', 'sur l’accueil')} · ${plural(t.onNow, 'en partie', 'en partie')}`}</span></button>
       <button class="ap-kpi" type="button" data-go="live"><span class="k">Joueurs en partie</span><span class="n">${nf.format(t.inGame)}</span><span class="s">${t.onNow} connecté${t.onNow > 1 ? 's' : ''}, présence vérifiée</span></button>
       <button class="ap-kpi" type="button" data-go="live"><span class="k">Parties actives</span><span class="n">${nf.format(t.active.length)}</span><span class="s">${t.idle ? `${plural(t.idle, 'inactive')} à nettoyer` : 'aucune partie fantôme'}</span></button>
       <button class="ap-kpi" type="button" data-go="audience"><span class="k">Pages vues · 24 h</span><span class="n">${d ? nf.format(d.totals.views) : '—'}</span><span class="s">${d ? (d.previous ? `${delta(d.totals.views, d.previous.views)} vs les 24 h d’avant` : `${nf.format(d.totals.entries)} arrivées`) : (S.todayErr || 'Chargement…')}</span></button>
     </div>
-    <div class="ap-cols">
-      <div>
+    <div class="ov-grid">
+      <section class="ov-b ov-live">
         <div class="ap-group-h"><h2>Parties en cours</h2><button class="link" type="button" data-go="live">Tout voir</button></div>
         <div class="ap-group ap-rooms">${rooms.length ? rooms.map(roomRow).join('') : '<div class="ap-empty"><b>Aucune partie en cours</b>Les nouvelles parties s’affichent ici en direct.</div>'}</div>
-        <div class="ap-group-h"><h2>Accueil</h2><p>${visibleCount} jeu${visibleCount > 1 ? 'x' : ''} affiché${visibleCount > 1 ? 's' : ''} sur ${shown.length}</p></div>
-        <div class="ap-group"><div class="ap-shelf">${shown.map(id => `<button type="button" class="${S.hidden[id] ? 'off' : ''}" data-act="edit-game" data-id="${id}"><img src="${cover(BY_ID[id])}" alt="" loading="lazy" decoding="async"><span>${esc(nameFor(id))}</span></button>`).join('')}</div></div>
-      </div>
-      <div>
+      </section>
+      <section class="ov-b ov-ctrl">
         <div class="ap-group-h"><h2>Contrôles rapides</h2></div>
         <div class="ap-group">
           <div class="ap-row ico">${tile('pause')}<div class="main"><div class="t">Maintenance</div><div class="d">Ferme tout le site, gèle les parties</div></div>${sw('maint', maint, 'Maintenance', true)}</div>
@@ -488,11 +488,17 @@ function drawOverview(box) {
           <button class="ap-row ico" type="button" data-go="bans">${tile('bans')}<div class="main"><div class="t">Bannis</div><div class="d">${S.bansDenied ? 'Règles de la base à publier' : plural(Object.keys(S.bans).length, 'compte banni', 'comptes bannis')}</div></div>${icon('chev', 'chev')}</button>
           ${t.idle ? `<button class="ap-row ico" type="button" data-act="cleanup">${tile('broom')}<div class="main"><div class="t">Nettoyer les parties inactives</div><div class="d">${plural(t.idle, 'partie')} sans signe de vie</div></div>${icon('chev', 'chev')}</button>` : ''}
         </div>
-        ${maint ? '' : mxCard(false)}
+      </section>
+      <section class="ov-b ov-home">
+        <div class="ap-group-h"><h2>Accueil</h2><p>${visibleCount} jeu${visibleCount > 1 ? 'x' : ''} affiché${visibleCount > 1 ? 's' : ''} sur ${shown.length}</p></div>
+        <div class="ap-group"><div class="ap-shelf">${shown.map(id => `<button type="button" class="${S.hidden[id] ? 'off' : ''}" data-act="edit-game" data-id="${id}"><img src="${cover(BY_ID[id])}" alt="" loading="lazy" decoding="async"><span>${esc(nameFor(id))}</span></button>`).join('')}</div></div>
+      </section>
+      <section class="ov-b ov-log">
         <div class="ap-group-h"><h2>Dernières actions</h2><button class="link" type="button" data-go="journal">Journal</button></div>
-        <div class="ap-group">${S.recent.length ? S.recent.map(e => `<div class="ap-row"><div class="main"><div class="t">${esc(e.msg)}</div><div class="d">${esc(CATS[e.cat] || e.cat)}${e.target ? ' · ' + esc(e.target) : ''}</div></div><span class="v">${ago(e.ts)}</span></div>`).join('') : '<div class="ap-empty">Aucune action pour l’instant.</div>'}</div>
-      </div>
-    </div>`);
+        <div class="ap-group">${S.recent.length ? S.recent.slice(0, 5).map(e => `<div class="ap-row"><div class="main"><div class="t">${esc(e.msg)}</div><div class="d">${esc(CATS[e.cat] || e.cat)}${e.target ? ' · ' + esc(e.target) : ''}</div></div><span class="v">${ago(e.ts)}</span></div>`).join('') : '<div class="ap-empty">Aucune action pour l’instant.</div>'}</div>
+      </section>
+    </div>
+    ${mxCard(true)}`);
 }
 
 // ── Écran de maintenance : combien de personnes y sont tombées, et d'où (service de mesure, page « maintenance ») ──
@@ -513,7 +519,7 @@ function mxCard(big) {
   const regions = (() => { try { return new Intl.DisplayNames('fr', { type: 'region' }); } catch (_) { return null; } })();
   const country = c => c === 'ZZ' ? 'Inconnu' : (regions && regions.of(c)) || c;
   const sum = x => x.rows.reduce((s, r) => s + r.n, 0) + x.other;
-  const block = (title, rows, tot, label, av, other) => `<div><h4>${title}</h4>${rows.length || other ? rows.slice(0, 5).map(r => row(label(r), r.n, tot, av(r))).join('') + (other ? row(`Autres (moins de ${d.kMin} chacun)`, other, tot, '…') : '') : '<p class="ap-foot" style="margin:6px 0">Rien d’assez fréquent pour être affiché.</p>'}</div>`;
+  const block = (title, rows, tot, label, av, other) => `<div><h4>${title}</h4>${rows.length || other ? rows.slice(0, 5).map(r => row(label(r), r.n, tot, av(r))).join('') + (other ? row(title === 'Villes' ? 'Ville inconnue' : `Autres (moins de ${d.kMin} chacun)`, other, tot, '…') : '') : '<p class="ap-foot" style="margin:6px 0">Rien d’assez fréquent pour être affiché.</p>'}</div>`;
   const body = !d ? `<div class="ap-empty">${esc(S.mxErr || 'Chargement…')}</div>`
     : !total ? `<div class="ap-empty"><b>Personne pour l’instant</b>Aucune vue de l’écran de maintenance sur cette période.</div>`
     : `<div class="mx-grid">
@@ -570,19 +576,34 @@ function liveFilter(rooms) {
     (!q || `${x.r.code} ${x.r.g.name}`.toLowerCase().includes(q) || x.players.some(p => String(p.name || '').toLowerCase().includes(q))));
 }
 
+// Carte d'une partie : affiche du jeu, code, avatars des joueurs (point = présence), état.
+function roomCard(x) {
+  const r = x.r, [ph, phc] = phaseOf(r.f.phase);
+  const av = x.players.slice(0, 5).map(p => `<span class="lv-av ${p.st === 'on' ? 'on' : p.st === 'off' ? 'off' : 'na'}" title="${esc(p.name)}">${esc(initial(p.name))}</span>`).join('')
+    + (x.players.length > 5 ? `<span class="lv-av more">+${x.players.length - 5}</span>` : '');
+  return `<div class="lv-card${x.idle ? ' idle' : ''}" role="button" tabindex="0" data-act="room" data-key="${esc(r.key)}" aria-selected="${S.live.sel === r.key}">
+    <div class="lv-top"><img src="${cover(r.g)}" alt="" loading="lazy" decoding="async"><span class="lv-grad"></span>
+      <span class="lv-code">${esc(r.code)}</span>${!x.idle && x.on ? '<span class="lv-live"><i></i>Live</span>' : ''}</div>
+    <div class="lv-body"><div class="lv-name">${esc(r.g.name)}</div><div class="lv-av-row">${av || '<span class="lv-none">Aucun joueur</span>'}</div></div>
+    <div class="lv-foot"><span class="ap-pill ${x.idle ? '' : phc}">${x.idle ? 'Inactive' : ph}</span><span class="lv-when">${plural(x.players.length, 'joueur')}${x.last ? ' · ' + ago(x.last) : x.created ? ' · ' + ago(x.created) : ''}</span></div>
+  </div>`;
+}
+
 function drawLive(box) {
-  const t = totals();
+  const t = totals(), maint = S.settings.maintenance === true;
   const counts = {};
   t.rooms.forEach(x => { counts[x.r.g.id] = (counts[x.r.g.id] || 0) + 1; });
   tools(`<div class="ap-seg" role="group" aria-label="Affichage"><button type="button" data-act="lv-view" data-v="rooms" aria-pressed="${S.live.view === 'rooms'}">Parties</button><button type="button" data-act="lv-view" data-v="players" aria-pressed="${S.live.view === 'players'}">Joueurs</button></div>
-    <select class="ap-field" data-act="lv-game" aria-label="Jeu"><option value="all">Tous les jeux</option>${CATALOG.map(g => `<option value="${g.id}">${esc(g.name)}${counts[g.id] ? ` (${counts[g.id]})` : ''}</option>`).join('')}</select>
-    <input class="ap-field" id="ap-live-q" type="search" placeholder="Rechercher" aria-label="Rechercher un joueur ou une partie" value="${esc(S.live.q)}" style="width:170px">
+    <input class="ap-field" id="ap-live-q" type="search" placeholder="Joueur, code…" aria-label="Rechercher un joueur ou une partie" value="${esc(S.live.q)}" style="width:170px">
     <button class="ap-btn" type="button" data-act="cleanup" ${t.idle ? '' : 'disabled'}>${icon('broom')}Nettoyer${t.idle ? ` (${t.idle})` : ''}</button>`,
     `${plural(t.active.length, 'partie active', 'parties actives')} · temps réel`);
-  const sel = S.el.querySelector('[data-act="lv-game"]'); if (sel) sel.value = S.live.game;
   const rooms = liveFilter(t.rooms);
-  const strip = `<div class="ap-strip">${S.settings.maintenance === true ? `<span><b>${S.waitingN}</b>sur l’écran de maintenance</span>` : `<span><b>${S.visitors}</b>sur l’accueil</span>`}<span><b>${t.onNow}</b>connectés en partie</span><span><b>${t.inGame}</b>joueurs dans les parties actives</span><span><b>${t.idle}</b>parties inactives</span>
-    <label style="margin-left:auto;display:inline-flex;align-items:center;gap:8px">Montrer les inactives ${sw('lv-idle', S.live.idle, 'Montrer les parties inactives')}</label></div>`;
+  const tiles = `<div class="lv-tiles">${[[maint ? 'Sur l’écran de maintenance' : 'Sur l’accueil', maint ? S.waitingN : S.visitors, true], ['Connectés en partie', t.onNow, true], ['Joueurs en parties actives', t.inGame, false], ['Parties inactives', t.idle, false]]
+    .map(([k, v, live]) => `<div class="lv-tile"><span class="k">${live ? '<i class="ap-dot on"></i>' : ''}${k}</span><b>${nf.format(v)}</b></div>`).join('')}</div>`;
+  const chip = (id, label, n, g) => `<button type="button" class="lv-chip" data-act="lv-game" data-v="${id}" aria-pressed="${S.live.game === id}">${g ? `<img src="${cover(g)}" alt="" loading="lazy" decoding="async">` : ''}<b>${esc(label)}</b><em>${n}</em></button>`;
+  const rail = `<div class="lv-bar"><div class="lv-rail" role="group" aria-label="Filtrer par jeu">${chip('all', 'Tous', t.rooms.length)}${CATALOG.filter(g => counts[g.id] || S.live.game === g.id).map(g => chip(g.id, g.name, counts[g.id] || 0, g)).join('')}</div>
+    <label class="lv-idle-t">Inactives ${sw('lv-idle', S.live.idle, 'Montrer les parties inactives')}</label></div>`;
+  const head = tiles + rail;
   if (S.live.sel && !S.rooms.has(S.live.sel)) S.live.sel = null;
   if (S.live.view === 'players') {
     const rows = [];
@@ -590,7 +611,7 @@ function drawLive(box) {
     const q = S.live.q.toLowerCase();
     const list = rows.filter(({ x, p }) => !q || `${p.name} ${x.r.code} ${x.r.g.name}`.toLowerCase().includes(q))
       .sort((a, b) => (a.p.st === 'on' ? 0 : 1) - (b.p.st === 'on' ? 0 : 1) || String(a.p.name).localeCompare(String(b.p.name), 'fr'));
-    paint(box, strip + `<div class="ap-group">${list.length ? `<table class="ap-table"><thead><tr><th>Joueur</th><th>Jeu</th><th class="hide-s">Partie</th><th>Statut</th><th></th></tr></thead><tbody>
+    paint(box, head + `<div class="ap-group">${list.length ? `<table class="ap-table"><thead><tr><th>Joueur</th><th>Jeu</th><th class="hide-s">Partie</th><th>Statut</th><th></th></tr></thead><tbody>
       ${list.map(({ x, p }) => `<tr><td><span class="who"><span class="ap-av" style="background:${avColor(p.name)}">${esc(initial(p.name))}</span>${esc(p.name)}${p.host ? icon('crown', 'ap-host') : ''}</span></td>
         <td>${esc(x.r.g.name)}</td><td class="hide-s"><button class="ap-code" type="button" data-act="room" data-key="${esc(x.r.key)}">${esc(x.r.code)}</button></td>
         <td>${status(p)}</td><td class="r"><button class="ap-icon-btn" type="button" data-act="pmenu" data-key="${esc(x.r.key)}" data-p="${esc(p.key)}" aria-label="Actions pour ${esc(p.name)}">${icon('more')}</button></td></tr>`).join('')}
@@ -598,9 +619,28 @@ function drawLive(box) {
     return;
   }
   const detail = S.live.sel && innerWidth > 1100 ? roomDetail(S.rooms.get(S.live.sel)) : '';
-  paint(box, strip + `<div class="ap-md${detail ? '' : ' solo'}">
-    <div class="ap-group ap-rooms">${rooms.length ? rooms.map(roomRow).join('') : `<div class="ap-empty"><b>Aucune partie</b>${S.live.game !== 'all' || S.live.q ? 'Rien ne correspond à ce filtre.' : 'Les parties apparaissent ici dès leur création.'}</div>`}</div>
+  const act = rooms.filter(x => !x.idle), ina = rooms.filter(x => x.idle);
+  const sec = (title, list) => list.length ? `<div class="lv-h"><h3>${title}</h3><span>${list.length}</span></div><div class="lv-grid">${list.map(roomCard).join('')}</div>` : '';
+  const filtered = S.live.game !== 'all' || S.live.q;
+  const empty = `<div class="lv-empty"><span class="lv-die" aria-hidden="true"></span><b>${filtered ? 'Aucune partie pour ce filtre' : 'Aucune partie en cours'}</b>${filtered ? 'Essaie un autre jeu ou une autre recherche.' : 'Les parties apparaissent ici dès qu’un joueur en crée une.'}</div>`;
+  // Un clic sur une partie change la grille (le panneau s'ouvre ou se ferme) : les cartes glissent
+  // vers leur nouvelle place au lieu de sauter, et le panneau entre en fondu.
+  const glide = S.live.glide; S.live.glide = false;
+  const before = glide ? new Map([...box.querySelectorAll('.lv-card[data-key]')].map(c => [c.dataset.key, c.getBoundingClientRect()])) : null;
+  const hadDetail = !!box.querySelector('.ap-detail');
+  paint(box, head + `<div class="ap-md${detail ? '' : ' solo'}"><div>${rooms.length ? sec('Actives', act) + sec('Inactives', ina) : empty}</div>
     ${detail ? `<div class="ap-detail">${detail}</div>` : ''}</div>`);
+  if (before && !matchMedia('(prefers-reduced-motion:reduce)').matches) {
+    const ease = 'cubic-bezier(.32,.72,0,1)';
+    for (const c of box.querySelectorAll('.lv-card[data-key]')) {
+      const a = before.get(c.dataset.key), b = c.getBoundingClientRect();
+      if (!a) continue;
+      const dx = a.left - b.left, dy = a.top - b.top;
+      if (dx || dy) c.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 380, easing: ease });
+    }
+    const d = box.querySelector('.ap-detail');
+    if (d && !hadDetail) d.animate([{ opacity: 0, transform: 'translateX(18px)' }, { opacity: 1, transform: 'none' }], { duration: 380, easing: ease });
+  }
   if (S.live.sel && innerWidth <= 1100) sheet(roomDetail(S.rooms.get(S.live.sel)), 'room');
 }
 
@@ -652,6 +692,10 @@ function drawSettings(box) {
     <div class="ap-group">
       <div class="ap-row ico">${tile('pause')}<div class="main"><div class="t">Maintenance</div><div class="d">Toutes les pages affichent l’écran de maintenance, les parties sont gelées</div></div>${sw('maint', S.settings.maintenance === true, 'Maintenance', true)}</div>
       <div class="ap-row ico">${tile('lock')}<div class="main"><div class="t">Vérification d’âge</div><div class="d">Demande la date de naissance avant d’entrer</div></div>${sw('age', S.settings.ageGate !== false, 'Vérification d’âge')}</div>
+    </div>
+    <div class="ap-group-h"><h2>Session</h2></div>
+    <div class="ap-group">
+      <button class="ap-row ico" type="button" data-act="logout">${tile('kick')}<div class="main"><div class="t">Se déconnecter</div><div class="d">Quitte l’administration sur cet appareil et efface l’accès admin</div></div>${icon('chev', 'chev')}</button>
     </div>
     <div class="ap-group-h"><h2>Parties</h2></div>
     <div class="ap-group">
@@ -783,7 +827,7 @@ function drawHome() {
       <button class="ap-btn ghost" type="button" data-act="pv-discard">Tout annuler</button><button class="ap-btn primary" type="button" data-act="pv-publish">Publier</button></div>`;
   if (!drag.on) {
     const aside = box.querySelector('.pv-insp');
-    const typing = aside && aside.contains(document.activeElement) && document.activeElement.matches('input[type=text], textarea');
+    const typing = aside && aside.contains(document.activeElement) && document.activeElement.matches('input[type=text], input[type=range], textarea');
     if (typing && panel) {
       // Saisie en cours : l'aperçu et la barre se mettent à jour, le panneau reste tel quel.
       const tmp = document.createElement('div'); tmp.innerHTML = html;
@@ -840,7 +884,7 @@ function inspector(id) {
       <div class="ap-group">
         <label class="ap-row"><span class="t" style="flex:none">Nom</span><input type="text" data-f="name" maxlength="40" value="${esc(v.name)}" placeholder="${esc(d.name)}"></label>
         <label class="ap-row"><span class="t" style="flex:none">Sous-titre</span><input type="text" data-f="sub" maxlength="40" value="${esc(v.sub)}" placeholder="${esc(d.sub)}"></label>
-        <label class="ap-row"><div class="main"><div class="t">Grande carte sur mobile</div><div class="d">Toute la largeur de l’écran</div></div>${sw('pv-f-wide', v.wide, 'Grande carte sur mobile')}</label>
+        <label class="ap-row"><div class="main"><div class="t">Grande carte</div><div class="d">Mobile : toute la largeur · tablette : deux colonnes</div></div>${sw('pv-f-wide', v.wide, 'Grande carte')}</label>
         <div class="ap-row"><span class="t" style="flex:1">Rangée</span><div class="ap-seg"><button type="button" data-act="pv-aband" data-v="0" aria-pressed="${!v.aband}">Principale</button><button type="button" data-act="pv-aband" data-v="1" aria-pressed="${!!v.aband}">Abandonnés</button></div></div>
       </div>
       ${sectionH('Pastille')}
@@ -875,7 +919,7 @@ function refreshSheet() {
   if (sh) sh.innerHTML = `<div class="pv-insp">${S.pv.sel ? inspector(S.pv.sel) : pagePanel()}</div>`;
   // Panneau latéral : redessiné sauf pendant une saisie.
   const aside = S.el.querySelector('.ap-sec[data-sec="home"] aside.pv-insp');
-  if (aside && !aside.contains(document.activeElement?.matches?.('input[type=text], textarea') ? document.activeElement : null)) aside.innerHTML = S.pv.sel ? inspector(S.pv.sel) : pagePanel();
+  if (aside && !aside.contains(document.activeElement?.matches?.('input[type=text], input[type=range], textarea') ? document.activeElement : null)) aside.innerHTML = S.pv.sel ? inspector(S.pv.sel) : pagePanel();
 }
 
 function moveSel(delta) {
@@ -1186,11 +1230,13 @@ async function onClick(e) {
   const act = a.dataset.act, room = a.dataset.key && S.rooms.get(a.dataset.key);
   switch (act) {
     case 'close': closeAdmin(); break;
+    case 'logout': logout(); break;
     case 'mx-range': S.mxRange = a.dataset.v; S.mx = null; loadMx(); schedule(); break;
     case 'refresh': syncRooms(); loadToday(); notify('Actualisé', { icon: 'undo' }); break;
-    case 'room': S.live.sel = S.live.sel === a.dataset.key && innerWidth > 1100 ? null : a.dataset.key; if (S.sec !== 'live') { S.live.view = 'rooms'; go('live'); } else { S.live.view = 'rooms'; draw('live'); } break;
-    case 'room-close': S.live.sel = null; closeSheet(); draw('live'); break;
+    case 'room': S.live.glide = true; S.live.sel = S.live.sel === a.dataset.key && innerWidth > 1100 ? null : a.dataset.key; if (S.sec !== 'live') { S.live.view = 'rooms'; go('live'); } else { S.live.view = 'rooms'; draw('live'); } break;
+    case 'room-close': S.live.glide = true; S.live.sel = null; closeSheet(); draw('live'); break;
     case 'lv-view': S.live.view = a.dataset.v; draw('live'); break;
+    case 'lv-game': S.live.game = a.dataset.v; draw('live'); break;
     case 'copy': try { await navigator.clipboard.writeText(a.dataset.v); notify('Code copié', { icon: 'copy', sub: a.dataset.v }); } catch (_) {} break;
     case 'pmenu': playerMenu(a, room, a.dataset.p); break;
     case 'del-room': deleteRoom(room); break;
@@ -1225,9 +1271,21 @@ function onInput(e) {
 
 // Actions immédiates, sans confirmation : chaque action importante affiche une notification, avec
 // « Annuler » quand on peut revenir en arrière (l'état d'avant est relu juste avant l'action).
+// Déconnexion : l'action est journalisée, le cookie admin du portier est effacé, le compte Google est quitté.
+async function logout() {
+  try { await logAdmin('connexion', 'Déconnexion de l’administration', 'Google'); } catch (_) {}
+  try { await fetch('/__gh/logout', { method: 'POST' }); } catch (_) {}
+  try { await adminSignOut(); } catch (_) {}
+  stop();
+  S.el.classList.add('hidden');
+  document.documentElement.style.overflow = '';
+  location.reload();
+}
+
 async function setMaintenance(on, input) {
   if (on) { try { sessionStorage.setItem('gh-mx-admin', '1'); } catch (_) {} }
   try { await update(ref(db, 'hub/settings'), { maintenance: on }); } catch (_) { if (input) input.checked = !on; notify('Action refusée', { kind: 'err' }); return; }
+  S.settings.maintenance = on; schedule();
   logAdmin('reglage', `Maintenance ${on ? 'activée' : 'désactivée'}`);
   notify(on ? 'Site en maintenance' : 'Site rouvert', {
     kind: on ? 'warn' : 'ok', icon: on ? 'pause' : 'live',
@@ -1238,6 +1296,7 @@ async function setMaintenance(on, input) {
 
 async function setAgeGate(on, input) {
   try { await update(ref(db, 'hub/settings'), { ageGate: on }); } catch (_) { if (input) input.checked = !on; notify('Action refusée', { kind: 'err' }); return; }
+  S.settings.ageGate = on; schedule();
   logAdmin('reglage', `Vérification d’âge ${on ? 'activée' : 'désactivée'}`);
   notify(`Vérification d’âge ${on ? 'activée' : 'désactivée'}`, { icon: 'lock', sub: on ? 'La date de naissance est demandée à l’entrée' : 'Le site s’ouvre sans vérification', undo: () => setAgeGate(!on) });
 }
@@ -1263,7 +1322,7 @@ async function restore(snaps) {
 async function deleteRoom(r) {
   if (!r) return;
   let snap;
-  try { snap = await snapshot(r); await removeRoom(r); } catch (_) { notify('Suppression refusée', { kind: 'err' }); return; }
+  try { snap = await snapshot(r); await removeRoom(r); } catch (_) { notify('Suppression refusée', { kind: 'err', sub: r.prefix === 'wr' ? 'Règles de la base à publier (WikiRace)' : 'Réessaie dans un instant' }); return; }
   logAdmin('partie', `Partie ${r.code} supprimée`, r.g.name);
   if (S.live.sel === r.key) { S.live.sel = null; closeSheet(); }
   notify('Partie supprimée', { icon: 'trash', sub: `${r.g.name} · ${r.code}`, undo: async () => { await restore([snap]); logAdmin('partie', `Partie ${r.code} restaurée`, r.g.name); } });
@@ -1278,9 +1337,11 @@ async function cleanup() {
   const idle = totals().rooms.filter(x => x.idle);
   if (!idle.length) return;
   const snaps = [];
-  for (const x of idle) { try { snaps.push(await snapshot(x.r)); await removeRoom(x.r); } catch (_) {} }
+  let refused = 0;
+  for (const x of idle) { try { snaps.push(await snapshot(x.r)); await removeRoom(x.r); } catch (_) { refused++; } }
+  if (!snaps.length) { notify('Nettoyage refusé', { kind: 'err', sub: 'Règles de la base à publier (WikiRace)' }); return; }
   logAdmin('global', `${plural(snaps.length, 'partie inactive supprimée', 'parties inactives supprimées')}`, 'nettoyage');
-  notify(`${plural(snaps.length, 'partie inactive supprimée', 'parties inactives supprimées')}`, { icon: 'broom', sub: 'Sans joueur connecté ni signe de vie',
+  notify(`${plural(snaps.length, 'partie inactive supprimée', 'parties inactives supprimées')}`, { icon: 'broom', kind: refused ? 'warn' : '', sub: refused ? `${plural(refused, 'partie refusée', 'parties refusées')} : règles de la base à publier` : 'Sans joueur connecté ni signe de vie',
     undo: async () => { await restore(snaps); logAdmin('global', `${plural(snaps.length, 'partie restaurée', 'parties restaurées')}`, 'nettoyage'); } });
 }
 

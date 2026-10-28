@@ -345,6 +345,9 @@
   /* ── Tablette ── */
   @media (max-width:1100px){
     :root{--gap:24px;--cols:3;}
+    .game-card[data-wide]{flex-basis:calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols) * 2 + var(--gap));}
+    .game-card[data-wide] .media{aspect-ratio:3/2;}
+    .game-card[data-wide] .front img{object-position:50% 38%;}
   }
   /* ── Mobile : deux colonnes, la premiere carte en large ── */
   @media (max-width:640px){

@@ -192,7 +192,7 @@ const rules = {
   },
 
   // Ancien Wikirace : visible et supprimable par l'admin seulement.
-  wr: { '.read': ADMIN, '.write': `${ADMIN} && !newData.exists()` },
+  wr: { '.read': ADMIN, '.write': `${ADMIN} && !newData.exists()`, $code: { '.write': `${ADMIN} && !newData.exists()` } },
 };
 
 for (const [prefix, opts] of Object.entries(GAMES)) rules[prefix] = gameRules(prefix, opts);

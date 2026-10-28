@@ -45,6 +45,12 @@ test('maintenance : l\'écran compte sa vue (page « maintenance », oppositions
   assert.ok(html.includes("navigator.doNotTrack === '1' || navigator.globalPrivacyControl"));
 });
 
+test('déconnexion : le cookie admin est effacé', async () => {
+  const res = await worker.fetch(new Request('https://roulia.me/__gh/logout', { method: 'POST' }), env);
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('Set-Cookie'), /gh_admin=; Max-Age=0/);
+});
+
 test('site ouvert : la requête passe à l\'origine', async () => {
   await reset(); flagValue = false;
   const res = await worker.fetch(req('/games/uno/index.html'), env);
