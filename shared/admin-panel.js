@@ -3,6 +3,8 @@
 //  Vue d'ensemble : chiffres en direct, contrôles rapides, parties en cours, dernières actions.
 //  En direct      : toutes les parties et tous les joueurs de tous les jeux, en temps réel ;
 //                   renommer, exclure, exclure de la partie pour de bon, bannir du site, supprimer.
+//  Historique     : parties terminées (vainqueur, classement, qui a gagné quoi, date et heure), rangées
+//                   automatiquement dans history/ avant tout nettoyage (shared/admin-history.js).
 //  Accueil        : aperçu de l'accueil à modifier (ordre par glisser-déposer, masquer, nom,
 //                   sous-titre, filtres, carte large, abandonnés, fenêtre « nouvelle version »),
 //                   publié d'un bloc dans hub/layout et hub/hidden.
@@ -12,10 +14,11 @@
 // Les droits sont ceux des règles de la base (firebase/build-rules.js) : ce module n'en accorde aucun.
 // Les parties sont listées par l'API REST en mode « shallow » (codes seuls), puis chaque partie est
 // suivie champ par champ (phase, joueurs, présence…) : jamais les gros nœuds d'un jeu.
-import { ref, get, set, update, remove, onValue, query, orderByKey, limitToLast }
+import { ref, get, set, update, remove, onValue, query, orderByKey, orderByChild, limitToLast }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { db, auth, adminSignOut } from './firebase.js';
 import { logAdmin, mountJournal, CATS } from './admin-journal.js';
+import { isEnded, archiveId, summarize } from './admin-history.js';
 
 // Jeux : identifiant de l'accueil, dossier, nœud de la base, présence suivie par le jeu,
 // joueurs rangés par compte (uid) plutôt qu'en liste.
@@ -36,7 +39,7 @@ const BY_DB = Object.fromEntries(CATALOG.map(g => [g.db, g]));
 const BY_ID = Object.fromEntries(CATALOG.map(g => [g.id, g]));
 const TAGS = [['amis', 'À plusieurs'], ['duel', 'En duel'], ['solo', 'En solo'], ['bluff', 'Bluff'], ['strategie', 'Stratégie'], ['chance', 'Hasard']];
 const WORDS = ['Aucun', 'Un', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit', 'Neuf', 'Dix', 'Onze', 'Douze'];
-const FIELDS = ['phase', 'players', 'presence', 'hostUid', 'members', 'createdAt', 'updatedAt', 'banned'];
+const FIELDS = ['phase', 'players', 'presence', 'hostUid', 'members', 'createdAt', 'updatedAt', 'banned', 'roundResult', 'gameNum'];
 const LIVE_MS = 45000;            // présence datée plus vieille : joueur absent
 const IDLE_MS = 3 * 3600000;      // partie sans signe de vie depuis 3 h : inactive
 const NAME_MAX = { mp: 16 };
@@ -74,12 +77,15 @@ const P = {
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/>',
   moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/>',
   auto: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17Z" fill="currentColor"/>',
+  history: '<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4.6"/><path d="M12 9.6V12l1.8 1.2"/>',
+  trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0V4Z"/><path d="M8 6H5.5v1.5A2.5 2.5 0 0 0 8 10M16 6h2.5v1.5A2.5 2.5 0 0 1 16 10M12 13v4M8.5 20h7M10 17h4"/>',
 };
 const icon = (k, cls = '') => `<svg viewBox="0 0 24 24" class="${cls}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k]}</svg>`;
 
 const SECTIONS = [
   { id: 'overview', label: 'Vue d’ensemble', short: 'Aperçu', ico: 'overview' },
   { id: 'live', label: 'En direct', short: 'Direct', ico: 'live' },
+  { id: 'history', label: 'Historique', short: 'Historique', ico: 'history' },
   { id: 'home', label: 'Accueil', short: 'Accueil', ico: 'home' },
   { id: 'audience', label: 'Audience', short: 'Audience', ico: 'audience' },
   { id: 'bans', label: 'Bannis', short: 'Bannis', ico: 'bans' },
@@ -112,6 +118,7 @@ const S = {
   settings: { ageGate: true, maintenance: false }, hidden: {}, layout: null, layoutDenied: false,
   bans: {}, bansDenied: false, visits: null, recent: [], today: null, mx: null, mxRange: '7d',
   live: { view: 'rooms', game: 'all', q: '', idle: false, sel: null },
+  hist: { items: [], ids: new Set(), denied: false, game: 'all', q: '', sel: null },   // historique des parties terminées (nœud history)
   pv: null,                      // éditeur de l'accueil (voir initPreview)
   audience: null, journal: null,
 };
@@ -157,7 +164,7 @@ function build() {
       <div class="ap-brand"><i aria-hidden="true"></i>GameHub<span>Admin</span></div>
       <label class="ap-search">${icon('search')}<input type="search" id="ap-q" placeholder="Joueur, partie, jeu…" aria-label="Rechercher un joueur, une partie ou un jeu" autocomplete="off"><kbd>${/Mac|iP/.test(navigator.platform) ? '⌘' : 'Ctrl'} K</kbd></label>
       <nav class="ap-nav" aria-label="Rubriques">
-        ${SECTIONS.map((s, i) => `${i === 4 ? '<div class="ap-nav-h">Gestion</div>' : ''}<button class="ap-item" type="button" data-go="${s.id}"><span class="ap-ico">${icon(s.ico)}</span>${s.label}<span class="ap-badge" data-badge="${s.id}" hidden></span></button>`).join('')}
+        ${SECTIONS.map((s, i) => `${s.id === 'bans' ? '<div class="ap-nav-h">Gestion</div>' : ''}<button class="ap-item" type="button" data-go="${s.id}"><span class="ap-ico">${icon(s.ico)}</span>${s.label}<span class="ap-badge" data-badge="${s.id}" hidden></span></button>`).join('')}
       </nav>
       <div class="ap-side-foot">
         <div class="ap-theme" role="group" aria-label="Apparence">${[['auto', 'Auto'], ['light', 'Clair'], ['dark', 'Sombre']].map(([k, t]) => `<button type="button" data-theme-set="${k}" aria-pressed="false">${icon(k === 'light' ? 'sun' : k === 'dark' ? 'moon' : 'auto')}${t}</button>`).join('')}</div>
@@ -235,6 +242,7 @@ function onKey(e) {
   if (e.key !== 'Escape') return;
   if (document.querySelector('.ap-veil:not([data-sheet]), .ap-menu')) return;   // la fenêtre ouverte se ferme d'abord
   e.stopImmediatePropagation();
+  if (S.hist.sel && S.sec === 'history' && document.querySelector('.ap-sheet')) { S.hist.sel = null; closeSheet(); draw('history'); return; }
   if (S.live.sel && S.sec === 'live') { S.live.sel = null; draw('live'); return; }
   if (S.pv && (S.pv.sel || S.pv.sheet) && S.sec === 'home') { S.pv.sel = null; S.pv.sheet = false; closeSheet(); drawHome(); return; }
   if (S.live.sel && document.querySelector('.ap-sheet')) { S.live.sel = null; closeSheet(); draw('live'); return; }
@@ -278,6 +286,16 @@ function start() {
   sub('hub/stats/visits', v => { S.visits = v; schedule(); });
   S.offs.push(onValue(query(ref(db, 'adminLog'), orderByKey(), limitToLast(6)),
     s => { S.recent = Object.values(s.val() || {}).filter(e => typeof e.ts === 'number').sort((a, b) => b.ts - a.ts); schedule(); }, () => {}));
+  // Les 300 dernières parties terminées. Les ids déjà vus évitent de réarchiver ; une partie plus ancienne est refusée par les règles (création unique).
+  S.offs.push(onValue(query(ref(db, 'history'), orderByChild('at'), limitToLast(300)),
+    s => {
+      const items = [];
+      s.forEach(c => { const v = c.val(); if (v && typeof v.at === 'number') items.push({ id: c.key, ...v }); });
+      S.hist.items = items.sort((a, b) => b.at - a.at); S.hist.denied = false;
+      items.forEach(x => S.hist.ids.add(x.id));
+      if (S.hist.sel && !items.some(x => x.id === S.hist.sel)) S.hist.sel = null;
+      schedule();
+    }, e => { S.hist.denied = isDenied(e); schedule(); }));
   syncRooms();
   S.timers.push(setInterval(syncRooms, 8000), setInterval(() => { countVisitors(); schedule(); }, 15000));
   loadToday();
@@ -289,6 +307,7 @@ function stop() {
   S.timers.forEach(clearInterval); S.timers = [];
   for (const r of S.rooms.values()) r.offs.forEach(f => f());
   S.rooms.clear();
+  archiving.clear();
 }
 
 function countVisitors() {
@@ -340,6 +359,8 @@ async function syncRooms() {
       }
     }));
     for (const [k, r] of S.rooms) if (!seen.has(k)) { r.offs.forEach(f => f()); S.rooms.delete(k); }
+    // Toute partie terminée est rangée dans l'historique avant qu'on puisse la nettoyer.
+    for (const r of S.rooms.values()) if (r.f.phase != null && isEnded(r.g, r.f)) archiveRoom(r);
     schedule();
   } finally { syncing = false; }
 }
@@ -369,7 +390,7 @@ function playersOf(r) {
   return out;
 }
 
-const PHASES = { lobby: ['Salon', 'tint'], playing: ['En jeu', 'green'], play: ['En jeu', 'green'], game: ['En jeu', 'green'], ended: ['Terminée', ''], end: ['Terminée', ''], finished: ['Terminée', ''], results: ['Résultats', ''], podium: ['Podium', ''] };
+const PHASES = { lobby: ['Salon', 'tint'], playing: ['En jeu', 'green'], play: ['En jeu', 'green'], game: ['En jeu', 'green'], ended: ['Terminée', ''], end: ['Terminée', ''], finished: ['Terminée', ''], gameover: ['Terminée', ''], win: ['Terminée', ''], draw: ['Match nul', ''], results: ['Résultats', ''], podium: ['Podium', ''] };
 const phaseOf = p => PHASES[p] || [p ? String(p)[0].toUpperCase() + String(p).slice(1) : 'Inconnue', 'green'];
 
 function roomInfo(r) {
@@ -377,9 +398,10 @@ function roomInfo(r) {
   const stamps = [r.f.createdAt, r.f.updatedAt].filter(v => typeof v === 'number');
   for (const v of Object.values(r.f.presence || {})) { if (typeof v === 'number') stamps.push(v); else if (v && typeof v.ts === 'number') stamps.push(v.ts); }
   const last = stamps.length ? Math.max(...stamps) : null;
-  const ended = /^(ended|end|finished)$/.test(r.f.phase || '');
-  // Inactive : terminée et vide ; ou, pour un jeu qui suit la présence, personne de connecté et aucun signe
-  // de vie depuis 10 min ; sinon, aucun signe de vie depuis 3 h. Sans aucun horodatage : on ne sait pas, active.
+  const ended = isEnded(r.g, r.f);
+  // Inactive : terminée et vide (elle va à l'historique) ; ou, pour un jeu qui suit la présence, personne de
+  // connecté et aucun signe de vie depuis 10 min ; sinon, aucun signe de vie depuis 3 h (abandonnée).
+  // Sans aucun horodatage : on ne sait pas, active.
   let idle = false;
   if (r.f.phase != null && !on) {
     if (ended) idle = true;
@@ -394,11 +416,15 @@ function liveRooms() {
     .sort((a, b) => (b.on - a.on) || (a.idle - b.idle) || ((b.last || 0) - (a.last || 0)) || a.r.code.localeCompare(b.r.code));
 }
 
+// idle : parties abandonnées ; done : parties terminées et vides (déjà dans l'historique) ; clean : les deux, ce que « Nettoyer » retire.
+// `rooms` ne garde que ce qui est « en direct » : une partie terminée et vide n'y figure plus, elle appartient à l'historique.
 function totals() {
-  const rooms = liveRooms(), active = rooms.filter(x => !x.idle);
+  const all = liveRooms(), active = all.filter(x => !x.idle);
+  const done = all.filter(x => x.idle && x.ended).length, idle = all.length - active.length - done;
+  const rooms = all.filter(x => !(x.idle && x.ended));
   const inGame = active.reduce((s, x) => s + x.players.length, 0);
-  const onNow = rooms.reduce((s, x) => s + x.on, 0);
-  return { rooms, active, idle: rooms.length - active.length, inGame, onNow };
+  const onNow = all.reduce((s, x) => s + x.on, 0);
+  return { all, rooms, active, idle, done, clean: idle + done, inGame, onNow };
 }
 
 let raf = 0;
@@ -425,6 +451,7 @@ function draw(sec) {
   if (!box) return;
   if (sec === 'overview') drawOverview(box);
   if (sec === 'live') drawLive(box);
+  if (sec === 'history') drawHistory(box);
   if (sec === 'home') drawHome();
   if (sec === 'bans') drawBans(box);
   if (sec === 'settings') drawSettings(box);
@@ -453,6 +480,115 @@ function paint(box, html) {
 const sw = (act, on, label, red = false) => `<label class="ap-switch${red ? ' red' : ''}"><input type="checkbox" data-act="${act}" ${on ? 'checked' : ''} aria-label="${esc(label)}"><i></i></label>`;
 const tile = k => `<span class="tile">${icon(k)}</span>`;
 
+// ── Historique des parties terminées ──
+// Chaque partie finie est résumée dans history/<id> (shared/admin-history.js) : vainqueur, classement, qui a gagné quoi,
+// date et heure. « Nettoyer » ne touche jamais à une entrée ; seule la suppression à la main la retire.
+const tzFmt = o => new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', ...o });
+const FD = { day: tzFmt({ weekday: 'long', day: 'numeric', month: 'long' }), long: tzFmt({ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), short: tzFmt({ day: 'numeric', month: 'short' }), hm: tzFmt({ hour: '2-digit', minute: '2-digit' }) };
+const dayKey = ts => new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' }).format(ts);
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+function dayLabel(ts) {
+  const k = dayKey(ts);
+  return k === dayKey(now()) ? 'Aujourd’hui' : k === dayKey(now() - 864e5) ? 'Hier' : cap(FD.day.format(ts));
+}
+function lasted(a, b) {
+  if (!a || !b || b <= a) return '—';
+  const m = Math.round((b - a) / 60000);
+  return m < 1 ? '< 1 min' : m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`;
+}
+const listOf = v => (Array.isArray(v) ? v : Object.values(v || {})).filter(Boolean);
+const winnersOf = x => listOf(x.p).filter(p => p.w).map(p => p.n);
+const histGame = x => BY_ID[x.g] || { id: x.g, name: x.g, dir: x.g };
+
+function histFilter() {
+  const q = S.hist.q.toLowerCase();
+  return S.hist.items.filter(x => (S.hist.game === 'all' || x.g === S.hist.game) &&
+    (!q || `${x.code} ${histGame(x).name} ${x.win || ''} ${listOf(x.p).map(p => p.n).join(' ')}`.toLowerCase().includes(q)));
+}
+
+function histItem(x) {
+  const g = histGame(x), w = winnersOf(x), n = listOf(x.p).length;
+  return `<button class="lv-item hi-item" type="button" data-act="hist-pick" data-id="${esc(x.id)}" aria-selected="${S.hist.sel === x.id}">
+    <span class="lv-th"><img src="${cover(g)}" alt="" loading="lazy" decoding="async"></span>
+    <span class="lv-it-main"><b>${esc(g.name)}</b><em>${esc(x.code)} · ${plural(n, 'joueur')}</em></span>
+    <span class="lv-it-r"><span class="hi-win">${w.length ? icon('crown') + esc(w.join(', ')) : 'Sans vainqueur'}</span><small>${FD.hm.format(x.at)}</small></span>
+  </button>`;
+}
+
+// Fiche d'une partie : affiche, vainqueur, date, durée, classement, qui a gagné quoi.
+function histPane(x, inSheet = false) {
+  if (!x) return '';
+  const g = histGame(x), p = listOf(x.p), k = listOf(x.k), w = winnersOf(x);
+  const stat = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
+  return `<div class="lv-pane-in ap-card hi-pane">
+    <div class="lv-hero"><img src="${cover(g)}" alt=""><span class="lv-grad"></span>
+      <div class="lv-hero-top"><span class="ap-pill">Terminée</span>${inSheet ? `<button class="ap-icon-btn hi-x" type="button" data-act="hist-close" aria-label="Fermer">${icon('close')}</button>` : ''}</div>
+      <div class="lv-hero-main"><div><h3>${esc(g.name)}</h3><span>${esc(cap(FD.long.format(x.at)))} · ${FD.hm.format(x.at)}</span></div>
+        <button class="lv-copy" type="button" data-act="copy" data-v="${esc(x.code)}" aria-label="Copier le code ${esc(x.code)}">${esc(x.code)}${icon('copy')}</button></div></div>
+    <div class="hi-champ"><span class="hi-trophy">${icon('trophy')}</span><div><small>${w.length > 1 ? 'Vainqueurs' : 'Vainqueur'}</small><b>${esc(x.win || 'Partie terminée')}</b>${x.sub ? `<em>${esc(x.sub)}</em>` : ''}</div></div>
+    <div class="lv-stats">${stat(FD.hm.format(x.at), `Fin · ${FD.short.format(x.at)}`)}${stat(x.from ? FD.hm.format(x.from) : '—', x.from ? `Début · ${FD.short.format(x.from)}` : 'Début')}${stat(lasted(x.from, x.at), 'Durée')}</div>
+    ${p.length ? `<div class="lv-ph"><h4>Classement</h4><span>${p.length}</span></div>
+    <div class="lv-pl">${p.map(r => `<div class="lv-pr"><span class="hi-rk${r.w ? ' w' : ''}">${typeof r.r === 'number' ? r.r : '·'}</span>
+      <span class="ap-av" style="background:${avColor(r.n)}">${esc(initial(r.n))}</span>
+      <div class="main"><div class="t">${esc(r.n)}${r.w ? icon('crown', 'ap-host') : ''}</div>${r.x ? `<div class="d">${esc(r.x)}</div>` : ''}</div>
+      ${r.s ? `<span class="hi-sc">${esc(r.s)}</span>` : ''}</div>`).join('')}</div>` : ''}
+    ${k.length ? `<div class="lv-ph"><h4>Qui a gagné quoi</h4><span>${k.length}</span></div>
+    <div class="lv-pl">${k.map(r => `<div class="lv-pr"><span class="hi-prize">${icon('trophy')}</span>
+      <div class="main"><div class="t">${esc(r.w)}</div><div class="d">${esc(r.t)}</div></div>
+      ${r.d ? `<span class="hi-sc">${esc(r.d)}</span>` : ''}</div>`).join('')}</div>` : ''}
+    <div class="lv-actions"><button class="ap-btn" type="button" data-act="copy" data-v="${esc(x.code)}">${icon('copy')}Copier le code</button><button class="ap-btn danger" type="button" data-act="hist-del" data-id="${esc(x.id)}">${icon('trash')}Retirer de l’historique</button></div>
+  </div>`;
+}
+
+function drawHistory(box) {
+  const all = S.hist.items, items = histFilter();
+  const today = dayKey(now()), week = now() - 7 * 864e5;
+  const people = new Set(all.flatMap(x => listOf(x.p).map(p => String(p.n).toLowerCase())));
+  tools(`<input class="ap-field" id="ap-hist-q" type="search" placeholder="Joueur, jeu, code…" aria-label="Rechercher dans l’historique" value="${esc(S.hist.q)}" style="width:200px">`,
+    `${plural(all.length, 'partie jouée')} · gardées jusqu’à leur suppression`);
+  const tiles = `<div class="lv-tiles">${[['Parties jouées', all.length], ['Aujourd’hui', all.filter(x => dayKey(x.at) === today).length], ['7 derniers jours', all.filter(x => x.at >= week).length], ['Joueurs différents', people.size]]
+    .map(([k, v]) => `<div class="lv-tile"><span class="k">${k}</span><b>${nf.format(v)}</b></div>`).join('')}</div>`;
+  const counts = {};
+  all.forEach(x => { counts[x.g] = (counts[x.g] || 0) + 1; });
+  const chip = (id, label, n, g) => `<button type="button" class="lv-chip" data-act="hist-game" data-v="${id}" aria-pressed="${S.hist.game === id}">${g ? `<img src="${cover(g)}" alt="" loading="lazy" decoding="async">` : ''}<b>${esc(label)}</b>${n ? `<em>${n}</em>` : ''}</button>`;
+  const rail = `<div class="lv-bar"><div class="lv-rail" role="group" aria-label="Filtrer par jeu">${chip('all', 'Tous', all.length)}${CATALOG.filter(g => counts[g.id] || S.hist.game === g.id).map(g => chip(g.id, g.name, counts[g.id] || 0, g)).join('')}</div></div>`;
+  const head = tiles + rail;
+  if (S.hist.denied) {
+    paint(box, `<div class="lv-empty"><span class="lv-die" aria-hidden="true"></span><b>Historique à activer</b>Les règles de la base doivent être publiées : <a href="https://console.firebase.google.com/project/undercover-game-b0d2a/database/undercover-game-b0d2a-default-rtdb/rules" target="_blank" rel="noopener">ouvrir la console des règles</a>.</div>`);
+    return;
+  }
+  const filtered = S.hist.game !== 'all' || S.hist.q;
+  const empty = `<div class="lv-empty"><span class="lv-die" aria-hidden="true"></span><b>${filtered ? 'Aucune partie pour ce filtre' : 'Aucune partie terminée'}</b>${filtered ? 'Essaie un autre jeu ou une autre recherche.' : 'Les parties terminées se rangent ici toutes seules, avec le vainqueur et les scores.'}</div>`;
+  if (!items.length) { paint(box, head + empty); return; }
+  // Regroupées par jour, la plus récente d'abord.
+  const days = [];
+  for (const x of items) { const k = dayKey(x.at), d = days[days.length - 1]; if (d && d.k === k) d.list.push(x); else days.push({ k, at: x.at, list: [x] }); }
+  const group = d => `<div class="lv-h"><h3>${dayLabel(d.at)}</h3><span>${d.list.length}</span></div>${d.list.map(histItem).join('')}`;
+  if (innerWidth > 1100) {
+    if (!S.hist.sel || !items.some(x => x.id === S.hist.sel)) S.hist.sel = items[0].id;
+    paint(box, head + `<div class="lv-console"><div class="lv-list">${days.map(group).join('')}</div><aside class="lv-pane">${histPane(items.find(x => x.id === S.hist.sel))}</aside></div>`);
+    return;
+  }
+  paint(box, head + `<div class="lv-list hi-flow">${days.map(group).join('')}</div>`);
+  const open = S.hist.sel && items.find(x => x.id === S.hist.sel);
+  if (open) sheet(histPane(open, true), 'hist'); else closeSheet();
+}
+
+async function deleteHistory(id) {
+  const x = S.hist.items.find(i => i.id === id);
+  if (!x) return;
+  const { id: _id, ...entry } = x;
+  try { await remove(ref(db, `history/${id}`)); } catch (_) { notify('Suppression refusée', { kind: 'err', sub: 'Règles de la base à publier' }); return; }
+  // La partie terminée peut encore exister : sans ça, elle serait rangée de nouveau au prochain passage.
+  const live = S.rooms.get(`${histGame(x).db}/${x.code}`);
+  if (live && archiveId(live.g, live.code, live.f) === id && isEnded(live.g, live.f)) removeRoom(live).catch(() => {});
+  S.hist.items = S.hist.items.filter(i => i.id !== id);
+  if (S.hist.sel === id) { S.hist.sel = null; closeSheet(); }
+  schedule();
+  logAdmin('partie', `Historique : partie ${x.code} retirée`, histGame(x).name);
+  notify('Retirée de l’historique', { icon: 'trash', sub: `${histGame(x).name} · ${x.code}`, undo: async () => { await set(ref(db, `history/${id}`), entry); logAdmin('partie', `Historique : partie ${x.code} rétablie`, histGame(x).name); } });
+}
+
 // ── Vue d'ensemble ──
 function drawOverview(box) {
   const t = totals(), d = S.today;
@@ -471,7 +607,7 @@ function drawOverview(box) {
     <div class="ap-kpis">
       <button class="ap-kpi" type="button" data-go="live"><span class="k"><span class="ap-dot on"></span>${maint ? 'Sur l’écran de maintenance' : 'Sur le site maintenant'}</span><span class="n">${nf.format(maint ? S.waitingN : S.visitors + t.onNow)}</span><span class="s">${maint ? 'personnes devant l’écran, en direct' : `${plural(S.visitors, 'sur l’accueil', 'sur l’accueil')} · ${plural(t.onNow, 'en partie', 'en partie')}`}</span></button>
       <button class="ap-kpi" type="button" data-go="live"><span class="k">Joueurs en partie</span><span class="n">${nf.format(t.inGame)}</span><span class="s">${t.onNow} connecté${t.onNow > 1 ? 's' : ''}, présence vérifiée</span></button>
-      <button class="ap-kpi" type="button" data-go="live"><span class="k">Parties actives</span><span class="n">${nf.format(t.active.length)}</span><span class="s">${t.idle ? `${plural(t.idle, 'inactive')} à nettoyer` : 'aucune partie fantôme'}</span></button>
+      <button class="ap-kpi" type="button" data-go="live"><span class="k">Parties actives</span><span class="n">${nf.format(t.active.length)}</span><span class="s">${t.clean ? `${plural(t.clean, 'partie')} à nettoyer` : 'aucune partie fantôme'}</span></button>
       <button class="ap-kpi" type="button" data-go="audience"><span class="k">Pages vues · 24 h</span><span class="n">${d ? nf.format(d.totals.views) : '—'}</span><span class="s">${d ? (d.previous ? `${delta(d.totals.views, d.previous.views)} vs les 24 h d’avant` : `${nf.format(d.totals.entries)} arrivées`) : (S.todayErr || 'Chargement…')}</span></button>
     </div>
     <div class="ov-grid">
@@ -486,7 +622,7 @@ function drawOverview(box) {
           <div class="ap-row ico">${tile('lock')}<div class="main"><div class="t">Vérification d’âge</div><div class="d">Date de naissance avant d’entrer</div></div>${sw('age', S.settings.ageGate !== false, 'Vérification d’âge')}</div>
           <button class="ap-row ico" type="button" data-go="home">${tile('home')}<div class="main"><div class="t">Modifier l’accueil</div><div class="d">Ordre, noms, jeux masqués</div></div>${icon('chev', 'chev')}</button>
           <button class="ap-row ico" type="button" data-go="bans">${tile('bans')}<div class="main"><div class="t">Bannis</div><div class="d">${S.bansDenied ? 'Règles de la base à publier' : plural(Object.keys(S.bans).length, 'compte banni', 'comptes bannis')}</div></div>${icon('chev', 'chev')}</button>
-          ${t.idle ? `<button class="ap-row ico" type="button" data-act="cleanup">${tile('broom')}<div class="main"><div class="t">Nettoyer les parties inactives</div><div class="d">${plural(t.idle, 'partie')} sans signe de vie</div></div>${icon('chev', 'chev')}</button>` : ''}
+          ${t.clean ? `<button class="ap-row ico" type="button" data-act="cleanup">${tile('broom')}<div class="main"><div class="t">Nettoyer les parties</div><div class="d">${t.idle ? plural(t.idle, 'abandonnée') : ''}${t.idle && t.done ? ' · ' : ''}${t.done ? plural(t.done, 'terminée') + ' (gardée dans l’historique)' : ''}</div></div>${icon('chev', 'chev')}</button>` : ''}
         </div>
       </section>
       <section class="ov-b ov-home">
@@ -566,7 +702,7 @@ function roomRow(x) {
     <div class="main"><div class="t">${esc(r.g.name)} · <span style="letter-spacing:.04em">${esc(r.code)}</span></div>
       <div class="d">${plural(x.players.length, 'joueur')}${x.last ? ' · ' + ago(x.last) : x.created ? ' · créée ' + ago(x.created) : ''}</div></div>
     <span class="ap-stack" aria-hidden="true">${dots}</span>
-    <span class="ap-pill ${x.idle ? '' : phc}">${x.idle ? 'Inactive' : ph}</span>
+    <span class="ap-pill ${x.idle ? '' : phc}">${x.idle ? 'Abandonnée' : ph}</span>
   </div>`;
 }
 
@@ -585,26 +721,26 @@ function roomCard(x) {
     <div class="lv-top"><img src="${cover(r.g)}" alt="" loading="lazy" decoding="async"><span class="lv-grad"></span>
       <span class="lv-code">${esc(r.code)}</span>${!x.idle && x.on ? '<span class="lv-live"><i></i>Live</span>' : ''}</div>
     <div class="lv-body"><div class="lv-name">${esc(r.g.name)}</div><div class="lv-av-row">${av || '<span class="lv-none">Aucun joueur</span>'}</div></div>
-    <div class="lv-foot"><span class="ap-pill ${x.idle ? '' : phc}">${x.idle ? 'Inactive' : ph}</span><span class="lv-when">${plural(x.players.length, 'joueur')}${x.last ? ' · ' + ago(x.last) : x.created ? ' · ' + ago(x.created) : ''}</span></div>
+    <div class="lv-foot"><span class="ap-pill ${x.idle ? '' : phc}">${x.idle ? 'Abandonnée' : ph}</span><span class="lv-when">${plural(x.players.length, 'joueur')}${x.last ? ' · ' + ago(x.last) : x.created ? ' · ' + ago(x.created) : ''}</span></div>
   </div>`;
 }
 
 function drawLive(box) {
   const t = totals(), maint = S.settings.maintenance === true;
   const counts = {};
-  // Les nombres des filtres suivent ce qui s'affiche : sans « Inactives », les parties inactives ne comptent pas.
+  // Les nombres des filtres suivent ce qui s'affiche : sans « Abandonnées », les parties abandonnées ne comptent pas.
   const shown = t.rooms.filter(x => S.live.idle || !x.idle);
   shown.forEach(x => { counts[x.r.g.id] = (counts[x.r.g.id] || 0) + 1; });
   tools(`<div class="ap-seg" role="group" aria-label="Affichage"><button type="button" data-act="lv-view" data-v="rooms" aria-pressed="${S.live.view === 'rooms'}">Parties</button><button type="button" data-act="lv-view" data-v="players" aria-pressed="${S.live.view === 'players'}">Joueurs</button></div>
     <input class="ap-field" id="ap-live-q" type="search" placeholder="Joueur, code…" aria-label="Rechercher un joueur ou une partie" value="${esc(S.live.q)}" style="width:170px">
-    <button class="ap-btn" type="button" data-act="cleanup" ${t.idle ? '' : 'disabled'}>${icon('broom')}Nettoyer${t.idle ? ` (${t.idle})` : ''}</button>`,
+    <button class="ap-btn" type="button" data-act="cleanup" ${t.clean ? '' : 'disabled'}>${icon('broom')}Nettoyer${t.clean ? ` (${t.clean})` : ''}</button>`,
     `${plural(t.active.length, 'partie active', 'parties actives')} · temps réel`);
   const rooms = liveFilter(t.rooms);
-  const tiles = `<div class="lv-tiles">${[[maint ? 'Sur l’écran de maintenance' : 'Sur l’accueil', maint ? S.waitingN : S.visitors, true], ['Connectés en partie', t.onNow, true], ['Joueurs en parties actives', t.inGame, false], ['Parties inactives', t.idle, false]]
+  const tiles = `<div class="lv-tiles">${[[maint ? 'Sur l’écran de maintenance' : 'Sur l’accueil', maint ? S.waitingN : S.visitors, true], ['Connectés en partie', t.onNow, true], ['Joueurs en parties actives', t.inGame, false], ['Parties abandonnées', t.idle, false]]
     .map(([k, v, live]) => `<div class="lv-tile"><span class="k">${live ? '<i class="ap-dot on"></i>' : ''}${k}</span><b>${nf.format(v)}</b></div>`).join('')}</div>`;
   const chip = (id, label, n, g) => `<button type="button" class="lv-chip" data-act="lv-game" data-v="${id}" aria-pressed="${S.live.game === id}">${g ? `<img src="${cover(g)}" alt="" loading="lazy" decoding="async">` : ''}<b>${esc(label)}</b>${n ? `<em>${n}</em>` : ''}</button>`;
   const rail = `<div class="lv-bar"><div class="lv-rail" role="group" aria-label="Filtrer par jeu">${chip('all', 'Tous', shown.length)}${CATALOG.filter(g => counts[g.id] || S.live.game === g.id).map(g => chip(g.id, g.name, counts[g.id] || 0, g)).join('')}</div>
-    <label class="lv-idle-t">Inactives ${sw('lv-idle', S.live.idle, 'Montrer les parties inactives')}</label></div>`;
+    <label class="lv-idle-t">Abandonnées ${sw('lv-idle', S.live.idle, 'Montrer les parties abandonnées')}</label></div>`;
   const head = tiles + rail;
   if (S.live.sel && !S.rooms.has(S.live.sel)) S.live.sel = null;
   if (S.live.view === 'players') {
@@ -629,14 +765,14 @@ function drawLive(box) {
     if (!S.live.sel || !rooms.some(x => x.r.key === S.live.sel)) S.live.sel = rooms[0].r.key;
     const group = (title, list) => list.length ? `<div class="lv-h"><h3>${title}</h3><span>${list.length}</span></div>${list.map(roomItem).join('')}` : '';
     const was = S.live.pane; S.live.pane = S.live.sel;
-    paint(box, head + `<div class="lv-console"><div class="lv-list">${group('Actives', act)}${group('Inactives', ina)}</div><aside class="lv-pane">${roomPane(S.rooms.get(S.live.sel))}</aside></div>`);
+    paint(box, head + `<div class="lv-console"><div class="lv-list">${group('Actives', act)}${group('Abandonnées', ina)}</div><aside class="lv-pane">${roomPane(S.rooms.get(S.live.sel))}</aside></div>`);
     const pane = box.querySelector('.lv-pane-in');
     if (was && was !== S.live.sel && pane && !matchMedia('(prefers-reduced-motion:reduce)').matches)
       pane.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'cubic-bezier(.32,.72,0,1)' });
     return;
   }
   const sec = (title, list) => list.length ? `<div class="lv-h"><h3>${title}</h3><span>${list.length}</span></div><div class="lv-grid">${list.map(roomCard).join('')}</div>` : '';
-  paint(box, head + `<div class="ap-md solo"><div>${rooms.length ? sec('Actives', act) + sec('Inactives', ina) : empty}</div></div>`);
+  paint(box, head + `<div class="ap-md solo"><div>${rooms.length ? sec('Actives', act) + sec('Abandonnées', ina) : empty}</div></div>`);
   if (S.live.sel && innerWidth <= 1100) sheet(roomDetail(S.rooms.get(S.live.sel)), 'room');
 }
 
@@ -648,7 +784,7 @@ function roomItem(x) {
   return `<button class="lv-item${x.idle ? ' idle' : ''}" type="button" data-act="room" data-key="${esc(r.key)}" aria-selected="${S.live.sel === r.key}">
     <span class="lv-th"><img src="${cover(r.g)}" alt="" loading="lazy" decoding="async">${!x.idle && x.on ? '<i></i>' : ''}</span>
     <span class="lv-it-main"><b>${esc(r.g.name)}</b><em>${esc(r.code)} · ${plural(x.players.length, 'joueur')}</em></span>
-    <span class="lv-it-r"><span class="lv-stack">${av}</span><small class="${x.idle ? '' : phc}">${x.idle ? 'Inactive' : ph}${x.last ? ' · ' + ago(x.last).replace('il y a ', '') : ''}</small></span>
+    <span class="lv-it-r"><span class="lv-stack">${av}</span><small class="${x.idle ? '' : phc}">${x.idle ? 'Abandonnée' : ph}${x.last ? ' · ' + ago(x.last).replace('il y a ', '') : ''}</small></span>
   </button>`;
 }
 
@@ -667,7 +803,7 @@ function roomPane(r) {
     : '<div class="ap-empty">Aucun joueur.</div>';
   return `<div class="lv-pane-in ap-card">
     <div class="lv-hero"><img src="${cover(r.g)}" alt=""><span class="lv-grad"></span>
-      <div class="lv-hero-top"><span class="ap-pill ${x.idle ? '' : phc}">${x.idle ? 'Inactive' : ph}</span>${!x.idle && x.on ? '<span class="lv-live"><i></i>Live</span>' : ''}</div>
+      <div class="lv-hero-top"><span class="ap-pill ${x.idle ? '' : phc}">${x.idle ? 'Abandonnée' : ph}</span>${!x.idle && x.on ? '<span class="lv-live"><i></i>Live</span>' : ''}</div>
       <div class="lv-hero-main"><div><h3>${esc(r.g.name)}</h3><span>${plural(x.players.length, 'joueur')}</span></div>
         <button class="lv-copy" type="button" data-act="copy" data-v="${esc(r.code)}" aria-label="Copier le code ${esc(r.code)}">${esc(r.code)}${icon('copy')}</button></div></div>
     <div class="lv-stats">${stat(r.g.presence ? `${x.on}/${x.players.length}` : nf.format(x.players.length), r.g.presence ? 'Connectés' : 'Inscrits')}${stat(since(x.created), 'Créée')}${stat(since(x.last), 'Dernier signe')}</div>
@@ -690,7 +826,7 @@ function roomDetail(r) {
     <div class="ap-detail-h"><img src="${cover(r.g)}" alt=""><div style="min-width:0;flex:1"><h3>${esc(r.g.name)}</h3>
       <button class="ap-code" type="button" data-act="copy" data-v="${esc(r.code)}" aria-label="Copier le code ${esc(r.code)}">${esc(r.code)}${icon('copy')}</button></div>
       <button class="ap-icon-btn" type="button" data-act="room-close" aria-label="Fermer">${icon('close')}</button></div>
-    <div class="ap-meta"><div><b><span class="ap-pill ${x.idle ? '' : phc}">${x.idle ? 'Inactive' : ph}</span></b>État</div><div><b>${r.g.presence ? `${x.on}/${x.players.length}` : x.players.length}</b>${r.g.presence ? 'Connectés' : 'Inscrits'}</div><div><b>${x.created ? ago(x.created).replace('il y a ', '') : '—'}</b>Créée</div></div>
+    <div class="ap-meta"><div><b><span class="ap-pill ${x.idle ? '' : phc}">${x.idle ? 'Abandonnée' : ph}</span></b>État</div><div><b>${r.g.presence ? `${x.on}/${x.players.length}` : x.players.length}</b>${r.g.presence ? 'Connectés' : 'Inscrits'}</div><div><b>${x.created ? ago(x.created).replace('il y a ', '') : '—'}</b>Créée</div></div>
     <div>${x.players.length ? x.players.map(p => `<div class="ap-row ico"><span class="ap-av" style="background:${avColor(p.name)}">${esc(initial(p.name))}</span>
       <div class="main"><div class="t">${esc(p.name)}${p.host ? icon('crown', 'ap-host') : ''}</div><div class="d">${p.host ? 'Hôte · ' : ''}${p.st === 'on' ? 'En ligne' : p.st === 'off' ? 'Absent' : 'Présence non suivie par ce jeu'}</div></div>
       <span class="ap-dot ${p.st === 'on' ? 'on' : p.st === 'off' ? 'off' : ''}"></span>
@@ -733,7 +869,7 @@ function drawSettings(box) {
     </div>
     <div class="ap-group-h"><h2>Parties</h2></div>
     <div class="ap-group">
-      <div class="ap-row ico">${tile('broom')}<div class="main"><div class="t">Parties inactives</div><div class="d">${t.idle ? `${plural(t.idle, 'partie')} sans joueur connecté ni signe de vie depuis 3 h` : 'Aucune pour l’instant'}</div></div><button class="ap-btn sm" type="button" data-act="cleanup" ${t.idle ? '' : 'disabled'}>Nettoyer</button></div>
+      <div class="ap-row ico">${tile('broom')}<div class="main"><div class="t">Parties à nettoyer</div><div class="d">${t.clean ? [t.idle && `${plural(t.idle, 'abandonnée')} (sans joueur ni signe de vie depuis 3 h)`, t.done && `${plural(t.done, 'terminée')} (déjà dans l’historique)`].filter(Boolean).join(' · ') : 'Aucune pour l’instant'}</div></div><button class="ap-btn sm" type="button" data-act="cleanup" ${t.clean ? '' : 'disabled'}>Nettoyer</button></div>
     </div>
     <div class="ap-group-h"><h2>Compteur historique</h2></div>
     <div class="ap-group">
@@ -1271,6 +1407,10 @@ async function onClick(e) {
     case 'room-close': S.live.glide = true; S.live.sel = null; closeSheet(); draw('live'); break;
     case 'lv-view': S.live.view = a.dataset.v; draw('live'); break;
     case 'lv-game': S.live.game = a.dataset.v; draw('live'); break;
+    case 'hist-pick': S.hist.sel = a.dataset.id; draw('history'); break;
+    case 'hist-close': S.hist.sel = null; closeSheet(); draw('history'); break;
+    case 'hist-game': S.hist.game = a.dataset.v; draw('history'); break;
+    case 'hist-del': deleteHistory(a.dataset.id); break;
     case 'copy': try { await navigator.clipboard.writeText(a.dataset.v); notify('Code copié', { icon: 'copy', sub: a.dataset.v }); } catch (_) {} break;
     case 'pmenu': playerMenu(a, room, a.dataset.p); break;
     case 'kick': { const p = room && playersOf(room).find(x => x.key === a.dataset.p); if (p) kick(room, p, {}); break; }
@@ -1301,6 +1441,7 @@ function onChange(e) {
 function onInput(e) {
   const t = e.target;
   if (t.id === 'ap-live-q') { S.live.q = t.value.trim(); const q = S.el.querySelector('#ap-q'); if (q) q.value = t.value; draw('live'); return; }
+  if (t.id === 'ap-hist-q') { S.hist.q = t.value.trim(); draw('history'); return; }
   homeInput(t);
 }
 
@@ -1357,6 +1498,7 @@ async function restore(snaps) {
 async function deleteRoom(r) {
   if (!r) return;
   let snap;
+  if (isEnded(r.g, r.f)) await archiveRoom(r);
   try { snap = await snapshot(r); await removeRoom(r); } catch (_) { notify('Suppression refusée', { kind: 'err', sub: r.prefix === 'wr' ? 'Règles de la base à publier (WikiRace)' : 'Réessaie dans un instant' }); return; }
   logAdmin('partie', `Partie ${r.code} supprimée`, r.g.name);
   if (S.live.sel === r.key) { S.live.sel = null; closeSheet(); }
@@ -1368,16 +1510,45 @@ async function removeRoom(r) {
   r.offs.forEach(f => f()); S.rooms.delete(r.key); schedule();
 }
 
+// Les parties terminées passent d'abord dans l'historique : sans résumé enregistré, elles restent (rien ne se perd).
 async function cleanup() {
-  const idle = totals().rooms.filter(x => x.idle);
-  if (!idle.length) return;
+  const todo = totals().all.filter(x => x.idle);
+  if (!todo.length) return;
   const snaps = [];
-  let refused = 0;
-  for (const x of idle) { try { snaps.push(await snapshot(x.r)); await removeRoom(x.r); } catch (_) { refused++; } }
-  if (!snaps.length) { notify('Nettoyage refusé', { kind: 'err', sub: 'Règles de la base à publier (WikiRace)' }); return; }
-  logAdmin('global', `${plural(snaps.length, 'partie inactive supprimée', 'parties inactives supprimées')}`, 'nettoyage');
-  notify(`${plural(snaps.length, 'partie inactive supprimée', 'parties inactives supprimées')}`, { icon: 'broom', kind: refused ? 'warn' : '', sub: refused ? `${plural(refused, 'partie refusée', 'parties refusées')} : règles de la base à publier` : 'Sans joueur connecté ni signe de vie',
-    undo: async () => { await restore(snaps); logAdmin('global', `${plural(snaps.length, 'partie restaurée', 'parties restaurées')}`, 'nettoyage'); } });
+  let refused = 0, kept = 0, done = 0;
+  for (const x of todo) {
+    if (x.ended && !(await archiveRoom(x.r))) { kept++; continue; }
+    try { snaps.push(await snapshot(x.r)); await removeRoom(x.r); if (x.ended) done++; } catch (_) { refused++; }
+  }
+  if (!snaps.length) { notify('Nettoyage refusé', { kind: 'err', sub: kept ? 'Résumés de l’historique non enregistrés : règles de la base à publier' : 'Règles de la base à publier (WikiRace)' }); return; }
+  const lost = snaps.length - done;
+  const detail = [lost && plural(lost, 'abandonnée'), done && `${plural(done, 'terminée')} gardée${done > 1 ? 's' : ''} dans l’historique`].filter(Boolean).join(' · ');
+  const left = refused + kept;
+  logAdmin('global', plural(snaps.length, 'partie nettoyée', 'parties nettoyées') + (detail ? ' : ' + detail : ''), 'nettoyage');
+  notify(plural(snaps.length, 'partie nettoyée', 'parties nettoyées'), { icon: 'broom', kind: left ? 'warn' : '', sub: left ? `${plural(left, 'partie gardée', 'parties gardées')} : règles de la base à publier` : detail,
+    undo: async () => { await restore(snaps); logAdmin('global', plural(snaps.length, 'partie restaurée', 'parties restaurées'), 'nettoyage'); } });
+}
+
+// Range le résumé d'une partie terminée dans history/<id>, une seule fois. Vrai si le résumé est enregistré.
+const archiving = new Map();
+function archiveRoom(r) {
+  const id = archiveId(r.g, r.code, r.f);
+  if (S.hist.ids.has(id)) return Promise.resolve(true);
+  if (archiving.has(id)) return archiving.get(id);
+  const job = (async () => {
+    try {
+      const d = (await get(ref(db, r.key))).val();
+      if (!d || !isEnded(r.g, d)) return false;       // relancée entre-temps : rien à ranger
+      const e = summarize(r.g, r.code, d, roomInfo(r).last);
+      if (!e) return false;
+      try { await set(ref(db, `history/${id}`), e); }
+      catch (err) { if (!(await get(ref(db, `history/${id}`))).exists()) throw err; }   // déjà rangée (hors des 300 dernières)
+      S.hist.ids.add(id);
+      return true;
+    } catch (err) { console.warn('Historique : résumé non enregistré', r.key, err && err.code); return false; }
+  })();
+  archiving.set(id, job);
+  return job;
 }
 
 async function deleteAll() {

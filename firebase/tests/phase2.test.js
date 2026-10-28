@@ -5,7 +5,7 @@
 import { test, describe, before, after, beforeEach } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
-import { ref, get, set, update, remove, push, runTransaction, increment, query, orderByKey, onDisconnect, serverTimestamp } from 'firebase/database';
+import { ref, get, set, update, remove, push, runTransaction, increment, query, orderByKey, orderByChild, limitToLast, onDisconnect, serverTimestamp } from 'firebase/database';
 
 const RULES = readFileSync(new URL('../database.rules.phase2.json', import.meta.url), 'utf8');
 let env, alice, bob, eve, anon, admin;
@@ -257,6 +257,27 @@ describe('Hub et admin', () => {
     await assertFails(get(ref(alice, 'adminLog')));
     await assertFails(get(ref(anon, 'adminLog')));
     await assertSucceeds(get(ref(admin, 'adminLog')));
+  });
+  test("historique : l'admin seul, création unique, suppression à la main, champs bornés", async () => {
+    const e = { g: 'uno', code: 'WILD-90', at: 1760000000000, from: 1759999000000, win: 'Zoé remporte la partie', sub: 'Main vide',
+      p: [{ n: 'Zoé', r: 1, s: 'Main vide', w: true }, { n: 'Max', r: 2, s: '2 cartes restantes', w: false, x: 'Civil' }],
+      k: [{ t: 'Prime · Le plus riche', w: 'Zoé', d: '+300 $' }] };
+    const id = 'uno-WILD-90-1759999000000';
+    await assertFails(set(ref(alice, `history/${id}`), e));
+    await assertFails(set(ref(anon, `history/${id}`), e));
+    await assertSucceeds(set(ref(admin, `history/${id}`), e));
+    await assertFails(set(ref(admin, `history/${id}`), { ...e, win: 'réécrit' }));   // jamais de modification
+    await assertFails(get(ref(alice, 'history')));
+    await assertFails(get(ref(anon, 'history')));
+    await assertSucceeds(get(query(ref(admin, 'history'), orderByChild('at'), limitToLast(300))));
+    await assertSucceeds(remove(ref(admin, `history/${id}`)));                        // retrait à la main
+    await assertFails(set(ref(admin, 'history/uno-X-1'), { ...e, g: 'UNO!' }));
+    await assertFails(set(ref(admin, 'history/uno-X-1'), { ...e, win: '<img src=x>' }));
+    await assertFails(set(ref(admin, 'history/uno-X-1'), { ...e, at: 'hier' }));
+    await assertFails(set(ref(admin, 'history/uno-X-1'), { ...e, extra: 1 }));
+    await assertFails(set(ref(admin, 'history/uno-X-1'), { ...e, p: [{ r: 1 }] }));   // un joueur sans nom
+    await assertFails(set(ref(admin, 'history/uno-X-1'), { ...e, k: [{ t: 'Prime' }] }));
+    await assertFails(set(ref(admin, 'history/uno X'), e));                           // identifiant au bon format
   });
   test("admins/ : chacun ne lit que sa propre ligne, personne n'écrit", async () => {
     await assertSucceeds(get(ref(alice, 'admins/alice')));

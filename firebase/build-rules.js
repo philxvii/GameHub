@@ -178,6 +178,47 @@ const rules = {
     },
   },
 
+  // Historique des parties terminées : le panneau admin y range un résumé (vainqueur, scores, gains)
+  // avant que la partie ne soit nettoyée. Lisible par l'admin seul ; une entrée se crée une fois et
+  // ne se supprime qu'à la main (jamais de modification).
+  history: {
+    '.read': ADMIN,
+    '.indexOn': ['at'],
+    $id: {
+      '.write': `${ADMIN} && (!data.exists() || !newData.exists())`,
+      '.validate': "$id.matches(/^[A-Za-z0-9_-]{1,90}$/) && newData.hasChildren(['g', 'code', 'at'])",
+      g: { '.validate': "newData.isString() && newData.val().matches(/^[a-z0-9]{1,24}$/)" },
+      code: { '.validate': "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{1,24}$/)" },
+      at: { '.validate': 'newData.isNumber()' },
+      from: { '.validate': 'newData.isNumber()' },
+      win: { '.validate': SHORT_TEXT(140) },
+      sub: { '.validate': SHORT_TEXT(140) },
+      // Joueurs : nom, place, score affiché, vainqueur ou non, précision (rôle, mot…).
+      p: {
+        $i: {
+          '.validate': "$i.matches(/^[0-9]{1,2}$/) && newData.hasChildren(['n'])",
+          n: { '.validate': `${SHORT_TEXT(30)} && newData.val().length >= 1` },
+          r: { '.validate': 'newData.isNumber()' },
+          s: { '.validate': SHORT_TEXT(48) },
+          w: { '.validate': 'newData.isBoolean()' },
+          x: { '.validate': SHORT_TEXT(60) },
+          $other: { '.validate': false },
+        },
+      },
+      // Qui a gagné quoi : intitulé, vainqueur(s), détail.
+      k: {
+        $i: {
+          '.validate': "$i.matches(/^[0-9]{1,2}$/) && newData.hasChildren(['t', 'w'])",
+          t: { '.validate': SHORT_TEXT(40) },
+          w: { '.validate': SHORT_TEXT(80) },
+          d: { '.validate': SHORT_TEXT(80) },
+          $other: { '.validate': false },
+        },
+      },
+      $other: { '.validate': false },
+    },
+  },
+
   // Comptes bannis du site par l'admin : lisibles et modifiables par lui seul ; voir openFor.
   bans: {
     '.read': ADMIN,
@@ -519,5 +560,6 @@ for (const prefix of Object.keys(GAMES)) {
 // Anciens clients : ils lisent encore hub/updateLog au chargement, la lecture reste publique ici.
 transition.hub = { ...phase1.hub, hidden: rules.hub.hidden, settings: rules.hub.settings, layout: rules.hub.layout, updateLog: { ...rules.hub.updateLog, '.read': true }, stats: rules.hub.stats, waiting: rules.hub.waiting };
 transition.adminLog = rules.adminLog;
+transition.history = rules.history;
 writeFileSync(new URL('./database.rules.transition.json', import.meta.url), JSON.stringify({ rules: transition }, null, 2) + '\n');
 console.log('database.rules.transition.json écrit');

@@ -411,6 +411,77 @@
           ".validate": false
         }
       }
+    },
+    "history": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".indexOn": [
+        "at"
+      ],
+      "$id": {
+        ".write": "auth != null && root.child('admins').child(auth.uid).val() === true && (!data.exists() || !newData.exists())",
+        ".validate": "$id.matches(/^[A-Za-z0-9_-]{1,90}$/) && newData.hasChildren(['g', 'code', 'at'])",
+        "g": {
+          ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9]{1,24}$/)"
+        },
+        "code": {
+          ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{1,24}$/)"
+        },
+        "at": {
+          ".validate": "newData.isNumber()"
+        },
+        "from": {
+          ".validate": "newData.isNumber()"
+        },
+        "win": {
+          ".validate": "newData.isString() && newData.val().length <= 140 && !newData.val().contains('<')"
+        },
+        "sub": {
+          ".validate": "newData.isString() && newData.val().length <= 140 && !newData.val().contains('<')"
+        },
+        "p": {
+          "$i": {
+            ".validate": "$i.matches(/^[0-9]{1,2}$/) && newData.hasChildren(['n'])",
+            "n": {
+              ".validate": "newData.isString() && newData.val().length <= 30 && !newData.val().contains('<') && newData.val().length >= 1"
+            },
+            "r": {
+              ".validate": "newData.isNumber()"
+            },
+            "s": {
+              ".validate": "newData.isString() && newData.val().length <= 48 && !newData.val().contains('<')"
+            },
+            "w": {
+              ".validate": "newData.isBoolean()"
+            },
+            "x": {
+              ".validate": "newData.isString() && newData.val().length <= 60 && !newData.val().contains('<')"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "k": {
+          "$i": {
+            ".validate": "$i.matches(/^[0-9]{1,2}$/) && newData.hasChildren(['t', 'w'])",
+            "t": {
+              ".validate": "newData.isString() && newData.val().length <= 40 && !newData.val().contains('<')"
+            },
+            "w": {
+              ".validate": "newData.isString() && newData.val().length <= 80 && !newData.val().contains('<')"
+            },
+            "d": {
+              ".validate": "newData.isString() && newData.val().length <= 80 && !newData.val().contains('<')"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
     }
   }
 }

@@ -643,3 +643,24 @@ a.ap-btn{text-decoration:none;color:inherit}
 @keyframes ap-count2{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 @media (max-width:820px){.ap-notif{left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));top:auto;width:auto;transform-origin:50% 100%}}
 @media (prefers-reduced-motion:reduce){.ap-notif{transition:opacity .2s}.ap-notif::after{display:none}}
+
+/* ═══ Historique : parties terminées, vainqueur et gains ═══ */
+.hi-win{display:inline-flex;align-items:center;gap:5px;max-width:170px;overflow:hidden;font-size:13px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;text-overflow:ellipsis}
+.hi-win svg{flex:none;width:13px;height:13px;color:var(--ap-amber)}
+.hi-flow{gap:8px}
+.hi-champ{display:flex;align-items:center;gap:14px;margin:14px 14px 0;padding:14px 16px;border-radius:14px;background:var(--ap-fill)}
+.hi-trophy{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:13px;background:var(--text);color:var(--bg)}
+.hi-trophy svg{width:22px;height:22px}
+.hi-champ small{display:block;font-size:11.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.hi-champ b{display:block;margin-top:2px;font-size:18px;font-weight:600;letter-spacing:-.03em;line-height:1.2}
+.hi-champ em{display:block;margin-top:2px;font-style:normal;font-size:13px;color:var(--muted)}
+.hi-pane .lv-stats{margin-top:14px;border-top:1px solid var(--ap-sep)}
+.hi-rk{display:grid;place-items:center;flex:none;width:24px;height:24px;border-radius:50%;background:var(--ap-fill);color:var(--muted);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+.hi-rk.w{background:var(--text);color:var(--bg)}
+.hi-sc{flex:none;max-width:48%;font-size:13.5px;font-weight:550;letter-spacing:-.01em;text-align:right;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hi-prize{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:50%;background:var(--ap-fill);color:var(--ap-amber)}
+.hi-prize svg{width:16px;height:16px}
+.hi-x{position:static;background:rgba(0,0,0,.5);color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.hi-x:hover{background:rgba(0,0,0,.68);color:#fff}
+.lv-empty a{color:var(--text);text-decoration:underline;text-underline-offset:3px}
+@media (max-width:520px){.hi-win{max-width:110px}.hi-champ b{font-size:16px}}
