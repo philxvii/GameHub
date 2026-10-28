@@ -41,13 +41,19 @@ export default function mount(root, { p, submit, progress, sfx }) {
     open = true;
     input.focus();
   }
-  function validate() {
+  async function validate() {
     if (!alive || !open) return;
     const s = input.value.trim();
     if (!/^[0-9]{1,5}$/.test(s)) { line.textContent = 'Un nombre entier'; return; }
     open = false;
-    answers.push(Number(s));
+    const guess = Number(s), truth = p.clouds[k].n;
+    answers.push(guess);
     progress(answers.length);
+    // Le vrai compte, tout de suite : « C'était 73 points (tu as dit 60) ».
+    row.style.visibility = 'hidden';
+    line.textContent = `C’était ${truth} points · tu as dit ${guess}`;
+    await wait(1600);
+    if (!alive) return;
     k++;
     if (k >= p.clouds.length) { alive = false; row.style.visibility = 'hidden'; line.textContent = 'Réponses enregistrées'; submit(payload()); return; }
     show();

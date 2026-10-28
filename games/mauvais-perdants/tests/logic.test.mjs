@@ -22,6 +22,7 @@ import { rankRound, slotPoints, standings, needsTiebreak, tiebreakOrder, awards,
 import { drawPlan, eligibleRounds, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks, roundsOf } from '../js/draw.js';
 import { decide, allowed, NEXT, GRACE_MS, INTRO_MS, COUNT_MS, gameOf, playMsOf, STALL_MS } from '../js/machine.js';
 import { prepare, aiItems, parseJudge, triage, resolve, scoreBac, voteList } from '../js/petitbac.js';
+import { mask } from '../js/chat.js';
 import { cleanName, cleanAnswer, answerKey, firstLetter, validName } from '../js/text.js';
 import { pickLine, LINES } from '../js/lines.js';
 import { roundEvents, boardEvents, speakFor } from '../js/presenter.js';
@@ -177,6 +178,16 @@ describe('Le Coffre', () => {
     assert.equal(coffre.score({ a: [n0, n1] }, p).stats.best, C_START + 1);
     assert.equal(coffre.score({ a: [n0, 'faux', 'faux', numberFor(p.seed, p.i, C_START + 1, 3)] }, p).stats.best, C_START);
     assert.equal(coffre.score({ a: ['x'] }, p).stats.best, 0);
+  });
+});
+
+describe('Chat : filtre d’affichage', () => {
+  test('gros mots masqués (accents, casse, ponctuation), le reste intact', () => {
+    assert.equal(mask('salut tout le monde'), 'salut tout le monde');
+    assert.equal(mask('quelle Merde!'), 'quelle ••••••');
+    assert.equal(mask('ferme ta gueule'), 'ferme ta gueule', 'phrase entière : pas de faux positif sur des mots communs');
+    assert.equal(mask('bravo computer'), 'bravo computer', 'pas de faux positif au milieu d’un mot');
+    assert.equal(mask('  deux   espaces '), 'deux espaces');
   });
 });
 

@@ -74,6 +74,11 @@ fictive de la fin des années 70. Pas de présentateur à l'écran (ses répliqu
   `firebase/database.rules.phase2.json` dans la console (Realtime Database > Règles) AVANT de pousser,
   puis vérifier en ligne. Tests : Node 73/73, règles Firebase du jeu (Coffre inclus), `multi.cjs` 17/17,
   `rounds.cjs` MAN00005 3/3 (Coffre en élimination). Pas encore vu dans Chrome à 3 joueurs.
+- 28/10 (soir), **local, non poussé** : chat libre (`js/chat.js`, nœud `chat` dans `firebase/build-rules.js` :
+  **règles à republier**) ; panneau « Pendant ce temps » avec phrase claire (où en est l'adversaire, états du
+  Coffre) ; Nuage : vrai nombre de points après chaque réponse + tableau au verdict ; 7 nouvelles catégories
+  de Petit Bac. À faire : correction douteuse du Petit Bac (demander un exemple précis à l'utilisateur ;
+  l'IA n'est pas déployée, le jury vote), Ban.
 
 **Lancer les émulateurs sur ce PC** : le lanceur `npx firebase` est bloqué par une stratégie de
 groupe (pas Java). Utiliser Node directement, avec le JDK 21 installé en ZIP (hors PATH, Java 17

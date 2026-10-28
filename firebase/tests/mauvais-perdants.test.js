@@ -158,6 +158,20 @@ describe('Mauvais Perdants : réponses de manche', () => {
     await assertFails(set(r(bob, 'start/t1/r0/alice'), serverTimestamp()));
     await assertSucceeds(remove(r(alice, 'start')));                          // le coordinateur vide tout
   });
+  test('chat : texte de 140 caractères, signé de son auteur, écrit une fois, vidé par le coordinateur seul', async () => {
+    await room();
+    const msg = (u, t = 'salut') => ({ u, t, ts: serverTimestamp() });
+    await assertSucceeds(set(r(bob, 'chat/m1'), msg('bob')));
+    await assertFails(set(r(bob, 'chat/m1'), msg('bob', 'modifié')));                       // jamais modifié
+    await assertFails(set(r(bob, 'chat/m2'), msg('alice')));                                // pas au nom d'un autre
+    await assertFails(set(r(bob, 'chat/m3'), msg('bob', 'x'.repeat(141))));                 // 140 caractères
+    await assertFails(set(r(bob, 'chat/m4'), msg('bob', '')));                              // pas vide
+    await assertFails(set(r(bob, 'chat/m5'), msg('bob', '<img src=x>')));                   // pas de balise
+    await assertFails(set(r(bob, 'chat/m6'), { u: 'bob', t: 'salut', ts: 1 }));             // heure du serveur imposée
+    await assertFails(set(r(carol, 'chat/m7'), msg('carol')));                              // pas membre du salon
+    await assertFails(remove(r(bob, 'chat')));
+    await assertSucceeds(remove(r(alice, 'chat')));
+  });
   test('Coffre en élimination : journal des tours, une entrée par joueur, pendant play', async () => {
     await room();
     await assertSucceeds(set(r(alice, 'match'), match()));

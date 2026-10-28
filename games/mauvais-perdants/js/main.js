@@ -9,6 +9,8 @@ import { wipe, confetti } from './ui/fx.js';
 import { createRoom, joinRoom, resumeRoom, serverNow, normalizeCode, ONLINE_MS } from './net.js';
 import { Coordinator, paramsOf, namesOf, finalSummary } from './coord.js';
 import { GHOST } from './results.js';
+import { derive } from './rounds/coffre.js';
+import { chat } from './chat.js';
 import { round, FAMILIES } from './rounds/index.js';
 import { gameOf, contenders, COUNT_MS } from './machine.js';
 import { ROUNDS_PER_TOURNAMENT, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks, roundsOf } from './draw.js';
@@ -107,6 +109,7 @@ function enter(r) {
   history.replaceState(null, '', `?code=${encodeURIComponent(r.code)}${location.search.includes('emu') ? '&emu' : ''}${aiParam()}`);
   room.onClosed = msg => { leaveUI(); homeErr.textContent = msg; };
   room.on(() => schedule());
+  chat.attach(room);
   schedule();
 }
 function aiParam() { const a = new URLSearchParams(location.search).get('ai'); return a ? `&ai=${encodeURIComponent(a)}` : ''; }
@@ -114,6 +117,7 @@ function leaveUI() {
   if (coord) { coord.stop(); coord = null; }
   if (view.destroy) view.destroy();
   view = { key: null };
+  chat.detach();
   room = null;
   store.set('mp-room', null);
   history.replaceState(null, '', location.pathname + (location.search.includes('emu') ? '?emu' : ''));
@@ -557,6 +561,8 @@ const VIEWS = {
     els.forEach(e => list.append(e));
     // L'Étiquette : le tableau des estimations d'abord (sinon il est hors de l'écran à 6-8 joueurs).
     if (gameOf(m) === 'prix') wrap.append(prixTable(m, names));
+    if (gameOf(m) === 'nuage') wrap.append(nuageTable(m, names));
+    if (gameOf(m) === 'nuage' || gameOf(m) === 'prix') wrap.append(h('p', { class: 'tied-note', text: 'Écart = de combien chacun se trompe en moyenne (en %). Plus il est petit, mieux c’est : le plus proche du vrai chiffre gagne.' }));
     wrap.append(list);
     if (rows.some(r => r.tied)) wrap.append(h('p', { class: 'tied-note', text: 'Ex æquo : points partagés (moyenne des places).' }));
     if (m.i === roundsOf(m) - 1 && m.i > 0) wrap.append(h('p', { class: 'tied-note', text: `Manche décisive : points de place ×${FINAL_MULT}.` }));
@@ -704,15 +710,16 @@ function mInfo(m, uid, names) { return { name: names[uid], c: (m.roster[uid] || 
 
 // ───────────── progression en direct
 // Dans l'unité de la manche ; barre relative à la borne (ou au meilleur).
+// [valeur courte, part de la barre, phrase « où il en est »]
 const PROG = {
-  gong: (v, p) => [`${v}/${p.trials} signaux`, v / p.trials],
-  tir: v => [`${v}/20 cibles`, v / 20],
-  dictee: (v, p) => [`${Math.round(100 * v / p.phrase.length)} % tapé`, v / p.phrase.length],
-  chemin: v => [`niveau ${v}`, null], damier: v => [`niveau ${v}`, null],
-  numeros: v => [`${v} numéros`, null], coffre: v => [`tour ${v}`, null],
-  dejavu: v => [`${v} bonnes`, null], calcul: v => [`${v} pt${Math.abs(v) > 1 ? 's' : ''}`, null],
-  nuage: v => [`${v}/3 nuages`, v / 3], bac: v => [`${v}/4 cases`, v / 4],
-  prix: v => [`${v}/5 produits`, v / 5],
+  gong: (v, p) => [`${v}/${p.trials}`, v / p.trials, `${v} signal${v > 1 ? 'x' : ''} sur ${p.trials} joué${v > 1 ? 's' : ''}`],
+  tir: v => [`${v}/20`, v / 20, `${v} cible${v > 1 ? 's' : ''} touchée${v > 1 ? 's' : ''} sur 20`],
+  dictee: (v, p) => { const pc = Math.round(100 * v / p.phrase.length); return [`${pc} %`, v / p.phrase.length, `phrase recopiée à ${pc} %`]; },
+  chemin: v => [`niv. ${v}`, null, `niveau ${v} réussi`], damier: v => [`niv. ${v}`, null, `niveau ${v} réussi`],
+  numeros: v => [`${v}`, null, `${v} numéro${v > 1 ? 's' : ''} retenu${v > 1 ? 's' : ''}`], coffre: v => [`tour ${v}`, null, `tour ${v}`],
+  dejavu: v => [`${v}`, null, `${v} bonne${v > 1 ? 's' : ''} réponse${v > 1 ? 's' : ''}`], calcul: v => [`${v} pt${Math.abs(v) > 1 ? 's' : ''}`, null, `${v} point${Math.abs(v) > 1 ? 's' : ''} au compteur`],
+  nuage: v => [`${v}/3`, v / 3, `${v} nuage${v > 1 ? 'x' : ''} sur 3 estimé${v > 1 ? 's' : ''}`], bac: v => [`${v}/4`, v / 4, `${v} case${v > 1 ? 's' : ''} sur 4 remplie${v > 1 ? 's' : ''}`],
+  prix: v => [`${v}/5`, v / 5, `${v} produit${v > 1 ? 's' : ''} sur 5 chiffré${v > 1 ? 's' : ''}`],
 };
 // État de chaque candidat : valeur, part de la borne (0 à 1), texte, fini ou non.
 function race(mm, g, p) {
@@ -721,8 +728,14 @@ function race(mm, g, p) {
   return contenders(mm).map((u, k) => {
     if (u === GHOST) return { u, ghost: true, txt: round(g).ghost(p).label, frac: 1, done: true };
     const v = vals[k];
-    const [txt, frac] = v === null ? ['', 0] : PROG[g](v, p);
-    return { u, v, txt, frac: Math.max(0, Math.min(1, frac === null ? v / best : frac)), done: !!room.s.subs[u], on: room.online(u) };
+    // Coffre à tour de rôle : l'état vient du journal des tours (en lice, son tour, éliminé).
+    if (g === 'coffre' && p.mode === 'turns') {
+      const d = derive(p, room.s.turns || {}, mm.at);
+      const out = d.out[u] !== undefined, mover = !d.over && d.mover === u;
+      return { u, v: 0, txt: out ? 'éliminé' : mover ? 'à lui' : 'en lice', say: out ? `éliminé au tour ${d.out[u] + 1} (à ${d.failLen[u]} chiffres)` : mover ? 'retape le nombre…' : 'attend son tour', frac: out ? 0 : 1, done: !!room.s.subs[u], on: room.online(u), out };
+    }
+    const [txt, frac, say] = v === null ? ['', 0, 'n’a pas encore commencé'] : PROG[g](v, p);
+    return { u, v, txt, say, frac: Math.max(0, Math.min(1, frac === null ? v / best : frac)), done: !!room.s.subs[u], on: room.online(u) };
   });
 }
 
@@ -740,15 +753,16 @@ function rivalsPanel(m) {
       myBest = mine && mine.v !== null && mine.v !== undefined ? mine.v : myBest;
       const others = rows.filter(r => r.u !== room.me);
       keyed(list, others.map(r => r.u), u => {
-        const val = h('small'), lamps = h('div', { class: 'lamps', 'aria-hidden': 'true' }, Array.from({ length: 10 }, () => h('i'))), stk = h('span', { class: 'sticker', text: 'Te dépasse', hidden: true });
-        const el = h('div', { class: 'rv', style: { '--pc': pcol(mm.roster[u].c) } }, token(names[u], mm.roster[u].c, 'sm'), h('div', {}, h('div', { class: 'nm' }, h('span', { text: names[u] }), val), lamps), stk);
-        el.__p = { val, lamps: [...lamps.children], stk };
+        const val = h('small'), say = h('div', { class: 'say' }), lamps = h('div', { class: 'lamps', 'aria-hidden': 'true' }, Array.from({ length: 10 }, () => h('i'))), stk = h('span', { class: 'sticker', text: 'Te dépasse', hidden: true });
+        const el = h('div', { class: 'rv', style: { '--pc': pcol(mm.roster[u].c) } }, token(names[u], mm.roster[u].c, 'sm'), h('div', {}, h('div', { class: 'nm' }, h('span', { text: names[u] }), val), say, lamps), stk);
+        el.__p = { val, say, lamps: [...lamps.children], stk };
         return el;
       }).forEach((el, k) => {
         const r = others[k], x = el.__p;
         const lit = Math.round(r.frac * 10);
         setClass(el, `rv${r.done ? ' fin' : ''}`);
-        setText(x.val, r.ghost ? `à battre · ${r.txt}` : r.done ? 'fini' : r.on ? (r.v === null ? '…' : String(r.v)) : 'absent');
+        setText(x.val, r.ghost ? `à battre · ${r.txt}` : r.done ? 'fini' : r.on ? (r.txt || '…') : 'absent');
+        setText(x.say, r.ghost ? 'score de référence' : r.done ? 'a terminé : réponse envoyée ✓' : !r.on ? 'déconnecté' : r.say);
         x.lamps.forEach((l, i) => setClass(l, i < lit ? 'on' : ''));
         x.stk.hidden = !(!r.ghost && !r.done && r.v !== null && r.v > 0 && r.v > myBest);
       });
@@ -837,6 +851,24 @@ function tiebreakView(deck, m) {
   });
   wrap.append(list);
   deck.append(wrap);
+}
+
+// Le Nuage : pour chaque nuage, le vrai nombre de points et l'estimation de chacun ; le plus proche en vert.
+function nuageTable(m, names) {
+  const p = paramsOf(m);
+  const who = contenders(m).filter(u => u !== GHOST && room.s.subs[u]);
+  const guesses = Object.fromEntries(who.map(u => { const d = parse((room.s.subs[u] || {}).d) || {}; return [u, Array.isArray(d.a) ? d.a.map(Number) : []]; }));
+  const t = h('table', { class: 'prix-table' });
+  t.append(h('tr', {}, h('th', { text: 'Nuage' }), h('th', { text: 'Points' }), who.map(u => h('th', { text: names[u] }))));
+  p.clouds.forEach((c, k) => {
+    const errs = who.map(u => { const g = guesses[u][k]; return g > 0 ? Math.abs(Math.log(g / c.n)) : Infinity; });
+    const best = Math.min(...errs);
+    t.append(h('tr', {},
+      h('td', { class: 'pt-item' }, h('b', { text: `Nuage ${k + 1}` })),
+      h('td', { class: 'pt-price' }, h('span', { class: 'tagp', text: `${c.n} points` })),
+      who.map((u, j) => { const g = guesses[u][k]; return h('td', { class: `pt-guess ${errs[j] === best && best < Infinity ? 'best' : ''}`, text: g > 0 ? String(g) : '—' }); })));
+  });
+  return h('div', { class: 'bac-grid' }, t);
 }
 
 // L'Étiquette : produit par produit, le vrai prix et l'estimation de chacun ; le plus proche en avant.

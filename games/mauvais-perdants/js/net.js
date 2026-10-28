@@ -7,7 +7,7 @@
 //   « en ligne » si son dernier battement a moins de 12 s.
 // - Chaque joueur n'écrit que ses nœuds ; le coordinateur écrit l'état du tournoi.
 
-import { ref, get, set, update, remove, onValue, onDisconnect, serverTimestamp, runTransaction, query, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { ref, get, set, push, update, remove, onValue, onDisconnect, serverTimestamp, runTransaction, query, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { db, ensureAuth, freeRoomCode, createRoom as fbCreate, openRoom, isDenied } from '../../../shared/firebase.js';
 import { cleanName } from './text.js';
 import { MAX_PLAYERS } from './scoring.js';
@@ -100,6 +100,8 @@ export class Room {
         this.emit(k);
       }, e => this.lost(e)));
     }
+    this.s.chat = {};
+    this.unsubs.push(onValue(query(ref(db, `${this.base}/chat`), limitToLast(60)), snap => { this.s.chat = snap.val() || {}; this.emit('chat'); }, () => {}));
     this.unsubs.push(onValue(query(ref(db, `${this.base}/mc`), limitToLast(8)), snap => { this.s.mc = snap.val() || {}; this.emit('mc'); }, e => this.lost(e)));
   }
   beat() { if (!this.closed) set(this.presenceRef, serverTimestamp()).catch(() => {}); }
@@ -143,6 +145,7 @@ export class Room {
   // Journal du Coffre (élimination) : une entrée par tour et par joueur, écrite une fois. `uid` = le
   // joueur dont c'est le tour ; un autre membre peut y inscrire l'élimination (r = 'x') si celui-ci a disparu.
   turn(tid, rk, n, uid, r) { return set(ref(db, `${this.base}/turns/${tid}/${rk}/${n}/${uid}`), { r, t: serverTimestamp() }).catch(() => {}); }
+  say(text) { return set(push(ref(db, `${this.base}/chat`)), { u: this.me, t: String(text).slice(0, 140), ts: serverTimestamp() }); }
   ready(tag) { return set(ref(db, `${this.base}/ready/${this.me}`), tag).catch(() => {}); }
   boast(tid, rk) { return set(ref(db, `${this.base}/boast/${tid}/${rk}/${this.me}`), true); }
   markStart(tid, rk) { return set(ref(db, `${this.base}/start/${tid}/${rk}/${this.me}`), serverTimestamp()); }

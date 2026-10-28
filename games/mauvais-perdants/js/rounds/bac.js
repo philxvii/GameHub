@@ -12,6 +12,8 @@ export const LETTERS = 'ABCDEFGHIJLMNOPRSTUV'.split('');     // sans K Q W X Y Z
 export const CATEGORIES = [
   'Pays', 'Ville', 'Animal', 'Fruit ou légume', 'Métier', 'Prénom',
   'Objet de la maison', 'Sport ou loisir', 'Plat ou aliment', 'Vêtement ou accessoire', 'Partie du corps',
+  'Boisson', 'Instrument de musique', 'Moyen de transport', 'Meuble', 'Outil', 'Fleur ou arbre',
+  'Dessert ou pâtisserie', 'Fleuve ou montagne', 'Ustensile de cuisine',
 ];
 export const SLOTS = 4;
 export const POINTS = { unique: 10, shared: 5, none: 0 };

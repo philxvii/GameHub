@@ -301,6 +301,7 @@ function mpRules() {
   const ROSTER = `${M}.child('roster').child($uid).exists()`;
   const CUR = `$tid === ${M}.child('tid').val() && $rk === ${M}.child('rk').val()`;
   const OWN = `${AUTH} && auth.uid === $uid && ${MEMBER}`;
+  const OWN_ANY = `${AUTH} && ${MEMBER}`;
   const STALE = `(!${R}.child('presence').child(data.val()).exists() || ${R}.child('presence').child(data.val()).val() < now - 15000)`;
   const room = {
     '.read': `auth != null && ((${OPEN} && data.child('members').child(auth.uid).exists()) || ${ADMIN})`,
@@ -412,6 +413,19 @@ function mpRules() {
         '.write': `${OWN} && !data.exists() && ${CUR} && ${M}.child('step').val() === 'play' && ${ROSTER}`,
         '.validate': 'newData.val() === now',
       } } },
+    },
+    // Chat de salon : texte libre, 140 caractères, un message par entrée (jamais modifié ni effacé par un joueur).
+    // Le nom affiché est celui de la fiche du joueur. Pas de balise. Le coordinateur vide tout en fin de partie.
+    chat: {
+      '.write': `${AUTH} && ${COORD} && !newData.exists()`,
+      $id: {
+        '.write': `${OWN_ANY} && !data.exists() && newData.child('u').val() === auth.uid`,
+        '.validate': "newData.hasChildren(['u', 't', 'ts'])",
+        u: { '.validate': 'newData.isString()' },
+        t: { '.validate': "newData.isString() && newData.val().length >= 1 && newData.val().length <= 140 && !newData.val().contains('<')" },
+        ts: { '.validate': 'newData.val() === now' },
+        $other: { '.validate': false },
+      },
     },
     // Le Coffre en élimination : journal des tours, une entrée par tour et par joueur, écrite une fois,
     // pendant l'étape `play`. Un joueur écrit la sienne ; n'importe quel joueur de la manche peut inscrire

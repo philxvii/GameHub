@@ -965,6 +965,25 @@
             }
           }
         },
+        "chat": {
+          ".write": "auth != null && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('mauvaisperdants').val() !== true && !root.child('bans').child(auth.uid).exists() && root.child('mp').child($code).child('coord').val() === auth.uid && !newData.exists()",
+          "$id": {
+            ".write": "auth != null && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('mauvaisperdants').val() !== true && !root.child('bans').child(auth.uid).exists() && root.child('mp').child($code).child('members').child(auth.uid).exists() && !data.exists() && newData.child('u').val() === auth.uid",
+            ".validate": "newData.hasChildren(['u', 't', 'ts'])",
+            "u": {
+              ".validate": "newData.isString()"
+            },
+            "t": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 140 && !newData.val().contains('<')"
+            },
+            "ts": {
+              ".validate": "newData.val() === now"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
         "turns": {
           ".write": "auth != null && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('mauvaisperdants').val() !== true && !root.child('bans').child(auth.uid).exists() && root.child('mp').child($code).child('coord').val() === auth.uid && !newData.exists()",
           "$tid": {
