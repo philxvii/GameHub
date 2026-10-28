@@ -48,6 +48,23 @@
 HTML, CSS et JavaScript natifs, sans framework ni étape de compilation. Les parties sont
 synchronisées en temps réel entre les joueurs, et le site est publié par GitHub Pages.
 
+## Sous le capot
+
+<table>
+<tr>
+<td width="50%" valign="top"><b>Multijoueur en temps réel</b><br>Un code de salon suffit : les parties se synchronisent instantanément entre téléphones et ordinateurs, sans compte à créer.</td>
+<td width="50%" valign="top"><b>Moteurs déterministes</b><br>Les règles de plusieurs jeux sont des modules purs, sans dépendance au navigateur : mêmes graines, mêmes parties, rejouables et testables.</td>
+</tr>
+<tr>
+<td valign="top"><b>3D dans le navigateur</b><br>Le plateau de Puissance 4 est rendu en 3D avec Three.js : bois verni, pions d'émail, éclairage de scène.</td>
+<td valign="top"><b>Présentateur IA</b><br>Les répliques de Banqueroll viennent d'un service intermédiaire qui bascule automatiquement entre plusieurs fournisseurs d'IA, avec repli sur des répliques locales.</td>
+</tr>
+<tr>
+<td valign="top"><b>Rendu et audio maison</b><br>Canvas 2D pour Mini Subway, sons et musiques synthétisés par Web Audio, tactile, souris et stylet gérés partout.</td>
+<td valign="top"><b>Testé en conditions réelles</b><br>Des centaines de tests automatisés, dont des parties jouées par plusieurs navigateurs en même temps contre les vraies règles de sécurité de la base.</td>
+</tr>
+</table>
+
 ## Licence
 
 © 2026 XVIIIUUUU, tous droits réservés : le code est visible mais pas libre de
