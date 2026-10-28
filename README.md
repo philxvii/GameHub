@@ -10,22 +10,7 @@ Des jeux multijoueurs à lancer dans le navigateur, entre potes.
 
 <br>
 
-<table>
-<tr>
-<td align="center" width="20%"><a href="https://roulia.me/games/banqueroll/"><img src="docs/readme/banqueroll.png" width="170" alt="Banqueroll"></a><br><b>Banqueroll</b><br><sub>2 à 8 joueurs</sub></td>
-<td align="center" width="20%"><a href="https://roulia.me/games/mauvais-perdants/"><img src="docs/readme/mauvais-perdants.png" width="170" alt="Mauvais Perdants"></a><br><b>Mauvais Perdants</b><br><sub>1 à 8 joueurs</sub></td>
-<td align="center" width="20%"><a href="https://roulia.me/games/mini-subway/"><img src="docs/readme/mini-subway.png" width="170" alt="Mini Subway"></a><br><b>Mini Subway</b><br><sub>1 à 4 joueurs</sub></td>
-<td align="center" width="20%"><a href="https://roulia.me/games/uno/"><img src="docs/readme/uno.png" width="170" alt="UNO"></a><br><b>UNO</b><br><sub>2 à 6 joueurs</sub></td>
-<td align="center" width="20%"><a href="https://roulia.me/games/undercover/"><img src="docs/readme/undercover.png" width="170" alt="Undercover"></a><br><b>Undercover</b><br><sub>3 à 9 joueurs</sub></td>
-</tr>
-<tr>
-<td align="center"><a href="https://roulia.me/games/roulette/"><img src="docs/readme/roulette.png" width="170" alt="Roulette"></a><br><b>Roulette</b><br><sub>2 à 8 joueurs</sub></td>
-<td align="center"><a href="https://roulia.me/games/mini-golf/"><img src="docs/readme/mini-golf.png" width="170" alt="Mini Golf"></a><br><b>Mini Golf</b><br><sub>2 à 4 joueurs</sub></td>
-<td align="center"><a href="https://roulia.me/games/qui-est-ce/"><img src="docs/readme/qui-est-ce.png" width="170" alt="Qui est-ce ?"></a><br><b>Qui est-ce ?</b><br><sub>2 joueurs</sub></td>
-<td align="center"><a href="https://roulia.me/games/bataille-navale/"><img src="docs/readme/bataille-navale.png" width="170" alt="Bataille navale"></a><br><b>Bataille navale</b><br><sub>2 joueurs</sub></td>
-<td align="center"><a href="https://roulia.me/games/puissance4/"><img src="docs/readme/puissance4.png" width="170" alt="Puissance 4"></a><br><b>Puissance 4</b><br><sub>2 joueurs</sub></td>
-</tr>
-</table>
+<a href="https://roulia.me"><img src="docs/readme/accueil.png" width="880" alt="Accueil de Game Hub"></a>
 
 </div>
 
