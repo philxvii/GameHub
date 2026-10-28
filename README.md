@@ -57,7 +57,7 @@ synchronisées en temps réel entre les joueurs, et le site est publié par GitH
 </tr>
 <tr>
 <td valign="top"><b>3D dans le navigateur</b><br>Le plateau de Puissance 4 est rendu en 3D avec Three.js : bois verni, pions d'émail, éclairage de scène.</td>
-<td valign="top"><b>Présentateur IA orchestré</b><br>Chaque réplique passe par une passerelle serverless en périphérie : cascade de trois fournisseurs de modèles avec budget de temps par appel, contexte de jeu borné, réponses nettoyées et validées, clés isolées du navigateur. L'IA ne produit que du texte et ne peut jamais agir sur la partie ; en cas d'échec, une réplique locale prend le relais.</td>
+<td valign="top"><b>Architecture résiliente</b><br>Le navigateur ne parle jamais directement aux modèles d'IA : une passerelle serverless en périphérie sert d'intermédiaire. Elle enchaîne plusieurs fournisseurs en cascade avec un budget de temps par appel, puis, si tous échouent, le jeu bascule sur ses répliques locales : la partie ne s'interrompt jamais. L'IA reste cantonnée au texte, sans aucune prise sur les règles.</td>
 </tr>
 <tr>
 <td valign="top"><b>Rendu et audio maison</b><br>Canvas 2D pour Mini Subway, sons et musiques synthétisés par Web Audio, tactile, souris et stylet gérés partout.</td>
