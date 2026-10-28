@@ -618,30 +618,62 @@ function drawLive(box) {
       </tbody></table>` : `<div class="ap-empty"><b>${q ? 'Aucun joueur ne correspond' : 'Personne en partie'}</b>${q ? 'Essaie un autre nom ou un code.' : 'Les joueurs apparaissent ici dès qu’ils rejoignent une partie.'}</div>`}</div>`);
     return;
   }
-  const detail = S.live.sel && innerWidth > 1100 ? roomDetail(S.rooms.get(S.live.sel)) : '';
   const act = rooms.filter(x => !x.idle), ina = rooms.filter(x => x.idle);
-  const sec = (title, list) => list.length ? `<div class="lv-h"><h3>${title}</h3><span>${list.length}</span></div><div class="lv-grid">${list.map(roomCard).join('')}</div>` : '';
   const filtered = S.live.game !== 'all' || S.live.q;
   const empty = `<div class="lv-empty"><span class="lv-die" aria-hidden="true"></span><b>${filtered ? 'Aucune partie pour ce filtre' : 'Aucune partie en cours'}</b>${filtered ? 'Essaie un autre jeu ou une autre recherche.' : 'Les parties apparaissent ici dès qu’un joueur en crée une.'}</div>`;
-  // Un clic sur une partie change la grille (le panneau s'ouvre ou se ferme) : les cartes glissent
-  // vers leur nouvelle place au lieu de sauter, et le panneau entre en fondu.
-  const glide = S.live.glide; S.live.glide = false;
-  const before = glide ? new Map([...box.querySelectorAll('.lv-card[data-key]')].map(c => [c.dataset.key, c.getBoundingClientRect()])) : null;
-  const hadDetail = !!box.querySelector('.ap-detail');
-  paint(box, head + `<div class="ap-md${detail ? '' : ' solo'}"><div>${rooms.length ? sec('Actives', act) + sec('Inactives', ina) : empty}</div>
-    ${detail ? `<div class="ap-detail">${detail}</div>` : ''}</div>`);
-  if (before && !matchMedia('(prefers-reduced-motion:reduce)').matches) {
-    const ease = 'cubic-bezier(.32,.72,0,1)';
-    for (const c of box.querySelectorAll('.lv-card[data-key]')) {
-      const a = before.get(c.dataset.key), b = c.getBoundingClientRect();
-      if (!a) continue;
-      const dx = a.left - b.left, dy = a.top - b.top;
-      if (dx || dy) c.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 380, easing: ease });
-    }
-    const d = box.querySelector('.ap-detail');
-    if (d && !hadDetail) d.animate([{ opacity: 0, transform: 'translateX(18px)' }, { opacity: 1, transform: 'none' }], { duration: 380, easing: ease });
+  if (innerWidth > 1100 && rooms.length) {
+    // Console : la liste des parties à gauche, le panneau de pilotage de la partie choisie à droite.
+    // Une partie est toujours choisie (la première), le panneau n'est jamais vide.
+    if (!S.live.sel || !rooms.some(x => x.r.key === S.live.sel)) S.live.sel = rooms[0].r.key;
+    const group = (title, list) => list.length ? `<div class="lv-h"><h3>${title}</h3><span>${list.length}</span></div>${list.map(roomItem).join('')}` : '';
+    const was = S.live.pane; S.live.pane = S.live.sel;
+    paint(box, head + `<div class="lv-console"><div class="lv-list">${group('Actives', act)}${group('Inactives', ina)}</div><aside class="lv-pane">${roomPane(S.rooms.get(S.live.sel))}</aside></div>`);
+    const pane = box.querySelector('.lv-pane-in');
+    if (was && was !== S.live.sel && pane && !matchMedia('(prefers-reduced-motion:reduce)').matches)
+      pane.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'cubic-bezier(.32,.72,0,1)' });
+    return;
   }
+  const sec = (title, list) => list.length ? `<div class="lv-h"><h3>${title}</h3><span>${list.length}</span></div><div class="lv-grid">${list.map(roomCard).join('')}</div>` : '';
+  paint(box, head + `<div class="ap-md solo"><div>${rooms.length ? sec('Actives', act) + sec('Inactives', ina) : empty}</div></div>`);
   if (S.live.sel && innerWidth <= 1100) sheet(roomDetail(S.rooms.get(S.live.sel)), 'room');
+}
+
+// Ligne de la liste des parties (grand écran) : affiche, jeu, code, joueurs, état.
+function roomItem(x) {
+  const r = x.r, [ph, phc] = phaseOf(r.f.phase);
+  const av = x.players.slice(0, 4).map(p => `<span class="lv-av ${p.st === 'on' ? 'on' : p.st === 'off' ? 'off' : 'na'}" title="${esc(p.name)}">${esc(initial(p.name))}</span>`).join('')
+    + (x.players.length > 4 ? `<span class="lv-av more">+${x.players.length - 4}</span>` : '');
+  return `<button class="lv-item${x.idle ? ' idle' : ''}" type="button" data-act="room" data-key="${esc(r.key)}" aria-selected="${S.live.sel === r.key}">
+    <span class="lv-th"><img src="${cover(r.g)}" alt="" loading="lazy" decoding="async">${!x.idle && x.on ? '<i></i>' : ''}</span>
+    <span class="lv-it-main"><b>${esc(r.g.name)}</b><em>${esc(r.code)} · ${plural(x.players.length, 'joueur')}</em></span>
+    <span class="lv-it-r"><span class="lv-stack">${av}</span><small class="${x.idle ? '' : phc}">${x.idle ? 'Inactive' : ph}${x.last ? ' · ' + ago(x.last).replace('il y a ', '') : ''}</small></span>
+  </button>`;
+}
+
+// Panneau de pilotage d'une partie : affiche, chiffres, joueurs avec leurs actions, suppression.
+function roomPane(r) {
+  if (!r) return '';
+  const x = roomInfo(r), [ph, phc] = phaseOf(r.f.phase);
+  const banned = Object.keys(r.f.banned || {});
+  const stat = (v, k) => `<div><b>${v}</b><span>${k}</span></div>`;
+  const since = t => t ? ago(t).replace('il y a ', '') : '—';
+  const rows = x.players.length ? x.players.map(p => `<div class="lv-pr"><span class="ap-av" style="background:${avColor(p.name)}">${esc(initial(p.name))}</span>
+      <div class="main"><div class="t">${esc(p.name)}${p.host ? icon('crown', 'ap-host') : ''}</div><div class="d">${p.host ? 'Hôte · ' : ''}${p.st === 'on' ? 'En ligne' : p.st === 'off' ? 'Absent' : 'Présence non suivie par ce jeu'}</div></div>
+      <span class="ap-dot ${p.st === 'on' ? 'on' : p.st === 'off' ? 'off' : ''}"></span>
+      <button class="ap-btn sm" type="button" data-act="kick" data-key="${esc(r.key)}" data-p="${esc(p.key)}" ${p.host ? 'disabled title="Hôte : supprime la partie pour l’écarter"' : ''}>Exclure</button>
+      <button class="ap-icon-btn" type="button" data-act="pmenu" data-key="${esc(r.key)}" data-p="${esc(p.key)}" aria-label="Autres actions pour ${esc(p.name)}">${icon('more')}</button></div>`).join('')
+    : '<div class="ap-empty">Aucun joueur.</div>';
+  return `<div class="lv-pane-in ap-card">
+    <div class="lv-hero"><img src="${cover(r.g)}" alt=""><span class="lv-grad"></span>
+      <div class="lv-hero-top"><span class="ap-pill ${x.idle ? '' : phc}">${x.idle ? 'Inactive' : ph}</span>${!x.idle && x.on ? '<span class="lv-live"><i></i>Live</span>' : ''}</div>
+      <div class="lv-hero-main"><div><h3>${esc(r.g.name)}</h3><span>${plural(x.players.length, 'joueur')}</span></div>
+        <button class="lv-copy" type="button" data-act="copy" data-v="${esc(r.code)}" aria-label="Copier le code ${esc(r.code)}">${esc(r.code)}${icon('copy')}</button></div></div>
+    <div class="lv-stats">${stat(r.g.presence ? `${x.on}/${x.players.length}` : nf.format(x.players.length), r.g.presence ? 'Connectés' : 'Inscrits')}${stat(since(x.created), 'Créée')}${stat(since(x.last), 'Dernier signe')}</div>
+    <div class="lv-ph"><h4>Joueurs</h4><span>${x.players.length}</span></div>
+    <div class="lv-pl">${rows}</div>
+    ${banned.length ? `<div class="ap-row"><div class="main"><div class="t">${plural(banned.length, 'compte exclu', 'comptes exclus')} de cette partie</div><div class="d">Ils ne peuvent plus y revenir</div></div><button class="ap-btn sm" type="button" data-act="unban-room" data-key="${esc(r.key)}">Tout lever</button></div>` : ''}
+    <div class="lv-actions"><button class="ap-btn" type="button" data-act="copy" data-v="${esc(r.code)}">${icon('copy')}Copier le code</button><button class="ap-btn danger" type="button" data-act="del-room" data-key="${esc(r.key)}">${icon('trash')}Supprimer la partie</button></div>
+  </div>`;
 }
 
 function status(p) {
@@ -1233,12 +1265,13 @@ async function onClick(e) {
     case 'logout': logout(); break;
     case 'mx-range': S.mxRange = a.dataset.v; S.mx = null; loadMx(); schedule(); break;
     case 'refresh': syncRooms(); loadToday(); notify('Actualisé', { icon: 'undo' }); break;
-    case 'room': S.live.glide = true; S.live.sel = S.live.sel === a.dataset.key && innerWidth > 1100 ? null : a.dataset.key; if (S.sec !== 'live') { S.live.view = 'rooms'; go('live'); } else { S.live.view = 'rooms'; draw('live'); } break;
+    case 'room': S.live.glide = true; S.live.sel = a.dataset.key; if (S.sec !== 'live') { S.live.view = 'rooms'; go('live'); } else { S.live.view = 'rooms'; draw('live'); } break;
     case 'room-close': S.live.glide = true; S.live.sel = null; closeSheet(); draw('live'); break;
     case 'lv-view': S.live.view = a.dataset.v; draw('live'); break;
     case 'lv-game': S.live.game = a.dataset.v; draw('live'); break;
     case 'copy': try { await navigator.clipboard.writeText(a.dataset.v); notify('Code copié', { icon: 'copy', sub: a.dataset.v }); } catch (_) {} break;
     case 'pmenu': playerMenu(a, room, a.dataset.p); break;
+    case 'kick': { const p = room && playersOf(room).find(x => x.key === a.dataset.p); if (p) kick(room, p, {}); break; }
     case 'del-room': deleteRoom(room); break;
     case 'unban-room': if (room) unbanRoom(room); break;
     case 'cleanup': cleanup(); break;
