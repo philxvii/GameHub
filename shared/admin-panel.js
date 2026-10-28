@@ -592,7 +592,9 @@ function roomCard(x) {
 function drawLive(box) {
   const t = totals(), maint = S.settings.maintenance === true;
   const counts = {};
-  t.rooms.forEach(x => { counts[x.r.g.id] = (counts[x.r.g.id] || 0) + 1; });
+  // Les nombres des filtres suivent ce qui s'affiche : sans « Inactives », les parties inactives ne comptent pas.
+  const shown = t.rooms.filter(x => S.live.idle || !x.idle);
+  shown.forEach(x => { counts[x.r.g.id] = (counts[x.r.g.id] || 0) + 1; });
   tools(`<div class="ap-seg" role="group" aria-label="Affichage"><button type="button" data-act="lv-view" data-v="rooms" aria-pressed="${S.live.view === 'rooms'}">Parties</button><button type="button" data-act="lv-view" data-v="players" aria-pressed="${S.live.view === 'players'}">Joueurs</button></div>
     <input class="ap-field" id="ap-live-q" type="search" placeholder="Joueur, code…" aria-label="Rechercher un joueur ou une partie" value="${esc(S.live.q)}" style="width:170px">
     <button class="ap-btn" type="button" data-act="cleanup" ${t.idle ? '' : 'disabled'}>${icon('broom')}Nettoyer${t.idle ? ` (${t.idle})` : ''}</button>`,
@@ -600,8 +602,8 @@ function drawLive(box) {
   const rooms = liveFilter(t.rooms);
   const tiles = `<div class="lv-tiles">${[[maint ? 'Sur l’écran de maintenance' : 'Sur l’accueil', maint ? S.waitingN : S.visitors, true], ['Connectés en partie', t.onNow, true], ['Joueurs en parties actives', t.inGame, false], ['Parties inactives', t.idle, false]]
     .map(([k, v, live]) => `<div class="lv-tile"><span class="k">${live ? '<i class="ap-dot on"></i>' : ''}${k}</span><b>${nf.format(v)}</b></div>`).join('')}</div>`;
-  const chip = (id, label, n, g) => `<button type="button" class="lv-chip" data-act="lv-game" data-v="${id}" aria-pressed="${S.live.game === id}">${g ? `<img src="${cover(g)}" alt="" loading="lazy" decoding="async">` : ''}<b>${esc(label)}</b><em>${n}</em></button>`;
-  const rail = `<div class="lv-bar"><div class="lv-rail" role="group" aria-label="Filtrer par jeu">${chip('all', 'Tous', t.rooms.length)}${CATALOG.filter(g => counts[g.id] || S.live.game === g.id).map(g => chip(g.id, g.name, counts[g.id] || 0, g)).join('')}</div>
+  const chip = (id, label, n, g) => `<button type="button" class="lv-chip" data-act="lv-game" data-v="${id}" aria-pressed="${S.live.game === id}">${g ? `<img src="${cover(g)}" alt="" loading="lazy" decoding="async">` : ''}<b>${esc(label)}</b>${n ? `<em>${n}</em>` : ''}</button>`;
+  const rail = `<div class="lv-bar"><div class="lv-rail" role="group" aria-label="Filtrer par jeu">${chip('all', 'Tous', shown.length)}${CATALOG.filter(g => counts[g.id] || S.live.game === g.id).map(g => chip(g.id, g.name, counts[g.id] || 0, g)).join('')}</div>
     <label class="lv-idle-t">Inactives ${sw('lv-idle', S.live.idle, 'Montrer les parties inactives')}</label></div>`;
   const head = tiles + rail;
   if (S.live.sel && !S.rooms.has(S.live.sel)) S.live.sel = null;

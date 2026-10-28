@@ -527,7 +527,7 @@ a.ap-btn{text-decoration:none;color:inherit}
 .lv-tile{padding:14px 16px 16px;border-radius:16px;background:var(--ap-card);box-shadow:0 0 0 1px var(--ap-sep)}
 .lv-tile .k{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)}
 .lv-tile b{display:block;margin-top:8px;font-size:32px;font-weight:600;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums}
-.lv-bar{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.lv-bar{display:flex;align-items:center;gap:14px;margin-bottom:12px}
 .lv-rail{display:flex;gap:8px;overflow-x:auto;padding:3px;margin:0 -3px;flex:1;min-width:0;scrollbar-width:none}
 .lv-rail::-webkit-scrollbar{display:none}
 .lv-chip{flex:none;display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border:none;border-radius:999px;background:var(--ap-card);box-shadow:0 0 0 1px var(--ap-sep);transition:background-color .2s,color .2s,transform .2s var(--ap-ease)}
@@ -571,7 +571,8 @@ a.ap-btn{text-decoration:none;color:inherit}
 .lv-stack{display:flex;padding-left:4px}
 .lv-it-r small{font-size:11.5px;color:var(--muted);white-space:nowrap}
 .lv-it-r small.green{color:var(--ap-green)}
-.lv-pane{position:sticky;top:0;max-height:calc(100vh - 24px);overflow:auto;border-radius:var(--ap-r);scrollbar-width:thin}
+/* Le panneau démarre à la hauteur de la première ligne de la liste (titre 22 px + 10 px de marge), sous la rangée de filtres. */
+.lv-pane{position:sticky;top:0;margin-top:32px;max-height:calc(100vh - 56px);overflow:auto;border-radius:var(--ap-r);scrollbar-width:thin}
 .lv-pane-in{overflow:hidden}
 .lv-hero{position:relative;height:150px;overflow:hidden;background:#0D0B12;isolation:isolate}
 .lv-hero img{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);object-fit:cover;object-position:50% 38%}
