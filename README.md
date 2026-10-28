@@ -39,17 +39,16 @@
 
 <div align="center">
 
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
-![Cloudflare Workers](https://img.shields.io/badge/Cloudflare_Workers-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)
-![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-222222?style=for-the-badge&logo=github&logoColor=white)
+<img src="https://skillicons.dev/icons?i=html,css,js,firebase,cloudflare,github&theme=dark&perline=6" width="420" alt="HTML, CSS, JavaScript, Firebase, Cloudflare, GitHub">
+
+<sub>HTML · CSS · JavaScript · Firebase · Cloudflare · GitHub Pages</sub>
 
 </div>
 
-Un site léger en HTML, CSS et JavaScript natifs, sans framework ni étape de compilation.
-Les parties sont synchronisées en temps réel entre les joueurs, et le site est publié par GitHub Pages.
+<br>
+
+HTML, CSS et JavaScript natifs, sans framework ni étape de compilation. Les parties sont
+synchronisées en temps réel entre les joueurs, et le site est publié par GitHub Pages.
 
 ## Licence
 
