@@ -861,7 +861,7 @@
     if (liveTried) return; liveTried = true;
     try {
       const { createLive } = await import('./games/qui-est-ce/vivant/js/live.js');
-      live = await createLive(chars.map(ch => ch.querySelector('.stage')), { reduced: reduce.matches, onProgress: showLoad, quiet: calm });
+      live = await createLive(chars.map(ch => ch.querySelector('.stage')), { reduced: reduce.matches, onProgress: showLoad, quiet: calm, urgent: () => wip.classList.contains('open') && !wipTeaser.hidden });
       liveReady = true; showLoad(1); rest(); startLive();
     } catch (err) { live = null; liveReady = true; showLoad(1); console.warn('Personnages 3D indisponibles, portraits utilisés', err); }
   }

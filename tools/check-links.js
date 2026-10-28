@@ -92,8 +92,10 @@ else {
 
 // 4. Racine : seulement le hub, la page 404, les icones et les dossiers prevus.
 // Icones du site : dans icons/, declarees par chaque page (hub, 404, jeux).
-const allowed = new Set(['index.html', 'home.html', '404.html', 'CNAME', 'README.md', 'LICENSE', 'games', 'icons', 'tools', 'shared', 'firebase', '__']);
-const stray = fs.readdirSync(ROOT).filter(f => !f.startsWith('.') && !allowed.has(f));
+const allowed = new Set(['index.html', 'home.html', '404.html', 'CNAME', 'README.md', 'LICENSE', 'games', 'icons', 'tools', 'shared', 'firebase', '__',
+  // Dossiers et pages ajoutés depuis : service de mesure, portier, docs, pages légales, consignes du dépôt.
+  'assets', 'docs', 'edge', 'edge-stats', 'confidentialite.html', 'CLAUDE.md', 'test_structural.py']);
+const stray = fs.readdirSync(ROOT).filter(f => !f.startsWith('.') && !f.endsWith('.backup') && !allowed.has(f));   // *.backup : copies locales, ignorées par git
 check('Racine propre : aucun code de jeu ni fichier en trop', stray.length === 0, stray.length ? 'en trop : ' + stray.join(', ') : '');
 
 // 5. Dans chaque jeu, tout chemin relatif mene a un fichier, sans sortir du jeu

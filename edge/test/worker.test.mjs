@@ -154,9 +154,24 @@ test("en-têtes de sécurité sur le site ouvert et sur l'écran de maintenance"
   assert.equal(res.headers.get('X-Content-Type-Options'), 'nosniff');
 });
 
-test('cache : admin revérifié, le reste servi du cache 5 min, images et polices inchangées', () => {
-  const res = (type, path) => secure(new Response('x', { headers: { 'Content-Type': type, 'Cache-Control': 'max-age=14400' } }), path);
+test('cache : admin revérifié, pages servies 5 min, images et modèles 3D gardés longtemps', () => {
+  const res = (type, path, search) => secure(new Response('x', { headers: { 'Content-Type': type, 'Cache-Control': 'max-age=14400' } }), path, search);
   for (const p of ['/shared/admin-panel.js', '/shared/admin-panel.css', '/shared/admin-audience.js']) assert.equal(res('text/javascript', p).headers.get('Cache-Control'), 'no-cache', p);
   for (const p of ['/', '/home', '/home.html', '/games/uno/index.html', '/shared/firebase.js', '/games/uno/style.css']) assert.match(res('text/html', p).headers.get('Cache-Control'), /max-age=300, stale-while-revalidate=3600/, p);
-  for (const t of ['image/webp', 'font/woff2']) assert.equal(res(t, '/shared/maintenance.webp').headers.get('Cache-Control'), 'max-age=14400', t);
+  assert.equal(res('model/gltf-binary', '/games/qui-est-ce/vivant/models/a.glb').headers.get('Cache-Control'), 'public, max-age=86400, stale-while-revalidate=604800');
+  assert.equal(res('image/webp', '/games/uno/cover.webp', '?v=2').headers.get('Cache-Control'), 'public, max-age=31536000, immutable');
+  assert.equal(res('application/json', '/data.json').headers.get('Cache-Control'), 'max-age=14400');   // le reste n'est pas touché
+});
+
+test('interrupteur : « ouvert » connu est servi sans attendre la base, la relecture se fait derrière', async () => {
+  await reset(); flagValue = false;
+  assert.equal(await (await worker.fetch(req('/a'), env)).text(), 'ORIGINE');          // lit la base : ouvert
+  await new Promise(r => setTimeout(r, 3100));                                           // le délai de 3 s est passé
+  flagValue = true;                                                                      // la maintenance vient d'être activée
+  let pending;
+  const ctx = { waitUntil: p => { pending = p; } };
+  assert.equal((await worker.fetch(req('/b'), env, ctx)).status, 200);                   // servie tout de suite avec la valeur connue
+  assert.ok(pending, 'relecture lancée derrière la réponse');
+  await pending;                                                                         // la base a répondu : fermé
+  assert.equal((await worker.fetch(req('/c'), env, ctx)).status, 503);                   // la requête suivante le sait
 });

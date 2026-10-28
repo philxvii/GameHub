@@ -6,10 +6,12 @@ import * as THREE from 'three';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 // Le hub y branche sa barre de chargement : onBytes(n) est appele a chaque morceau recu.
-export const progress = { onBytes: null };
+// urgent() : vrai quand quelqu'un attend les personnages ; sinon (préchargement de l'accueil) les fichiers passent
+// après tout le reste, pour qu'un clic sur un jeu ne fasse pas la queue derrière une dizaine de Mo.
+export const progress = { onBytes: null, urgent: () => false };
 
 export async function loadGlb(loader, url) {
-  const res = await fetch(url);
+  const res = await fetch(url, { priority: progress.urgent() ? 'auto' : 'low' });
   if (!res.ok) throw new Error(`Introuvable : ${url}`);
   let buf;
   if (res.body && progress.onBytes) {

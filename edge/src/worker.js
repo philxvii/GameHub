@@ -50,12 +50,11 @@ const cookieOf = (request, name) => {
   return m ? m[1] : '';
 };
 
-// Vrai si le site est ouvert. Fermé par défaut : valeur absente, illisible ou base injoignable
+// Relit l'interrupteur dans la base. Fermé par défaut : valeur absente, illisible ou base injoignable
 // (sauf dernière valeur « ouvert » récente). Une valeur `false` ou `null` = jamais réglé = ouvert,
 // comme dans shared/maintenance.js.
-async function siteOpen() {
+async function readFlag() {
   const now = Date.now();
-  if (flag.known && now - flag.at < FLAG_TTL_MS) return flag.open;
   try {
     const res = await fetch(`${DB}/hub/settings/maintenance.json`, { cf: { cacheTtl: 0 }, signal: AbortSignal.timeout(4000) });
     if (!res.ok) throw new Error(String(res.status));
@@ -65,6 +64,20 @@ async function siteOpen() {
   } catch (_) {
     return flag.known && flag.open && now - flag.at < FLAG_STALE_MS;
   }
+}
+
+// Vrai si le site est ouvert. Tant que « ouvert » est connu depuis moins de 60 s, la requête n'attend pas la base :
+// elle est servie tout de suite et la relecture se fait derrière (ctx.waitUntil). Fermé ou inconnu : on attend la
+// base, comme avant, pour qu'une réouverture se voie aussitôt et qu'un doute reste fermé.
+let refreshing = false;
+async function siteOpen(ctx) {
+  const now = Date.now();
+  if (flag.known && now - flag.at < FLAG_TTL_MS) return flag.open;
+  if (ctx && ctx.waitUntil && flag.known && flag.open && now - flag.at < FLAG_STALE_MS) {
+    if (!refreshing) { refreshing = true; ctx.waitUntil(readFlag().finally(() => { refreshing = false; })); }
+    return true;
+  }
+  return readFlag();
 }
 
 // Vérifie le jeton Firebase de l'utilisateur : la base le valide elle-même (?auth=) et ne
@@ -108,7 +121,8 @@ const SECURITY_HEADERS = {
   'Content-Security-Policy-Report-Only': CSP,
 };
 const HOT = /^\/shared\/admin-/;
-export function secure(res, pathname = '/') {
+const ASSET = /\.(?:glb|gltf|bin|ktx2|webp|png|jpe?g|gif|svg|ico|woff2?|mp3|ogg|wav|mp4|webm)$/i;
+export function secure(res, pathname = '/', search = '') {
   const out = new Response(res.body, res);
   for (const [k, v] of Object.entries(SECURITY_HEADERS)) out.headers.set(k, v);
   // Panneau d'admin : le navigateur revérifie à chaque visite (réponse 304 si rien n'a changé), une mise en ligne s'y
@@ -117,6 +131,10 @@ export function secure(res, pathname = '/') {
   // Images et polices gardent leur cache habituel.
   if (/text\/html|javascript|text\/css/.test(out.headers.get('Content-Type') || '')) {
     out.headers.set('Cache-Control', HOT.test(pathname) ? 'no-cache' : 'public, max-age=300, stale-while-revalidate=3600');
+  } else if (res.ok && ASSET.test(pathname)) {
+    // Images, modèles 3D, polices, sons : GitHub ne les garde que 10 min chez le visiteur, et les personnages de
+    // Qui est-ce pèsent une dizaine de Mo. Une adresse versionnée (?v=2) ne change jamais : un an. Les autres : un jour.
+    out.headers.set('Cache-Control', /(?:^|&)v=/.test(search.slice(1)) ? 'public, max-age=31536000, immutable' : 'public, max-age=86400, stale-while-revalidate=604800');
   }
   return out;
 }
@@ -187,7 +205,7 @@ $('reopen').onclick = async () => {
 </script></body></html>`;
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const { pathname } = url;
 
@@ -215,11 +233,11 @@ export default {
     // Le calque de secours du site demande ici si le cookie admin est valide (HttpOnly : illisible côté page).
     if (pathname === '/__gh/session' && request.method === 'GET') return json(admin ? 200 : 401, { admin: !!admin });
 
-    if (admin || await siteOpen()) return secure(await fetch(request), pathname);
+    if (admin || await siteOpen(ctx)) return secure(await fetch(request), pathname, url.search);
 
     // Seule exception pendant la maintenance : les pages de Firebase Auth copiées dans __/auth/
     // (la connexion Google de l'admin y revient). Fichiers publics de Firebase, sans rien du site.
-    if (pathname.startsWith('/__/auth/')) return secure(await fetch(request), pathname);
+    if (pathname.startsWith('/__/auth/')) return secure(await fetch(request), pathname, url.search);
 
     return page(503, maintenancePage());
   },

@@ -12,7 +12,7 @@ const breathe = () => new Promise((r) => requestAnimationFrame(() => setTimeout(
 
 // `quiet` : attente avant chaque etape lourde (construction, premier rendu : ~0,2 s chacune). Le hub
 // y fait patienter le prechargement tant que l'utilisateur bouge, pour qu'il ne sente rien.
-export async function createLive(hosts, { reduced = false, onProgress = () => {}, quiet = breathe } = {}) {
+export async function createLive(hosts, { reduced = false, onProgress = () => {}, quiet = breathe, urgent = () => true } = {}) {
   const base = new URL('../', import.meta.url);
   const [people, sizes] = await Promise.all([fetch(new URL('roster.json', base)).then((r) => r.json()), fetch(new URL('sizes.json', base)).then((r) => r.json())]);
   const cast = createCast(people);
@@ -22,6 +22,7 @@ export async function createLive(hosts, { reduced = false, onProgress = () => {}
   let got = 0, built = 0;
   const report = () => onProgress(Math.min(0.99, 0.85 * Math.min(1, got / total) + 0.15 * (built / hosts.length)));
   progress.onBytes = (n) => { got += n; report(); };
+  progress.urgent = urgent;
 
   const frame = await cast.frame();
   const items = [];
@@ -50,6 +51,7 @@ export async function createLive(hosts, { reduced = false, onProgress = () => {}
     items.push(it); built++; report();
   }
   progress.onBytes = null;
+  progress.urgent = () => false;
   onProgress(1);
 
   let ptr = null, raf = 0, last = 0, t = 0;
