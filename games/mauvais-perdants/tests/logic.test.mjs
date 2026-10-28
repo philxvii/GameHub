@@ -342,6 +342,17 @@ describe('Barème', () => {
   });
 });
 
+describe('Tirage : jamais les mêmes épreuves deux parties de suite', () => {
+  test('avec 12 manches jouables, aucune manche de la partie précédente ne revient', () => {
+    for (let s = 0; s < 400; s++) {
+      const a = drawPlan(`R${s}`, { devices: ['mouse', 'mouse'] });
+      const b = drawPlan(`S${s}`, { devices: ['mouse', 'mouse'] }, a.map(x => x.g));
+      assert.equal(b.length, 5);
+      assert.deepEqual(b.filter(x => a.some(y => y.g === x.g)), [], `${a.map(x => x.g)} puis ${b.map(x => x.g)}`);
+    }
+  });
+});
+
 describe('Tirage des cinq manches', () => {
   test('5 manches distinctes, une par famille, jamais Petit Bac en premier, reproductible', () => {
     for (let s = 0; s < 300; s++) {

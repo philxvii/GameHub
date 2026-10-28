@@ -50,7 +50,7 @@ personne ne pourrait contester les réponses.
 | Mémoire | **Déjà vu ?** | « déjà vu » ou « nouveau » (3 erreurs) | bonnes réponses |
 | Mots | **Le Petit Bac** | une lettre, quatre catégories, correction par IA | 10 si unique, 5 si partagée |
 | Chiffres | **Calcul express** | opérations générées, juste +1, faux −1 | total net |
-| Chiffres | **Le Nuage** | estimer un nuage de points vu 2,5 s (×3) | écart logarithmique |
+| Chiffres | **Le Nuage** | estimer un nuage de points vu 4 s (×3) | écart logarithmique |
 
 Les huit premières viennent du cahier des tests cognitifs, adapté au jeu à plusieurs.
 Le Petit Bac est la manche signature. Calcul express et Le Nuage ont été ajoutées

@@ -111,10 +111,12 @@ export class Coordinator {
     const solo = players.length === 1;
     if (solo) roster[GHOST] = { name: 'Gonzague', c: players[0].c === 1 ? 2 : 1, dev: players[0].dev };
     const seed = (typeof window !== 'undefined' && window.__mpSeed) || newSeed();
-    const recent = prev && prev.plan ? prev.plan.map(x => x.g) : [];
+    // Les manches de la partie précédente : celle qui vient de finir, ou, après un retour au salon (match effacé), celle mémorisée.
+    const recent = prev && prev.plan ? prev.plan.map(x => x.g) : (this.lastPlan || []);
     const plan = drawPlan(seed, { devices: players.map(p => p.dev), solo, ai: !!aiBase() }, recent, decodePicks((room.s.cfg || {}).v));
     // Revanche : numéro suivant ; nouveau salon ou retour au salon : numéro neuf (jamais réutilisé d'affilée).
     const tid = `t${prev && prev.tid ? (Number(prev.tid.slice(1)) % 9999) + 1 : 1 + Math.floor(Math.random() * 9999)}`;
+    this.lastPlan = plan.map(x => x.g);
     await room.clearRoundData();
     await room.write({
       match: { tid, rk: 'r0', i: 0, step: 'intro', at: now, end: now + INTRO_MS, seq: 1, seed, plan, roster, recent: recent.length ? recent : null },
@@ -130,6 +132,8 @@ export class Coordinator {
     await this.introLine();
   }
   async backToLobby() {
+    const cur = this.room.s.match;
+    if (cur && cur.plan) this.lastPlan = cur.plan.map(x => x.g);
     await this.room.clearRoundData();
     await this.room.write({ match: null, phase: 'lobby' });
   }

@@ -1,11 +1,11 @@
-// Le Nuage — estimation. Un nuage de points s'affiche 2,5 s : combien y en a-t-il ?
+// Le Nuage — estimation. Un nuage de points s'affiche 4 s : combien y en a-t-il ?
 // Trois nuages, générés par le code (le nombre exact est connu, rien n'est inventé).
 // L'écart se mesure en rapport (logarithme) : se tromper de 20 sur 40 pèse plus que
 // de 20 sur 150. Le plus petit écart cumulé gagne.
 
 import { arr, int, roundRng } from './_deps.js';
 
-export const CLOUDS = 3, SHOW_MS = 2500;
+export const CLOUDS = 3, SHOW_MS = 4000;
 export const MISSING = Math.log(4);       // pas de réponse : comme se tromper d'un facteur 4
 
 export function clouds(seed, i) {
@@ -31,8 +31,8 @@ export const errorOf = (guess, n) => {
 
 export default {
   id: 'nuage', family: 'chiffres', title: 'Le Nuage', verb: 'Estime',
-  rules: ['Un nuage de points s’affiche 2,5 secondes.', 'Combien de points ? Trois nuages.', 'Le plus petit écart cumulé gagne.'],
-  playMs: 40000,
+  rules: ['Un nuage de points s’affiche 4 secondes.', 'Combien de points ? Trois nuages.', 'Le plus petit écart cumulé gagne.'],
+  playMs: 50000,
   unit: 'écart moyen à la vraie valeur',
   eligible: () => true,
   params(seed, i) { return { clouds: clouds(seed, i), show: SHOW_MS }; },

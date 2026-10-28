@@ -262,12 +262,16 @@ async function tournamentDone(devs, tid, ms = 9 * 60000) {
     T2 = `t${Number(T1.slice(1)) % 9999 + 1}`;
     for (const d of [A, B, C, D]) await waitFor(d.p, `const m = window.__mp.room.s.match; return m && m.tid === ${js(T2)} && m.step === 'intro';`, 15000, `${d.label} revanche`);
     const [p1, p2] = await A.p.eval(`const m = window.__mp.room.s.match; return [m.recent, m.plan.map(x => x.g)];`);
-    assert.ok(p2.filter(g => !p1.includes(g)).length >= 3, 'manches renouvelées');
+    assert.deepEqual(p2.filter(g => p1.includes(g)), [], 'aucune manche de la partie précédente ne revient');
     await tournamentDone([A, B, C, D], T2);
     const m = await A.p.eval(`return window.__mp.room.s.match;`);
-    const det = JSON.parse(m.det[m.plan.findIndex(x => x.g === 'bac')]);
-    assert.equal(det.mode, 'jury');
-    assert.ok(Object.values(det.cells).flat().some(c => /xqinvente/.test(c.t) && c.st === 'unique'), 'sans IA, personne n’a refusé : acceptée (règle annoncée)');
+    // Le Petit Bac était dans la 1re partie : il ne revient donc pas ici. Le jury sans IA est vérifié s'il est tiré.
+    const bi = m.plan.findIndex(x => x.g === 'bac');
+    if (bi >= 0) {
+      const det = JSON.parse(m.det[bi]);
+      assert.equal(det.mode, 'jury');
+      assert.ok(Object.values(det.cells).flat().some(c => /xqinvente/.test(c.t) && c.st === 'unique'), 'sans IA, personne n’a refusé : acceptée (règle annoncée)');
+    }
     await fetch(`${AI}/mode?m=ok`);
   });
 

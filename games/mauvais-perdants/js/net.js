@@ -145,7 +145,7 @@ export class Room {
   // Journal du Coffre (élimination) : une entrée par tour et par joueur, écrite une fois. `uid` = le
   // joueur dont c'est le tour ; un autre membre peut y inscrire l'élimination (r = 'x') si celui-ci a disparu.
   turn(tid, rk, n, uid, r) { return set(ref(db, `${this.base}/turns/${tid}/${rk}/${n}/${uid}`), { r, t: serverTimestamp() }).catch(() => {}); }
-  say(text) { return set(push(ref(db, `${this.base}/chat`)), { u: this.me, t: String(text).slice(0, 140), ts: serverTimestamp() }); }
+  chatSend(text) { return set(push(ref(db, `${this.base}/chat`)), { u: this.me, t: String(text).slice(0, 140), ts: serverTimestamp() }); }
   ready(tag) { return set(ref(db, `${this.base}/ready/${this.me}`), tag).catch(() => {}); }
   boast(tid, rk) { return set(ref(db, `${this.base}/boast/${tid}/${rk}/${this.me}`), true); }
   markStart(tid, rk) { return set(ref(db, `${this.base}/start/${tid}/${rk}/${this.me}`), serverTimestamp()); }

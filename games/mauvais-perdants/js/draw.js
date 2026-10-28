@@ -63,8 +63,11 @@ export function drawPlan(seed, room = {}, recent = [], allowed = null) {
   for (const fam of FAMILY_ORDER) {
     const inFam = pool.filter(x => x.family === fam);
     if (!inFam.length) continue;
+    // Une manche par famille, jamais une manche de la partie précédente : une famille qui n'a que des
+    // manches récentes (le Petit Bac est seul dans « Mots ») est sautée, et une autre famille comble.
     const fresh = inFam.filter(x => !recent.includes(x.id));
-    const choice = r.pick(fresh.length ? fresh : inFam);
+    if (!fresh.length) continue;
+    const choice = r.pick(fresh);
     picks.push({ g: choice.id, f: fam });
   }
   // Famille vide : compléter avec une manche restante, de préférence jamais jouée récemment.
