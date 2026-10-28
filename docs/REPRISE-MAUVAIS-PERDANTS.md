@@ -68,6 +68,12 @@ fictive de la fin des années 70. Pas de présentateur à l'écran (ses répliqu
   valeur = centimes×10 + nb de réponses, sans changer les règles Firebase) ; intro du départage
   nomme les ex æquo. `rounds.cjs` 5/5 (le rendu des prix des autres n'a pas été regardé à l'œil).
   Reste : Ban (admin), `multi.cjs` et `solo.cjs` à relancer.
+- 28/10, **local, non commité** : lots pour rire (12 au total, source affichée pour chacun) ; Le Coffre
+  à plusieurs passe en élimination à tour de rôle (`js/rounds/coffre.js`, `derive()`, `js/play/coffre.js`,
+  journal `turns/` dans `firebase/build-rules.js`). **Règles Firebase modifiées** : il faut publier
+  `firebase/database.rules.phase2.json` dans la console (Realtime Database > Règles) AVANT de pousser,
+  puis vérifier en ligne. Tests : Node 73/73, règles Firebase du jeu (Coffre inclus), `multi.cjs` 17/17,
+  `rounds.cjs` MAN00005 3/3 (Coffre en élimination). Pas encore vu dans Chrome à 3 joueurs.
 
 **Lancer les émulateurs sur ce PC** : le lanceur `npx firebase` est bloqué par une stratégie de
 groupe (pas Java). Utiliser Node directement, avec le JDK 21 installé en ZIP (hors PATH, Java 17

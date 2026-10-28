@@ -413,6 +413,19 @@ function mpRules() {
         '.validate': 'newData.val() === now',
       } } },
     },
+    // Le Coffre en élimination : journal des tours, une entrée par tour et par joueur, écrite une fois,
+    // pendant l'étape `play`. Un joueur écrit la sienne ; n'importe quel joueur de la manche peut inscrire
+    // l'ÉLIMINATION ('x') d'un autre qui a disparu. L'ordre des tours est contrôlé par les clients (pas de serveur arbitre).
+    turns: {
+      '.write': `${AUTH} && ${COORD} && !newData.exists()`,
+      $tid: { $rk: { $n: { $uid: {
+        '.write': `${AUTH} && ${MEMBER} && !data.exists() && ${CUR} && ${M}.child('step').val() === 'play' && now <= ${M}.child('end').val() + 2500 && ${ROSTER} && ${M}.child('roster').child(auth.uid).exists() && (auth.uid === $uid || newData.child('r').val() === 'x')`,
+        '.validate': "$n.matches(/^[0-9]{1,3}$/) && newData.hasChildren(['r', 't'])",
+        r: { '.validate': "newData.isString() && newData.val().matches(/^[ox]$/)" },
+        t: { '.validate': 'newData.val() === now' },
+        $other: { '.validate': false },
+      } } } },
+    },
     boast: {
       '.write': `${AUTH} && ${COORD} && !newData.exists()`,
       $tid: { $rk: { $uid: {

@@ -95,8 +95,9 @@ async function tournament(devs, seed, shotPrefix) {
     await d.p.eval(`document.querySelector('#name').value = ${js(n)}; document.querySelector('#code').value = ${js(code)}; document.querySelector('#btn-join').click(); return 1;`);
     await waitFor(d.p, `return document.querySelector('#app').dataset.screen === 'lobby';`);
   }
-  const rule = { tir: /[0-9],[0-9] s|cibles/, dictee: /mots\/min|% tapé/, chemin: /^niveau [0-9]+$/, damier: /^niveau [0-9]+$/, dejavu: /bonnes/, nuage: /^écart [0-9]+ %$/, prix: /^écart [0-9]+ %$/, bac: /pts$/ };
-  for (const [seed, prefix] of [['MAN00000', '08-manches'], ['MAN00006', '09-manches']]) {
+  const rule = { coffre: /éliminé à [0-9]+ chiffres|dernier en lice|encore en lice/, tir: /[0-9],[0-9] s|cibles/, dictee: /mots\/min|% tapé/, chemin: /^niveau [0-9]+$/, damier: /^niveau [0-9]+$/, dejavu: /bonnes/, nuage: /^écart [0-9]+ %$/, prix: /^écart [0-9]+ %$/, bac: /pts$/ };
+  const SEEDS = process.env.SEEDS ? process.env.SEEDS.split(',').map((x, k) => [x, `1${k}-manches`]) : [['MAN00000', '08-manches'], ['MAN00006', '09-manches']];
+  for (const [seed, prefix] of SEEDS) {
     let m;
     await check(`tournoi ${seed} jusqu’au podium`, async () => { m = await tournament(devs, seed, prefix); });
     if (!m) continue;

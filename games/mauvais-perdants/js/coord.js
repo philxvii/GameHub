@@ -17,6 +17,7 @@ import { pickLine } from './lines.js';
 import { newSeed } from './rng.js';
 import { hostLine, judge, aiBase } from './ai.js';
 import { serverNow } from './net.js';
+import { derive, verdictOf } from './rounds/coffre.js';
 import { roomInfo, paramsOf, namesOf, computeRound, computeBac, GHOST, isSolo } from './results.js';
 export { paramsOf, namesOf, finalSummary } from './results.js';
 
@@ -232,6 +233,12 @@ export class Coordinator {
       const { res, bac } = computeBac(m, st.prep, final, boasts);
       const det = { kind: 'bac', mode: st.mode, letter: st.params.letter, cats: st.params.cats, cells: Object.fromEntries(Object.entries(bac).map(([u, b]) => [u, b.cells.map(c => ({ t: c.text, st: c.st, p: c.pts, w: c.why || '' }))])), votes: Object.fromEntries(Object.entries(final).filter(([, v]) => v.src === 'vote').map(([g, v]) => [g, { no: v.no, of: v.of, s: v.s }])) };
       return { res, det: JSON.stringify(det).slice(0, 30000) };
+    }
+    // Le Coffre en élimination : le classement vient du journal des tours, pas de ce que chaque client déclare.
+    const p = gameOf(m) === 'coffre' ? paramsOf(m) : null;
+    if (p && p.mode === 'turns') {
+      const d = derive(p, await this.room.readTurns(m.tid, m.rk), m.at);
+      for (const uid of Object.keys(subs)) subs[uid] = { ...subs[uid], d: JSON.stringify(verdictOf(d, uid)) };
     }
     const out = computeRound(m, subs, boasts);
     if (out.order) return { det: JSON.stringify({ kind: 'tb', order: out.order, labels: Object.fromEntries(Object.entries(out.scored).map(([u, s]) => [u, s.label])) }) };

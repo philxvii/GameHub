@@ -13,6 +13,11 @@ Mets la note à jour à chaque étape ; supprime-la, ainsi que cette section, qu
 - Commits : `feat(scope): …` ou `fix(scope): …`, en français, en minuscules, sans point final,
   sans trailer ni co-auteur.
 - Rien ne se commite sans demande explicite de l'utilisateur.
+- **Liens cliquables, toujours.** Dès que l'utilisateur doit ouvrir quelque chose (console Firebase, tableau
+  de bord Cloudflare, page du site, fichier du dépôt), donne le lien complet et cliquable : URL entière
+  (`https://…`) ou fichier en lien markdown relatif à la racine, `[nom](chemin/fichier)`. Jamais seulement
+  un nom de menu ou un chemin à retrouver à la main. Console des règles Firebase :
+  https://console.firebase.google.com/project/undercover-game-b0d2a/database/undercover-game-b0d2a-default-rtdb/rules
 - Après un déploiement fait par l'utilisateur (règles Firebase, Worker Cloudflare, push), vérifie toi-même
   que c'est bien en ligne (requête sur roulia.me, lecture de la base, Chrome) avant de dire que c'est fait.
   Ne demande jamais à l'utilisateur de confirmer ce que tu peux contrôler.

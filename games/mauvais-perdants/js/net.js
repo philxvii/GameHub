@@ -77,7 +77,7 @@ export async function resumeRoom(code) {
 export class Room {
   constructor(code, uid) {
     this.code = code; this.me = uid; this.base = `${P}/${code}`;
-    this.s = { players: {}, presence: {}, ready: {}, prog: {}, mc: {}, subs: {}, boast: {}, votes: {}, start: {} };
+    this.s = { players: {}, presence: {}, ready: {}, prog: {}, mc: {}, subs: {}, boast: {}, votes: {}, start: {}, turns: {} };
     this.unsubs = []; this.roundUnsubs = []; this.closed = false; this.listeners = new Set();
     this.loaded = new Set();          // nœuds déjà reçus au moins une fois
     this.roundKey = null;
@@ -115,10 +115,10 @@ export class Room {
     this.roundUnsubs.forEach(u => { try { u(); } catch (_) {} });
     this.roundUnsubs = [];
     this.roundKey = key;
-    this.s.subs = {}; this.s.boast = {}; this.s.votes = {}; this.s.start = {};
-    ['subs', 'boast', 'votes', 'start'].forEach(k => this.loaded.delete(k));
+    this.s.subs = {}; this.s.boast = {}; this.s.votes = {}; this.s.start = {}; this.s.turns = {};
+    ['subs', 'boast', 'votes', 'start', 'turns'].forEach(k => this.loaded.delete(k));
     if (!key) return;
-    for (const k of ['subs', 'boast', 'votes', 'start']) {
+    for (const k of ['subs', 'boast', 'votes', 'start', 'turns']) {
       this.roundUnsubs.push(onValue(ref(db, `${this.base}/${k}/${key}`), snap => { this.s[k] = snap.val() || {}; this.loaded.add(k); this.emit(k); }, () => {}));
     }
   }
@@ -140,6 +140,9 @@ export class Room {
     if (d.length > 4000) return Promise.reject(userErr('Réponse trop longue.'));
     return set(ref(db, `${this.base}/subs/${tid}/${rk}/${this.me}`), { d, t: serverTimestamp() });
   }
+  // Journal du Coffre (élimination) : une entrée par tour et par joueur, écrite une fois. `uid` = le
+  // joueur dont c'est le tour ; un autre membre peut y inscrire l'élimination (r = 'x') si celui-ci a disparu.
+  turn(tid, rk, n, uid, r) { return set(ref(db, `${this.base}/turns/${tid}/${rk}/${n}/${uid}`), { r, t: serverTimestamp() }).catch(() => {}); }
   ready(tag) { return set(ref(db, `${this.base}/ready/${this.me}`), tag).catch(() => {}); }
   boast(tid, rk) { return set(ref(db, `${this.base}/boast/${tid}/${rk}/${this.me}`), true); }
   markStart(tid, rk) { return set(ref(db, `${this.base}/start/${tid}/${rk}/${this.me}`), serverTimestamp()); }
@@ -169,9 +172,10 @@ export class Room {
   write(updates) { return update(ref(db, this.base), updates); }
   txMatch(fn) { return runTransaction(ref(db, `${this.base}/match`), fn, { applyLocally: false }); }
   readSubs(tid, rk) { return get(ref(db, `${this.base}/subs/${tid}/${rk}`)).then(s => s.val() || {}); }
+  readTurns(tid, rk) { return get(ref(db, `${this.base}/turns/${tid}/${rk}`)).then(s => s.val() || {}); }
   readVotes(tid, rk) { return get(ref(db, `${this.base}/votes/${tid}/${rk}`)).then(s => s.val() || {}); }
   readBoasts(tid, rk) { return get(ref(db, `${this.base}/boast/${tid}/${rk}`)).then(s => s.val() || {}); }
-  clearRoundData() { return Promise.all(['subs', 'boast', 'votes', 'start'].map(k => remove(ref(db, `${this.base}/${k}`)).catch(() => {}))); }
+  clearRoundData() { return Promise.all(['subs', 'boast', 'votes', 'start', 'turns'].map(k => remove(ref(db, `${this.base}/${k}`)).catch(() => {}))); }
   say(id, line) { return set(ref(db, `${this.base}/mc/${id}`), line); }
   patchLine(id, fields) { return update(ref(db, `${this.base}/mc/${id}`), fields).catch(() => {}); }
 

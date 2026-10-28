@@ -694,3 +694,5 @@ html.calm .demo-step { animation: none; opacity: 1; }
 .price-card.has-emoji .pc-media::after { content: none; }
 .pc-source { margin: 6px 0 0; font-size: 12px; font-weight: 600; opacity: .8; min-height: 2.6em; }
 .prix-table .pt-src { font-size: 11px; font-style: italic; white-space: normal; max-width: 280px; }
+/* Le Coffre en élimination : à qui le tour */
+.turn-who { margin: 6px 0 10px; font-family: var(--display); text-transform: uppercase; font-size: clamp(20px, 2.4vw, 30px); line-height: 1.05; text-align: center; min-height: 1.1em; }

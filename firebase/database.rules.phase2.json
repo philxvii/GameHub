@@ -965,6 +965,28 @@
             }
           }
         },
+        "turns": {
+          ".write": "auth != null && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('mauvaisperdants').val() !== true && !root.child('bans').child(auth.uid).exists() && root.child('mp').child($code).child('coord').val() === auth.uid && !newData.exists()",
+          "$tid": {
+            "$rk": {
+              "$n": {
+                "$uid": {
+                  ".write": "auth != null && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('mauvaisperdants').val() !== true && !root.child('bans').child(auth.uid).exists() && root.child('mp').child($code).child('members').child(auth.uid).exists() && !data.exists() && $tid === root.child('mp').child($code).child('match').child('tid').val() && $rk === root.child('mp').child($code).child('match').child('rk').val() && root.child('mp').child($code).child('match').child('step').val() === 'play' && now <= root.child('mp').child($code).child('match').child('end').val() + 2500 && root.child('mp').child($code).child('match').child('roster').child($uid).exists() && root.child('mp').child($code).child('match').child('roster').child(auth.uid).exists() && (auth.uid === $uid || newData.child('r').val() === 'x')",
+                  ".validate": "$n.matches(/^[0-9]{1,3}$/) && newData.hasChildren(['r', 't'])",
+                  "r": {
+                    ".validate": "newData.isString() && newData.val().matches(/^[ox]$/)"
+                  },
+                  "t": {
+                    ".validate": "newData.val() === now"
+                  },
+                  "$other": {
+                    ".validate": false
+                  }
+                }
+              }
+            }
+          }
+        },
         "boast": {
           ".write": "auth != null && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('mauvaisperdants').val() !== true && !root.child('bans').child(auth.uid).exists() && root.child('mp').child($code).child('coord').val() === auth.uid && !newData.exists()",
           "$tid": {

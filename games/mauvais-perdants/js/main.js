@@ -347,7 +347,7 @@ const DEMOS = {
   bac: ['🔤 Une lettre', '✍️ Un mot par case', '🏆 Le plus original'],
   calcul: ['➕ Une opération', '⚡ Réponds vite', '🏆 Meilleur total'],
   chemin: ['👀 Cases allumées', '👆 Reproduis l’ordre', '🏆 Niveau le plus haut'],
-  coffre: ['🔢 Un nombre', '🙈 Il disparaît', '⌨️ Retape-le'],
+  coffre: ['🔢 Le même nombre pour tous', '⌨️ À tour de rôle, on le retape', '💀 Faux : éliminé'],
   damier: ['💡 Cases allumées', '🧠 Retiens-les', '👆 Retrouve-les'],
   dejavu: ['📝 Un mot', '🤔 Déjà vu ?', '✅ Oui ou non'],
   dictee: ['📜 Une phrase', '⌨️ Recopie-la', '🏁 Premier arrivé'],
@@ -469,6 +469,8 @@ const VIEWS = {
           save: payload => { try { sessionStorage.setItem(saveKey, JSON.stringify(payload)); } catch (_) {} },
           progress: (x, sub) => room.progress(sub === undefined ? k : `${k}.${sub}`, x),
           // L'Étiquette : le prix que chaque autre joueur a écrit pour le produit `idx` (null = rien).
+          // Le Coffre en élimination : journal des tours partagé, et qui est encore en ligne.
+          turn: { me: room.me, log: () => room.s.turns || {}, write: (n, u, r) => room.turn(m.tid, m.rk, n, u, r), online: u => room.online(u), names: () => namesOf(mm) },
           peers: idx => contenders(mm).filter(u => u !== room.me && u !== GHOST).map(u => {
             const pr = room.s.prog[u], names = namesOf(mm);
             const cents = pr && pr.k.startsWith(`${k}.${idx}`) ? parseInt(pr.k.slice(`${k}.${idx}`.length), 36) : 0;
@@ -707,7 +709,7 @@ const PROG = {
   tir: v => [`${v}/20 cibles`, v / 20],
   dictee: (v, p) => [`${Math.round(100 * v / p.phrase.length)} % tapé`, v / p.phrase.length],
   chemin: v => [`niveau ${v}`, null], damier: v => [`niveau ${v}`, null],
-  numeros: v => [`${v} numéros`, null], coffre: v => [`${v} chiffres`, null],
+  numeros: v => [`${v} numéros`, null], coffre: v => [`tour ${v}`, null],
   dejavu: v => [`${v} bonnes`, null], calcul: v => [`${v} pt${Math.abs(v) > 1 ? 's' : ''}`, null],
   nuage: v => [`${v}/3 nuages`, v / 3], bac: v => [`${v}/4 cases`, v / 4],
   prix: v => [`${v}/5 produits`, v / 5],

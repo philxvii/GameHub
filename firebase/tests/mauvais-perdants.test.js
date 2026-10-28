@@ -158,6 +158,24 @@ describe('Mauvais Perdants : réponses de manche', () => {
     await assertFails(set(r(bob, 'start/t1/r0/alice'), serverTimestamp()));
     await assertSucceeds(remove(r(alice, 'start')));                          // le coordinateur vide tout
   });
+  test('Coffre en élimination : journal des tours, une entrée par joueur, pendant play', async () => {
+    await room();
+    await assertSucceeds(set(r(alice, 'match'), match()));
+    const ok = { r: 'o', t: serverTimestamp() };
+    await assertSucceeds(set(r(bob, 'turns/t1/r0/0/bob'), ok));
+    await assertFails(set(r(bob, 'turns/t1/r0/0/bob'), { r: 'x', t: serverTimestamp() }));   // écrit une fois
+    await assertFails(set(r(bob, 'turns/t1/r0/1/alice'), ok));                              // pas un succès à la place d'un autre
+    await assertSucceeds(set(r(bob, 'turns/t1/r0/1/alice'), { r: 'x', t: serverTimestamp() }));   // mais une élimination (joueur disparu)
+    await assertFails(set(r(bob, 'turns/t1/r0/2/bob'), { r: 'z', t: serverTimestamp() }));  // 'o' ou 'x'
+    await assertFails(set(r(bob, 'turns/t1/r0/3/bob'), { r: 'o', t: 1 }));                  // heure du serveur imposée
+    await assertFails(set(r(bob, 'turns/t1/r0/abc/bob'), ok));                               // numéro de tour
+    await assertFails(set(r(bob, 'turns/t1/r1/0/bob'), ok));                                // pas une autre manche
+    await assertFails(set(r(carol, 'turns/t1/r0/4/carol'), ok));                            // hors tournoi
+    await assertFails(remove(r(bob, 'turns')));
+    await assertSucceeds(remove(r(alice, 'turns')));
+    await assertSucceeds(set(r(alice, 'match'), match({ step: 'reveal' })));
+    await assertFails(set(r(bob, 'turns/t1/r0/0/bob'), ok));                                // hors étape play
+  });
   test('le coordinateur vide les réponses ; un joueur ne peut pas', async () => {
     await room();
     await assertSucceeds(set(r(alice, 'match'), match()));
