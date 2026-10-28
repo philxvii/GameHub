@@ -1,12 +1,10 @@
 <div align="center">
 
-<img src="icons/favicon.svg" alt="" width="72" height="72">
+<a href="https://roulia.me"><img src="docs/readme/social-preview.png" width="100%" alt="Game Hub : des jeux multijoueurs à lancer dans le navigateur, entre potes"></a>
 
-# Game Hub
+<br>
 
-Des jeux multijoueurs à lancer dans le navigateur, entre potes.
-
-[**roulia.me**](https://roulia.me)
+**[Jouer](https://roulia.me)** &nbsp;·&nbsp; **[Les jeux](#les-jeux)** &nbsp;·&nbsp; **[Signaler un problème](https://github.com/philxvii/GameHub/issues)** &nbsp;·&nbsp; **[Licence](#licence)**
 
 <br>
 
@@ -16,18 +14,25 @@ Des jeux multijoueurs à lancer dans le navigateur, entre potes.
 
 <br>
 
-## Jeux
+## Jouer
 
-- **[Banqueroll](https://roulia.me/games/banqueroll/)** : plateau financier avec enchères, échanges, bots et présentateur IA.
-- **[Mauvais Perdants](https://roulia.me/games/mauvais-perdants/)** : une émission de télé des années 70, un tournoi de mini-jeux et un solo contre le présentateur.
-- **[Mini Subway](https://roulia.me/games/mini-subway/)** : trace des lignes de métro et achemine les passagers avant la saturation.
-- **[UNO](https://roulia.me/games/uno/)** : pose tes cartes, bloque les autres et crie UNO.
-- **[Undercover](https://roulia.me/games/undercover/)** : trouve l'imposteur avant qu'il ne te démasque.
-- **[Roulette](https://roulia.me/games/roulette/)** : misez vos jetons, la roue tourne.
-- **[Mini Golf](https://roulia.me/games/mini-golf/)** : 9 trous, le moins de coups gagne.
-- **[Qui est-ce ?](https://roulia.me/games/qui-est-ce/)** : devine le personnage adverse.
-- **[Bataille navale](https://roulia.me/games/bataille-navale/)** : place ta flotte et coule celle de l'adversaire.
-- **[Puissance 4](https://roulia.me/games/puissance4/)** : aligne 4 jetons avant l'adversaire.
+Rendez-vous sur **[roulia.me](https://roulia.me)**, choisissez un jeu, créez une partie et partagez le code
+à vos amis. Tout se joue dans le navigateur, sur téléphone comme sur ordinateur.
+
+## Les jeux
+
+<table>
+<tr><td align="center" width="90"><img src="docs/readme/banqueroll.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/banqueroll/">Banqueroll</a></b><br>Plateau financier : enchères, échanges, bots et présentateur IA.</td><td align="right" nowrap>2 à 8 joueurs</td></tr>
+<tr><td align="center"><img src="docs/readme/mauvais-perdants.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/mauvais-perdants/">Mauvais Perdants</a></b><br>Une émission de télé des années 70 : un tournoi de mini-jeux et un solo contre le présentateur.</td><td align="right" nowrap>1 à 8 joueurs</td></tr>
+<tr><td align="center"><img src="docs/readme/undercover.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/undercover/">Undercover</a></b><br>Trouve l'imposteur avant qu'il ne te démasque.</td><td align="right" nowrap>3 à 9 joueurs</td></tr>
+<tr><td align="center"><img src="docs/readme/uno.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/uno/">UNO</a></b><br>Pose tes cartes, bloque les autres et crie UNO.</td><td align="right" nowrap>2 à 6 joueurs</td></tr>
+<tr><td align="center"><img src="docs/readme/mini-subway.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/mini-subway/">Mini Subway</a></b><br>Trace des lignes de métro et achemine les passagers avant la saturation.</td><td align="right" nowrap>1 à 4 joueurs</td></tr>
+<tr><td align="center"><img src="docs/readme/roulette.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/roulette/">Roulette</a></b><br>Misez vos jetons, la roue tourne.</td><td align="right" nowrap>2 à 8 joueurs</td></tr>
+<tr><td align="center"><img src="docs/readme/mini-golf.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/mini-golf/">Mini Golf</a></b><br>9 trous, le moins de coups gagne.</td><td align="right" nowrap>2 à 4 joueurs</td></tr>
+<tr><td align="center"><img src="docs/readme/puissance4.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/puissance4/">Puissance 4</a></b><br>Aligne 4 jetons avant l'adversaire.</td><td align="right" nowrap>2 joueurs</td></tr>
+<tr><td align="center"><img src="docs/readme/qui-est-ce.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/qui-est-ce/">Qui est-ce ?</a></b><br>Devine le personnage adverse.</td><td align="right" nowrap>2 joueurs</td></tr>
+<tr><td align="center"><img src="docs/readme/bataille-navale.png" width="64" alt=""></td><td><b><a href="https://roulia.me/games/bataille-navale/">Bataille navale</a></b><br>Place ta flotte et coule celle de l'adversaire.</td><td align="right" nowrap>2 joueurs</td></tr>
+</table>
 
 ## Licence
 
@@ -36,5 +41,6 @@ réutilisation (voir [LICENSE](LICENSE)). Les noms UNO, Qui est-ce ?, Puissance 
 les autres jeux classiques restent des marques de leurs éditeurs respectifs.
 
 <div align="center">
+<br>
 <sub>By XVIIIUUUU</sub>
 </div>
