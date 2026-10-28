@@ -8,7 +8,7 @@ import { parsePrice, slotAt, euros, errorOf, ITEMS_PER_ROUND } from '../rounds/p
 const NOTED = ['C’est noté. On ne juge pas. Pas encore.', 'Enregistré. Le marché appréciera.', 'Noté. Courageux.', 'Vu. La régie retient son souffle.'];
 const verdictOf = pct => (pct <= 5 ? 'Dans le mille.' : pct <= 15 ? 'Pas loin du tout.' : pct <= 35 ? 'Correct, sans plus.' : pct <= 80 ? 'Tu fais tes courses de temps en temps ?' : 'Tu ne fais jamais tes courses.');
 
-export default function mount(root, { p, now, startAt, submit, progress }) {
+export default function mount(root, { p, now, startAt, submit, progress, peers }) {
   const answers = Array(ITEMS_PER_ROUND).fill(0);
   let shown = -1, revealed = -1, alive = true, sent = false;
   const idx = h('b');
@@ -22,8 +22,15 @@ export default function mount(root, { p, now, startAt, submit, progress }) {
   const input = h('input', { class: 'inp', inputmode: 'decimal', autocomplete: 'off', maxlength: '10', placeholder: '0,00 €', 'aria-label': 'Prix en euros' });
   const btn = h('button', { class: 'btn btn-main', type: 'button', text: 'Valider' });
   const fb = h('div', { class: 'feedback' });
-  root.append(h('div', { class: 'play-head' }, h('span', {}, 'Produit ', idx), h('span', {}, 'Réponse dans ', left)), card, fb, h('div', { class: 'answer-row' }, input, btn));
+  const others = h('div', { class: 'peer-prices', 'aria-live': 'polite' });
+  root.append(h('div', { class: 'play-head' }, h('span', {}, 'Produit ', idx), h('span', {}, 'Réponse dans ', left)), card, fb, others, h('div', { class: 'answer-row' }, input, btn));
 
+  // Valeur partagée : prix en centimes (borné) × 10 + nombre de produits répondus ; clé = produit.
+  const share = () => progress(Math.min(9999, Math.round(answers[shown] * 100)) * 10 + answers.filter(x => x > 0).length, shown);
+  function showPeers(k) {
+    const list = peers(k);
+    others.replaceChildren(...list.map(o => h('span', { class: o.cents === null ? 'pp none' : 'pp' }, h('b', { text: o.name }), ` ${o.cents === null ? '—' : euros(o.cents / 100)}`)));
+  }
   const lock = on => { input.disabled = on; btn.disabled = on; };
   function show(k) {
     const it = p.items[k];
@@ -32,7 +39,7 @@ export default function mount(root, { p, now, startAt, submit, progress }) {
     brand.textContent = it.brand; name.textContent = it.name; qty.textContent = it.qty;
     photo.hidden = false; card.classList.remove('no-photo', 'revealed');
     photo.src = `img/prix/${it.code}.jpg`;
-    tag.textContent = '';
+    tag.textContent = ''; others.replaceChildren();
     fb.className = 'feedback'; fb.textContent = '';
     input.value = ''; lock(false);
     card.classList.remove('in'); void card.offsetWidth; card.classList.add('in');
@@ -48,12 +55,12 @@ export default function mount(root, { p, now, startAt, submit, progress }) {
     const v = take();
     if (v === null) { fb.className = 'feedback ko'; fb.textContent = 'Un prix en euros, par exemple 2 ou 3,50'; return; }
     lock(true);
-    progress(answers.filter(x => x > 0).length);
+    share();
     fb.className = 'feedback'; fb.textContent = `${euros(v)} · ${NOTED[shown % NOTED.length]}`;
   }
   function reveal(k) {
     revealed = k;
-    if (!input.disabled) { take(); lock(true); progress(answers.filter(x => x > 0).length); }
+    if (!input.disabled) { take(); lock(true); share(); }
     const it = p.items[k], g = answers[k];
     tag.textContent = euros(it.price);
     card.classList.add('revealed');
@@ -72,6 +79,7 @@ export default function mount(root, { p, now, startAt, submit, progress }) {
     if (s.k !== shown) show(s.k);
     left.textContent = s.reveal ? '—' : `${s.left} s`;
     if (s.reveal && revealed !== s.k) reveal(s.k);
+    if (s.reveal) showPeers(s.k);
   };
   btn.addEventListener('click', validate);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); validate(); } });

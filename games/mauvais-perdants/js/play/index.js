@@ -21,7 +21,7 @@ import prix from './prix.js';
 
 export const PLAY = { gong, tir, dictee, chemin, numeros, damier, coffre, dejavu, bac, calcul, nuage, prix };
 
-export function mountPlay(el, { gameId, params, startAt, endAt, now, send, progress, doneText, save, finished }) {
+export function mountPlay(el, { gameId, params, startAt, endAt, now, send, progress, peers, doneText, save, finished }) {
   clear(el);
   const root = h('div', { class: 'play' });
   el.append(root);
@@ -37,7 +37,7 @@ export function mountPlay(el, { gameId, params, startAt, endAt, now, send, progr
     clear(root);
     root.append(h('div', { class: 'done-card' }, h('div', { class: 'big', text: 'Verrouillé' }), h('p', { text: doneText || 'Réponse enregistrée. On attend les autres…' })));
   };
-  const api = { p: params, now, startAt, endAt, submit: finish, progress, sfx, el: root, finished: finished || (() => {}) };
+  const api = { p: params, now, startAt, endAt, submit: finish, progress, peers: peers || (() => []), sfx, el: root, finished: finished || (() => {}) };
   const begin = () => {
     if (destroyed) return;
     mod = PLAY[gameId](root, api);

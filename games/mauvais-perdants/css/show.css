@@ -597,7 +597,7 @@ textarea.typer:focus { outline: none; box-shadow: 0 0 0 4px var(--mustard); }
 /* ─────────────── ordinateur : tout tient dans la fenêtre, sans barre de défilement */
 @media (min-width: 961px) {
   html, body { overflow: hidden; }
-  #home, #lobby { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
+  #home, #lobby { height: 100vh; height: 100dvh; min-height: 0; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(0, 0, 0, .35) transparent; }
   .topbar { min-height: 60px; padding-top: 8px; padding-bottom: 8px; }
   .lobby-grid, .home-grid { min-height: 0; padding-bottom: 20px; }
   .lobby-grid { grid-template-columns: minmax(360px, 560px) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); }
@@ -612,12 +612,10 @@ textarea.typer:focus { outline: none; box-shadow: 0 0 0 4px var(--mustard); }
   .picks-grid .pick-name { font-size: 15px; }
   .picks-grid .pick::after { top: 9px; right: 8px; width: 14px; height: 14px; font-size: 9px; }
   .picks-grid .pick.on { box-shadow: 0 3px 0 var(--ink); }
-  .cast { min-height: 0; overflow-y: auto; scrollbar-width: none; padding-bottom: 12px; }
-  .cast::-webkit-scrollbar, .deck::-webkit-scrollbar { display: none; }
+  .cast { min-height: 0; overflow-y: auto; scrollbar-width: thin; padding-bottom: 12px; }
   .roster { margin-top: 18px; }
   .launch { margin-top: 22px; }
   .rules-card { margin-top: 18px; }
-  .deck { scrollbar-width: none; }
 }
 @media (min-width: 961px) and (max-height: 820px) {
   .h2 { font-size: 44px; }
@@ -679,3 +677,15 @@ textarea.typer:focus { outline: none; box-shadow: 0 0 0 4px var(--mustard); }
   .rays { animation: none; }
 }
 html.calm *, html.calm *::before, html.calm *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; transition-delay: 0ms !important; }
+
+/* Intro de manche : démonstration animée en trois temps + rappel des points */
+.demo { display: flex; gap: 8px; margin: 10px 0 4px; flex-wrap: wrap; }
+.demo-step { flex: 1 1 0; min-width: 96px; text-align: center; font-weight: 800; font-size: 14px; padding: 10px 8px; border: 2px solid var(--ink); border-radius: 12px; background: var(--paper); color: var(--ink); opacity: .45; animation: demo-on 4.2s var(--ios) infinite; }
+@keyframes demo-on { 0%, 8% { opacity: .45; transform: none; } 12%, 30% { opacity: 1; transform: translateY(-3px); box-shadow: 0 4px 0 var(--ink); background: var(--mustard); } 38%, 100% { opacity: .45; transform: none; } }
+html.calm .demo-step { animation: none; opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .demo-step { animation: none; opacity: 1; } }
+.pts-note { margin: 8px 0 0; font-size: 13px; font-weight: 600; opacity: .85; }
+/* L'Étiquette : les prix des autres joueurs, une fois l'étiquette tombée */
+.peer-prices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.peer-prices .pp { padding: 4px 10px; border-radius: 999px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); font-size: 14px; font-weight: 700; }
+.peer-prices .pp.none { opacity: .55; }

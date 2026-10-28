@@ -60,6 +60,15 @@ fictive de la fin des années 70. Pas de présentateur à l'écran (ses répliqu
     navigateur visent le port 4174 par défaut : sur ce PC, préfixer
     `SA_URL=http://localhost:4173/games/mauvais-perdants/`.
 
+- 28/10, retours des testeurs, **local, non commité, non testé dans un navigateur** (Node 68/68) :
+  défilement rendu à l'accueil/salon sur ordinateur (barres fines visibles, `show.css`) ; intro de
+  manche avec mini-démo animée en 3 temps (`DEMOS` dans `main.js`) et rappel des points max
+  (`pointsNote`) ; L'Étiquette : tableau des estimations de chacun placé AVANT le classement.
+  Ajoutés ensuite : prix des autres affichés à chaque étiquette (via `prog`, clé `tag.produit`,
+  valeur = centimes×10 + nb de réponses, sans changer les règles Firebase) ; intro du départage
+  nomme les ex æquo. `rounds.cjs` 5/5 (le rendu des prix des autres n'a pas été regardé à l'œil).
+  Reste : Ban (admin), `multi.cjs` et `solo.cjs` à relancer.
+
 **Lancer les émulateurs sur ce PC** : le lanceur `npx firebase` est bloqué par une stratégie de
 groupe (pas Java). Utiliser Node directement, avec le JDK 21 installé en ZIP (hors PATH, Java 17
 reste le défaut) :

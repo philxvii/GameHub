@@ -336,6 +336,33 @@ function renderPips(m) {
   });
 }
 
+// Ce qu'une manche peut rapporter : 10 au premier, 2 au dernier (2 à 8 joueurs), fanfaronnade ±3.
+function pointsNote(last, roster) {
+  const n = Object.keys(roster).length, k = last ? FINAL_MULT : 1;
+  return `Points : ${10 * k} au 1er${n > 1 ? `, ${2 * k} au dernier` : ''}${last ? ' (manche ×2)' : ''}. Fanfaronnade : +3 si tu gagnes, −3 si tu finis en bas. Maximum sur la manche : ${10 * k + 3}.`;
+}
+
+// Mini-démonstration animée : trois temps (regarde / agis / gagne) qui s'allument à tour de rôle.
+const DEMOS = {
+  bac: ['🔤 Une lettre', '✍️ Un mot par case', '🏆 Le plus original'],
+  calcul: ['➕ Une opération', '⚡ Réponds vite', '🏆 Meilleur total'],
+  chemin: ['👀 Cases allumées', '👆 Reproduis l’ordre', '🏆 Niveau le plus haut'],
+  coffre: ['🔢 Un nombre', '🙈 Il disparaît', '⌨️ Retape-le'],
+  damier: ['💡 Cases allumées', '🧠 Retiens-les', '👆 Retrouve-les'],
+  dejavu: ['📝 Un mot', '🤔 Déjà vu ?', '✅ Oui ou non'],
+  dictee: ['📜 Une phrase', '⌨️ Recopie-la', '🏁 Premier arrivé'],
+  gong: ['🔴 Panneau rouge', '🟢 Il passe au vert', '👆 Touche vite'],
+  nuage: ['☁️ Un nuage de points', '🔢 Combien ?', '🎯 Écart minimal'],
+  numeros: ['🔢 Repère les numéros', '🙈 Ils se cachent', '👆 Dans l’ordre'],
+  prix: ['🛒 Un produit', '🏷️ Devine son prix', '🔴 L’étiquette tombe'],
+  tir: ['🎯 20 cibles', '👆 Touche-les', '⏱️ Le plus rapide']
+};
+function demoOf(id) {
+  const steps = DEMOS[id];
+  if (!steps) return null;
+  return h('div', { class: 'demo', 'aria-hidden': 'true' }, steps.map((t, k) => h('span', { class: 'demo-step', style: { animationDelay: `${k * 1.4}s` }, text: t })));
+}
+
 function tickClock() {
   const el = $('#clock-num'), box = $('#clock');
   const m = room && room.s.match;
@@ -362,8 +389,10 @@ const VIEWS = {
     const card = h('div', { class: 'ecard' },
       h('div', { class: 'top' }, h('span', { class: `fam ${last ? 'x2' : ''}`, text: tb ? 'Départage' : last ? `Finale · points ×${FINAL_MULT}` : fam.label }), h('span', { class: 'no', text: tb ? 'Ex æquo' : `${m.i + 1} / ${roundsOf(m)}` })),
       h('h1', { text: def.title }),
+      tb ? h('p', { class: 'pts-note', text: `Égalité en tête entre ${Object.keys(m.tb || {}).map(u => namesOf(m)[u]).join(' et ')} : une manche décide, les autres regardent. Si l’égalité persiste, la victoire est partagée.` }) : demoOf(def.id),
       h('ol', { class: 'round-rules' }, (tb ? ['Seuls les ex æquo jouent.', def.id === 'gong' ? 'Trois signaux : le temps moyen le plus bas remporte le tournoi.' : '20 secondes de calcul : le meilleur total remporte le tournoi.'] : def.rules).map(t => h('li', { text: t }))),
       h('div', { class: 'meta' }, h('span', {}, 'Durée max ', h('b', { text: `${Math.round(def.playMs / 1000 * (tb ? 0.5 : 1))} s` })), h('span', {}, 'Égalité : ', h('b', { text: def.tieText(p) }))),
+      h('p', { class: 'pts-note', text: tb ? 'Le gagnant du départage remporte le tournoi.' : pointsNote(last, m.roster) }),
       m.roster[GHOST] && def.ghost ? h('p', { class: 'ghost', text: `Score à battre : ${def.ghost(p).label}` }) : null,
       h('span', { class: 'sticker red', text: last ? 'Tout se joue ici' : pick(['Aucune excuse acceptée', 'Facile. En théorie.', 'Ça va mal se passer'], tag(m)) }));
     const readies = h('div', { class: 'readies' });
@@ -438,7 +467,13 @@ const VIEWS = {
           gameId: gameOf(m), params: paramsOf(m), startAt: m.at, endAt: m.end, now: serverNow,
           send: payload => { try { sessionStorage.removeItem(saveKey); } catch (_) {} return room.submit(m.tid, m.rk, payload); },
           save: payload => { try { sessionStorage.setItem(saveKey, JSON.stringify(payload)); } catch (_) {} },
-          progress: x => room.progress(k, x),
+          progress: (x, sub) => room.progress(sub === undefined ? k : `${k}.${sub}`, x),
+          // L'Étiquette : le prix que chaque autre joueur a écrit pour le produit `idx` (null = rien).
+          peers: idx => contenders(mm).filter(u => u !== room.me && u !== GHOST).map(u => {
+            const pr = room.s.prog[u], names = namesOf(mm);
+            const ok = pr && pr.k === `${k}.${idx}` && pr.v >= 10;
+            return { name: names[u], cents: ok ? Math.floor(pr.v / 10) : null };
+          }),
           finished: () => room.ready(`${k}:f`),
         });
         return;
@@ -518,11 +553,12 @@ const VIEWS = {
         h('span', { class: 'pts', text: signed(r.pts) }));
     });
     els.forEach(e => list.append(e));
+    // L'Étiquette : le tableau des estimations d'abord (sinon il est hors de l'écran à 6-8 joueurs).
+    if (gameOf(m) === 'prix') wrap.append(prixTable(m, names));
     wrap.append(list);
     if (rows.some(r => r.tied)) wrap.append(h('p', { class: 'tied-note', text: 'Ex æquo : points partagés (moyenne des places).' }));
     if (m.i === roundsOf(m) - 1 && m.i > 0) wrap.append(h('p', { class: 'tied-note', text: `Manche décisive : points de place ×${FINAL_MULT}.` }));
     if (gameOf(m) === 'bac') wrap.append(bacTable(m, names));
-    if (gameOf(m) === 'prix') wrap.append(prixTable(m, names));
     // Du dernier au premier ; le vainqueur arrive détaché, après un court temps d'arrêt.
     const order = els.slice().reverse();
     const step = reduced() ? 0 : Math.min(640, 2800 / order.length);
@@ -674,11 +710,11 @@ const PROG = {
   numeros: v => [`${v} numéros`, null], coffre: v => [`${v} chiffres`, null],
   dejavu: v => [`${v} bonnes`, null], calcul: v => [`${v} pt${Math.abs(v) > 1 ? 's' : ''}`, null],
   nuage: v => [`${v}/3 nuages`, v / 3], bac: v => [`${v}/4 cases`, v / 4],
-  prix: v => [`${v}/5 produits`, v / 5],
+  prix: v => [`${v % 10}/5 produits`, (v % 10) / 5],
 };
 // État de chaque candidat : valeur, part de la borne (0 à 1), texte, fini ou non.
 function race(mm, g, p) {
-  const vals = contenders(mm).map(u => { const pr = room.s.prog[u]; return pr && pr.k === tag(mm) ? pr.v : null; });
+  const vals = contenders(mm).map(u => { const pr = room.s.prog[u]; return pr && pr.k.split('.')[0] === tag(mm) ? pr.v : null; });
   const best = Math.max(1, ...vals.filter(v => v !== null));
   return contenders(mm).map((u, k) => {
     if (u === GHOST) return { u, ghost: true, txt: round(g).ghost(p).label, frac: 1, done: true };
