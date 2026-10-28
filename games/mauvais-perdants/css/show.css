@@ -689,3 +689,8 @@ html.calm .demo-step { animation: none; opacity: 1; }
 .peer-prices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .peer-prices .pp { padding: 4px 10px; border-radius: 999px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); font-size: 14px; font-weight: 700; }
 .peer-prices .pp.none { opacity: .55; }
+.pc-emoji { display: none; font-size: clamp(72px, 9vw, 120px); line-height: 1; }
+.price-card.has-emoji .pc-emoji { display: block; }
+.price-card.has-emoji .pc-media::after { content: none; }
+.pc-source { margin: 6px 0 0; font-size: 12px; font-weight: 600; opacity: .8; min-height: 2.6em; }
+.prix-table .pt-src { font-size: 11px; font-style: italic; white-space: normal; max-width: 280px; }

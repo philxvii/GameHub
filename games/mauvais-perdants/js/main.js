@@ -471,8 +471,8 @@ const VIEWS = {
           // L'Étiquette : le prix que chaque autre joueur a écrit pour le produit `idx` (null = rien).
           peers: idx => contenders(mm).filter(u => u !== room.me && u !== GHOST).map(u => {
             const pr = room.s.prog[u], names = namesOf(mm);
-            const ok = pr && pr.k === `${k}.${idx}` && pr.v >= 10;
-            return { name: names[u], cents: ok ? Math.floor(pr.v / 10) : null };
+            const cents = pr && pr.k.startsWith(`${k}.${idx}`) ? parseInt(pr.k.slice(`${k}.${idx}`.length), 36) : 0;
+            return { name: names[u], cents: cents > 0 ? cents : null };
           }),
           finished: () => room.ready(`${k}:f`),
         });
@@ -710,7 +710,7 @@ const PROG = {
   numeros: v => [`${v} numéros`, null], coffre: v => [`${v} chiffres`, null],
   dejavu: v => [`${v} bonnes`, null], calcul: v => [`${v} pt${Math.abs(v) > 1 ? 's' : ''}`, null],
   nuage: v => [`${v}/3 nuages`, v / 3], bac: v => [`${v}/4 cases`, v / 4],
-  prix: v => [`${v % 10}/5 produits`, (v % 10) / 5],
+  prix: v => [`${v}/5 produits`, v / 5],
 };
 // État de chaque candidat : valeur, part de la borne (0 à 1), texte, fini ou non.
 function race(mm, g, p) {
@@ -849,11 +849,11 @@ function prixTable(m, names) {
     const errs = who.map(u => { const g = guesses[u][k]; return g > 0 ? Math.abs(Math.log(g / it.price)) : Infinity; });
     const best = Math.min(...errs);
     t.append(h('tr', {},
-      h('td', { class: 'pt-item' }, h('img', { src: `img/prix/${it.code}.jpg`, alt: '', loading: 'lazy', onerror: e => e.currentTarget.remove() }), h('span', {}, h('b', { text: it.name }), h('small', { text: `${it.brand} · ${it.qty}` }))),
+      h('td', { class: 'pt-item' }, h('img', { src: `img/prix/${it.code}.jpg`, alt: '', loading: 'lazy', onerror: e => e.currentTarget.remove() }), h('span', {}, h('b', { text: it.name }), h('small', { text: `${it.brand} · ${it.qty}` }), h('small', { class: 'pt-src', text: `Source : ${it.source}` }))),
       h('td', { class: 'pt-price' }, h('span', { class: 'tagp', text: eur(it.price) })),
       who.map((u, j) => { const g = guesses[u][k]; return h('td', { class: `pt-guess ${errs[j] === best && best < Infinity ? 'best' : ''}`, text: g > 0 ? eur(g) : '—' }); })));
   });
-  return h('div', { class: 'bac-grid' }, t, h('p', { class: 'fine', text: 'Produits et prix : Open Food Facts et Open Prices (données libres). Prix = médiane des relevés en magasin.' }));
+  return h('div', { class: 'bac-grid' }, t, h('p', { class: 'fine', text: 'Produits et prix : Open Food Facts et Open Prices (données libres), médiane des relevés en magasin. Lots pour rire : prix neufs approximatifs.' }));
 }
 
 function bacTable(m, names) {

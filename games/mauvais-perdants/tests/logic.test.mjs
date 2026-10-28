@@ -354,7 +354,8 @@ describe('Tirage des cinq manches', () => {
 describe('L’Étiquette (prix)', () => {
   test('catalogue : codes-barres, prix positifs, produits uniques, cinq distincts par manche, reproductible', () => {
     assert.ok(CATALOG.length >= 30);
-    assert.ok(CATALOG.every(([code, name, brand, qty, price]) => /^[0-9]{8,14}$/.test(code) && name && brand && qty && price > 0));
+    // Produit réel : code-barres. Lot pour rire : identifiant « fun-… » et emoji à la place de la photo.
+    assert.ok(CATALOG.every(([code, name, brand, qty, price, emoji]) => (/^[0-9]{8,14}$/.test(code) || (/^fun-[a-z0-9-]+$/.test(code) && emoji)) && name && brand && qty && price > 0 && price <= 9999999));
     assert.equal(new Set(CATALOG.map(c => c[0])).size, CATALOG.length);
     const p = prix.params('S1', 2);
     assert.equal(p.items.length, ITEMS_PER_ROUND);

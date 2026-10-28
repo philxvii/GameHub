@@ -18,15 +18,17 @@ export default function mount(root, { p, now, startAt, submit, progress, peers }
   photo.addEventListener('load', () => { photo.hidden = false; card.classList.remove('no-photo'); });
   const brand = h('div', { class: 'pc-brand' }), name = h('div', { class: 'pc-name' }), qty = h('div', { class: 'pc-qty' });
   const tag = h('div', { class: 'pc-price', 'aria-live': 'polite' });
-  const card = h('div', { class: 'price-card' }, h('div', { class: 'pc-media' }, photo), h('div', { class: 'pc-text' }, brand, name, qty), tag);
+  const emoji = h('span', { class: 'pc-emoji', 'aria-hidden': 'true' });
+  const card = h('div', { class: 'price-card' }, h('div', { class: 'pc-media' }, photo, emoji), h('div', { class: 'pc-text' }, brand, name, qty), tag);
   const input = h('input', { class: 'inp', inputmode: 'decimal', autocomplete: 'off', maxlength: '10', placeholder: '0,00 €', 'aria-label': 'Prix en euros' });
   const btn = h('button', { class: 'btn btn-main', type: 'button', text: 'Valider' });
   const fb = h('div', { class: 'feedback' });
+  const source = h('p', { class: 'pc-source' });
   const others = h('div', { class: 'peer-prices', 'aria-live': 'polite' });
-  root.append(h('div', { class: 'play-head' }, h('span', {}, 'Produit ', idx), h('span', {}, 'Réponse dans ', left)), card, fb, others, h('div', { class: 'answer-row' }, input, btn));
+  root.append(h('div', { class: 'play-head' }, h('span', {}, 'Produit ', idx), h('span', {}, 'Réponse dans ', left)), card, fb, source, others, h('div', { class: 'answer-row' }, input, btn));
 
-  // Valeur partagée : prix en centimes (borné) × 10 + nombre de produits répondus ; clé = produit.
-  const share = () => progress(Math.min(9999, Math.round(answers[shown] * 100)) * 10 + answers.filter(x => x > 0).length, shown);
+  // Partagé : valeur = nombre de produits répondus ; clé = « tag.produit + centimes en base 36 » (16 caractères max).
+  const share = () => progress(answers.filter(x => x > 0).length, shown + Math.min(999999900, Math.round(answers[shown] * 100)).toString(36));
   function showPeers(k) {
     const list = peers(k);
     others.replaceChildren(...list.map(o => h('span', { class: o.cents === null ? 'pp none' : 'pp' }, h('b', { text: o.name }), ` ${o.cents === null ? '—' : euros(o.cents / 100)}`)));
@@ -37,9 +39,11 @@ export default function mount(root, { p, now, startAt, submit, progress, peers }
     shown = k;
     idx.textContent = `${k + 1} / ${ITEMS_PER_ROUND}`;
     brand.textContent = it.brand; name.textContent = it.name; qty.textContent = it.qty;
-    photo.hidden = false; card.classList.remove('no-photo', 'revealed');
-    photo.src = `img/prix/${it.code}.jpg`;
-    tag.textContent = ''; others.replaceChildren();
+    card.classList.remove('no-photo', 'revealed');
+    emoji.textContent = it.emoji || '';
+    if (it.emoji) { photo.hidden = true; photo.removeAttribute('src'); card.classList.add('no-photo', 'has-emoji'); }
+    else { photo.hidden = false; card.classList.remove('has-emoji'); photo.src = `img/prix/${it.code}.jpg`; }
+    tag.textContent = ''; source.textContent = ''; others.replaceChildren();
     fb.className = 'feedback'; fb.textContent = '';
     input.value = ''; lock(false);
     card.classList.remove('in'); void card.offsetWidth; card.classList.add('in');
@@ -63,6 +67,7 @@ export default function mount(root, { p, now, startAt, submit, progress, peers }
     if (!input.disabled) { take(); lock(true); share(); }
     const it = p.items[k], g = answers[k];
     tag.textContent = euros(it.price);
+    source.textContent = `Source du prix : ${it.source}`;
     card.classList.add('revealed');
     if (g > 0) {
       const pct = Math.round((Math.exp(errorOf(g, it.price)) - 1) * 100);

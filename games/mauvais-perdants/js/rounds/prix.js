@@ -14,7 +14,10 @@ export const GUESS_MS = 12000, SHOW_MS = 4000, LEAD_MS = 600;
 export const SLOT_MS = GUESS_MS + SHOW_MS;
 export const MISSING = Math.log(4);       // pas de réponse : comme se tromper d'un facteur 4
 
-// [code-barres, produit, marque, contenance, prix médian en euros]
+// Source du prix, affichée avec chaque étiquette. Produits réels : relevés Open Prices.
+export const SRC_OPEN_PRICES = 'Open Prices : médiane des relevés en magasin en France (depuis juin 2024, hors promotions), relevés le 27/10/2026.';
+
+// [code-barres, produit, marque, contenance, prix médian en euros, (emoji, source) pour les lots pour rire]
 export const CATALOG = [
   ['3017620422003', "Nutella", "Ferrero", "400 g", 3.73],
   ['3017620425035', "Nutella, le grand pot", "Ferrero", "1 kg", 6.68],
@@ -63,13 +66,26 @@ export const CATALOG = [
   ['7622210137258', "Oreo Double Crème", "Oreo", "157 g", 1.47],
   ['8000500267103', "Kinder Délice", "Ferrero", "10 gâteaux", 3.83],
   ['3017760038331', "La Barquette chocolat", "LU", "120 g", 1.45],
+  // Lots « pour rire » : pas de photo (emoji à la place), prix neufs en France arrondis, à titre indicatif.
+  ['fun-classe-a', "Mercedes Classe A, neuve", "Mercedes-Benz", "A 180", 38000, '🚗', "Prix de départ indicatif d’une A 180 neuve en France (tarif constructeur, estimation)."],
+  ['fun-appart', "Appartement parisien, 2 pièces", "Paris 11e", "40 m²", 400000, '🏢', "Ordre de grandeur : environ 10 000 € le m² à Paris (estimation, pas une annonce)."],
+  ['fun-banane', "La banane scotchée au mur (Comedian)", "Maurizio Cattelan", "adjugée en 2024", 5700000, '🍌', "Adjugée chez Sotheby’s à New York en novembre 2024, environ 6,2 M$ frais inclus (converti en euros, arrondi)."],
+  ['fun-iphone', "iPhone 17 Pro Max", "Apple", "256 Go", 1479, '📱', "Tarif public Apple France à la sortie (estimation)."],
+  ['fun-macbook', "MacBook Air 13 pouces", "Apple", "puce M4", 1199, '💻', "Tarif public Apple France (estimation)."],
+  ['fun-navigo', "Pass Navigo, un mois", "Île-de-France Mobilités", "toutes zones", 90.8, '🚇', "Tarif officiel du forfait mensuel, Île-de-France Mobilités (2025)."],
+  ['fun-rolex', "Submariner Date, acier", "Rolex", "41 mm", 11000, '⌚', "Prix catalogue approximatif en boutique (estimation ; le marché de l’occasion est plus élevé)."],
+  ['fun-tesla', "Model 3 Propulsion", "Tesla", "neuve", 37000, '🚘', "Prix de départ indicatif en France (estimation)."],
+  ['fun-ferrari', "Roma", "Ferrari", "neuve, sans options", 230000, '🏎️', "Prix de départ indicatif sans options (estimation)."],
+  ['fun-ps5', "PlayStation 5, édition standard", "Sony", "lecteur disque", 550, '🎮', "Prix conseillé Sony en France (estimation)."],
+  ['fun-baguette', "Une baguette tradition", "La boulangerie du coin", "250 g", 1.2, '🥖', "Prix courant en boulangerie (estimation, varie selon la ville)."],
+  ['fun-ticket', "Un ticket de métro", "RATP", "Paris, à l’unité", 2.5, '🎫', "Tarif RATP du ticket à l’unité (estimation)."],
 ];
 
 export function items(seed, i) {
   const r = roundRng(seed, i, 'prix');
   return r.shuffle(CATALOG.map((c, k) => k)).slice(0, ITEMS_PER_ROUND).map(k => {
-    const [code, name, brand, qty, price] = CATALOG[k];
-    return { code, name, brand, qty, price };
+    const [code, name, brand, qty, price, emoji, source] = CATALOG[k];
+    return { code, name, brand, qty, price, emoji, source: source || SRC_OPEN_PRICES };
   });
 }
 
