@@ -1552,7 +1552,11 @@ function notify(title, { sub = '', kind = '', icon: ic = 'info', undo = null } =
     await undo();
     notify('Action annulée', { icon: 'undo' });
   }, { once: true });
-  const hide = ms => { clearTimeout(notifTimer); notifTimer = setTimeout(() => n.classList.remove('show'), ms); };
+  // Le trait du bas se vide pendant la durée d'affichage ; il s'arrête avec la souris et repart à sa sortie.
+  const hide = ms => {
+    clearTimeout(notifTimer); notifTimer = setTimeout(() => n.classList.remove('show'), ms);
+    n.style.setProperty('--dur', ms + 'ms'); n.dataset.t = n.dataset.t === 'a' ? 'b' : 'a';   // change d'animation : le trait repart de zéro
+  };
   hide(undo ? 6000 : 3200);
   n.onmouseenter = () => clearTimeout(notifTimer);
   n.onmouseleave = () => hide(2200);
