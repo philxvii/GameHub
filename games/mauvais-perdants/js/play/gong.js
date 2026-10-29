@@ -44,7 +44,7 @@ export default function mount(root, { p, submit, progress }) {
       state = 'pause';
       const ms = Math.max(0, Math.round(at - t0));
       times.push(ms);
-      progress(times.length);
+      progress(times.length, `${times.length - 1}${Math.min(99999, ms).toString(36)}`);   // son temps n'est visible des autres qu'une fois qu'ils ont joué le même signal
       drawDots();
       show('res', `${ms} ms`, times.length < trials ? 'Suivant…' : 'Terminé');
       if (times.length >= trials) setTimeout(() => submit({ t: times, f: falses }), 600);

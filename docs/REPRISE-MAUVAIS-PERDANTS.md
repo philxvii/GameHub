@@ -91,6 +91,7 @@ fictive de la fin des années 70. Pas de présentateur à l'écran (ses répliqu
   Éliminés au même tour = ex æquo. `derive()` dans `js/rounds/coffre.js`, interface `mountTurns` dans
   `js/play/coffre.js` (pastilles d'ordre, bannière « À TOI »). Copier-coller bloqué (`noPaste`, `noCopy`).
   Tests : Node 78/78, règles Firebase 17/17, `coffre-paste.cjs` 2/2, `rounds.cjs` 5/5.
+- 29/10 : Gong, temps de réaction de l'adversaire visible à chaque signal (clé de `prog` `indice+ms en base 36`, affiché dans `liveExtra`, une fois qu'on a soi-même joué ce signal). Reste : Ban, Petit Bac douteux (IA non déployée).
 
 **Lancer les émulateurs sur ce PC** : le lanceur `npx firebase` est bloqué par une stratégie de
 groupe (pas Java). Utiliser Node directement, avec le JDK 21 installé en ZIP (hors PATH, Java 17

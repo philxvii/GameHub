@@ -803,3 +803,4 @@ html.calm .cf-banner.me, .cf-banner.me:where(*) { animation-play-state: running;
 .leave-btn:hover { background: rgba(29, 20, 14, .1); }
 .leave-btn svg { width: 22px; height: 22px; }
 .act-note { margin: -4px 4px 4px; }
+.rv .lv-win { color: #ff9a86; font-weight: 700; }

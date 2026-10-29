@@ -793,6 +793,14 @@ function liveExtra(el, g, p, r, mine) {
     if (guess > 0 && idx < myCount && p.clouds[idx]) kids = [h('span', { class: 'lv-say', text: `Nuage ${idx + 1} : il a mis ${guess}` }), h('span', { class: 'lv-true', text: ` (c’était ${p.clouds[idx].n})` })];
     else if (guess > 0) kids = [h('span', { class: 'lv-hide', text: 'Sa réponse s’affichera quand tu auras répondu.' })];
   }
+  else if (g === 'gong' && r.sub && !r.ghost) {
+    const idx = Number(r.sub[0]), ms = parseInt(r.sub.slice(1), 36);
+    const myCount = mine && mine.v ? mine.v : 0;
+    if (ms >= 0 && idx < myCount) {
+      const mm = mine && mine.sub && Number(mine.sub[0]) === idx ? parseInt(mine.sub.slice(1), 36) : null;
+      kids = [h('span', { class: 'lv-say', text: `Signal ${idx + 1} : ${ms} ms` }), mm !== null ? h('span', { class: ms < mm ? 'lv-win' : 'lv-true', text: ms < mm ? ` (${mm - ms} ms plus vite que toi)` : ms > mm ? ` (tu es ${ms - mm} ms plus vite)` : ' (ex æquo)' }) : null].filter(Boolean);
+    } else kids = [h('span', { class: 'lv-hide', text: 'Son temps s’affichera quand tu auras joué ce signal.' })];
+  }
   const key = kids.map(k => k.textContent).join('|');
   if (el.__k === key) return;
   el.__k = key;
