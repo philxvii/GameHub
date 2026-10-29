@@ -59,8 +59,7 @@
   :root[data-theme="dark"]{background:#090B08;}
   html,body{height:100%;overflow:hidden;}
   body{background:transparent;color:var(--text);font-family:var(--f);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;height:100dvh;display:flex;flex-direction:column;font-synthesis:none;}
-  ::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal;}
-  :root.theming *{transition:background-color var(--d-3),color var(--d-3),border-color var(--d-3)!important;}
+  :root.theming,:root.theming *{transition:background-color var(--d-2),color var(--d-2),border-color var(--d-2)!important;}
   button,input{font:inherit;color:inherit;}
   [hidden]{display:none!important;}
   :focus-visible{outline:2px solid var(--focus);outline-offset:3px;}
@@ -601,20 +600,12 @@ function applyTheme(t) {
   try { localStorage.setItem('gh-theme', t); } catch (_) {}
   syncTheme();
 }
-$('theme-toggle').addEventListener('click', e => {
-  const t = root.dataset.theme === 'dark' ? 'light' : 'dark', b = e.currentTarget.getBoundingClientRect();
-  if (!document.startViewTransition || reduced.matches) {
-    root.classList.add('theming'); applyTheme(t);
-    setTimeout(() => root.classList.remove('theming'), 500);
-    return;
-  }
-  const x = b.left + b.width / 2, y = b.top + b.height / 2;
-  const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
-  const vt = document.startViewTransition(() => { applyTheme(t); return new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res))); });
-  vt.ready.then(() => root.animate(
-    { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] },
-    { duration: 900, easing: 'cubic-bezier(.65,0,.25,1)', pseudoElement: '::view-transition-new(root)' }
-  )).catch(() => {});
+// Changement de thème : un fondu court des couleurs, tout de suite (pas de transition de vue).
+$('theme-toggle').addEventListener('click', () => {
+  const t = root.dataset.theme === 'dark' ? 'light' : 'dark';
+  if (!reduced.matches) root.classList.add('theming');
+  applyTheme(t);
+  setTimeout(() => root.classList.remove('theming'), 260);
 });
 syncTheme();
 
