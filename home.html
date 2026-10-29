@@ -1412,10 +1412,12 @@ window.adminLogin = async () => {
   try {
     await auth.authStateReady();
     const u = auth.currentUser;
-    if (!u || u.isAnonymous || (await get(ref(db, `admins/${u.uid}`))).val() !== true) throw 0;
+    // Pas de lecture admins/<uid> ici : juste après le chargement elle part parfois avant le jeton
+    // de connexion et serait refusée. Le panneau n'est qu'une interface, les règles protègent les données.
+    if (!u || u.isAnonymous) throw new Error('session Google absente');
     const panel = await import('./shared/admin-panel.js');
-    panel.openAdmin(document.getElementById('admin-panel'));
-  } catch (_) { try { sessionStorage.removeItem('gh-admin-open'); } catch (_) {} }
+    await panel.openAdmin(document.getElementById('admin-panel'));
+  } catch (e) { console.warn('[admin] panneau non rouvert :', e); try { sessionStorage.removeItem('gh-admin-open'); } catch (_) {} }
 })();
 
 // ── Age gate ──
