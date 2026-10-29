@@ -136,8 +136,12 @@ function loadCss() {
   }));
 }
 
+// Panneau ouvert + rubrique, gardés le temps de l'onglet : un rechargement le rouvre (home.html).
+export const OPEN_KEY = 'gh-admin-open';
+
 export async function openAdmin(el, { login = false, devEndpoint } = {}) {
   S.el = el; S.dev = devEndpoint || null;
+  try { const s = sessionStorage.getItem(OPEN_KEY); if (s && SECTIONS.some(x => x.id === s)) S.sec = s; } catch (_) {}
   await loadCss();
   if (!el.firstChild) build();
   el.classList.remove('hidden');
@@ -152,6 +156,7 @@ export async function openAdmin(el, { login = false, devEndpoint } = {}) {
 async function closeAdmin() {
   if (S.pv && pvChanges().length) notify('Brouillon de l’accueil gardé', { icon: 'home', sub: 'Non publié · il t’attend jusqu’au rechargement de la page' });
   stop();
+  try { sessionStorage.removeItem(OPEN_KEY); } catch (_) {}
   S.el.classList.add('hidden');
   document.documentElement.style.overflow = '';
 }
@@ -252,6 +257,7 @@ function onKey(e) {
 
 function go(sec, { instant = false } = {}) {
   S.sec = sec;
+  try { sessionStorage.setItem(OPEN_KEY, sec); } catch (_) {}
   const def = SECTIONS.find(s => s.id === sec);
   closeSheet(); closeMenu();
   S.el.querySelectorAll('[data-go]').forEach(b => { if (b.dataset.go === sec) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
@@ -1454,6 +1460,7 @@ async function logout() {
   try { await fetch('/__gh/logout', { method: 'POST' }); } catch (_) {}
   try { await adminSignOut(); } catch (_) {}
   stop();
+  try { sessionStorage.removeItem(OPEN_KEY); } catch (_) {}
   S.el.classList.add('hidden');
   document.documentElement.style.overflow = '';
   location.reload();
