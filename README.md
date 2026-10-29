@@ -4,7 +4,7 @@
 
 <br>
 
-**[Jouer](https://roulia.me)** &nbsp;·&nbsp; **[Les jeux](#les-jeux)** &nbsp;·&nbsp; **[Signaler un problème](https://github.com/philxvii/GameHub/issues)** &nbsp;·&nbsp; **[Licence](#licence)**
+<a href="https://roulia.me"><img src="https://img.shields.io/badge/%E2%96%B6%20%20JOUER-FF5A3C?style=for-the-badge&labelColor=FF5A3C&color=FF5A3C" alt="▶  JOUER"></a> <a href="#les-jeux"><img src="https://img.shields.io/badge/LES%20JEUX-17141F?style=for-the-badge&labelColor=17141F&color=17141F" alt="LES JEUX"></a> <a href="https://github.com/philxvii/GameHub/issues"><img src="https://img.shields.io/badge/SIGNALER%20UN%20PROBL%C3%88ME-17141F?style=for-the-badge&labelColor=17141F&color=17141F" alt="SIGNALER UN PROBLÈME"></a> <a href="#licence"><img src="https://img.shields.io/badge/LICENCE-17141F?style=for-the-badge&labelColor=17141F&color=17141F" alt="LICENCE"></a>
 
 </div>
 
