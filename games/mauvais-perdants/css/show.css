@@ -793,3 +793,13 @@ html.calm .cf-banner.me, .cf-banner.me:where(*) { animation-play-state: running;
 .cf-slot.on { background: var(--cream); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink); animation: popDigit 160ms var(--ios); }
 @keyframes popDigit { from { transform: translateY(-6px); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .cf-banner.me, .cf-slot.on { animation: none; } }
+
+/* Reprise d'une partie en cours (accueil) et bouton de sortie du salon avec son texte */
+.resume { padding: 14px; border-radius: 16px; background: var(--paper); border: var(--line); display: grid; gap: 10px; }
+.resume p { margin: 0; font-weight: 600; }
+.resume p span { font-family: var(--display, inherit); letter-spacing: .08em; }
+.resume-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.leave-btn { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px 0 8px; border-radius: 20px; border: 0; background: transparent; color: inherit; font-weight: 700; flex: none; transition: background 200ms var(--ios); }
+.leave-btn:hover { background: rgba(29, 20, 14, .1); }
+.leave-btn svg { width: 22px; height: 22px; }
+.act-note { margin: -4px 4px 4px; }

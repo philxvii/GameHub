@@ -45,6 +45,10 @@
         <p class="tagline">Les épreuves de ton choix, entre amis, un seul gagnant. Les autres repartent avec leur dignité. Enfin, ce qu’il en reste.</p>
       </div>
       <div class="card home-panel">
+        <div class="resume" id="resume" role="status" hidden>
+          <p><b>Partie en cours</b> · plateau <span id="resume-code"></span></p>
+          <div class="resume-row"><button class="btn btn-main" id="resume-go" type="button">Reprendre cette partie</button><button class="btn-link" id="resume-no" type="button">Non merci</button></div>
+        </div>
         <label class="field"><span>Ton nom de candidat</span><input id="name" maxlength="16" autocomplete="nickname" placeholder="Ex. le futur perdant" enterkeyhint="go"></label>
         <p class="quip" id="name-quip" aria-live="polite"></p>
         <section class="home-picks" aria-labelledby="home-picks-title">
@@ -76,7 +80,7 @@
   <section id="lobby" class="screen" aria-label="Salon">
     <div class="band" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <header class="topbar">
-      <div class="tb-l"><button class="icon-btn" id="btn-leave" type="button" aria-label="Quitter le plateau"><svg><use href="#i-back"/></svg></button><span class="bug" aria-hidden="true">7</span><span class="show-name">Mauvais Perdants</span></div>
+      <div class="tb-l"><button class="leave-btn" id="btn-leave" type="button"><svg><use href="#i-back"/></svg><span id="leave-label">Quitter</span></button><span class="bug" aria-hidden="true">7</span><span class="show-name">Mauvais Perdants</span></div>
       <div></div>
       <div class="tb-r"><span class="onair">Antenne dans un instant</span></div>
     </header>
@@ -144,8 +148,10 @@
     </section>
     <section class="sheet-sec sheet-actions">
       <button class="btn btn-main" id="menu-resume" type="button">Reprendre</button>
-      <button class="btn btn-ghost" id="menu-stop" type="button" hidden>Arrêter le tournoi (retour au salon)</button>
-      <button class="btn btn-ghost" id="menu-quit" type="button">Quitter la partie</button>
+      <button class="btn btn-ghost" id="menu-stop" type="button" hidden>Arrêter pour tous, retour au salon</button>
+      <p class="fine act-note" id="menu-stop-note" hidden>Le tournoi s’arrête pour tout le monde. Vous restez dans le même salon.</p>
+      <button class="btn btn-ghost" id="menu-quit" type="button">Quitter, retour à l’accueil</button>
+      <p class="fine act-note">Toi seul sors du plateau. Les autres continuent sans toi.</p>
       <div class="confirm" id="menu-confirm" hidden>
         <p id="menu-confirm-text">Tu quittes l’émission : tu seras compté absent pour la suite.</p>
         <div class="confirm-row"><button class="btn btn-dark" id="menu-confirm-yes" type="button">Oui, quitter</button><button class="btn btn-ghost" id="menu-confirm-no" type="button">Rester</button></div>

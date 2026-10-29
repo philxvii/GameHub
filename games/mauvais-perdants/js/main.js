@@ -129,16 +129,35 @@ $('#btn-leave').addEventListener('click', async () => { const r = room; leaveUI(
 function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
 setInterval(() => { if (room) { tickClock(); elect(); if (view.tick) view.tick(); } }, 200);
 
-// Reprise après rechargement : si l'on est encore membre du salon, on y retourne
-// directement (même manche, même état : tout vient de la base).
+// Reprise : un rechargement de la page (même code dans l'adresse) ramène directement dans le
+// salon, même manche, même état (tout vient de la base). Une visite « à froid » ne téléporte
+// jamais : l'accueil propose un bandeau « Reprendre » ; un lien d'invitation vers un autre
+// plateau fait oublier l'ancien.
+const resumeBox = $('#resume');
+const hideResume = () => { resumeBox.hidden = true; };
+async function resumeSaved(code) {
+  const r = await resumeRoom(code);
+  if (!r) { store.set('mp-room', null); hideResume(); return false; }
+  if (!room) enter(r); else r.dispose();
+  return true;
+}
 (async () => {
   const code = store.get('mp-room');
   if (!code) return;
-  try {
-    const r = await resumeRoom(code);
-    if (r && !room) enter(r); else if (!r) store.set('mp-room', null);
-  } catch (_) { store.set('mp-room', null); }
+  if (pre && normalizeCode(pre) !== code) return store.set('mp-room', null);
+  if (pre) {
+    try { await resumeSaved(code); } catch (_) { store.set('mp-room', null); }
+    return;
+  }
+  $('#resume-code').textContent = code;
+  resumeBox.hidden = false;
 })();
+$('#resume-go').addEventListener('click', e => busy(e.currentTarget, async () => {
+  try {
+    if (!(await resumeSaved(store.get('mp-room')))) homeErr.textContent = 'Cette partie n’existe plus : elle a été fermée.';
+  } catch (_) { store.set('mp-room', null); hideResume(); homeErr.textContent = 'Impossible de reprendre cette partie.'; }
+}));
+$('#resume-no').addEventListener('click', () => { store.set('mp-room', null); hideResume(); });
 
 // ═════════════════════════════════════ coordination
 // Le coordinateur tourne ici si `coord` désigne cet onglet. S'il s'est éteint depuis
@@ -234,6 +253,8 @@ function renderLobby() {
   $('#count-min').textContent = n < MIN_PLAYERS ? 'seul : partie en solo' : `${MAX_PLAYERS} au plus`;
   $('#launch-quip').textContent = n < 2 ? 'Seul, tu ne peux perdre que contre toi-même. C’est déjà un début.' : n < 4 ? 'Les absents ont toujours tort. Ici, les présents aussi.' : 'Beau plateau. Il n’y aura qu’un gagnant, et beaucoup d’excuses.';
   const host = room.isHost;
+  setText($('#leave-label'), host ? 'Fermer le salon' : 'Quitter');
+  $('#btn-leave').title = host ? 'Ferme le salon pour tout le monde et retourne à l’accueil' : 'Quitte ce plateau et retourne à l’accueil';
   // Lancer : l'hôte, ou le joueur qui coordonne en son absence.
   const ctl = host || room.isCoord;
   $('#host-ctl').hidden = !ctl;
@@ -963,7 +984,7 @@ function openMenu() {
   $('#opt-calm').checked = calmPref();
   $('#opt-full').checked = !!document.fullscreenElement;
   $('#opt-full').closest('label').hidden = !document.documentElement.requestFullscreen;
-  $('#menu-stop').hidden = !(room && room.isCoord && m && m.step !== 'final');
+  $('#menu-stop').hidden = $('#menu-stop-note').hidden = !(room && room.isCoord && m && m.step !== 'final');
   $('#menu-confirm').hidden = true;
   menu.hidden = false; menuBack.hidden = false;
   requestAnimationFrame(() => { menu.classList.add('open'); menuBack.classList.add('open'); });
