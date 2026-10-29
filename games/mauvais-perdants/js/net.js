@@ -14,6 +14,7 @@ import { MAX_PLAYERS } from './scoring.js';
 
 export const P = 'mp';
 export const ONLINE_MS = 12000;
+const GONE_MS = 60000;
 const BEAT_MS = 4000;
 const WORDS = ['GONG', 'BUZZ', 'FLOP', 'BIDE', 'TRAC', 'CHUTE', 'HONTE', 'PRIME', 'CRAN', 'DUEL', 'JURY', 'ROAST', 'OLE'];
 export const genCode = (random = Math.random) => `${WORDS[Math.floor(random() * WORDS.length)]}-${String(Math.floor(random() * 90) + 10)}`;
@@ -129,6 +130,14 @@ export class Room {
   get isCoord() { return this.s.coord === this.me; }
   get isPlayer() { return !!this.s.players[this.me]; }
   online(uid, now = serverNow()) { const t = this.s.presence[uid]; return typeof t === 'number' && now - t < ONLINE_MS; }
+  // Voyant de présence : 'on' (vert) il bat, 'away' (jaune) il ne bat plus (onglet en veille, réseau coupé),
+  // 'gone' (rouge) sa présence a disparu de la base : il a fermé la page.
+  presence(uid, now = serverNow()) {
+    const t = this.s.presence[uid];
+    if (typeof t !== 'number') return 'gone';
+    const age = now - t;
+    return age < ONLINE_MS ? 'on' : age < GONE_MS ? 'away' : 'gone';
+  }
   onlineSet(now = serverNow()) { return new Set(Object.keys(this.s.presence || {}).filter(u => this.online(u, now))); }
   players() {
     return Object.entries(this.s.players || {}).map(([uid, p]) => ({ uid, ...p, online: this.online(uid), host: uid === this.s.hostUid }))

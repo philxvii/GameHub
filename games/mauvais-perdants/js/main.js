@@ -31,6 +31,15 @@ const lobbyKnown = new Set();
 // ───────────── petits outils d'affichage
 const pcol = c => `var(--p${(Number(c) || 0) % 8})`;
 const initial = name => (String(name || '?').trim()[0] || '?').toUpperCase();
+// Voyant de présence collé au jeton : vert (là), jaune (parti un instant), rouge (plus sur le site).
+const PRES_TXT = { on: 'Présent', away: 'Parti un instant (onglet en veille ?)', gone: 'Plus sur le site' };
+const presDot = () => h('i', { class: 'pres', 'aria-hidden': 'true' });
+function setPres(el, uid) {
+  const d = el.querySelector('.pres');
+  if (!d) return;
+  const st = uid === GHOST ? 'on' : room.presence(uid);
+  if (d.dataset.st !== st) { d.dataset.st = st; d.title = PRES_TXT[st]; }
+}
 const token = (name, c, cls = '') => h('span', { class: `tok ${cls}`, style: { '--pc': pcol(c) }, 'aria-hidden': 'true', text: initial(name) });
 const signed = n => (n < 0 ? `−${-n}` : `+${n}`);
 // Choix stable dans une liste (même texte pour tout le monde, à chaque rendu).
@@ -60,13 +69,24 @@ if (pre) codeIn.value = normalizeCode(pre);
 
 // Le jeu commente ton nom pendant que tu le tapes.
 const QUIPS = ['Joli nom. Dommage qu’on va le voir en bas du classement.', 'Noté. La régie prépare déjà la lanterne rouge.', 'Court et efficace. Comme ta future série de victoires.', 'Très bien. On l’écrira en petit sur le podium.'];
-const quip = () => { const n = cleanName(nameIn.value); $('#name-quip').textContent = n ? pick(QUIPS, n) : ''; };
+// Un nom trop court est signalé juste sous le champ (et pas en bas de page), en rouge.
+const NAME_BAD = 'Il te faut un nom de candidat (3 à 16 caractères).';
+const quip = () => {
+  const n = cleanName(nameIn.value), el = $('#name-quip'), bad = !!n && !validName(n);
+  el.classList.toggle('bad', bad);
+  el.textContent = bad ? NAME_BAD : n ? pick(QUIPS, n) : '';
+};
 nameIn.addEventListener('input', quip);
 quip();
 
 function readName() {
   const n = cleanName(nameIn.value);
-  if (!validName(n)) { homeErr.textContent = 'Il te faut un nom de candidat (3 à 16 caractères).'; nameIn.focus(); return null; }
+  if (!validName(n)) {
+    const el = $('#name-quip');
+    el.classList.add('bad'); el.textContent = NAME_BAD;
+    nameIn.focus(); nameIn.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    return null;
+  }
   store.set('mp-name', n);
   return n;
 }
@@ -127,6 +147,8 @@ function leaveUI() {
 $('#btn-leave').addEventListener('click', async () => { const r = room; leaveUI(); if (r) await r.leave(); });
 
 function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
+// Un voyant passe au jaune sans qu'aucun message n'arrive : on relit la présence toutes les 2 s.
+setInterval(() => { if (room) schedule(); }, 2000);
 setInterval(() => { if (room) { tickClock(); elect(); if (view.tick) view.tick(); } }, 200);
 
 // Reprise : un rechargement de la page (même code dans l'adresse) ramène directement dans le
@@ -232,7 +254,7 @@ function renderLobby() {
     if (uid === '∅') return h('li', { class: 'off empty' }, h('span', { class: 'tok', text: '?' }), h('span', { class: 'desk' }, h('span', { class: 'nm', text: 'Personne' }), h('span', { class: 'tag', text: 'pour l’instant' })));
     const p = byUid[uid];
     const tagEl = h('span', { class: 'tag' });
-    const el = h('li', {}, token(p.name, p.c), h('span', { class: 'desk' }, h('span', { class: 'nm', text: p.name }), tagEl));
+    const el = h('li', {}, token(p.name, p.c), presDot(), h('span', { class: 'desk' }, h('span', { class: 'nm', text: p.name }), tagEl));
     const stk = h('span', { class: 'sticker red', text: pick(['Proie facile', 'Vient perdre', 'Favori ?'], uid), hidden: true });
     el.append(stk);
     el.__p = { tagEl, stk };
@@ -241,6 +263,7 @@ function renderLobby() {
     if (!el.__p) return;
     const p = players[k];
     setClass(el, p.online ? '' : 'off');
+    setPres(el, p.uid);
     setText(el.__p.tagEl, p.uid === room.me ? (p.host ? 'toi · hôte' : 'toi') : p.host ? 'hôte' : p.online ? 'prêt à perdre' : 'parti se cacher');
     // Un seul autocollant : pour le dernier arrivé (jamais pour soi).
     el.__p.stk.hidden = !(newest && p.uid === newest.uid && p.uid !== room.me);
@@ -457,8 +480,9 @@ const VIEWS = {
     return {
       update(mm) {
         const names = namesOf(mm);
-        keyed(readies, contenders(mm), u => h('span', {}, token(names[u], mm.roster[u].c), h('span', { class: 'nm', text: names[u] }))).forEach((el, k) => {
+        keyed(readies, contenders(mm), u => h('span', {}, h('span', { class: 'tw' }, token(names[u], mm.roster[u].c), presDot()), h('span', { class: 'nm', text: names[u] }))).forEach((el, k) => {
           const u = contenders(mm)[k];
+          setPres(el, u);
           setClass(el, u === GHOST || room.s.ready[u] === tag(mm) ? 'on' : '');
           if (room.s.boast[u] && !el.querySelector('.sticker')) el.append(h('span', { class: 'sticker', text: '« Trop facile »' }));
         });
@@ -842,13 +866,14 @@ function rivalsPanel(m) {
       const others = rows.filter(r => r.u !== room.me);
       keyed(list, others.map(r => r.u), u => {
         const val = h('small'), say = h('div', { class: 'say' }), xtra = h('div', { class: 'xtra' }), lamps = h('div', { class: 'lamps', 'aria-hidden': 'true' }, Array.from({ length: segs }, () => h('i'))), stk = h('span', { class: 'sticker', hidden: true });
-        const el = h('div', { class: 'rv', style: { '--pc': pcol(mm.roster[u].c) } }, token(names[u], mm.roster[u].c, 'sm'), h('div', {}, h('div', { class: 'nm' }, h('span', { text: names[u] }), val), say, xtra, lamps), stk);
+        const el = h('div', { class: 'rv', style: { '--pc': pcol(mm.roster[u].c) } }, h('span', { class: 'tw' }, token(names[u], mm.roster[u].c, 'sm'), presDot()), h('div', {}, h('div', { class: 'nm' }, h('span', { text: names[u] }), val), say, xtra, lamps), stk);
         el.__p = { val, say, xtra, lamps: [...lamps.children], stk };
         return el;
       }).forEach((el, k) => {
         const r = others[k], x = el.__p;
         const lit = Math.round(r.frac * segs);
         setClass(el, `rv${r.done ? ' fin' : ''}`);
+        setPres(el, r.u);
         setText(x.val, r.ghost ? `à battre · ${r.txt}` : r.done ? 'fini' : r.on ? (r.txt || '…') : 'absent');
         setText(x.say, r.ghost ? 'score de référence' : r.done ? 'a terminé : réponse envoyée ✓' : !r.on ? 'déconnecté' : r.say);
         liveExtra(x.xtra, g, p, r, mine);

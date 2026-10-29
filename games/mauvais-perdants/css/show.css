@@ -101,6 +101,12 @@ button { cursor: pointer; }
   box-shadow: 0 3px 0 var(--ink), inset 0 -4px 0 rgba(0, 0, 0, .16); position: relative; }
 .tok.sm { --s: 34px; border-width: 2px; box-shadow: 0 2px 0 var(--ink), inset 0 -3px 0 rgba(0, 0, 0, .16); }
 .tok.lg { --s: 68px; }
+/* voyant de présence : vert = là, jaune = parti un instant, rouge = plus sur le site */
+.tw { position: relative; display: inline-flex; flex: none; }
+.pres { position: absolute; top: -3px; right: -3px; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid var(--ink); background: #3fbf6a; z-index: 3; transition: background 400ms var(--ios); }
+.pres[data-st="away"] { background: var(--mustard); }
+.pres[data-st="gone"] { background: var(--red); }
+.roster li > .pres { top: 0; right: calc(50% - 38px); }
 .chip { width: 11px; height: 11px; border-radius: 50%; flex: none; background: var(--pc, var(--cream)); box-shadow: 0 0 0 2px var(--ink); }
 /* autocollant taquin : un par écran, pas plus */
 .sticker { display: inline-block; background: var(--mustard); color: var(--ink); border: 2px solid var(--ink); border-radius: 8px; padding: 4px 9px; font-weight: 800; font-size: 12px; box-shadow: 0 2px 0 var(--ink); white-space: nowrap; transform: rotate(var(--rot, -4deg)); }
@@ -140,6 +146,7 @@ button { cursor: pointer; }
 .logo .logo-b { color: var(--mustard); margin-left: .12em; transform: rotate(-2.5deg); transform-origin: left; }
 .tagline { font-size: clamp(17px, 1.6vw, 21px); font-weight: 600; max-width: 34ch; margin: 26px 0 0; line-height: 1.4; }
 .home-panel { padding: 26px; display: grid; gap: 16px; }
+.quip.bad { color: var(--bad); font-weight: 700; }
 .quip { margin: -6px 0 0; font-size: 13px; font-weight: 600; color: var(--mute); min-height: 18px; transition: opacity 300ms; }
 .or { display: flex; align-items: center; gap: 12px; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
 .or::before, .or::after { content: ''; flex: 1; border-top: 2px dashed rgba(29, 20, 14, .22); }
@@ -252,9 +259,10 @@ button { cursor: pointer; }
 .side { display: grid; gap: 22px; }
 .side h3 { margin: 0; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--mustard); }
 .readies { display: flex; flex-wrap: wrap; gap: 18px 22px; }
-.readies > span { display: flex; flex-direction: column; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; max-width: 76px; text-align: center; position: relative; opacity: .45; transition: opacity 600ms var(--ios); }
+.readies > span { display: flex; flex-direction: column; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; max-width: 76px; text-align: center; position: relative; }
+.readies > span .tok, .readies > span .nm { opacity: .45; transition: opacity 600ms var(--ios); }
 .readies > span .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 76px; }
-.readies > span.on { opacity: 1; }
+.readies > span.on .tok, .readies > span.on .nm { opacity: 1; }
 .readies > span.on .tok::after { content: '✓'; position: absolute; right: -8px; bottom: -6px; width: 22px; height: 22px; border-radius: 50%; background: var(--mustard); border: 2px solid var(--ink); display: grid; place-items: center; font-family: var(--ui); font-weight: 800; font-size: 12px; color: var(--ink); animation: pop 600ms var(--bounce) both; }
 .readies > span .sticker { position: absolute; top: -18px; left: 30px; font-size: 11px; padding: 3px 7px; --rot: -6deg; z-index: 1; }
 .intro-actions { display: grid; gap: 14px; }
