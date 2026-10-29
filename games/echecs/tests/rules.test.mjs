@@ -3,10 +3,12 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  W, B, START, parseFEN, toFEN, legal, make, unmake, san, fromSAN, uciOf, replay, outcome, insufficient,
+  W, B, START, parseFEN, attackersOf, hanging, toFEN, legal, make, unmake, san, fromSAN, uciOf, replay, outcome, insufficient,
   startGame, playMove, claimTime, resign, offerDraw, answerDraw, nextRound, clockNow, whiteOf, colorOfPlayer, toMoves,
 } from '../rules.js';
 import { think } from '../bot.js';
+import { LESSONS, describe as describeMove, warning } from '../learn.js';
+import { pseudo, sqOf, hanging as hangingOf } from '../rules.js';
 
 function perft(st, d) {
   if (!d) return 1;
@@ -60,6 +62,19 @@ describe('Coups spéciaux et notation', () => {
   test('levée d’ambiguïté', () => {
     const st = parseFEN('k7/8/8/8/8/8/8/KR5R w - - 0 1');
     assert.ok(fromSAN(st, 'Rbd1') && fromSAN(st, 'Rhd1'));
+  });
+});
+
+describe('Le coach', () => {
+  test('attaquants d’une case', () => {
+    const b = parseFEN('4k3/8/8/4q3/8/2N5/8/4K3 w - - 0 1').b;     // dame noire e5, cavalier blanc c3
+    assert.deepEqual(attackersOf(b, 18, B), [36]);
+    assert.deepEqual(attackersOf(parseFEN('4k3/8/8/3p4/8/2N5/8/4K3 w - - 0 1').b, 35, W), [18]);
+  });
+  test('pièces en prise : non défendue, ou attaquée par moins cher', () => {
+    assert.deepEqual(hanging(parseFEN('4k3/8/8/4q3/8/2N5/8/4K3 w - - 0 1').b, W), [18]);   // cavalier seul
+    assert.deepEqual(hanging(parseFEN('4k3/8/8/4q3/8/2N5/3P4/4K3 w - - 0 1').b, W), []);   // défendu par le pion
+    assert.deepEqual(hanging(parseFEN('4k3/8/8/8/1p6/2Q5/8/4K3 w - - 0 1').b, W), [18]);   // dame attaquée par un pion
   });
 });
 
@@ -159,5 +174,38 @@ describe('L’ordinateur', () => {
     const t = Date.now();
     assert.ok(think(START, 'maitre'));
     assert.ok(Date.now() - t < 2500);
+  });
+});
+
+describe('Apprendre', () => {
+  // Chaque exercice doit pouvoir être réussi : étoiles atteignables, coup demandé légal, mat présent.
+  const solvable = step => {
+    const st = parseFEN(step.fen);
+    if (step.goal === 'move') return legal(st).some(m => step.want.some(w => uciOf(m).startsWith(w)));
+    if (step.goal === 'escape') return inCheckStart(st) && legal(st).length > 0;
+    if (step.goal === 'mate') return legal(st).some(m => { const u = make(st, m); const ok = outcome(st)?.reason === 'mate'; unmake(st, m, u); return ok; });
+    let front = [[st.b, new Set(step.stars.map(sqOf))]];
+    for (let d = 0; d < 8; d++) {
+      const next = [];
+      for (const [b, left] of front) for (const m of pseudo({ ...st, b, side: W, ep: -1, castle: 0 })) {
+        const nb = b.slice(); nb[m.from] = '.'; nb[m.to] = m.promo || m.p;
+        const nl = new Set(left); nl.delete(m.to);
+        if (!nl.size && !nb.some(p => p !== '.' && p >= 'a')) return true;
+        next.push([nb, nl]);
+      }
+      front = next.slice(0, 20000);
+    }
+    return false;
+  };
+  const inCheckStart = st => st.kings[W] >= 0 && legal(st).length > 0 && outcome(st) === null;
+  LESSONS.forEach((l, i) => l.steps.forEach((step, j) => test(`leçon ${i + 1}, exercice ${j + 1} faisable`, () => assert.ok(solvable(step)))));
+  test('le coach décrit les coups et signale les pièces en prise', () => {
+    const st = parseFEN(START);
+    const moves = 'e4 e5 Nf3'.split(' ').map(s => { const m = fromSAN(st, s); const d = describeMove(st, m, W); make(st, m); return d; });
+    assert.equal(moves[0], 'Tu joues le pion en e4 : de la place au centre.');
+    assert.equal(moves[1], 'L’ordinateur joue le pion en e5 : de la place au centre.');
+    assert.match(moves[2], /menace son pion en e5/);
+    const b = parseFEN('4k3/8/8/4q3/8/2N5/8/7K w - - 0 1');
+    assert.match(warning(b, hangingOf(b.b, W)), /ton cavalier en c3 est en prise/);
   });
 });

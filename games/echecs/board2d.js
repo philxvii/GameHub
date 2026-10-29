@@ -170,8 +170,8 @@ export function createBoard2D(host) {
   }
 
   // ══════════════════ Marques ══════════════════
-  // { selected, targets: [{ sq, cap }], last: [from, to], check, hover }
-  function marks({ selected = -1, targets = [], last = null, check = -1, hover = -1 } = {}) {
+  // { selected, targets: [{ sq, cap }], last: [from, to], check, hover, stars: [sq], risk: [sq] }
+  function marks({ selected = -1, targets = [], last = null, check = -1, hover = -1, stars = [], risk = [] } = {}) {
     const tg = new Map(targets.map(t => [t.sq, t]));
     squares.forEach((d, s) => {
       d.classList.toggle('sel', s === selected);
@@ -179,6 +179,8 @@ export function createBoard2D(host) {
       d.classList.toggle('hov', s === hover);
       d.classList.toggle('tgt', tg.has(s));
       d.classList.toggle('cap', !!tg.get(s)?.cap);
+      d.classList.toggle('star', stars.includes(s));
+      d.classList.toggle('risk', risk.includes(s));
       if (s === check && !d.classList.contains('chk')) { d.classList.add('chk'); d.classList.remove('pulse'); void d.offsetWidth; d.classList.add('pulse'); }
       if (s !== check) d.classList.remove('chk', 'pulse');
     });

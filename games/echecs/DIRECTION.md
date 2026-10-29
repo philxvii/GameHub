@@ -42,3 +42,18 @@ toujours visible). Propre aux échecs :
 | FIDE, *Laws of Chess* (art. 5, 6, 9) | Pat, matériel insuffisant, 50 coups, triple répétition ; drapeau tombé sans matériel pour mater en face : nulle | Toutes les fins de partie sont appliquées automatiquement par `rules.js` |
 | Chess Programming Wiki, *Perft Results* | Comptages de référence du générateur de coups | Les tests vérifient cinq positions de référence |
 | T. Michniewski, *Simplified Evaluation Function* | Valeurs et tables de placement simples, suffisantes pour un adversaire crédible | Évaluation de l'ordinateur (`bot.js`) |
+
+## Apprendre
+
+Pour les nouveaux joueurs, deux étapes (`learn.js`) :
+
+- **Cinq leçons, treize exercices** sur l'échiquier : chaque pièce (ramasser des étoiles), puis le
+  roque, la prise en passant, la promotion, l'échec et deux mats en un coup. Un coup faux est
+  expliqué, puis l'exercice se remet en place. Indice à la demande ; leçons faites mémorisées.
+- **Une partie avec un coach**, contre l'ordinateur débutant : chaque coup est commenté en une phrase
+  (prise, menace, roque, développement), les pièces en prise sont cerclées d'orange, « Un conseil ? »
+  propose un coup. Si l'on vient de laisser une pièce en prise, l'ordinateur attend : « Annuler mon
+  coup » ou « Je garde mon coup ».
+
+Le coach prévient, il ne joue pas à la place du joueur : apprendre passe par l'erreur comprise
+(Ryan, Rigby et Przybylski, 2006 : le sentiment de compétence nourrit l'envie de rejouer).

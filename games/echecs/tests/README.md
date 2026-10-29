@@ -12,7 +12,8 @@ node --test games/echecs/tests/rules.test.mjs   # règles et ordinateur, sans na
 - la partie partagée : lancement, coups refusés (hors tour, illégal, état dépassé, partie finie),
   points, revanche aux couleurs échangées, nulle proposée et acceptée, pendule (ajout par coup,
   drapeau constaté) ;
-- l'ordinateur : mat en un, parade d'une menace de mat, temps de réponse.
+- l'ordinateur : mat en un, parade d'une menace de mat, temps de réponse ;
+- apprendre : chaque exercice des leçons est faisable, le coach décrit les coups et repère les pièces en prise.
 
 Les règles Firebase du nœud `ec` sont testées avec celles des autres jeux (`firebase/tests/`,
 `npm test` dans `firebase/`, émulateurs et Java 21).

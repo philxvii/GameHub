@@ -217,6 +217,29 @@
   .offer{display:grid;gap:10px;padding:14px;border-radius:16px;background:var(--surface2);border:1px solid color-mix(in srgb,var(--brass) 50%,transparent);box-shadow:var(--shadow);}
   .offer p{font-size:14.5px;}
 
+  /* Apprendre : la liste des leçons, l'encart de la leçon, celui du coach. */
+  .lessons{list-style:none;display:grid;gap:2px;margin:0 0 8px;counter-reset:l;}
+  .lessons button{width:100%;display:grid;grid-template-columns:2.2em 1fr auto;align-items:baseline;gap:10px;padding:11px 2px;background:none;border:0;border-bottom:1px solid var(--border2);cursor:pointer;text-align:left;color:var(--text);}
+  .lessons button:hover,.lessons button:focus-visible{color:var(--brass);outline:none;}
+  .lessons .n{font-family:var(--f-display);font-size:22px;color:var(--brass);}
+  .lessons .t{font-family:var(--f-display);font-weight:600;font-size:22px;line-height:1.15;}
+  .lessons .s{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);}
+  .lessons .done .s{color:var(--felt);}
+  .lesson,.coach{display:grid;gap:10px;padding:18px;border-radius:18px;background:var(--surface2);border:1px solid var(--border);box-shadow:var(--shadow);}
+  .ls-title{font-family:var(--f-display);font-weight:600;font-size:26px;line-height:1.1;}
+  .ls-text,.coach-text{font-size:15px;line-height:1.5;}
+  .ls-note{font-size:14.5px;min-height:22px;color:var(--muted);}
+  .ls-note.ok{color:var(--felt);font-weight:500;}
+  .ls-note.ko{color:var(--err);}
+  .coach-text{min-height:46px;}
+  body.learning #pc-top,body.learning #pc-bot,body.learning .moves,body.learning #turn,body.learning #hint,body.learning #acts,body.learning .strip{display:none!important;}
+  body.learning .side{grid-template-rows:auto;align-content:center;}
+  .b2-sq.star::before{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z' fill='%23f4c04a' stroke='%237a5310' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E") center/58% no-repeat;
+    animation:star 1.8s ease-in-out infinite;}
+  @keyframes star{50%{transform:scale(1.12) rotate(8deg);}}
+  .b2-sq.risk::after{left:6%;top:6%;width:88%;height:88%;border-radius:50%;border:calc(var(--bs) * .007) dashed rgba(230,110,30,.95);box-sizing:border-box;animation:risk 4s linear infinite;}
+  @keyframes risk{to{transform:rotate(360deg);}}
+
   /* Bandeau de fin : il se pose sur la colonne, au-dessus des actions. */
   .end{display:grid;gap:10px;padding:18px 18px 16px;border-radius:18px;background:var(--surface2);border:1px solid color-mix(in srgb,var(--brass) 45%,transparent);box-shadow:var(--shadow);
     opacity:0;transform:translateY(10px) scale(.98);transition:opacity 500ms var(--e-out),transform 600ms var(--e-out);}
@@ -403,10 +426,22 @@
     <p class="tagline">Une partie au cercle</p>
     <nav class="menu" aria-label="Menu">
       <button class="mi" type="button" id="resume" hidden onclick="resumeGame()"><span>Reprendre</span><span class="mi-note" id="resume-note"></span></button>
+      <button class="mi" type="button" onclick="show('s-learn')"><span>Apprendre</span><span class="mi-note">Les règles en jouant, puis une partie avec un coach</span></button>
       <button class="mi" type="button" onclick="show('s-solo')"><span>Contre l’ordinateur</span><span class="mi-note">Trois niveaux, de débutant à maître</span></button>
       <button class="mi" type="button" onclick="show('s-create')"><span>Nouvelle partie</span><span class="mi-note">Ouvre une table, partage le code</span></button>
       <button class="mi" type="button" onclick="show('s-join')"><span>Rejoindre</span><span class="mi-note">Le code d’un ami</span></button>
     </nav>
+  </section>
+
+  <!-- Apprendre -->
+  <section class="screen panel" id="s-learn" hidden aria-labelledby="learn-title">
+    <p class="eyebrow">Apprendre</p>
+    <h2 id="learn-title" tabindex="-1" data-focus>Les échecs, pas à pas</h2>
+    <ol class="lessons" id="lessons"></ol>
+    <div class="panel-actions">
+      <button class="mi mi-go" type="button" onclick="startCoach()">Partie avec un coach</button>
+      <button class="mi mi-back" type="button" onclick="show('s-home')">Retour</button>
+    </div>
   </section>
 
   <!-- Contre l'ordinateur -->
@@ -510,6 +545,22 @@
         <div class="pcard" id="pc-bot"><span class="pchip fig" aria-hidden="true"></span><div><span class="pname"></span><span class="pstate"></span><span class="pcap"></span></div><div class="pright"><span class="pclock" hidden></span><span class="pscore"></span></div></div>
         <div class="dock">
           <p class="strip" id="strip" aria-hidden="true"></p>
+          <div class="lesson" id="lesson" hidden>
+            <p class="eyebrow" id="ls-step"></p>
+            <p class="ls-title" id="ls-title" tabindex="-1"></p>
+            <p class="ls-text" id="ls-text"></p>
+            <p class="ls-note" id="ls-note" aria-live="polite"></p>
+            <div class="acts"><button class="act primary" id="ls-next" type="button">Suivant</button><button class="act" id="ls-hint" type="button">Indice</button><button class="act" id="ls-reset" type="button">Recommencer</button><button class="act" id="ls-back" type="button">Les leçons</button></div>
+          </div>
+          <div class="coach" id="coach" hidden>
+            <p class="eyebrow">Le coach</p>
+            <p class="coach-text" id="coach-text" aria-live="polite"></p>
+            <div class="acts">
+              <button class="act" id="coach-tip" type="button">Un conseil ?</button>
+              <button class="act primary" id="coach-undo" type="button" hidden>Annuler mon coup</button>
+              <button class="act" id="coach-keep" type="button" hidden>Je garde mon coup</button>
+            </div>
+          </div>
           <p class="turnline" id="turn" tabindex="-1" data-focus></p>
           <p class="netbar" id="netbar" role="status" hidden>Connexion perdue. Reconnexion…</p>
           <p class="hint" id="hint"></p>
@@ -541,11 +592,12 @@
 import { ref, onValue, runTransaction, onDisconnect, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { db, ensureAuth, freeRoomCode, createRoom, openRoom, closeRoom, isDenied } from '../../shared/firebase.js';
 import {
-  W, B, START, parseFEN, toFEN, legal, make, uciOf, fromSAN, replay, capturedBy, inCheck, kindOf, colorOf,
+  W, B, START, parseFEN, toFEN, legal, pseudo, make, uciOf, hanging, outcome, sqOf, fromSAN, replay, capturedBy, inCheck, kindOf, colorOf,
   TIME, tcOf, toPlayers, toMoves, whiteOf, playerOf, colorOfPlayer, clockNow,
   startGame as startRule, playMove, claimTime, resign as resignRule, offerDraw, answerDraw, nextRound,
 } from './rules.js';
 import { createBoard2D } from './board2d.js';
+import { LESSONS, describe, warning, the, OPENING_TIP } from './learn.js';
 
 const $ = id => document.getElementById(id);
 const escH = v => String(v ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
@@ -575,8 +627,9 @@ window.show = id => {
   document.querySelectorAll('.screen').forEach(s => { s.hidden = s.id !== id; });
   document.body.dataset.screen = id;
   if (moving) $(id).querySelector('[data-focus]')?.focus({ preventScroll: true });
-  if (id !== 's-game') { closePromo(); select(-1); }
-  showcase(id === 's-home' || id === 's-lobby' || id === 's-solo' || id === 's-create' || id === 's-join' || id === 's-joining');
+  if (id !== 's-game') { closePromo(); select(-1); if (S.lesson) endLesson(); }
+  if (id === 's-learn') renderLessons();
+  showcase(id === 's-home' || id === 's-lobby' || id === 's-solo' || id === 's-learn' || id === 's-create' || id === 's-join' || id === 's-joining');
   syncSlot();
 };
 let toastT;
@@ -697,11 +750,13 @@ const myColor = () => (S.game ? colorOfPlayer(S.game, S.pnum) : W);
 const viewColor = () => myColor() ^ (S.flip ? 1 : 0);
 const sideToMove = () => (S.game ? toMoves(S.game.moves).length % 2 : W);
 const myTurn = () => !!S.game && S.game.phase === 'playing' && sideToMove() === myColor() && !!toPlayers(S.game.players)[1];
-const canPlay = () => myTurn() && !S.pending && (S.solo || S.connected) && !S.botBusy;
+const canPlay = () => (S.lesson ? !S.lesson.done && !S.lesson.busy : myTurn() && !S.pending && (S.solo || S.connected) && !S.botBusy && !S.coachHold);
 
 // Les cases jouables de la pièce choisie.
 function targetsOf(s) {
-  if (s < 0 || !S.game) return [];
+  if (s < 0) return [];
+  if (S.lesson) return lessonMoves().filter(m => m.from === s);
+  if (!S.game) return [];
   const { st } = viewOf(S.game);
   return legal(st).filter(m => m.from === s);
 }
@@ -712,21 +767,29 @@ function select(s) {
   paintMarks();
 }
 function paintMarks() {
-  if (!S.game || document.body.dataset.screen !== 's-game') return;
+  if (document.body.dataset.screen !== 's-game') return;
+  const hov = document.activeElement?.classList.contains('sq') && document.activeElement.matches(':focus-visible') ? S.focus : S.hover ?? -1;
+  if (S.lesson) {
+    const L = S.lesson, t = targetsOf(S.sel).map(m => ({ sq: m.to, cap: m.cap !== '.' }));
+    board.marks({ selected: S.sel, targets: t, last: L.last, check: L.check, hover: hov, stars: [...L.stars] });
+    return;
+  }
+  if (!S.game) return;
   const v = viewOf(S.game), moves = targetsOf(S.sel);
   const targets = [...new Map(moves.map(m => [m.to, { sq: m.to, cap: m.cap !== '.' }])).values()];
   const last = v.last ? [v.last.from, v.last.to] : null;
   const hover = document.activeElement?.classList.contains('sq') && document.activeElement.matches(':focus-visible') ? S.focus : S.hover ?? -1;
-  board.marks({ selected: S.sel, targets, last, check: S.game.phase === 'playing' ? v.check : -1, hover });
+  board.marks({ selected: S.sel, targets, last, check: S.game.phase === 'playing' ? v.check : -1, hover, risk: S.game.coach && !S.coachHold ? S.risk || [] : S.coachHold?.squares || [] });
 }
 
 // ══════════════════ Viser : clic, glisser, clavier ══════════════════
-const own = s => { const p = S.game ? viewOf(S.game).st.b[s] : '.'; return p !== '.' && colorOf(p) === myColor(); };
+const own = s => { const p = S.lesson ? S.lesson.st.b[s] : S.game ? viewOf(S.game).st.b[s] : '.'; return p !== '.' && colorOf(p) === myColor(); };
+const playable = () => !!S.lesson || S.game?.phase === 'playing';
 function tap(s) {
-  if (!S.game || S.game.phase !== 'playing' || s < 0) return;
+  if (!playable() || s < 0) return;
   if (S.sel >= 0 && targetsOf(S.sel).some(m => m.to === s)) { tryMove(S.sel, s); return; }
   if (own(s)) {
-    if (!canPlay()) { if (!myTurn()) toast(S.botBusy ? 'L’ordinateur réfléchit…' : 'Ce n’est pas ton tour.'); board.refuse(s); return; }
+    if (!canPlay()) { if (S.lesson) return; if (S.coachHold) { toast('Réponds d’abord au coach.'); return; } if (!myTurn()) toast(S.botBusy ? 'L’ordinateur réfléchit…' : 'Ce n’est pas ton tour.'); board.refuse(s); return; }
     if (!targetsOf(s).length) { board.refuse(s); toast('Cette pièce ne peut pas bouger.'); select(-1); return; }
     select(S.sel === s ? -1 : s);
     return;
@@ -740,7 +803,7 @@ const pickAt = (x, y) => {
 };
 let press = null;
 slotEl.addEventListener('pointerdown', e => {
-  if (e.button !== 0 || !S.game || S.game.phase !== 'playing') return;
+  if (e.button !== 0 || !playable()) return;
   const s = pickAt(e.clientX, e.clientY);
   press = { x: e.clientX, y: e.clientY, s, drag: false, id: e.pointerId, picked: own(s) && canPlay() && targetsOf(s).length > 0, again: s >= 0 && s === S.sel };
   try { slotEl.setPointerCapture(e.pointerId); } catch (_) {}
@@ -815,15 +878,17 @@ async function tryMove(from, to) {
   let m = choices[0];
   if (choices.length > 1) {                  // promotion
     const k = await askPromo(to, myColor());
-    if (!k) { select(-1); board.dragCancel(); board.setPosition(viewOf(S.game).st.b, viewOf(S.game).caps); return; }
+    if (!k) { select(-1); board.dragCancel(); board.setPosition(S.lesson ? S.lesson.st.b : viewOf(S.game).st.b); return; }
     m = choices.find(x => kindOf(x.promo) === k) || m;
   }
+  if (S.lesson) { select(-1); lessonMove(m); return; }
+  S.tipText = '';
   const uci = uciOf(m), expect = toMoves(S.game.moves).length;
   select(-1);
   // Le coup part tout de suite à l'écran, avant la réponse du serveur.
   const r = playMove(S.game, { pnum: S.pnum, uci, expect, now: now() });
   if (!r.ok) { toast(REFUSED[r.reason] || 'Coup refusé.'); return; }
-  if (S.solo) { commitSolo(r.game); return; }
+  if (S.solo) { coachCheck(r.game); commitSolo(r.game); return; }
   S.pending = true; S.optimistic = r.game; renderControls();
   showGame(r.game);
   let reason = null;
@@ -864,6 +929,8 @@ window.startSolo = () => {
 };
 function enterSolo(game) {
   leaveOnline();
+  if (S.lesson) endLesson();
+  Object.assign(S, { coachHold: null, tipText: '', risk: [] });
   Object.assign(S, { solo: true, code: null, pnum: 0, isHost: true, game, level: game.level, shown: null, flip: false, endKey: '' });
   document.body.classList.add('solo'); document.body.classList.remove('online');
   store.set(SOLO, game);
@@ -878,7 +945,7 @@ function commitSolo(game) {
 }
 async function botMaybe() {
   const g = S.game;
-  if (!S.solo || !g || g.phase !== 'playing' || sideToMove() === myColor() || S.botBusy) return;
+  if (!S.solo || !g || g.phase !== 'playing' || sideToMove() === myColor() || S.botBusy || S.coachHold) return;
   S.botBusy = true; renderControls();
   const plies = toMoves(g.moves).length, t0 = Date.now();
   const uci = await bot(toFEN(viewOf(g).st), S.level);
@@ -888,6 +955,172 @@ async function botMaybe() {
   const r = playMove(g, { pnum: 1, uci, expect: plies, now: Date.now() });
   if (r.ok) commitSolo(r.game); else renderControls();
 }
+
+// ══════════════════ Apprendre : les leçons ══════════════════
+// Une leçon se joue sur l'échiquier de la partie, sans adversaire : la page lit l'objectif de
+// l'étape (learn.js) et juge chaque coup.
+const LEARNED = 'ec-learn';
+function renderLessons() {
+  const done = store.get(LEARNED) || [];
+  $('lessons').innerHTML = LESSONS.map((l, i) => `<li><button type="button" data-l="${i}" class="${done.includes(i) ? 'done' : ''}"><span class="n">${i + 1}</span>
+    <span class="t">${escH(l.title)}</span><span class="s">${done.includes(i) ? 'Faite' : `${l.steps.length} exercices`}</span></button></li>`).join('');
+}
+$('lessons').addEventListener('click', e => { const b = e.target.closest('[data-l]'); if (b) startLesson(Number(b.dataset.l), 0); });
+const stepOf = L => LESSONS[L.li].steps[L.si];
+function startLesson(li, si, note = '') {
+  leaveOnline();
+  Object.assign(S, { game: null, solo: false, shown: null, sel: -1, flip: false, coachHold: null });
+  const step = LESSONS[li].steps[si], st = parseFEN(step.fen);
+  S.lesson = { li, si, st, stars: new Set((step.stars || []).map(sqOf)), done: false, busy: false, last: null, check: -1, note, tone: note ? 'ko' : '' };
+  S.lesson.check = st.kings[W] >= 0 && inCheck(st) ? st.kings[W] : -1;
+  document.body.classList.add('learning'); document.body.classList.remove('online', 'solo');
+  if (document.body.dataset.screen !== 's-game') show('s-game');
+  orient(W); board.setOrientation(W, false); board.clearEnd();
+  board.setPosition(st.b); paintGrid(st.b);
+  renderLesson(); paintMarks();
+}
+function endLesson() {
+  S.lesson = null;
+  document.body.classList.remove('learning');
+  board.clearEnd(); board.marks({});
+}
+// Étoiles : les pièces blanches jouent seules (pas de roi à protéger, pas de réponse des noirs).
+const lessonMoves = () => {
+  const L = S.lesson;
+  if (stepOf(L).goal !== 'stars') return legal(L.st);
+  return pseudo({ ...L.st, side: W });
+};
+async function lessonMove(m) {
+  const L = S.lesson, step = stepOf(L), st = L.st;
+  L.busy = true; L.note = ''; L.tone = '';
+  make(st, m);
+  if (step.goal === 'stars') { st.side = W; st.ep = -1; }
+  L.last = [m.from, m.to];
+  const star = L.stars.delete(m.to);
+  L.check = -1;
+  renderLesson();
+  await board.animateMove(m, { b: st.b.slice() });
+  if (S.lesson !== L) return;
+  paintGrid(st.b);
+  const uci = uciOf(m);
+  const fail = msg => {
+    L.note = msg; L.tone = 'ko'; renderLesson();
+    setTimeout(() => { if (S.lesson === L) startLesson(L.li, L.si, msg); }, 1300);
+  };
+  if (step.goal === 'stars') {
+    const left = L.stars.size + st.b.filter(p => p !== '.' && p >= 'a').length;
+    if (!left) succeed(L);
+    else { L.note = star ? `Une étoile ! Encore ${L.stars.size}.` : m.cap !== '.' ? 'Pris !' : ''; L.tone = star || m.cap !== '.' ? 'ok' : ''; }
+  } else if (step.goal === 'move') {
+    if (step.want.some(w => uci.startsWith(w))) succeed(L); else return fail('Ce n’est pas le coup demandé. On recommence.');
+  } else if (step.goal === 'escape') succeed(L);
+  else if (step.goal === 'mate') {
+    const o = outcome(st);
+    if (o?.reason === 'mate') { succeed(L); board.mate(st.kings[B], st.kings[W]); }
+    else if (o?.reason === 'stalemate') return fail('Pat ! Le roi noir n’a plus de coup mais n’est pas en échec : c’est nulle. On recommence.');
+    else return fail(inCheck(st) ? 'Échec, mais pas mat : le roi noir peut encore s’échapper.' : 'Pas d’échec : le roi noir n’est pas attaqué.');
+  }
+  L.busy = false;
+  renderLesson(); paintMarks();
+}
+function succeed(L) {
+  L.done = true; L.note = stepOf(L).ok; L.tone = 'ok';
+  if (L.si === LESSONS[L.li].steps.length - 1) {
+    const done = store.get(LEARNED) || [];
+    if (!done.includes(L.li)) store.set(LEARNED, [...done, L.li]);
+  }
+  say(`Réussi. ${L.note}`);
+}
+function renderLesson() {
+  const L = S.lesson;
+  $('lesson').hidden = !L;
+  if (!L) return;
+  const lesson = LESSONS[L.li], step = stepOf(L), last = L.si === lesson.steps.length - 1;
+  $('ls-step').textContent = `Leçon ${L.li + 1} · exercice ${L.si + 1} sur ${lesson.steps.length}`;
+  $('ls-title').textContent = lesson.title;
+  $('ls-text').textContent = step.text;
+  const n = $('ls-note'); n.textContent = L.note || ''; n.className = `ls-note ${L.tone || ''}`;
+  $('ls-next').disabled = !L.done;
+  $('ls-next').textContent = !last ? 'Exercice suivant' : L.li < LESSONS.length - 1 ? 'Leçon suivante' : 'Partie avec le coach';
+  $('ls-hint').hidden = L.done;
+}
+$('ls-next').addEventListener('click', () => {
+  const L = S.lesson;
+  if (!L?.done) return;
+  if (L.si + 1 < LESSONS[L.li].steps.length) startLesson(L.li, L.si + 1);
+  else if (L.li + 1 < LESSONS.length) startLesson(L.li + 1, 0);
+  else window.startCoach();
+});
+$('ls-reset').addEventListener('click', () => { const L = S.lesson; if (L) startLesson(L.li, L.si); });
+$('ls-back').addEventListener('click', () => show('s-learn'));
+$('ls-hint').addEventListener('click', () => {
+  const L = S.lesson;
+  if (!L || L.done) return;
+  const step = stepOf(L);
+  const from = step.want ? sqOf(step.want[0].slice(0, 2)) : L.st.b.findIndex((p, s) => p !== '.' && p < 'a' && lessonMoves().some(m => m.from === s));
+  L.note = step.hint || 'Clique ta pièce : les cases où elle peut aller s’allument.'; L.tone = '';
+  renderLesson();
+  if (from >= 0) select(from);
+});
+
+// ══════════════════ Apprendre : la partie avec un coach ══════════════════
+// Contre l'ordinateur débutant. Le coach commente chaque coup, signale les pièces en prise,
+// propose un conseil, et retient l'ordinateur quand on vient de laisser une pièce en prise.
+window.startCoach = () => {
+  enterSolo({ solo: true, coach: true, level: 'debutant', phase: 'playing', tc: 'libre', gameNum: 1, moves: [], drawOffer: null, result: null,
+    players: [{ name: 'Toi', score: 0 }, { name: 'Débutant', score: 0, bot: true }] });
+};
+// Après mon coup : une pièce laissée en prise ? L'ordinateur attend ma décision.
+function coachCheck(next) {
+  if (!S.game?.coach || next.phase !== 'playing') return;
+  const me = myColor(), before = hanging(viewOf(S.game).st.b, me), after = viewOf(next).st;
+  const fresh = hanging(after.b, me).filter(s => !before.includes(s));
+  if (!fresh.length) return;
+  const s = fresh.sort((a, b) => 'PNBRQ'.indexOf(kindOf(after.b[b])) - 'PNBRQ'.indexOf(kindOf(after.b[a])))[0];
+  S.coachHold = { squares: fresh, text: `Prudence : ${the(after.b[s])} en ${nameSq(s)} peut être pris sans rien en échange. Tu veux annuler ce coup ?` };
+}
+function renderCoach(g, v) {
+  const box = $('coach');
+  box.hidden = !g.coach || !!S.lesson;
+  if (box.hidden) return;
+  const me = myColor(), hold = !!S.coachHold;
+  $('coach-undo').hidden = $('coach-keep').hidden = !hold;
+  $('coach-tip').hidden = hold || g.phase !== 'playing';
+  $('coach-tip').disabled = !myTurn() || S.botBusy;
+  S.risk = [];
+  let text;
+  if (hold) text = S.coachHold.text;
+  else if (g.phase === 'ended') text = g.result?.winner === S.pnum ? 'Bien joué ! Rejoue pour progresser, ou essaie le niveau Club.' : 'Ce n’est que partie remise : rejoue, en suivant mes alertes.';
+  else if (S.tipText) text = S.tipText;
+  else if (!v.last) text = me === W ? OPENING_TIP : 'L’ordinateur a les blancs : il commence. Regarde son coup.';
+  else {
+    const prev = replay(v.list.slice(0, -1)).st, mine = colorOf(v.last.p) === me;
+    text = describe(prev, v.last, me);
+    if (!mine) { S.risk = inCheck(v.st) ? [] : hanging(v.st.b, me); const w = warning(v.st, S.risk); if (w) text += ' ' + w; }
+  }
+  $('coach-text').textContent = text;
+  paintMarks();
+}
+$('coach-keep').addEventListener('click', () => { S.coachHold = null; render(); botMaybe(); });
+$('coach-undo').addEventListener('click', () => {
+  const g = S.game;
+  S.coachHold = null;
+  if (!g) return;
+  S.shown = null;
+  commitSolo({ ...g, moves: toMoves(g.moves).slice(0, -1) });
+});
+$('coach-tip').addEventListener('click', async () => {
+  const g = S.game;
+  if (!g?.coach || !myTurn() || S.botBusy) return;
+  $('coach-tip').disabled = true; $('coach-text').textContent = 'Je regarde…';
+  const st = viewOf(g).st, uci = await bot(toFEN(st), 'club');
+  if (S.game !== g) return;
+  const m = legal(st).find(x => uciOf(x) === uci);
+  if (!m) { render(); return; }
+  S.tipText = `Conseil : ${describe(st, m, myColor()).replace(/^Tu joues /, 'joue ')}`;
+  render();
+  select(m.from);
+});
 
 // ══════════════════ Créer ══════════════════
 function genCode() {
@@ -987,7 +1220,7 @@ function leave(msg, gone = false) {
   stopPresence(gone);
   if (!S.solo) store.set(SESSION, null);
   setUrl(null);
-  Object.assign(S, { code: null, game: null, pnum: null, isHost: false, shown: null, solo: false, sel: -1, botBusy: false });
+  Object.assign(S, { code: null, game: null, pnum: null, isHost: false, shown: null, solo: false, sel: -1, botBusy: false, coachHold: null, tipText: '', risk: [] });
   document.body.classList.remove('online', 'solo');
   disarm();
   renderResume();
@@ -1072,7 +1305,7 @@ $('act-undo').addEventListener('click', () => {
   if (n && (n - 1) % 2 !== mine) n--;            // la réponse de l'ordinateur
   if (n && (n - 1) % 2 === mine) n--;            // puis mon coup
   if (n === list.length) return;
-  S.shown = null;
+  S.shown = null; S.coachHold = null; S.tipText = '';
   commitSolo({ ...g, moves: list.slice(0, n) });
 });
 
@@ -1149,6 +1382,7 @@ function showGame(g) {
   renderMoves(v);
   renderControls();
   renderEnd(g, v);
+  renderCoach(g, v);
 }
 
 function announce(g, v) {
@@ -1324,10 +1558,10 @@ $('copy-link').addEventListener('click', () => S.code && copy(invite(), 'Lien d�
 function renderResume() {
   const s = store.get(SESSION), solo = store.get(SOLO);
   $('resume').hidden = !s && !(solo && solo.phase === 'playing');
-  $('resume-note').textContent = s ? `Table ${s.code}` : solo ? `Contre l’ordinateur · ${LEVELS[solo.level] || ''}` : '';
+  $('resume-note').textContent = s ? `Table ${s.code}` : solo?.coach ? 'Partie avec le coach' : solo ? `Contre l’ordinateur · ${LEVELS[solo.level] || ''}` : '';
 }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && ['s-create', 's-join', 's-solo'].includes(document.body.dataset.screen)) { e.preventDefault(); show('s-home'); }
+  if (e.key === 'Escape' && ['s-create', 's-join', 's-solo', 's-learn'].includes(document.body.dataset.screen)) { e.preventDefault(); show('s-home'); }
 });
 document.querySelector('#s-home .menu').addEventListener('keydown', e => {
   const items = [...document.querySelectorAll('#s-home .mi:not([hidden])')], i = items.indexOf(document.activeElement);

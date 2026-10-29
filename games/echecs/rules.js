@@ -92,6 +92,35 @@ export function attacked(b, sq, by) {
 
 export const inCheck = st => attacked(st.b, st.kings[st.side], st.side ^ 1);
 
+// Les pièces du camp `by` qui attaquent la case `sq` (le coach s'en sert pour les pièces en prise).
+export function attackersOf(b, sq, by) {
+  const [P, N, Bp, R, Q, K] = by === W ? 'PNBRQK' : 'pnbrqk', out = [];
+  for (const t of KNIGHT[sq]) if (b[t] === N) out.push(t);
+  for (const t of KING[sq]) if (b[t] === K) out.push(t);
+  const f = sq & 7, pawns = by === W ? [[f > 0, sq - 9], [f < 7, sq - 7]] : [[f > 0, sq + 7], [f < 7, sq + 9]];
+  for (const [ok, t] of pawns) if (ok && t >= 0 && t < 64 && b[t] === P) out.push(t);
+  for (const [lines, a, c] of [[DIAG, Bp, Q], [ORTH, R, Q]]) for (const line of lines) for (const t of line[sq]) {
+    const p = b[t]; if (p === '.') continue; if (p === a || p === c) out.push(t); break;
+  }
+  return out;
+}
+
+// Pièces du camp `side` en prise : attaquées et non défendues, ou attaquées par une pièce de
+// moindre valeur. Le roi n'en fait pas partie (c'est l'échec).
+const WORTH = { P: 1, N: 3, B: 3, R: 5, Q: 9, K: 99 };
+export function hanging(b, side) {
+  const out = [];
+  for (let s = 0; s < 64; s++) {
+    const p = b[s];
+    if (p === '.' || colorOf(p) !== side || kindOf(p) === 'K') continue;
+    const att = attackersOf(b, s, side ^ 1);
+    if (!att.length) continue;
+    const cheapest = Math.min(...att.map(t => WORTH[kindOf(b[t])]));
+    if (!attacked(b, s, side) || cheapest < WORTH[kindOf(p)]) out.push(s);
+  }
+  return out;
+}
+
 // Coups pseudo-légaux (le roi peut rester en échec : `legal` filtre). `noisy` : prises et
 // promotions seulement (recherche de calme du moteur).
 // Un coup : { from, to, p (pièce jouée), cap (pièce prise ou '.'), promo?, flag }
