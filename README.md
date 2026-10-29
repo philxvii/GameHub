@@ -1,6 +1,6 @@
 <div align="center">
 
-<a href="https://roulia.me"><img src="docs/readme/social-preview.png" width="100%" alt="Game Hub : des jeux multijoueurs à lancer dans le navigateur, entre potes"></a>
+<a href="https://roulia.me"><img src="docs/readme/banniere.gif" width="100%" alt="Game Hub : des jeux multijoueurs à lancer dans le navigateur, entre potes"></a>
 
 <br>
 
