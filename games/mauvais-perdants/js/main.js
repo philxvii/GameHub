@@ -66,7 +66,7 @@ quip();
 
 function readName() {
   const n = cleanName(nameIn.value);
-  if (!validName(n)) { homeErr.textContent = 'Il te faut un nom de candidat (1 à 16 caractères).'; nameIn.focus(); return null; }
+  if (!validName(n)) { homeErr.textContent = 'Il te faut un nom de candidat (3 à 16 caractères).'; nameIn.focus(); return null; }
   store.set('mp-name', n);
   return n;
 }
@@ -374,7 +374,7 @@ const DEMOS = {
   chemin: ['👀 Cases allumées', '👆 Reproduis l’ordre', '🏆 Niveau le plus haut'],
   coffre: ['🔢 Ton nombre, rien que pour toi', '⌨️ Tu le tapes, les autres te regardent', '💀 Faux : éliminé'],
   damier: ['💡 Cases allumées', '🧠 Retiens-les', '👆 Retrouve-les'],
-  dejavu: ['📝 Un mot', '🤔 Déjà vu ?', '✅ Oui ou non'],
+  dejavu: ['🆕 « pomme » : 1re fois → Nouveau', '🔁 « pomme » revient → Déjà vu', '❤️ 3 erreurs max'],
   dictee: ['📜 Une phrase', '⌨️ Recopie-la', '🏁 Premier arrivé'],
   gong: ['🔴 Panneau rouge', '🟢 Il passe au vert', '👆 Touche vite'],
   nuage: ['☁️ Un nuage de points', '🔢 Combien ?', '🎯 Écart minimal'],
@@ -782,7 +782,20 @@ function race(mm, g, p) {
 //  - Dictée : sa phrase qui se remplit (on la connaît déjà, ça ne donne rien) ;
 //  - Nuage : ce qu'il a mis pour un nuage, seulement quand TOI aussi tu y as répondu ;
 //  - Petit Bac et le reste : rien du contenu, seulement l'avancement.
-function liveExtra(el, g, p, r, mine) {
+// L'écran de l'autre, reconstruit depuis la graine commune + sa progression (rien de plus à envoyer).
+function spectate(g, p, r) {
+  const idx = Math.max(0, parseInt(r.sub, 10) || 0);
+  if (g === 'tir') {
+    const t = p.targets[Math.min(r.v, p.targets.length - 1)], s = p.radius * 200;
+    return h('div', { class: 'mini-arena', 'aria-label': 'Arène du joueur' }, h('i', { style: { left: `${t.x * 100}%`, top: `${t.y * 100}%`, width: `${s}%`, height: `${s}%` } }));
+  }
+  if (g === 'calcul' && p.list[idx]) return h('div', { class: 'mini-screen' }, h('b', { text: `${p.list[idx].q} = ?` }), h('small', { text: ` question ${idx + 1}, total ${r.v}` }));
+  if (g === 'dejavu' && p.words[idx]) return h('div', { class: 'mini-screen' }, h('b', { text: p.words[idx].w }), h('small', { text: ` ${r.v} bonne${r.v > 1 ? 's' : ''} réponse${r.v > 1 ? 's' : ''}` }));
+  return h('span');
+}
+
+// `open` : toi, tu as fini (ou tu regardes) : plus rien à recopier, on montre tout.
+function liveExtra(el, g, p, r, mine, open = false) {
   let kids = [];
   if (g === 'dictee' && r.v !== null && r.v !== undefined && !r.ghost) {
     const n = Math.max(0, Math.min(p.phrase.length, r.v));
@@ -790,13 +803,14 @@ function liveExtra(el, g, p, r, mine) {
   } else if (g === 'nuage' && r.sub && !r.ghost) {
     const idx = Number(r.sub[0]), guess = parseInt(r.sub.slice(1), 36);
     const myCount = mine && mine.v ? mine.v : 0;
-    if (guess > 0 && idx < myCount && p.clouds[idx]) kids = [h('span', { class: 'lv-say', text: `Nuage ${idx + 1} : il a mis ${guess}` }), h('span', { class: 'lv-true', text: ` (c’était ${p.clouds[idx].n})` })];
+    if (guess > 0 && (open || idx < myCount) && p.clouds[idx]) kids = [h('span', { class: 'lv-say', text: `Nuage ${idx + 1} : il a mis ${guess}` }), h('span', { class: 'lv-true', text: ` (c’était ${p.clouds[idx].n})` })];
     else if (guess > 0) kids = [h('span', { class: 'lv-hide', text: 'Sa réponse s’affichera quand tu auras répondu.' })];
   }
+  else if (open && !r.ghost && r.v !== null && r.v !== undefined && ['tir', 'calcul', 'dejavu'].includes(g)) kids = [spectate(g, p, r)];
   else if (g === 'gong' && r.sub && !r.ghost) {
     const idx = Number(r.sub[0]), ms = parseInt(r.sub.slice(1), 36);
     const myCount = mine && mine.v ? mine.v : 0;
-    if (ms >= 0 && idx < myCount) {
+    if (ms >= 0 && (open || idx < myCount)) {
       const mm = mine && mine.sub && Number(mine.sub[0]) === idx ? parseInt(mine.sub.slice(1), 36) : null;
       kids = [h('span', { class: 'lv-say', text: `Signal ${idx + 1} : ${ms} ms` }), mm !== null ? h('span', { class: ms < mm ? 'lv-win' : 'lv-true', text: ms < mm ? ` (${mm - ms} ms plus vite que toi)` : ms > mm ? ` (tu es ${ms - mm} ms plus vite)` : ' (ex æquo)' }) : null].filter(Boolean);
     } else kids = [h('span', { class: 'lv-hide', text: 'Son temps s’affichera quand tu auras joué ce signal.' })];
@@ -807,11 +821,15 @@ function liveExtra(el, g, p, r, mine) {
   el.replaceChildren(...kids);
 }
 
+// Nombre de lampes de la rampe : une par case réelle quand la manche a une borne claire.
+const SEGS = { bac: 4, nuage: 3, prix: 5, gong: p => p.trials };
+
 // Les rivaux pendant ta manche : un jeton, une valeur, une rampe de lampes.
 function rivalsPanel(m) {
   const g = gameOf(m), p = paramsOf(m), names = namesOf(m);
   const list = h('div', { class: 'rivals-list' });
-  const el = h('aside', { class: 'rivals', 'aria-label': 'Les autres candidats' }, h('h3', { text: 'Pendant ce temps' }), list);
+  const el = h('aside', { class: 'rivals', 'aria-label': 'Les autres candidats' }, h('h3', { text: 'Les autres candidats, en direct' }), h('p', { class: 'rv-help', text: 'Là où en sont les autres pendant que tu joues. Le badge te dit s’ils sont devant ou derrière toi.' }), list);
+  const segs = SEGS[g] ? (typeof SEGS[g] === 'function' ? SEGS[g](p) : SEGS[g]) : 10;
   let myBest = 0;
   return {
     el,
@@ -823,19 +841,22 @@ function rivalsPanel(m) {
       myBest = mine && mine.v !== null && mine.v !== undefined ? mine.v : myBest;
       const others = rows.filter(r => r.u !== room.me);
       keyed(list, others.map(r => r.u), u => {
-        const val = h('small'), say = h('div', { class: 'say' }), xtra = h('div', { class: 'xtra' }), lamps = h('div', { class: 'lamps', 'aria-hidden': 'true' }, Array.from({ length: 10 }, () => h('i'))), stk = h('span', { class: 'sticker', text: 'Te dépasse', hidden: true });
+        const val = h('small'), say = h('div', { class: 'say' }), xtra = h('div', { class: 'xtra' }), lamps = h('div', { class: 'lamps', 'aria-hidden': 'true' }, Array.from({ length: segs }, () => h('i'))), stk = h('span', { class: 'sticker', hidden: true });
         const el = h('div', { class: 'rv', style: { '--pc': pcol(mm.roster[u].c) } }, token(names[u], mm.roster[u].c, 'sm'), h('div', {}, h('div', { class: 'nm' }, h('span', { text: names[u] }), val), say, xtra, lamps), stk);
         el.__p = { val, say, xtra, lamps: [...lamps.children], stk };
         return el;
       }).forEach((el, k) => {
         const r = others[k], x = el.__p;
-        const lit = Math.round(r.frac * 10);
+        const lit = Math.round(r.frac * segs);
         setClass(el, `rv${r.done ? ' fin' : ''}`);
         setText(x.val, r.ghost ? `à battre · ${r.txt}` : r.done ? 'fini' : r.on ? (r.txt || '…') : 'absent');
         setText(x.say, r.ghost ? 'score de référence' : r.done ? 'a terminé : réponse envoyée ✓' : !r.on ? 'déconnecté' : r.say);
         liveExtra(x.xtra, g, p, r, mine);
         x.lamps.forEach((l, i) => setClass(l, i < lit ? 'on' : ''));
-        x.stk.hidden = !(!r.ghost && !r.done && r.v !== null && r.v > 0 && r.v > myBest);
+        // Devant, à égalité ou derrière toi (une fois que l'autre a commencé).
+        const started = !r.ghost && !r.done && r.v !== null && r.v > 0;
+        x.stk.hidden = !started;
+        if (started) { const c = r.v > myBest ? ['Devant toi', ''] : r.v < myBest ? ['Derrière toi', ' cream'] : ['Comme toi', ' cream']; setText(x.stk, c[0]); setClass(x.stk, `sticker${c[1]}`); }
       });
     },
   };
@@ -873,9 +894,9 @@ function liveView(deck, m, title, mine = false) {
       if (mine && me && me.txt) head.textContent = `${me.txt} !`;
       keyed(list, rows.map(r => r.u), u => {
         const tok = h('span', { class: 'tok', style: { '--pc': pcol(mm.roster[u].c), left: '5%' }, text: initial(names[u]) });
-        const status = h('b'), detail = h('small');
-        const el = h('div', { class: 'lane' }, h('div', { class: 'road' }, tok), h('div', { class: 'st' }, `${names[u]} · `, status, detail));
-        el.__p = { tok, status, detail };
+        const status = h('b'), detail = h('small'), xtra = h('div', { class: 'xtra' });
+        const el = h('div', { class: 'lane' }, h('div', { class: 'road' }, tok), h('div', { class: 'st' }, `${names[u]} · `, status, detail, xtra));
+        el.__p = { tok, status, detail, xtra };
         return el;
       }).forEach((el, k) => {
         const r = rows[k], x = el.__p;
@@ -884,7 +905,8 @@ function liveView(deck, m, title, mine = false) {
         const left = `${(5 + r.frac * 78).toFixed(1)}%`;
         if (x.tok.style.left !== left) x.tok.style.left = left;
         setText(x.status, r.ghost ? 'score à battre' : r.done ? 'fini' : r.on ? 'joue' : 'déconnecté');
-        setText(x.detail, r.txt || (r.done ? '' : '…'));
+        setText(x.detail, r.ghost ? (r.txt || '') : r.say || r.txt || (r.done ? '' : '…'));
+        liveExtra(x.xtra, g, p, r, me, true);
       });
     },
   };

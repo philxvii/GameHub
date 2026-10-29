@@ -2,6 +2,7 @@
 // Règle d'affichage : le contenu joueur passe TOUJOURS par textContent (ui/dom.js) ;
 // ces fonctions bornent et normalisent, elles ne fabriquent jamais de HTML.
 
+export const NAME_MIN = 3;
 export const NAME_MAX = 16;
 export const ANSWER_MAX = 32;
 
@@ -17,7 +18,7 @@ export function cleanName(raw) {
     .slice(0, NAME_MAX);
 }
 
-export const validName = n => typeof n === 'string' && n.length >= 1 && n.length <= NAME_MAX && n === cleanName(n);
+export const validName = n => typeof n === 'string' && n.length >= NAME_MIN && n.length <= NAME_MAX && n === cleanName(n);
 
 export function cleanAnswer(raw) {
   return String(raw == null ? '' : raw)

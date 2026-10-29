@@ -28,7 +28,7 @@ export default function mount(root, { p, submit, progress, sfx }) {
     } else { fb.className = 'feedback'; fb.textContent = 'passé'; }
     answers.push(v);
     sc.textContent = String(net);
-    progress(net);
+    progress(net, k + 1);   // indice de la question en cours, pour ceux qui regardent
     k++;
     if (k >= COUNT) { alive = false; submit(payload()); return; }
     draw();

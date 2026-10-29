@@ -117,14 +117,14 @@ function mountTurns(root, { p, now, startAt, submit, progress, sfx, turn }) {
       say(mine ? 'C’est à toi dans un instant…' : `${name(d.mover)} va jouer`, mine ? 'me' : '');
       renderTyped(d, false);
     } else if (t < d.start + shows) {
-      // Seul le joueur dont c'est le tour voit son nombre : les autres ne peuvent donc rien en recopier.
-      if (phase !== 'show') { phase = 'show'; big.textContent = mine ? d.num : '• '.repeat(d.len).trim(); row.style.visibility = 'hidden'; barTo(d.start + shows - t); }
-      say(mine ? 'À TOI ! Retiens ton nombre' : `${name(d.mover)} mémorise son nombre…`, mine ? 'me' : '');
+      // Chacun a SON nombre : les autres peuvent donc voir celui du joueur sans rien en recopier.
+      if (phase !== 'show') { phase = 'show'; big.textContent = d.num; row.style.visibility = 'hidden'; barTo(d.start + shows - t); }
+      say(mine ? 'À TOI ! Retiens ton nombre' : `${name(d.mover)} mémorise ce nombre…`, mine ? 'me' : '');
       renderTyped(d, false);
     } else {
       if (phase !== 'answer') {
         phase = 'answer';
-        big.textContent = '• '.repeat(d.len).trim();
+        big.textContent = mine ? '• '.repeat(d.len).trim() : d.num;   // les autres gardent son nombre sous les yeux pour juger ce qu'il tape
         fb.textContent = ''; fb.className = 'feedback';
         barTo(dl - t);
         if (mine && !dead) { row.style.visibility = 'visible'; input.focus(); }

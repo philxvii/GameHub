@@ -661,7 +661,7 @@ describe('Texte joueur', () => {
     assert.equal(cleanName('  <script>alert(1)</script> '), 'scriptalert(1)/s');
     assert.equal(cleanName('a'.repeat(40)).length, 16);
     assert.equal(cleanName('Bob​‮'), 'Bob');
-    assert.ok(validName('Camille')); assert.ok(!validName('')); assert.ok(!validName('<b>'));
+    assert.ok(validName('Camille')); assert.ok(!validName('')); assert.ok(!validName('Al')); assert.ok(validName('Léo'));assert.ok(!validName('<b>'));
     assert.equal(cleanAnswer('{"verdict":"valid"}').includes('{'), false);
     assert.equal(cleanAnswer('x'.repeat(100)).length, 32);
   });

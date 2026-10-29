@@ -92,6 +92,15 @@ fictive de la fin des années 70. Pas de présentateur à l'écran (ses répliqu
   `js/play/coffre.js` (pastilles d'ordre, bannière « À TOI »). Copier-coller bloqué (`noPaste`, `noCopy`).
   Tests : Node 78/78, règles Firebase 17/17, `coffre-paste.cjs` 2/2, `rounds.cjs` 5/5.
 - 29/10 : Gong, temps de réaction de l'adversaire visible à chaque signal (clé de `prog` `indice+ms en base 36`, affiché dans `liveExtra`, une fois qu'on a soi-même joué ce signal). Reste : Ban, Petit Bac douteux (IA non déployée).
+- 29/10 (après-midi), **local, non commité, non testé dans un navigateur** (Node 78/78) : nom de candidat 3 à 16
+  caractères (`NAME_MIN` dans `js/text.js`, pas dans les règles Firebase) ; panneau des rivaux plus clair (titre,
+  badge « Devant toi / Comme toi / Derrière toi », une lampe par vraie case via `SEGS`) ; écran « ta manche est
+  finie » : détails des adversaires dévoilés (`liveExtra(…, open)`) et mini-écran de l'autre (`spectate()` : cible du
+  Tir, question du Calcul, mot du Déjà vu, reconstruits depuis la graine + `prog`, sous-clé = indice, sans toucher aux
+  règles) ; Coffre par tours : les autres voient le nombre du joueur ; L'Étiquette : photos libres pour 5 lots
+  « pour rire » (`img/prix/fun-*.jpg`, emoji en repli) ; règles de Déjà vu ? réécrites avec exemple.
+  Reste : mini-écrans des autres manches (Chemin, Damier, Numéros, Petit Bac, Prix, Dictée à plusieurs), photos des
+  7 autres lots, Ban, Petit Bac douteux. À vérifier dans Chrome avant de pousser.
 
 **Lancer les émulateurs sur ce PC** : le lanceur `npx firebase` est bloqué par une stratégie de
 groupe (pas Java). Utiliser Node directement, avec le JDK 21 installé en ZIP (hors PATH, Java 17

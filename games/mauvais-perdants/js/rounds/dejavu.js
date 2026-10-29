@@ -59,7 +59,7 @@ export function replay(answers, words) {
 
 export default {
   id: 'dejavu', family: 'memoire', title: 'Déjà vu ?', verb: 'Reconnais',
-  rules: ['Un mot s’affiche : déjà vu dans cette manche, ou nouveau ?', '3 erreurs et c’est fini.', 'Le plus de bonnes réponses gagne.'],
+  rules: ['Les mots défilent un par un. Un mot déjà passé plus tôt dans la manche : « Déjà vu ». Un mot que tu vois pour la première fois : « Nouveau ».', 'Exemple : pomme, chaise, pomme → Nouveau, Nouveau, Déjà vu. Le tout premier mot est forcément nouveau.', '3 erreurs et c’est fini. Le plus de bonnes réponses gagne.'],
   playMs: 60000,
   unit: 'bonnes réponses',
   eligible: () => true,

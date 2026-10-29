@@ -47,8 +47,11 @@ export default function mount(root, { p, now, startAt, submit, progress, peers }
     brand.textContent = it.brand; name.textContent = it.name; qty.textContent = it.qty;
     card.classList.remove('no-photo', 'revealed');
     emoji.textContent = it.emoji || '';
-    if (it.emoji) { photo.hidden = true; photo.removeAttribute('src'); card.classList.add('no-photo', 'has-emoji'); }
-    else { photo.hidden = false; card.classList.remove('has-emoji'); photo.src = `img/prix/${it.code}.jpg`; }
+    // Lot « pour rire » : sa photo s'il en a une, sinon l'emoji.
+    const noPhoto = () => { photo.hidden = true; photo.removeAttribute('src'); card.classList.add('no-photo', 'has-emoji'); };
+    photo.hidden = false; card.classList.remove('has-emoji');
+    photo.onerror = it.emoji ? noPhoto : null;
+    photo.src = `img/prix/${it.code}.jpg`;
     tag.textContent = ''; source.textContent = ''; others.replaceChildren();
     fb.className = 'feedback'; fb.textContent = '';
     input.value = ''; lock(false);
