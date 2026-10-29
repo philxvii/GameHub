@@ -66,7 +66,7 @@ export const CATALOG = [
   ['7622210137258', "Oreo Double Crème", "Oreo", "157 g", 1.47],
   ['8000500267103', "Kinder Délice", "Ferrero", "10 gâteaux", 3.83],
   ['3017760038331', "La Barquette chocolat", "LU", "120 g", 1.45],
-  // Lots « pour rire » : pas de photo (emoji à la place), prix neufs en France arrondis, à titre indicatif.
+  // Lots « pour rire » : photos libres dans img/prix/CREDITS-FUN.md (emoji en repli), prix neufs en France arrondis, à titre indicatif.
   ['fun-classe-a', "Mercedes Classe A, neuve", "Mercedes-Benz", "A 180", 38000, '🚗', "Prix de départ indicatif d’une A 180 neuve en France (tarif constructeur, estimation)."],
   ['fun-appart', "Appartement parisien, 2 pièces", "Paris 11e", "40 m²", 400000, '🏢', "Ordre de grandeur : environ 10 000 € le m² à Paris (estimation, pas une annonce)."],
   ['fun-banane', "La banane scotchée au mur (Comedian)", "Maurizio Cattelan", "adjugée en 2024", 5700000, '🍌', "Adjugée chez Sotheby’s à New York en novembre 2024, environ 6,2 M$ frais inclus (converti en euros, arrondi)."],
