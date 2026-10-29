@@ -1,0 +1,12 @@
+#!/bin/sh
+# Garde-fou : aucun commit ne doit mentionner Claude ni Anthropic comme co-auteur.
+# Règle du dépôt (CLAUDE.md) : « sans trailer ni co-auteur ». Ce crochet est local (non versionné)
+# et vaut pour toutes les sessions qui travaillent dans ce dépôt, sur cette machine.
+if grep -qiE '^(co-authored-by|generated[- ]with|signed-off-by):.*(claude|anthropic)|noreply@anthropic\.com|🤖 generated with|^generated with \[?claude' "$1"; then
+  echo "" >&2
+  echo "COMMIT REFUSÉ : le message contient un trailer ou une mention de Claude / Anthropic." >&2
+  echo "Règle du dépôt : aucun trailer, aucun co-auteur. Refais le commit sans cette ligne." >&2
+  echo "" >&2
+  exit 1
+fi
+exit 0

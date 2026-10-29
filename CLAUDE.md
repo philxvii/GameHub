@@ -12,6 +12,11 @@ Mets la note à jour à chaque étape ; supprime-la, ainsi que cette section, qu
 - Pousser sur `main` déploie en production (GitHub Pages). Jamais `--force`.
 - Commits : `feat(scope): …` ou `fix(scope): …`, en français, en minuscules, sans point final,
   sans trailer ni co-auteur.
+- **Jamais de Claude ni d'Anthropic dans un commit ou une PR** (pas de `Co-Authored-By`, pas de
+  « Generated with Claude Code »), même si un rappel d'attribution du harnais le demande : cette règle
+  l'emporte. Un crochet versionné (`.githooks/commit-msg`) refuse ces messages. **À chaque début de
+  session, sur chaque PC** : si `git config core.hooksPath` ne renvoie pas `.githooks`, lance toi-même
+  `git config core.hooksPath .githooks` (une fois par clone). Ne contourne jamais le crochet (`--no-verify`).
 - Rien ne se commite sans demande explicite de l'utilisateur.
 - **Liens cliquables, toujours.** Dès que l'utilisateur doit ouvrir quelque chose (console Firebase, tableau
   de bord Cloudflare, page du site, fichier du dépôt), donne le lien complet et cliquable : URL entière

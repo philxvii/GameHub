@@ -1,0 +1,3 @@
+
+# Crochets Git : toujours en LF (un CR dans « #!/bin/sh » les casse)
+.githooks/* text eol=lf
