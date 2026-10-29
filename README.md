@@ -16,18 +16,27 @@
 
 <table>
 <tr>
-<td align="center" width="20%"><a href="https://roulia.me/games/banqueroll/"><img src="docs/readme/banqueroll.png" width="150" alt="Banqueroll"></a><br><br><b><a href="https://roulia.me/games/banqueroll/">Banqueroll</a></b><br><sub>Enchères et échanges</sub><br><sub>2 à 8 joueurs</sub><br><br></td>
-<td align="center" width="20%"><a href="https://roulia.me/games/mauvais-perdants/"><img src="docs/readme/mauvais-perdants.png" width="150" alt="Mauvais Perdants"></a><br><br><b><a href="https://roulia.me/games/mauvais-perdants/">Mauvais Perdants</a></b><br><sub>Tournoi télé des années 70</sub><br><sub>1 à 8 joueurs</sub><br><br></td>
-<td align="center" width="20%"><a href="https://roulia.me/games/undercover/"><img src="docs/readme/undercover.png" width="150" alt="Undercover"></a><br><br><b><a href="https://roulia.me/games/undercover/">Undercover</a></b><br><sub>Démasque l'imposteur</sub><br><sub>3 à 9 joueurs</sub><br><br></td>
-<td align="center" width="20%"><a href="https://roulia.me/games/uno/"><img src="docs/readme/uno.png" width="150" alt="UNO"></a><br><br><b><a href="https://roulia.me/games/uno/">UNO</a></b><br><sub>Bloque et crie UNO</sub><br><sub>2 à 6 joueurs</sub><br><br></td>
-<td align="center" width="20%"><a href="https://roulia.me/games/mini-subway/"><img src="docs/readme/mini-subway.png" width="150" alt="Mini Subway"></a><br><br><b><a href="https://roulia.me/games/mini-subway/">Mini Subway</a></b><br><sub>Trace ton réseau de métro</sub><br><sub>1 à 4 joueurs</sub><br><br></td>
+<td align="center" width="25%"><a href="https://roulia.me/games/banqueroll/"><img src="docs/readme/banqueroll.png" width="160" alt="Banqueroll"></a><br><br><b><a href="https://roulia.me/games/banqueroll/">Banqueroll</a></b><br><sub>Enchères et échanges</sub><br><sub>2 à 8 joueurs</sub><br><br></td>
+<td align="center" width="25%"><a href="https://roulia.me/games/mauvais-perdants/"><img src="docs/readme/mauvais-perdants.png" width="160" alt="Mauvais Perdants"></a><br><br><b><a href="https://roulia.me/games/mauvais-perdants/">Mauvais Perdants</a></b><br><sub>Tournoi télé des années 70</sub><br><sub>1 à 8 joueurs</sub><br><br></td>
+<td align="center" width="25%"><a href="https://roulia.me/games/undercover/"><img src="docs/readme/undercover.png" width="160" alt="Undercover"></a><br><br><b><a href="https://roulia.me/games/undercover/">Undercover</a></b><br><sub>Démasque l'imposteur</sub><br><sub>3 à 9 joueurs</sub><br><br></td>
+<td align="center" width="25%"><a href="https://roulia.me/games/uno/"><img src="docs/readme/uno.png" width="160" alt="UNO"></a><br><br><b><a href="https://roulia.me/games/uno/">UNO</a></b><br><sub>Bloque et crie UNO</sub><br><sub>2 à 6 joueurs</sub><br><br></td>
 </tr>
+</table>
+
+<table>
 <tr>
-<td align="center" width="20%"><a href="https://roulia.me/games/roulette/"><img src="docs/readme/roulette.png" width="150" alt="Roulette"></a><br><br><b><a href="https://roulia.me/games/roulette/">Roulette</a></b><br><sub>Misez, la roue tourne</sub><br><sub>2 à 8 joueurs</sub><br><br></td>
-<td align="center" width="20%"><a href="https://roulia.me/games/mini-golf/"><img src="docs/readme/mini-golf.png" width="150" alt="Mini Golf"></a><br><br><b><a href="https://roulia.me/games/mini-golf/">Mini Golf</a></b><br><sub>9 trous, le moins de coups</sub><br><sub>2 à 4 joueurs</sub><br><br></td>
-<td align="center" width="20%"><a href="https://roulia.me/games/puissance4/"><img src="docs/readme/puissance4.png" width="150" alt="Puissance 4"></a><br><br><b><a href="https://roulia.me/games/puissance4/">Puissance 4</a></b><br><sub>Aligne 4 jetons</sub><br><sub>2 joueurs</sub><br><br></td>
-<td align="center" width="20%"><a href="https://roulia.me/games/qui-est-ce/"><img src="docs/readme/qui-est-ce.png" width="150" alt="Qui est-ce ?"></a><br><br><b><a href="https://roulia.me/games/qui-est-ce/">Qui est-ce ?</a></b><br><sub>Devine le personnage</sub><br><sub>2 joueurs</sub><br><br></td>
-<td align="center" width="20%"><a href="https://roulia.me/games/bataille-navale/"><img src="docs/readme/bataille-navale.png" width="150" alt="Bataille navale"></a><br><br><b><a href="https://roulia.me/games/bataille-navale/">Bataille navale</a></b><br><sub>Coule la flotte adverse</sub><br><sub>2 joueurs</sub><br><br></td>
+<td align="center" width="25%"><a href="https://roulia.me/games/echecs/"><img src="docs/readme/echecs.png" width="160" alt="Échecs"></a><br><br><b><a href="https://roulia.me/games/echecs/">Échecs</a></b><br><sub>Leçons, coach et duels</sub><br><sub>1 ou 2 joueurs</sub><br><br></td>
+<td align="center" width="25%"><a href="https://roulia.me/games/mini-subway/"><img src="docs/readme/mini-subway.png" width="160" alt="Mini Subway"></a><br><br><b><a href="https://roulia.me/games/mini-subway/">Mini Subway</a></b><br><sub>Trace ton réseau de métro</sub><br><sub>1 à 4 joueurs</sub><br><br></td>
+<td align="center" width="25%"><a href="https://roulia.me/games/roulette/"><img src="docs/readme/roulette.png" width="160" alt="Roulette"></a><br><br><b><a href="https://roulia.me/games/roulette/">Roulette</a></b><br><sub>Misez, la roue tourne</sub><br><sub>2 à 8 joueurs</sub><br><br></td>
+<td align="center" width="25%"><a href="https://roulia.me/games/mini-golf/"><img src="docs/readme/mini-golf.png" width="160" alt="Mini Golf"></a><br><br><b><a href="https://roulia.me/games/mini-golf/">Mini Golf</a></b><br><sub>9 trous, le moins de coups</sub><br><sub>2 à 4 joueurs</sub><br><br></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td align="center" width="25%"><a href="https://roulia.me/games/puissance4/"><img src="docs/readme/puissance4.png" width="160" alt="Puissance 4"></a><br><br><b><a href="https://roulia.me/games/puissance4/">Puissance 4</a></b><br><sub>Aligne 4 jetons</sub><br><sub>2 joueurs</sub><br><br></td>
+<td align="center" width="25%"><a href="https://roulia.me/games/qui-est-ce/"><img src="docs/readme/qui-est-ce.png" width="160" alt="Qui est-ce ?"></a><br><br><b><a href="https://roulia.me/games/qui-est-ce/">Qui est-ce ?</a></b><br><sub>Devine le personnage</sub><br><sub>2 joueurs</sub><br><br></td>
+<td align="center" width="25%"><a href="https://roulia.me/games/bataille-navale/"><img src="docs/readme/bataille-navale.png" width="160" alt="Bataille navale"></a><br><br><b><a href="https://roulia.me/games/bataille-navale/">Bataille navale</a></b><br><sub>Coule la flotte adverse</sub><br><sub>2 joueurs</sub><br><br></td>
 </tr>
 </table>
 
