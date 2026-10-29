@@ -14,6 +14,7 @@ import { derive } from './rounds/coffre.js';
 import { chat } from './chat.js';
 import { round, FAMILIES } from './rounds/index.js';
 import { COLORS as INK } from './rounds/encre.js';
+import { accepts as anaOk } from './rounds/anagramme.js';
 import { gameOf, contenders, COUNT_MS } from './machine.js';
 import { ROUNDS_PER_TOURNAMENT, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks, roundsOf } from './draw.js';
 import { standings, MIN_PLAYERS, MAX_PLAYERS, FINAL_MULT } from './scoring.js';
@@ -612,6 +613,7 @@ const VIEWS = {
     if (rows.some(r => r.tied)) wrap.append(h('p', { class: 'tied-note', text: 'Ex æquo : points partagés (moyenne des places).' }));
     if (m.i === roundsOf(m) - 1 && m.i > 0) wrap.append(h('p', { class: 'tied-note', text: `Manche décisive : points de place ×${FINAL_MULT}.` }));
     if (gameOf(m) === 'bac') wrap.append(bacTable(m, names));
+    if (gameOf(m) === 'anagramme') wrap.append(anagrammeTable(m, names));
     // Du dernier au premier ; le vainqueur arrive détaché, après un court temps d'arrêt.
     const order = els.slice().reverse();
     const step = reduced() ? 0 : Math.min(640, 2800 / order.length);
@@ -980,6 +982,22 @@ function nuageTable(m, names) {
       h('td', { class: 'pt-item' }, h('b', { text: `Nuage ${k + 1}` })),
       h('td', { class: 'pt-price' }, h('span', { class: 'tagp', text: `${c.n} points` })),
       who.map((u, j) => { const g = guesses[u][k]; return h('td', { class: `pt-guess ${errs[j] === best && best < Infinity ? 'best' : ''}`, text: g > 0 ? String(g) : '—' }); })));
+  });
+  return h('div', { class: 'bac-grid' }, t);
+}
+
+// Le Mot brouillé : pour chaque mot, la réponse et ce que chacun a tapé (juste en vert, « — » = passé).
+function anagrammeTable(m, names) {
+  const p = paramsOf(m);
+  const who = contenders(m).filter(u => u !== GHOST && room.s.subs[u]);
+  const typed = Object.fromEntries(who.map(u => { const d = parse((room.s.subs[u] || {}).d) || {}; return [u, Array.isArray(d.a) ? d.a.map(String) : []]; }));
+  const t = h('table', { class: 'prix-table' });
+  t.append(h('tr', {}, h('th', { text: 'Mot' }), h('th', { text: 'Réponse' }), who.map(u => h('th', { text: names[u] }))));
+  p.items.forEach((it, k) => {
+    t.append(h('tr', {},
+      h('td', { class: 'pt-item' }, h('small', { text: it.s.toUpperCase() })),
+      h('td', { class: 'pt-price' }, h('span', { class: 'tagp', text: it.w.toUpperCase() })),
+      who.map(u => { const a = typed[u][k]; return h('td', { class: `pt-guess ${a && anaOk(it, a) ? 'best' : ''}`, text: a || '—' }); })));
   });
   return h('div', { class: 'bac-grid' }, t);
 }
