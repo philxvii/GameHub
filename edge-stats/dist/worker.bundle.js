@@ -5,7 +5,7 @@
 // compteurs (heure, portée, dimension, valeur). Pas d'IP, pas d'identifiant, pas de cookie.
 
 // 'maintenance' : l'écran de maintenance servi par le portier (roulia-gate), quelle que soit l'adresse demandée.
-const PAGES = ['home', 'maintenance', 'banqueroll', 'bataille-navale', 'echecs', 'mauvais-perdants', 'mini-golf', 'mini-subway',
+const PAGES = ['home', 'maintenance', '421', 'banqueroll', 'bataille-navale', 'echecs', 'mauvais-perdants', 'mini-golf', 'mini-subway',
   'puissance4', 'qui-est-ce', 'roulette', 'undercover', 'uno', 'wikirace'];
 const DIMS = ['page', 'entry', 'country', 'city', 'device', 'browser', 'os', 'ref'];
 const K_MIN = 5;                    // seuil d'affichage : une valeur sous ce seuil est regroupée

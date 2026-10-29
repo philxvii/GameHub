@@ -24,7 +24,7 @@ export function isEnded(g, f) {
 
 // Identifiant stable : la même partie n'est archivée qu'une fois. Puissance 4 et les Échecs enchaînent des manches sous le même code.
 export function archiveId(g, code, f) {
-  return `${g.db}-${code}-${num(f.createdAt)}${g.id === 'puissance4' || g.id === 'echecs' ? '-' + (f.gameNum || 1) : ''}`.slice(0, 90);
+  return `${g.db}-${code}-${num(f.createdAt)}${['puissance4', 'echecs', '421'].includes(g.id) ? '-' + (f.gameNum || 1) : ''}`.slice(0, 90);
 }
 
 // Places 1, 2, 3… ; deux scores identiques partagent la place.
@@ -109,6 +109,15 @@ const SUMMARY = {
     rows.forEach((r, i) => { r.r = w === -1 ? 1 : r.w ? 1 : i + 1; });
     const won = rows.find(r => r.w);
     return { win: won ? `${won.n} gagne ${why}`.trim() : 'Partie nulle', sub: `${many(Math.ceil(plies / 2), 'coup')}${d.gameNum > 1 ? ` · partie n° ${d.gameNum}` : ''}`, rows, k: [] };
+  },
+
+  421(d) {
+    const loser = d.result && d.result.loser;
+    const rows = slots(d.players).map((p, i) => p && { n: p.name, i, v: num(p.losses) }).filter(Boolean);
+    rows.forEach(r => { r.w = r.i !== loser; r.r = r.w ? 1 : rows.length; r.s = r.i === loser ? 'Garde les 21 jetons' : many(r.v, 'défaite'); });
+    rows.sort((a, b) => a.r - b.r);
+    const l = rows.find(r => r.i === loser);
+    return { win: l ? `${l.n} perd la partie` : 'Partie terminée', sub: d.gameNum > 1 ? `Partie n° ${d.gameNum}` : '', rows, k: [] };
   },
 
   quiestce(d) {

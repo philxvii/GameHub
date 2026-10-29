@@ -120,7 +120,7 @@ describe('Ancien WikiRace', () => {
 });
 
 describe('Exclusion d’une partie', () => {
-  for (const prefix of ['games', 'banqueroll', 'p4', 'qec2', 'bn', 'rl', 'mg', 'uno', 'ec']) {
+  for (const prefix of ['games', 'banqueroll', 'p4', 'qec2', 'bn', 'rl', 'mg', 'uno', 'ec', 'qd']) {
     const code = prefix === 'banqueroll' ? 'ROLL-17' : 'ABCD-12';
     test(`${prefix} : l’exclu ne revient pas, les autres entrent`, async () => {
       await seed(`${prefix}/${code}`, { ...lobby, members: { alice: true, eve: true } });

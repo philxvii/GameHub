@@ -13,7 +13,7 @@ import { auth } from './firebase.js';
 
 const RANGES = [['24h', '24 h'], ['7d', '7 jours'], ['30d', '30 jours'], ['90d', '90 jours'], ['365d', '1 an']];
 const PAGE_NAMES = { home: 'Accueil', maintenance: 'Écran de maintenance', banqueroll: 'Banqueroll', 'bataille-navale': 'Bataille Navale', 'mauvais-perdants': 'Mauvais Perdants', 'mini-golf': 'Mini Golf',
-  'mini-subway': 'Mini Subway', puissance4: 'Puissance 4', 'qui-est-ce': 'Qui est-ce ?', roulette: 'Roulette', undercover: 'Undercover', uno: 'UNO', wikirace: 'WikiRace', echecs: 'Échecs' };
+  'mini-subway': 'Mini Subway', puissance4: 'Puissance 4', 'qui-est-ce': 'Qui est-ce ?', roulette: 'Roulette', undercover: 'Undercover', uno: 'UNO', wikirace: 'WikiRace', echecs: 'Échecs', 421: '421' };
 const DEVICE = { desktop: 'Ordinateur', mobile: 'Mobile', tablet: 'Tablette' };
 const DEVICE_C = { desktop: '#EE4B2E', mobile: '#3A72FF', tablet: '#22A15D' };   // scripts/validate_palette.js : OK clair et sombre
 const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];

@@ -29,6 +29,7 @@ const CATALOG = [
   { id: 'uno', name: 'UNO', dir: 'uno', db: 'uno' },
   { id: 'puissance4', name: 'Puissance 4', dir: 'puissance4', db: 'p4', presence: 'index' },
   { id: 'echecs', name: 'Échecs', dir: 'echecs', db: 'ec', presence: 'index' },
+  { id: '421', name: '421', dir: '421', db: 'qd', presence: 'index' },
   { id: 'quiestce', name: 'Qui est-ce ?', dir: 'qui-est-ce', db: 'qec2' },
   { id: 'bataille', name: 'Bataille Navale', dir: 'bataille-navale', db: 'bn' },
   { id: 'roulette', name: 'Roulette', dir: 'roulette', db: 'rl' },
