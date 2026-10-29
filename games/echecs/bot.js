@@ -5,7 +5,7 @@
 //
 // Message reçu : { id, fen, level } ; réponse : { id, uci }.
 
-import { W, parseFEN, pseudo, legal, make, unmake, attacked, inCheck, uciOf, kindOf, colorOf } from './rules.js';
+import { W, parseFEN, pseudo, legal, make, unmake, attacked, inCheck, uciOf, kindOf, colorOf } from './rules.js?v=4';
 
 const VALUE = { P: 100, N: 320, B: 330, R: 500, Q: 900, K: 0 };
 // Tables vues des blancs, rangée 8 en haut (comme un diagramme).

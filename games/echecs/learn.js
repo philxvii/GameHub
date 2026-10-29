@@ -10,7 +10,7 @@
 //          'mate'   : mater en un coup ;
 //   text   la consigne ; ok : le mot de la fin ; hint : l'indice.
 
-import { W, B, kindOf, colorOf, sqName, attackersOf, attacked, make, unmake, inCheck, legal } from './rules.js';
+import { W, B, kindOf, colorOf, sqName, attackersOf, attacked, make, unmake, inCheck, legal } from './rules.js?v=4';
 
 export const LESSONS = [
   { title: 'Le roi et la tour', steps: [

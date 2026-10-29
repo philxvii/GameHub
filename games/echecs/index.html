@@ -595,9 +595,11 @@ import {
   W, B, START, parseFEN, toFEN, legal, pseudo, make, uciOf, hanging, outcome, sqOf, fromSAN, replay, capturedBy, inCheck, kindOf, colorOf,
   TIME, tcOf, toPlayers, toMoves, whiteOf, playerOf, colorOfPlayer, clockNow,
   startGame as startRule, playMove, claimTime, resign as resignRule, offerDraw, answerDraw, nextRound,
-} from './rules.js';
-import { createBoard2D } from './board2d.js';
-import { LESSONS, describe, warning, the, OPENING_TIP } from './learn.js';
+} from './rules.js?v=4';
+// Version des modules (?v=) : à augmenter quand un fichier JS du jeu change, sinon le cache de GitHub Pages
+// (jusqu'à une heure) peut servir un mélange d'anciens et de nouveaux fichiers.
+import { createBoard2D } from './board2d.js?v=4';
+import { LESSONS, describe, warning, the, OPENING_TIP } from './learn.js?v=4';
 
 const $ = id => document.getElementById(id);
 const escH = v => String(v ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
@@ -913,7 +915,7 @@ async function tryMove(from, to) {
 // La partie se joue sur l'appareil : même objet, mêmes règles que la partie en ligne.
 let worker = null, botReq = 0;
 const bot = (fen, level) => new Promise(res => {
-  if (!worker) { worker = new Worker(new URL('./bot.js', location.href), { type: 'module' }); }
+  if (!worker) { worker = new Worker(new URL('./bot.js?v=4', location.href), { type: 'module' }); }
   const id = ++botReq;
   const on = e => { if (e.data?.id !== id) return; worker.removeEventListener('message', on); res(e.data.uci); };
   worker.addEventListener('message', on);
