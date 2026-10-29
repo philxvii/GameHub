@@ -17,6 +17,7 @@ export class Flaps {
   set(value, { pad = 'end', sound = true, scroll = true } = {}) {
     const raw = String(value).toUpperCase().slice(0, this.len);
     const t = pad === 'start' ? raw.padStart(this.len) : raw.padEnd(this.len);
+    if (t === this.text) return this;      // rien ne change : on ne relance pas l'animation en cours
     this.timers.forEach(clearTimeout); this.timers = [];
     const instant = reduced();
     t.split('').forEach((ch, i) => {

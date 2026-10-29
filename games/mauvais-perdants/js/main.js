@@ -244,8 +244,9 @@ function render() {
 function renderLobby() {
   if (view.destroy) view.destroy();
   view = { key: 'lobby' };
-  if (!codeFlaps) { codeFlaps = new Flaps(7); clear($('#code-flaps')).append(codeFlaps.el); }
-  if (codeFlaps.text !== room.code.padEnd(7)) codeFlaps.set(room.code);
+  // Les codes font jusqu'à 8 caractères (« CHUTE-47 ») : 7 cases coupaient le dernier et relançaient l'animation sans fin.
+  if (!codeFlaps) { codeFlaps = new Flaps(8); clear($('#code-flaps')).append(codeFlaps.el); }
+  codeFlaps.set(room.code);
   const players = room.players();
   // Chaque candidat a son pupitre, son jeton à sa couleur. Un pupitre est créé une seule fois :
   // le nouveau venu fait son entrée, les autres ne bougent pas.
