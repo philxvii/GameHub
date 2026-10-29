@@ -788,6 +788,7 @@
     bataille: { name: 'Bataille Navale', pct: 5, soon: [['Une mer retravaillée', 'Un plateau qui a de la profondeur.'], ['Des tirs qui se voient', 'Eau, touché, coulé : chaque coup a son effet.'], ['Un placement plus fluide', 'Poser sa flotte sans se battre avec l’écran.']] },
     roulette: { name: 'Roulette', pct: 5, soon: [['Une roue plus vraie', 'Une bille, un bol, un vrai tour de roue.'], ['Un suspense mis en scène', 'Le ralenti avant le numéro gagnant.'], ['Un tapis soigné', 'Mises et jetons lisibles à plusieurs.']] },
     mauvaisperdants: { name: 'Mauvais Perdants', pct: 30, soon: [['Un vrai plateau de télé', 'Rideaux, projecteurs et ampoules : une émission, pas un écran.'], ['Un animateur qui existe', 'Gonzague plus grand, plus expressif, plus odieux.'], ['Des finales mises en scène', 'Résultats et podium avec un vrai moment de gloire.']] },
+    echecs: { name: 'Échecs', pct: 95, soon: [['Un plateau peaufiné', 'Les cases, les pièces et la lumière encore affinées.'], ['Des détails soignés', 'Les petits gestes et les finitions qui font la différence.'], ['Une ambiance plus travaillée', 'Un décor et une atmosphère à la hauteur du jeu.']] },
     minigolf: { name: 'Mini Golf', pct: 5, soon: [['Des parcours repensés', 'Des pistes avec du relief et des obstacles.'], ['Un tir plus précis', 'Viser et doser la puissance, sans approximation.'], ['Une partie à plusieurs', 'Voir la balle de chacun rouler sur le green.']] }
   };
   // Tous les autres jeux peuvent aussi l'avoir, reglee depuis l'admin : eteinte par defaut (-1).
@@ -1284,8 +1285,8 @@
 })();
 </script>
 <script type="module">
-import { ref, set, update, onValue, remove, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { db, adminSignIn } from './shared/firebase.js';
+import { ref, get, set, update, onValue, remove, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { db, auth, adminSignIn } from './shared/firebase.js';
 
 // ── Presence ──
 // onDisconnect ne part pas toujours (onglet tué, mobile en veille, maintenance) : chaque
@@ -1401,6 +1402,21 @@ window.adminLogin = async () => {
   document.getElementById('admin-gate').classList.add('hidden');
   panel.openAdmin(document.getElementById('admin-panel'), { login: true });
 };
+
+// Rechargement avec le panneau ouvert : on le rouvre si la session Google est encore admin
+// (aucune fenêtre de connexion ; sinon on oublie simplement).
+(async () => {
+  let open = null;
+  try { open = sessionStorage.getItem('gh-admin-open'); } catch (_) {}
+  if (!open) return;
+  try {
+    await auth.authStateReady();
+    const u = auth.currentUser;
+    if (!u || u.isAnonymous || (await get(ref(db, `admins/${u.uid}`))).val() !== true) throw 0;
+    const panel = await import('./shared/admin-panel.js');
+    panel.openAdmin(document.getElementById('admin-panel'));
+  } catch (_) { try { sessionStorage.removeItem('gh-admin-open'); } catch (_) {} }
+})();
 
 // ── Age gate ──
 window.gateInput = (el, nextId, maxLen) => {
