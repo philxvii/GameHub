@@ -72,6 +72,10 @@ synchronisées en temps réel entre les joueurs, et le site est publié par GitH
 <td valign="top"><b>Rendu et audio maison</b><br>Canvas 2D pour Mini Subway, sons et musiques synthétisés par Web Audio, tactile, souris et stylet gérés partout.</td>
 <td valign="top"><b>Testé en conditions réelles</b><br>Des centaines de tests automatisés, dont des parties jouées par plusieurs navigateurs en même temps contre les vraies règles de sécurité de la base.</td>
 </tr>
+<tr>
+<td valign="top"><b>Un moteur d'échecs maison</b><br>Règles complètes vérifiées sur les positions de référence (perft), adversaire à trois niveaux : recherche alpha-bêta dans un Web Worker, la page ne gèle jamais pendant qu'il réfléchit.</td>
+<td valign="top"><b>Apprendre en jouant</b><br>Les Échecs ont des leçons interactives sur l'échiquier, puis une partie avec un coach qui commente chaque coup, signale les pièces en prise et propose un conseil.</td>
+</tr>
 </table>
 
 ## Licence
