@@ -106,6 +106,10 @@ fictive de la fin des années 70. Pas de présentateur à l'écran (ses répliqu
   `PICK_ORDER`, répliques de l'animateur, démos, spectateur (mini-écrans Encre, Intrus, Mot brouillé ; écart au
   Chrono/Métronome). Tests Node 86/86 (`tests/nouvelles-epreuves.test.mjs`) ; chaque écran vu dans Chrome via une page
   de test jetable (supprimée) ; PAS joué à plusieurs ni via `rounds.cjs` (pas de bot pour ces épreuves).
+  29/10 (soir), local, non commité : bilan clair au verdict (Petit Bac : pour chaque case qui a validé, IA ou vote avec
+  les voix, plus « Réponses contestées : qui a décidé quoi » ; toutes manches : ligne de calcul « 2e place : 8 points,
+  fanfaronnade +3 = 11 ») ; exclusion d'un candidat parti par le coordinateur (menu ☰ > Candidats > Exclure,
+  `coord.kick()` retire l'entrée de `match.roster`, sans changer les règles Firebase ; non testé en ligne).
   Reste : mini-écrans des autres manches (Chemin, Damier, Numéros, Petit Bac, Prix, Dictée à plusieurs), photos des
   7 autres lots, Ban, Petit Bac douteux. À vérifier dans Chrome avant de pousser.
 - 29/10 (soir), **local, non commité, non vu dans Chrome** : les rampes de petits points du panneau des rivaux (`SEGS`, `.lamps`) sont remplacées par une barre d'avancement avec « xx % de la manche » (`.pbar`) ; masquée pour Gonzague (score fixe).

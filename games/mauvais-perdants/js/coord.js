@@ -131,6 +131,18 @@ export class Coordinator {
     } else await this.sayType(solo ? 'solo_welcome' : 'welcome', { n: names.length, P: players[0].name });
     await this.introLine();
   }
+  // Exclure un candidat parti : il sort du tournoi (plus attendu, plus classé) et devient spectateur.
+  // Passe par `match`, que le coordinateur écrit déjà : aucune règle de la base à changer.
+  async kick(uid) {
+    await this.room.txMatch(cur => {
+      if (!cur || !cur.roster || !cur.roster[uid] || Object.keys(cur.roster).length < 2) return undefined;
+      const roster = { ...cur.roster }; delete roster[uid];
+      const next = { ...cur, roster };
+      if (cur.tb) { const tb = { ...cur.tb }; delete tb[uid]; next.tb = tb; }
+      return next;
+    });
+  }
+
   async backToLobby() {
     const cur = this.room.s.match;
     if (cur && cur.plan) this.lastPlan = cur.plan.map(x => x.g);
@@ -235,7 +247,7 @@ export class Coordinator {
       const votes = await this.room.readVotes(m.tid, m.rk);
       const final = resolve(st.prep, st.tri, votes, contenders(m));
       const { res, bac } = computeBac(m, st.prep, final, boasts);
-      const det = { kind: 'bac', mode: st.mode, letter: st.params.letter, cats: st.params.cats, cells: Object.fromEntries(Object.entries(bac).map(([u, b]) => [u, b.cells.map(c => ({ t: c.text, st: c.st, p: c.pts, w: c.why || '' }))])), votes: Object.fromEntries(Object.entries(final).filter(([, v]) => v.src === 'vote').map(([g, v]) => [g, { no: v.no, of: v.of, s: v.s }])) };
+      const det = { kind: 'bac', mode: st.mode, letter: st.params.letter, cats: st.params.cats, cells: Object.fromEntries(Object.entries(bac).map(([u, b]) => [u, b.cells.map(c => { const f = c.group ? final[c.group] : null; return { t: c.text, st: c.st, p: c.pts, w: c.why || '', ...(f ? { src: f.src, no: f.no, of: f.of } : {}) }; })])), votes: Object.fromEntries(Object.entries(final).filter(([, v]) => v.src === 'vote').map(([g, v]) => [g, { no: v.no, of: v.of, s: v.s }])) };
       return { res, det: JSON.stringify(det).slice(0, 30000) };
     }
     // Le Coffre en élimination : le classement vient du journal des tours, pas de ce que chaque client déclare.

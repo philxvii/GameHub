@@ -5,6 +5,7 @@
 
 import { $, h, clear, chip, toast, reduced } from './ui/dom.js';
 import { Flaps } from './ui/flaps.js';
+import { demoOf } from './ui/demos.js';
 import { wipe, confetti } from './ui/fx.js';
 import { createRoom, joinRoom, resumeRoom, serverNow, normalizeCode, ONLINE_MS } from './net.js';
 import { Coordinator, paramsOf, namesOf, finalSummary } from './coord.js';
@@ -392,32 +393,6 @@ function pointsNote(last, roster) {
   return `Points : ${10 * k} au 1er${n > 1 ? `, ${2 * k} au dernier` : ''}${last ? ' (manche ×2)' : ''}. Fanfaronnade : +3 si tu gagnes, −3 si tu finis en bas. Maximum sur la manche : ${10 * k + 3}.`;
 }
 
-// Mini-démonstration animée : trois temps (regarde / agis / gagne) qui s'allument à tour de rôle.
-const DEMOS = {
-  bac: ['🔤 Une lettre', '✍️ Un mot par case', '🏆 Le plus original'],
-  calcul: ['➕ Une opération', '⚡ Réponds vite', '🏆 Meilleur total'],
-  chemin: ['👀 Cases allumées', '👆 Reproduis l’ordre', '🏆 Niveau le plus haut'],
-  coffre: ['🔢 Ton nombre, rien que pour toi', '⌨️ Tu le tapes, les autres te regardent', '💀 Faux : éliminé'],
-  damier: ['💡 Cases allumées', '🧠 Retiens-les', '👆 Retrouve-les'],
-  dejavu: ['🆕 « pomme » : 1re fois → Nouveau', '🔁 « pomme » revient → Déjà vu', '❤️ 3 erreurs max'],
-  dictee: ['📜 Une phrase', '⌨️ Recopie-la', '🏁 Premier arrivé'],
-  gong: ['🔴 Panneau rouge', '🟢 Il passe au vert', '👆 Touche vite'],
-  nuage: ['☁️ Un nuage de points', '🔢 Combien ?', '🎯 Écart minimal'],
-  numeros: ['🔢 Repère les numéros', '🙈 Ils se cachent', '👆 Dans l’ordre'],
-  prix: ['🛒 Un produit', '🏷️ Devine son prix', '🔴 L’étiquette tombe'],
-  tir: ['🎯 20 cibles', '👆 Touche-les', '⏱️ Le plus rapide'],
-  encre: ['🎨 Mot « ROUGE » écrit en bleu', '👆 Touche BLEU, la couleur de l’encre', '🏆 Le plus de points en 30 s'],
-  chrono: ['⏱️ Un chrono démarre', '🙈 Il disparaît à 2 s', '🛑 STOP pile à la durée demandée'],
-  intrus: ['🔠 Des signes presque pareils', '👁️ Un seul est différent', '⏱️ Le plus rapide'],
-  anagramme: ['🔀 Lettres mélangées', '⌨️ Retrouve le mot', '🏆 Le plus de mots'],
-  metronome: ['🔔 Quatre battements', '🤫 Le métronome se tait', '👆 Continue au même rythme'],
-};
-function demoOf(id) {
-  const steps = DEMOS[id];
-  if (!steps) return null;
-  return h('div', { class: 'demo', 'aria-hidden': 'true' }, steps.map((t, k) => h('span', { class: 'demo-step', style: { animationDelay: `${k * 1.4}s` }, text: t })));
-}
-
 // Le résultat de chacun en phrase simple (le moteur garde son format court, utile aux tests).
 function plainLabel(g, label) {
   const t = String(label || '');
@@ -622,7 +597,9 @@ const VIEWS = {
         token(who.name, who.c),
         h('span', { class: 'who' }, h('b', { text: who.name }),
           r.boast ? h('span', { class: `bst ${r.boast > 0 ? 'up' : 'down'}`, text: `${signed(r.boast)} fanfaronnade` }) : null,
-          lantern ? h('span', { class: 'sticker red', text: 'Lanterne rouge' }) : null),
+          lantern ? h('span', { class: 'sticker red', text: 'Lanterne rouge' }) : null,
+          // Le détail du calcul, en clair : place → points, fanfaronnade, ex æquo.
+          h('small', { class: 'calc', text: r.absent ? 'absent : 0 point' : `${r.rank === 1 ? '1re' : `${r.rank}e`} place${r.tied ? ' (ex æquo, points partagés)' : ''} : ${r.base} point${r.base > 1 ? 's' : ''}${r.boast ? `, fanfaronnade ${signed(r.boast)}` : ''} = ${r.pts}` })),
         h('span', { class: 'lab', text: plainLabel(gameOf(m), r.label) }),
         h('span', { class: 'pts' }, signed(r.pts), h('small', { text: ' pts' })));
     });
@@ -869,11 +846,11 @@ function liveExtra(el, g, p, r, mine, open = false) {
   el.replaceChildren(...kids);
 }
 
-// Les rivaux pendant ta manche : un jeton, une valeur, une barre d'avancement.
+// Les rivaux pendant ta manche : un jeton, une valeur, une phrase claire.
 function rivalsPanel(m) {
   const g = gameOf(m), p = paramsOf(m), names = namesOf(m);
   const list = h('div', { class: 'rivals-list' });
-  const el = h('aside', { class: 'rivals', 'aria-label': 'Les autres candidats' }, h('h3', { text: 'Les autres candidats, en direct' }), h('p', { class: 'rv-help', text: 'Là où en sont les autres pendant que tu joues. Le badge te dit s’ils sont devant ou derrière toi.' }), list);
+  const el = h('aside', { class: 'rivals', 'aria-label': 'Les autres candidats' }, h('h3', { text: 'Les autres candidats, en direct' }), h('p', { class: 'rv-help', text: 'Ce que font les autres en ce moment. Le badge dit s’ils sont devant ou derrière toi.' }), list);
   let myBest = 0;
   return {
     el,
@@ -885,9 +862,9 @@ function rivalsPanel(m) {
       myBest = mine && mine.v !== null && mine.v !== undefined ? mine.v : myBest;
       const others = rows.filter(r => r.u !== room.me);
       keyed(list, others.map(r => r.u), u => {
-        const val = h('small'), say = h('div', { class: 'say' }), xtra = h('div', { class: 'xtra' }), fill = h('i'), pct = h('small', { class: 'pct' }), lamps = h('div', { class: 'pbar' }, h('span', { class: 'track', 'aria-hidden': 'true' }, fill), pct), stk = h('span', { class: 'sticker', hidden: true });
-        const el = h('div', { class: 'rv', style: { '--pc': pcol(mm.roster[u].c) } }, h('span', { class: 'tw' }, token(names[u], mm.roster[u].c, 'sm'), presDot()), h('div', {}, h('div', { class: 'nm' }, h('span', { text: names[u] }), val), say, xtra, lamps), stk);
-        el.__p = { val, say, xtra, lamps, fill, pct, stk };
+        const val = h('small'), say = h('div', { class: 'say' }), xtra = h('div', { class: 'xtra' }), stk = h('span', { class: 'sticker', hidden: true });
+        const el = h('div', { class: 'rv', style: { '--pc': pcol(mm.roster[u].c) } }, h('span', { class: 'tw' }, token(names[u], mm.roster[u].c, 'sm'), presDot()), h('div', {}, h('div', { class: 'nm' }, h('span', { text: names[u] }), val), say, xtra), stk);
+        el.__p = { val, say, xtra, stk };
         return el;
       }).forEach((el, k) => {
         const r = others[k], x = el.__p;
@@ -896,11 +873,6 @@ function rivalsPanel(m) {
         setText(x.val, r.ghost ? `à battre · ${r.txt}` : r.done ? 'fini' : r.on ? (r.txt || '…') : 'absent');
         setText(x.say, r.ghost ? 'score de référence' : r.done ? 'a terminé : réponse envoyée ✓' : !r.on ? 'déconnecté' : r.say);
         liveExtra(x.xtra, g, p, r, mine);
-        // Gonzague n'avance pas : son score est fixe, une jauge pleine ne dirait rien.
-        x.lamps.hidden = !!r.ghost;
-        const pc = Math.round(r.frac * 100);
-        x.fill.style.width = `${pc}%`;
-        setText(x.pct, `${pc} % de la manche`);
         // Devant, à égalité ou derrière toi (une fois que l'autre a commencé).
         const started = !r.ghost && !r.done && r.v !== null && r.v > 0;
         x.stk.hidden = !started;
@@ -1036,12 +1008,29 @@ function bacTable(m, names) {
   if (det.kind !== 'bac') return h('div');
   const t = h('table', { class: 'bac-table' });
   t.append(h('tr', {}, h('th', { text: `Lettre ${det.letter}` }), det.cats.map(c => h('th', { text: c }))));
-  const ST = { unique: 'unique', shared: 'partagée', invalid: 'refusée', letter: 'mauvaise lettre', empty: '' };
+  // En clair : pourquoi cette case rapporte ce qu'elle rapporte, et qui l'a validée (IA ou vote, avec les voix).
+  const judge = c => (c.src === 'vote' ? `vote des joueurs, ${c.no} refus sur ${c.of}` : c.src === 'ia' ? 'correcteur IA' : '');
+  const why = c => {
+    if (c.st === 'empty') return '';
+    if (c.st === 'letter') return 'refusée : ne commence pas par la bonne lettre';
+    if (c.st === 'invalid') return `refusée par ${judge(c) || 'le correcteur'}${c.src === 'ia' && c.w ? ` : ${c.w}` : ''}`;
+    return `${c.st === 'shared' ? 'écrite par plusieurs : 5 pts' : 'seule à l’avoir écrite : 10 pts'} · acceptée${judge(c) ? ` (${judge(c)})` : ''}`;
+  };
   Object.entries(det.cells).forEach(([u, cells]) => {
-    t.append(h('tr', {}, h('td', {}, h('b', { text: names[u] })), cells.map(c => h('td', { class: c.st }, h('span', { class: 'p', text: c.p ? `+${c.p}` : '0' }), c.t || '—', c.st !== 'empty' ? h('small', { text: [ST[c.st], c.w].filter(Boolean).join(' · ') }) : null))));
+    t.append(h('tr', {}, h('td', {}, h('b', { text: names[u] })), cells.map(c => h('td', { class: c.st }, h('span', { class: 'p', text: c.p ? `+${c.p}` : '0' }), c.t || '—', c.st !== 'empty' ? h('small', { text: why(c) }) : null))));
   });
+  // Bilan des réponses contestées : qui a tranché quoi, en une phrase chacune.
+  const seen = new Set(), disputed = [];
+  Object.entries(det.cells).forEach(([u, cells]) => cells.forEach((c, k) => {
+    const id = `${k}:${(c.t || '').toLowerCase()}`;
+    if (c.src !== 'vote' || seen.has(id)) return;
+    seen.add(id);
+    const authors = Object.entries(det.cells).filter(([, cs]) => cs[k] && (cs[k].t || '').toLowerCase() === (c.t || '').toLowerCase()).map(([x]) => names[x]);
+    disputed.push(h('li', { class: c.st === 'invalid' ? 'no' : 'yes' }, h('b', { text: `« ${c.t} »` }), ` (${det.cats[k]}, de ${authors.join(' et ')}) : `, h('span', { text: c.st === 'invalid' ? `REFUSÉE, ${c.no} joueur${c.no > 1 ? 's' : ''} sur ${c.of} ${c.no > 1 ? 'ont' : 'a'} refusé` : `ACCEPTÉE, ${c.no} refus sur ${c.of} : il en fallait plus de la moitié` })));
+  }));
   const mode = String(det.mode || '');
   return h('div', { class: 'bac-grid' }, t,
+    disputed.length ? h('div', { class: 'bac-bilan' }, h('h3', { text: 'Réponses contestées : qui a décidé quoi' }), h('ul', {}, disputed)) : h('p', { class: 'fine bac-bilan', text: 'Aucune réponse contestée : tout a été validé ou refusé directement.' }),
     h('div', { class: 'legend' }, h('span', {}, h('i', { style: { background: 'var(--ok)' } }), 'unique 10'), h('span', {}, h('i', { style: { background: 'var(--mustard)' } }), 'partagée 5'), h('span', {}, h('i', { style: { background: 'var(--red)' } }), 'refusée 0'),
       h('span', { text: mode.startsWith('ia:') ? `Correction : IA (${mode.slice(3)}) + vote des joueurs sur les cas douteux` : 'Correction : vote des joueurs (IA indisponible)' })));
 }
@@ -1063,6 +1052,19 @@ function openMenu() {
   $('#opt-full').checked = !!document.fullscreenElement;
   $('#opt-full').closest('label').hidden = !document.documentElement.requestFullscreen;
   $('#menu-stop').hidden = $('#menu-stop-note').hidden = !(room && room.isCoord && m && m.step !== 'final');
+  // Le coordinateur peut exclure un candidat parti, pour ne pas ralentir les autres.
+  const pl = clear($('#menu-players'));
+  const others = room && room.isCoord && m && m.step !== 'final' ? Object.keys(m.roster || {}).filter(u => u !== room.me) : [];
+  pl.hidden = others.length === 0 || Object.keys(m.roster).length < 2;
+  if (!pl.hidden) {
+    const PRES = { on: 'en ligne', away: 'parti un instant', gone: 'a quitté le site' };
+    pl.append(h('h3', { text: 'Candidats' }), ...others.map(u => {
+      const st = room.presence(u), nm = (m.roster[u] || {}).name || '?';
+      const b = h('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: 'Exclure' });
+      b.addEventListener('click', () => ask(`${nm} sort du tournoi : plus attendu, plus classé, il reste spectateur. Ses points déjà gagnés disparaissent du classement.`, `Exclure ${nm}`, () => { closeMenu(); if (coord) coord.kick(u).catch(() => toast('Exclusion impossible')); }));
+      return h('div', { class: `mp-row ${st}` }, h('span', { class: 'nm', text: nm }), h('small', { text: PRES[st] }), b);
+    }));
+  }
   $('#menu-confirm').hidden = true;
   menu.hidden = false; menuBack.hidden = false;
   requestAnimationFrame(() => { menu.classList.add('open'); menuBack.classList.add('open'); });
