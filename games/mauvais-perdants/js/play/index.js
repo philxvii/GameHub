@@ -18,8 +18,13 @@ import bac from './bac.js';
 import calcul from './calcul.js';
 import nuage from './nuage.js';
 import prix from './prix.js';
+import encre from './encre.js';
+import chrono from './chrono.js';
+import intrus from './intrus.js';
+import anagramme from './anagramme.js';
+import metronome from './metronome.js';
 
-export const PLAY = { gong, tir, dictee, chemin, numeros, damier, coffre, dejavu, bac, calcul, nuage, prix };
+export const PLAY = { gong, tir, dictee, chemin, numeros, damier, coffre, dejavu, bac, calcul, nuage, prix, encre, chrono, intrus, anagramme, metronome };
 
 export function mountPlay(el, { gameId, params, startAt, endAt, now, send, progress, peers, turn, doneText, save, finished }) {
   clear(el);

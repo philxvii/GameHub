@@ -99,8 +99,16 @@ fictive de la fin des années 70. Pas de présentateur à l'écran (ses répliqu
   Tir, question du Calcul, mot du Déjà vu, reconstruits depuis la graine + `prog`, sous-clé = indice, sans toucher aux
   règles) ; Coffre par tours : les autres voient le nombre du joueur ; L'Étiquette : photos libres pour 5 lots
   « pour rire » (`img/prix/fun-*.jpg`, emoji en repli) ; règles de Déjà vu ? réécrites avec exemple.
+  **5 nouvelles épreuves (29/10, local, non commitées)** après étude de marché (Jackbox : règle en 30 s, un geste
+  par écran ; Mario Party : le hasard pur frustre, donc que de l'adresse ; WarioWare : un verbe par épreuve ; Wordle :
+  même défi pour tous, résultat comparable) : `encre` (Stroop, vitesse), `chrono` (Chrono caché, chiffres), `intrus`
+  (espace), `anagramme` (Mot brouillé, mots), `metronome` (mémoire) ; fichiers `rounds/` + `play/`, ajoutées en fin de
+  `PICK_ORDER`, répliques de l'animateur, démos, spectateur (mini-écrans Encre, Intrus, Mot brouillé ; écart au
+  Chrono/Métronome). Tests Node 86/86 (`tests/nouvelles-epreuves.test.mjs`) ; chaque écran vu dans Chrome via une page
+  de test jetable (supprimée) ; PAS joué à plusieurs ni via `rounds.cjs` (pas de bot pour ces épreuves).
   Reste : mini-écrans des autres manches (Chemin, Damier, Numéros, Petit Bac, Prix, Dictée à plusieurs), photos des
   7 autres lots, Ban, Petit Bac douteux. À vérifier dans Chrome avant de pousser.
+- 29/10 (soir), **local, non commité, non vu dans Chrome** : les rampes de petits points du panneau des rivaux (`SEGS`, `.lamps`) sont remplacées par une barre d'avancement avec « xx % de la manche » (`.pbar`) ; masquée pour Gonzague (score fixe).
 
 **Lancer les émulateurs sur ce PC** : le lanceur `npx firebase` est bloqué par une stratégie de
 groupe (pas Java). Utiliser Node directement, avec le JDK 21 installé en ZIP (hors PATH, Java 17

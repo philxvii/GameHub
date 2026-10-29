@@ -109,6 +109,11 @@ export const LINES = {
     L(c => c.g === 'calcul' && `Calcul express. Une erreur coûte un point. Taper au hasard, c'est payer pour perdre.`),
     L(c => c.g === 'nuage' && `Le Nuage. Combien de points ? Personne ne compte, tout le monde ment. Approchez-vous de la vérité.`),
     L(c => c.g === 'prix' && `L'Étiquette. Combien ça coûte ? Vous allez découvrir que vous ne faites jamais vos courses.`),
+    L(c => c.g === 'encre' && `L'Encre. Le mot dit une chose, la couleur en dit une autre. Comme vous, en fait.`),
+    L(c => c.g === 'chrono' && `Le Chrono caché. Vous prétendez avoir le sens du temps. Vous êtes en retard à tout.`),
+    L(c => c.g === 'intrus' && `L'Intrus. Un seul signe n'est pas comme les autres. Vous le reconnaîtrez : c'est le seul qui ne vous ressemble pas.`),
+    L(c => c.g === 'anagramme' && `Le Mot brouillé. Des lettres en vrac, comme vos arguments. Remettez-les en ordre.`),
+    L(c => c.g === 'metronome' && `Le Métronome. Quatre battements, puis le silence. Tenez le rythme. Je sais, c'est dur sans moi pour vous guider.`),
   ],
   round_win: [
     L(c => `${c.P} gagne la manche. Je note, je souligne, et je fais semblant de ne pas être impressionné.`),

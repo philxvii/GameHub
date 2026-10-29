@@ -12,6 +12,7 @@ import { GHOST } from './results.js';
 import { derive } from './rounds/coffre.js';
 import { chat } from './chat.js';
 import { round, FAMILIES } from './rounds/index.js';
+import { COLORS as INK } from './rounds/encre.js';
 import { gameOf, contenders, COUNT_MS } from './machine.js';
 import { ROUNDS_PER_TOURNAMENT, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks, roundsOf } from './draw.js';
 import { standings, MIN_PLAYERS, MAX_PLAYERS, FINAL_MULT } from './scoring.js';
@@ -403,7 +404,12 @@ const DEMOS = {
   nuage: ['☁️ Un nuage de points', '🔢 Combien ?', '🎯 Écart minimal'],
   numeros: ['🔢 Repère les numéros', '🙈 Ils se cachent', '👆 Dans l’ordre'],
   prix: ['🛒 Un produit', '🏷️ Devine son prix', '🔴 L’étiquette tombe'],
-  tir: ['🎯 20 cibles', '👆 Touche-les', '⏱️ Le plus rapide']
+  tir: ['🎯 20 cibles', '👆 Touche-les', '⏱️ Le plus rapide'],
+  encre: ['🎨 Mot « ROUGE » écrit en bleu', '👆 Touche BLEU, la couleur de l’encre', '🏆 Le plus de points en 30 s'],
+  chrono: ['⏱️ Un chrono démarre', '🙈 Il disparaît à 2 s', '🛑 STOP pile à la durée demandée'],
+  intrus: ['🔠 Des signes presque pareils', '👁️ Un seul est différent', '⏱️ Le plus rapide'],
+  anagramme: ['🔀 Lettres mélangées', '⌨️ Retrouve le mot', '🏆 Le plus de mots'],
+  metronome: ['🔔 Quatre battements', '🤫 Le métronome se tait', '👆 Continue au même rythme'],
 };
 function demoOf(id) {
   const steps = DEMOS[id];
@@ -781,6 +787,11 @@ const PROG = {
   dejavu: v => [`${v}`, null, `${v} bonne${v > 1 ? 's' : ''} réponse${v > 1 ? 's' : ''}`], calcul: v => [`${v} pt${Math.abs(v) > 1 ? 's' : ''}`, null, `${v} point${Math.abs(v) > 1 ? 's' : ''} au compteur`],
   nuage: v => [`${v}/3`, v / 3, `${v} nuage${v > 1 ? 'x' : ''} sur 3 estimé${v > 1 ? 's' : ''}`], bac: v => [`${v}/4`, v / 4, `${v} case${v > 1 ? 's' : ''} sur 4 remplie${v > 1 ? 's' : ''}`],
   prix: v => [`${v}/5`, v / 5, `${v} produit${v > 1 ? 's' : ''} sur 5 chiffré${v > 1 ? 's' : ''}`],
+  encre: v => [`${v} pt${Math.abs(v) > 1 ? 's' : ''}`, null, `${v} point${Math.abs(v) > 1 ? 's' : ''} au compteur`],
+  chrono: v => [`${v}/3`, v / 3, `${v} essai${v > 1 ? 's' : ''} sur 3 stoppé${v > 1 ? 's' : ''}`],
+  intrus: v => [`${v}/12`, v / 12, `${v} grille${v > 1 ? 's' : ''} sur 12 trouvée${v > 1 ? 's' : ''}`],
+  anagramme: v => [`${v}`, null, `${v} mot${v > 1 ? 's' : ''} retrouvé${v > 1 ? 's' : ''}`],
+  metronome: v => [`${v}/3`, v / 3, `${v} tempo${v > 1 ? 's' : ''} sur 3 joué${v > 1 ? 's' : ''}`],
 };
 // État de chaque candidat : valeur, part de la borne (0 à 1), texte, fini ou non.
 function race(mm, g, p) {
@@ -815,6 +826,12 @@ function spectate(g, p, r) {
   }
   if (g === 'calcul' && p.list[idx]) return h('div', { class: 'mini-screen' }, h('b', { text: `${p.list[idx].q} = ?` }), h('small', { text: ` question ${idx + 1}, total ${r.v}` }));
   if (g === 'dejavu' && p.words[idx]) return h('div', { class: 'mini-screen' }, h('b', { text: p.words[idx].w }), h('small', { text: ` ${r.v} bonne${r.v > 1 ? 's' : ''} réponse${r.v > 1 ? 's' : ''}` }));
+  if (g === 'encre' && p.items[idx]) { const it = p.items[idx], c = INK[it.c]; return h('div', { class: 'mini-screen' }, h('b', { style: { color: c.css }, text: INK[it.w].name }), h('small', { text: ` ${r.v} point${Math.abs(r.v) > 1 ? 's' : ''}` })); }
+  if (g === 'anagramme' && p.items[idx]) return h('div', { class: 'mini-screen' }, h('b', { text: p.items[idx].s.toUpperCase() }), h('small', { text: ` mot ${idx + 1}, ${r.v} trouvé${r.v > 1 ? 's' : ''}` }));
+  if (g === 'intrus' && p.rounds[Math.min(r.v, p.rounds.length - 1)]) {
+    const gr = p.rounds[Math.min(r.v, p.rounds.length - 1)];
+    return h('div', { class: 'mini-odd', style: { gridTemplateColumns: `repeat(${gr.n}, 1fr)` } }, Array.from({ length: gr.n * gr.n }, (_, c) => h('i', { class: c === gr.cell ? 'odd' : '', text: c === gr.cell ? gr.odd : gr.base })));
+  }
   return h('span');
 }
 
@@ -830,7 +847,13 @@ function liveExtra(el, g, p, r, mine, open = false) {
     if (guess > 0 && (open || idx < myCount) && p.clouds[idx]) kids = [h('span', { class: 'lv-say', text: `Nuage ${idx + 1} : il a mis ${guess}` }), h('span', { class: 'lv-true', text: ` (c’était ${p.clouds[idx].n})` })];
     else if (guess > 0) kids = [h('span', { class: 'lv-hide', text: 'Sa réponse s’affichera quand tu auras répondu.' })];
   }
-  else if (open && !r.ghost && r.v !== null && r.v !== undefined && ['tir', 'calcul', 'dejavu'].includes(g)) kids = [spectate(g, p, r)];
+  else if (open && !r.ghost && r.v !== null && r.v !== undefined && ['tir', 'calcul', 'dejavu', 'encre', 'anagramme', 'intrus'].includes(g)) kids = [spectate(g, p, r)];
+  else if ((g === 'chrono' || g === 'metronome') && r.sub && !r.ghost) {
+    // « indice de l'essai + écart en ms (base 36) » : visible une fois qu'on a joué le même essai (ou fini).
+    const i = Number(r.sub[0]), err = parseInt(r.sub.slice(1), 36), myCount = mine && mine.v ? mine.v : 0;
+    if (open || i < myCount) kids = [h('span', { class: 'lv-say', text: `${g === 'chrono' ? 'Essai' : 'Tempo'} ${i + 1} : ${g === 'chrono' ? (err / 1000).toFixed(2).replace('.', ',') + ' s' : err + ' ms'} d’écart` }), h('span', { class: err <= (g === 'chrono' ? 150 : 40) ? 'lv-win' : 'lv-true', text: err <= (g === 'chrono' ? 150 : 40) ? ' (quasi parfait)' : '' })];
+    else kids = [h('span', { class: 'lv-hide', text: 'Son écart s’affichera quand tu auras joué cet essai.' })];
+  }
   else if (g === 'gong' && r.sub && !r.ghost) {
     const idx = Number(r.sub[0]), ms = parseInt(r.sub.slice(1), 36);
     const myCount = mine && mine.v ? mine.v : 0;
@@ -845,15 +868,11 @@ function liveExtra(el, g, p, r, mine, open = false) {
   el.replaceChildren(...kids);
 }
 
-// Nombre de lampes de la rampe : une par case réelle quand la manche a une borne claire.
-const SEGS = { bac: 4, nuage: 3, prix: 5, gong: p => p.trials };
-
-// Les rivaux pendant ta manche : un jeton, une valeur, une rampe de lampes.
+// Les rivaux pendant ta manche : un jeton, une valeur, une barre d'avancement.
 function rivalsPanel(m) {
   const g = gameOf(m), p = paramsOf(m), names = namesOf(m);
   const list = h('div', { class: 'rivals-list' });
   const el = h('aside', { class: 'rivals', 'aria-label': 'Les autres candidats' }, h('h3', { text: 'Les autres candidats, en direct' }), h('p', { class: 'rv-help', text: 'Là où en sont les autres pendant que tu joues. Le badge te dit s’ils sont devant ou derrière toi.' }), list);
-  const segs = SEGS[g] ? (typeof SEGS[g] === 'function' ? SEGS[g](p) : SEGS[g]) : 10;
   let myBest = 0;
   return {
     el,
@@ -865,19 +884,22 @@ function rivalsPanel(m) {
       myBest = mine && mine.v !== null && mine.v !== undefined ? mine.v : myBest;
       const others = rows.filter(r => r.u !== room.me);
       keyed(list, others.map(r => r.u), u => {
-        const val = h('small'), say = h('div', { class: 'say' }), xtra = h('div', { class: 'xtra' }), lamps = h('div', { class: 'lamps', 'aria-hidden': 'true' }, Array.from({ length: segs }, () => h('i'))), stk = h('span', { class: 'sticker', hidden: true });
+        const val = h('small'), say = h('div', { class: 'say' }), xtra = h('div', { class: 'xtra' }), fill = h('i'), pct = h('small', { class: 'pct' }), lamps = h('div', { class: 'pbar' }, h('span', { class: 'track', 'aria-hidden': 'true' }, fill), pct), stk = h('span', { class: 'sticker', hidden: true });
         const el = h('div', { class: 'rv', style: { '--pc': pcol(mm.roster[u].c) } }, h('span', { class: 'tw' }, token(names[u], mm.roster[u].c, 'sm'), presDot()), h('div', {}, h('div', { class: 'nm' }, h('span', { text: names[u] }), val), say, xtra, lamps), stk);
-        el.__p = { val, say, xtra, lamps: [...lamps.children], stk };
+        el.__p = { val, say, xtra, lamps, fill, pct, stk };
         return el;
       }).forEach((el, k) => {
         const r = others[k], x = el.__p;
-        const lit = Math.round(r.frac * segs);
         setClass(el, `rv${r.done ? ' fin' : ''}`);
         setPres(el, r.u);
         setText(x.val, r.ghost ? `à battre · ${r.txt}` : r.done ? 'fini' : r.on ? (r.txt || '…') : 'absent');
         setText(x.say, r.ghost ? 'score de référence' : r.done ? 'a terminé : réponse envoyée ✓' : !r.on ? 'déconnecté' : r.say);
         liveExtra(x.xtra, g, p, r, mine);
-        x.lamps.forEach((l, i) => setClass(l, i < lit ? 'on' : ''));
+        // Gonzague n'avance pas : son score est fixe, une jauge pleine ne dirait rien.
+        x.lamps.hidden = !!r.ghost;
+        const pc = Math.round(r.frac * 100);
+        x.fill.style.width = `${pc}%`;
+        setText(x.pct, `${pc} % de la manche`);
         // Devant, à égalité ou derrière toi (une fois que l'autre a commencé).
         const started = !r.ghost && !r.done && r.v !== null && r.v > 0;
         x.stk.hidden = !started;
