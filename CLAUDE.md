@@ -5,7 +5,8 @@
 **Avant de toucher au dépôt (code, interface, image, texte), lis [docs/CHARTE-DES-JEUX.md](docs/CHARTE-DES-JEUX.md)
 en entier, puis enregistre-en l'essentiel dans ta mémoire persistante** (les huit règles, le niveau des jeux
 de référence, l'obligation de plan). Relis-la au début de chaque session. En deux phrases : chaque jeu est un
-petit monde avec sa propre direction artistique, son logo, son histoire et une immersion poussée au maximum
+petit monde avec sa propre direction artistique, épurée et recherchée, **jamais proche de celle d'un autre jeu du
+site** (univers, palette, typographies, matière, boutons, tout diffère), son logo, son histoire et une immersion poussée au maximum
 (comme Banqueroll, Mini Subway ou Puissance 4) ; il doit sembler fait par une équipe de graphistes, de
 développeurs et de testeurs, jamais généré par une IA. **Rien n'est produit avant qu'un dossier
 `games/<jeu>/DIRECTION.md` ait été écrit et validé par l'utilisateur** : épuré, fluide, typographie choisie.

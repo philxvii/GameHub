@@ -20,9 +20,14 @@ fluide. Même la police compte.
 
 ## 1. Les huit règles
 
-1. **Un jeu = un univers.** Une phrase suffit pour le dire (« Le zinc d'un bistrot »,
-   « Une chaîne de télé de 1978 », « Une salle d'observatoire la nuit »). Si on ne peut pas
-   la dire, le jeu n'est pas prêt à être dessiné.
+1. **Un jeu = un univers, et jamais deux jeux ne se ressemblent.** Une phrase suffit pour le
+   dire (« Le zinc d'un bistrot », « Une chaîne de télé de 1978 », « Une salle d'observatoire
+   la nuit »). Si on ne peut pas la dire, le jeu n'est pas prêt à être dessiné. **Chaque jeu a
+   sa propre direction artistique, épurée et recherchée : lieu, matière, palette, typographie,
+   logotype, forme des boutons, mouvement, tout diffère de ce qui existe déjà sur le site.**
+   Deux jeux qui se ressemblent (même ambiance, mêmes couleurs, même police, mêmes boutons,
+   même habillage avec des mots changés) sont un échec, même si chacun est joli. Épuré ne veut
+   pas dire vide ni fade : peu d'éléments, mais choisis et travaillés.
 2. **L'immersion est maximale** : décor, matières, objets, lumière, sons, micro-textes,
    transitions, écrans de chargement, d'erreur et de victoire. Tout vit dans l'univers.
    Aucun écran « par défaut » qui sortirait du monde du jeu.
@@ -55,6 +60,18 @@ fluide. Même la police compte.
 | **Mauvais Perdants** | « Canal 7 » : une chaîne de télé fictive de 1978 | Le décor, c'est l'interface ; la couleur dit la phase du jeu ; ton taquin, fausses publicités, virgule d'antenne | `games/mauvais-perdants/docs/DIRECTION-ARTISTIQUE.md` |
 | **Le hub** | Une page claire, des affiches, rien d'autre | Les affiches portent seules la couleur ; distribution des cartes à l'ouverture ; Instrument Sans | `shared/design/README.md` |
 
+**Ce qui est déjà pris : à ne pas reprendre.** Un nouveau jeu doit s'éloigner de chacune de ces
+lignes, pas s'en inspirer.
+
+| Jeu | Univers | Typographies | Palette dominante | Matière |
+| --- | --- | --- | --- | --- |
+| Mini Subway | carte de métro imprimée | Bricolage Grotesque, IBM Plex Mono | crème, bleu, rouge, vert de lignes | papier |
+| Banqueroll | table de banque | Gloock, Schibsted Grotesk | vert feutre, carton, laiton | feutre, carton, laiton |
+| Puissance 4 | observatoire de nuit | Cinzel, Tenor Sans | bleu nuit, lune, noyer | bois verni, acier |
+| 421 | zinc de bistrot | Fraunces, DM Sans | vert tapis, rouge, crème | zinc, os, feutrine |
+| Échecs | club d'échecs | Cormorant Garamond, Jost | vert sombre, laiton, bois clair | marqueterie |
+| Mauvais Perdants | télé de 1978 | Anton, Instrument Sans | orange, moutarde, sarcelle, brun | habillage de chaîne |
+
 Ce que ces jeux ont tous : **un lieu ou un objet concret**, une palette courte venue de
 matières réelles, une typographie qui sent l'époque, des détails qu'on découvre en jouant,
 un dossier de direction qui explique chaque choix et son pourquoi.
@@ -79,7 +96,9 @@ dans cet ordre, et que l'utilisateur ait dit oui à l'étape 3.
 
 1. **Regarder** les jeux de référence de la section 2 (au moins deux, avec leur dossier de
    direction) et **chercher** : lieux, objets, époques, typographies, jeux et interfaces
-   comparables, ce que les joueurs aiment et détestent. Noter les sources.
+   comparables, ce que les joueurs aiment et détestent. Noter les sources. **Vérifier que
+   l'univers, la palette, les typographies et la matière envisagés ne ressemblent à aucun
+   jeu du tableau « déjà pris »** ; si un seul des cinq critères se recoupe, on change.
 2. **Écrire `games/<jeu>/DIRECTION.md`** sur le modèle des autres (voir le gabarit
    ci-dessous) : univers en une phrase, tableau « Élément / Décision / Pourquoi », mouvement,
    recherche, écrans clés, personnages et ton, affiche, sons.
@@ -145,7 +164,8 @@ un ton.
 ## 8. Identité d'un jeu : la liste à cocher
 
 - [ ] un nom propre à lui, jamais celui d'un autre jeu ni d'une marque
-- [ ] une phrase d'univers, un lieu ou un objet central
+- [ ] une phrase d'univers, un lieu ou un objet central, **différents de tous les autres jeux**
+- [ ] une ligne ajoutée au tableau « déjà pris » de la section 2 (univers, typos, palette, matière)
 - [ ] un logotype dessiné, une affiche 720 × 960 (3:4, WebP, 30 à 70 Ko) dans le style des
       autres affiches (voir `shared/design/README.md`)
 - [ ] une typographie justifiée, une palette courte, un seul accent
