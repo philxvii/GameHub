@@ -158,6 +158,17 @@ describe('Mauvais Perdants : réponses de manche', () => {
     await assertFails(set(r(bob, 'start/t1/r0/alice'), serverTimestamp()));
     await assertSucceeds(remove(r(alice, 'start')));                          // le coordinateur vide tout
   });
+  test('Coffre : chiffres tapés, visibles des autres, écrits par soi seul', async () => {
+    await room();
+    await assertSucceeds(set(r(bob, 'typing/bob'), { k: '3', d: '48' }));
+    await assertSucceeds(set(r(bob, 'typing/bob'), { k: '3', d: '482' }));           // écrasé à chaque frappe
+    await assertSucceeds(get(r(alice, 'typing/bob')));                                // lu par les autres membres
+    await assertFails(set(r(alice, 'typing/bob'), { k: '3', d: '1' }));              // pas au nom d'un autre
+    await assertFails(set(r(bob, 'typing/bob'), { k: '3', d: '12a' }));              // des chiffres seulement
+    await assertFails(set(r(bob, 'typing/bob'), { k: '3', d: '1'.repeat(25) }));     // 24 au plus
+    await assertFails(set(r(bob, 'typing/bob'), { k: 'x', d: '1' }));                // numéro de tour
+    await assertFails(set(r(carol, 'typing/carol'), { k: '3', d: '1' }));            // pas membre du salon
+  });
   test('chat : texte de 140 caractères, signé de son auteur, écrit une fois, vidé par le coordinateur seul', async () => {
     await room();
     const msg = (u, t = 'salut') => ({ u, t, ts: serverTimestamp() });

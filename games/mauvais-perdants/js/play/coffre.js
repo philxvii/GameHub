@@ -5,25 +5,45 @@ import { h } from '../ui/dom.js';
 import { lives as livesEl, wait } from './index.js';
 import { numberFor, showMs, normalizeDigits, derive, verdictOf, answerMs, START, LIVES, MAX_LEN, TIMEOUT_GRACE_MS } from '../rounds/coffre.js';
 
+// Anti-triche : on ne colle rien dans la case de réponse (ni clic droit, ni Ctrl+V, ni glisser-déposer),
+// et le nombre affiché ne se sélectionne ni ne se copie. Un chiffre se tape, c'est tout.
+const NO = e => { e.preventDefault(); e.stopPropagation(); };
+function noPaste(el) {
+  ['paste', 'drop', 'dragover', 'contextmenu', 'cut', 'copy'].forEach(t => el.addEventListener(t, NO));
+  el.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && /^[vxcz]$/i.test(e.key)) { e.preventDefault(); } if (e.key === 'Insert' && e.shiftKey) e.preventDefault(); }, true);
+  el.addEventListener('input', () => { el.value = el.value.replace(/[^0-9]/g, ''); });
+  return el;
+}
+function noCopy(el) {
+  ['copy', 'cut', 'contextmenu', 'dragstart', 'selectstart'].forEach(t => el.addEventListener(t, NO));
+  el.style.userSelect = 'none'; el.style.webkitUserSelect = 'none';
+  return el;
+}
+
 export default function mount(root, api) {
   return api.p.mode === 'turns' && api.turn ? mountTurns(root, api) : mountSolo(root, api);
 }
-// ───────────── À plusieurs : élimination à tour de rôle (voir rounds/coffre.js)
+// ───────────── À plusieurs : élimination par tours (voir rounds/coffre.js)
+// Un tour = tous les joueurs encore en lice jouent une fois, chacun avec SON nombre (même longueur).
+// À l'écran : l'ordre de passage (qui a joué, qui joue, qui attend), une bannière « À TOI » ou
+// « BOB joue », et pendant que quelqu'un tape, les autres voient ses chiffres arriver.
 function mountTurns(root, { p, now, startAt, submit, progress, sfx, turn }) {
   const me = turn.me;
   const name = u => (turn.names()[u] || '?');
-  const lvl = h('b'), alive = h('b');
-  const who = h('div', { class: 'turn-who', 'aria-live': 'polite' });
-  const big = h('div', { class: 'bignum' });
+  const lvl = h('b'), alive = h('b'), len = h('b');
+  const orderEl = h('div', { class: 'cf-order', 'aria-label': 'Ordre de passage' });
+  const banner = h('div', { class: 'cf-banner', 'aria-live': 'polite' });
+  const big = noCopy(h('div', { class: 'bignum' }));
+  const typed = h('div', { class: 'cf-typed', 'aria-label': 'Chiffres tapés par le joueur' });
   const barFill = h('i'), bar = h('div', { class: 'bar' }, barFill);
-  const input = h('input', { class: 'inp', inputmode: 'numeric', pattern: '[0-9]*', autocomplete: 'off', maxlength: '24', 'aria-label': 'Le nombre' });
+  const input = noPaste(h('input', { class: 'inp', inputmode: 'numeric', pattern: '[0-9]*', autocomplete: 'off', maxlength: '24', 'aria-label': 'Le nombre' }));
   const btn = h('button', { class: 'btn btn-main', type: 'button', text: 'Valider' });
   const row = h('div', { class: 'answer-row' }, input, btn);
   const fb = h('div', { class: 'feedback' });
-  root.append(h('div', { class: 'play-head' }, h('span', {}, 'Chiffres : ', lvl), h('span', {}, 'En lice : ', alive)), who, bar, big, fb, row);
+  root.append(h('div', { class: 'play-head' }, h('span', {}, 'Tour ', lvl, ' · ', len, ' chiffres'), h('span', {}, 'En lice : ', alive)), orderEl, banner, bar, big, typed, fb, row);
   row.style.visibility = 'hidden';
 
-  let turnN = -1, phase = '', dead = false, finishing = false, timer = null;
+  let turnN = -1, phase = '', dead = false, finishing = false, timer = null, curN = -1, orderKey = '', typedKey = '', lastSent = 0;
   const wrote = new Set();
   const barTo = ms => {
     barFill.style.transition = 'none'; barFill.style.transform = 'scaleX(1)'; void barFill.offsetWidth;
@@ -33,32 +53,59 @@ function mountTurns(root, { p, now, startAt, submit, progress, sfx, turn }) {
   const payloadOf = d => verdictOf(d, me);
   const payload = () => payloadOf(derive(p, turn.log(), startAt));
 
+  // L'ordre de passage : une pastille par joueur, avec ce qu'il a fait ce tour-ci.
+  const TAG = { now: 'joue', ok: 'réussi', ko: 'raté', out: 'éliminé', wait: 'attend' };
+  function renderOrder(d) {
+    const states = p.order.map(u => {
+      const st = d.over ? (d.out[u] !== undefined ? 'out' : 'ok') : d.out[u] !== undefined ? (d.played[u] === 'x' ? 'ko' : 'out') : u === d.mover ? 'now' : d.played[u] === 'o' ? 'ok' : 'wait';
+      return [u, st];
+    });
+    const key = states.map(([u, st]) => `${u}:${st}`).join('|') + `|${d.round}`;
+    if (key === orderKey) return;
+    orderKey = key;
+    orderEl.replaceChildren(...states.map(([u, st]) => h('div', { class: `cf-chip ${st}${u === me ? ' me' : ''}` },
+      h('span', { class: 'cf-av', style: { '--pc': turn.color(u) }, text: (name(u)[0] || '?').toUpperCase() }),
+      h('b', { text: u === me ? `${name(u)} (toi)` : name(u) }), h('small', { text: TAG[st] }))));
+  }
+  // Les chiffres que tape le joueur dont c'est le tour, vus par les autres.
+  function renderTyped(d, show) {
+    let digits = '', key = '';
+    if (show && !d.over && d.mover !== me) { const t = turn.typed(d.mover); digits = t && t.k === String(d.n) ? t.d : ''; key = `${d.n}:${d.len}:${digits}`; }
+    if (key === typedKey) return;
+    typedKey = key;
+    if (!key) { typed.replaceChildren(); return; }
+    typed.replaceChildren(...Array.from({ length: d.len }, (_, i) => h('span', { class: `cf-slot${digits[i] ? ' on' : ''}`, text: digits[i] || '' })));
+  }
   function feedbackFor(d) {
     const m = d.lastMove;
     if (!m) { fb.textContent = ''; fb.className = 'feedback'; return; }
-    if (m.r === 'o') { fb.className = 'feedback ok'; fb.textContent = `${name(m.u)} : exact.`; }
-    else { fb.className = 'feedback ko'; fb.textContent = `${name(m.u)} est éliminé · c’était ${m.num}`; }
+    const t = turn.typed(m.u), got = t && t.k === String(m.n) ? t.d : '';
+    if (m.r === 'o') { fb.className = 'feedback ok'; fb.textContent = m.u === me ? 'Exact ! Tu passes.' : `${name(m.u)} : exact.`; }
+    else { fb.className = 'feedback ko'; fb.textContent = `${m.u === me ? 'Raté, tu es éliminé' : `${name(m.u)} est éliminé`} · il fallait ${m.num}${got ? `, ${m.u === me ? 'tu as tapé' : 'il a tapé'} ${got}` : ''}`; }
   }
+  const say = (txt, cls = '') => { banner.className = `cf-banner ${cls}`; if (banner.textContent !== txt) banner.textContent = txt; };
 
   function tick() {
     if (finishing) return;
     const d = derive(p, turn.log(), startAt);
     const t = now();
-    lvl.textContent = String(d.len);
+    lvl.textContent = String(d.round + 1);
+    len.textContent = String(d.len);
     alive.textContent = String(d.alive.length);
+    renderOrder(d);
     if (d.out[me] !== undefined && !dead) { dead = true; sfx.bad(); }
     if (d.over) {
       finishing = true;
-      row.style.visibility = 'hidden';
-      big.textContent = d.winner === me ? '🏆' : d.winner ? '—' : '=';
-      who.textContent = d.winner ? (d.winner === me ? 'Dernier en lice : tu gagnes la manche !' : `${name(d.winner)} gagne la manche.`) : 'Plus aucun nombre assez long : égalité des survivants.';
+      row.style.visibility = 'hidden'; renderTyped(d, false);
+      big.textContent = d.winner === me ? 'GAGNÉ' : d.winner ? '—' : '=';
+      say(d.winner ? (d.winner === me ? 'Dernier en lice : tu gagnes la manche !' : `${name(d.winner)} gagne la manche.`) : d.alive.length ? 'Plus aucun nombre assez long : égalité des survivants.' : 'Tout le monde a raté le même tour : égalité.', 'end');
       feedbackFor(d);
       progress(d.n);
       setTimeout(() => submit(payloadOf(d)), 2600);
       return;
     }
     if (d.n !== turnN) {
-      turnN = d.n; phase = ''; input.value = '';
+      turnN = d.n; phase = ''; input.value = ''; curN = d.n;
       progress(d.n);
       feedbackFor(d);
     }
@@ -66,19 +113,24 @@ function mountTurns(root, { p, now, startAt, submit, progress, sfx, turn }) {
     const mine = d.mover === me;
     const dl = d.start + shows + ans;
     if (t < d.start) {
-      if (phase !== 'wait') { phase = 'wait'; big.textContent = '…'; row.style.visibility = 'hidden'; barFill.style.transition = 'none'; barFill.style.transform = 'scaleX(1)'; }
-      who.textContent = dead ? 'Éliminé : tu regardes la suite.' : `Prochain nombre : ${d.len} chiffres`;
+      if (phase !== 'wait') { phase = 'wait'; big.textContent = '• • •'; row.style.visibility = 'hidden'; barFill.style.transition = 'none'; barFill.style.transform = 'scaleX(1)'; }
+      say(mine ? 'C’est à toi dans un instant…' : `${name(d.mover)} va jouer`, mine ? 'me' : '');
+      renderTyped(d, false);
     } else if (t < d.start + shows) {
-      if (phase !== 'show') { phase = 'show'; big.textContent = d.num; row.style.visibility = 'hidden'; barTo(d.start + shows - t); }
-      who.textContent = mine ? 'Retiens-le : c’est à toi !' : `Retiens-le · ${name(d.mover)} le retapera`;
+      // Seul le joueur dont c'est le tour voit son nombre : les autres ne peuvent donc rien en recopier.
+      if (phase !== 'show') { phase = 'show'; big.textContent = mine ? d.num : '• '.repeat(d.len).trim(); row.style.visibility = 'hidden'; barTo(d.start + shows - t); }
+      say(mine ? 'À TOI ! Retiens ton nombre' : `${name(d.mover)} mémorise son nombre…`, mine ? 'me' : '');
+      renderTyped(d, false);
     } else {
       if (phase !== 'answer') {
         phase = 'answer';
-        big.textContent = '?'.repeat(Math.min(d.len, 12));
+        big.textContent = '• '.repeat(d.len).trim();
+        fb.textContent = ''; fb.className = 'feedback';
         barTo(dl - t);
         if (mine && !dead) { row.style.visibility = 'visible'; input.focus(); }
       }
-      who.textContent = mine ? 'À toi : retape le nombre !' : `${name(d.mover)} tape le nombre…`;
+      say(mine ? 'À TOI ! Tape ton nombre' : `${name(d.mover)} tape son nombre…`, mine ? 'me' : '');
+      renderTyped(d, true);
       // Temps écoulé : le joueur s'élimine lui-même ; les autres le font si le sien a disparu.
       if (mine && t > dl) { row.style.visibility = 'hidden'; write(d.n, me, 'x'); }
       else if (!mine && (t > dl + TIMEOUT_GRACE_MS || (!turn.online(d.mover) && t > d.start + shows + TIMEOUT_GRACE_MS))) write(d.n, d.mover, 'x');
@@ -91,9 +143,17 @@ function mountTurns(root, { p, now, startAt, submit, progress, sfx, turn }) {
     if (got === null) { fb.className = 'feedback ko'; fb.textContent = 'Des chiffres seulement.'; return; }
     const ok = got === d.num;
     row.style.visibility = 'hidden';
+    turn.typing(d.n, got);
     if (ok) sfx.good(); else sfx.bad();
     write(d.n, me, ok ? 'o' : 'x');
   }
+  // Chaque frappe est envoyée (au plus une toutes les 120 ms) pour que les autres voient les chiffres arriver.
+  input.addEventListener('input', () => {
+    if (phase !== 'answer') return;
+    const t = Date.now();
+    if (t - lastSent < 120) { clearTimeout(input.__t); input.__t = setTimeout(() => { lastSent = Date.now(); turn.typing(curN, input.value); }, 120); return; }
+    lastSent = t; turn.typing(curN, input.value);
+  });
   btn.addEventListener('click', validate);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); validate(); } });
   timer = setInterval(tick, 100);
@@ -107,10 +167,10 @@ function mountSolo(root, { p, submit, progress, sfx }) {
   let len = START, lives = LIVES, a = 0, t0 = performance.now(), lastOk = 0, alive = true, best = 0, open = false;
   const lvl = h('b', { text: String(len) });
   const lifeBox = h('span');
-  const big = h('div', { class: 'bignum', 'aria-live': 'polite' });
+  const big = noCopy(h('div', { class: 'bignum', 'aria-live': 'polite' }));
   const barFill = h('i');
   const bar = h('div', { class: 'bar' }, barFill);
-  const input = h('input', { class: 'inp', inputmode: 'numeric', pattern: '[0-9]*', autocomplete: 'off', maxlength: '24', 'aria-label': 'Le nombre' });
+  const input = noPaste(h('input', { class: 'inp', inputmode: 'numeric', pattern: '[0-9]*', autocomplete: 'off', maxlength: '24', 'aria-label': 'Le nombre' }));
   const btn = h('button', { class: 'btn btn-main', type: 'button', text: 'Valider' });
   const row = h('div', { class: 'answer-row' }, input, btn);
   const fb = h('div', { class: 'feedback' });

@@ -85,6 +85,12 @@ fictive de la fin des années 70. Pas de présentateur à l'écran (ses répliqu
   par jeu (`liveExtra` : phrase de la Dictée qui se remplit, réponse au Nuage visible une fois qu'on a répondu,
   rien du contenu au Petit Bac) ; résultats en phrases simples (`plainLabel`). Reste : Petit Bac douteux
   (en attente d'un exemple), Ban.
+- 29/10, **Coffre refait** (plusieurs joueurs) : élimination PAR TOURS. À chaque tour, chaque joueur encore en lice
+  joue une fois avec SON nombre (même longueur pour tous, `numberFor(…, indice du joueur)`), le retient seul, puis le
+  tape pendant que les autres voient ses chiffres arriver (nœud `typing/<uid>` dans les règles, publié le 29/10).
+  Éliminés au même tour = ex æquo. `derive()` dans `js/rounds/coffre.js`, interface `mountTurns` dans
+  `js/play/coffre.js` (pastilles d'ordre, bannière « À TOI »). Copier-coller bloqué (`noPaste`, `noCopy`).
+  Tests : Node 78/78, règles Firebase 17/17, `coffre-paste.cjs` 2/2, `rounds.cjs` 5/5.
 
 **Lancer les émulateurs sur ce PC** : le lanceur `npx firebase` est bloqué par une stratégie de
 groupe (pas Java). Utiliser Node directement, avec le JDK 21 installé en ZIP (hors PATH, Java 17

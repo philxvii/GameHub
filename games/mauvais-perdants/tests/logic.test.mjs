@@ -40,7 +40,7 @@ describe('contrat des manches', () => {
     assert.equal(new Set(ROUNDS.map(r => r.id)).size, ROUNDS.length);
     assert.deepEqual(new Set(ROUNDS.map(r => r.family)), new Set(['vitesse', 'espace', 'memoire', 'mots', 'chiffres']));
     for (const r of ROUNDS) {
-      assert.ok(r.title && r.verb && r.rules.length >= 2 && r.playMs >= 20000 && r.playMs <= ({ coffre: 150000, prix: 100000 }[r.id] || 90000), r.id);
+      assert.ok(r.title && r.verb && r.rules.length >= 2 && r.playMs >= 20000 && r.playMs <= ({ coffre: 180000, prix: 100000 }[r.id] || 90000), r.id);
       assert.equal(typeof r.params, 'function'); assert.equal(typeof r.eligible, 'function'); assert.equal(typeof r.tieText, 'function');
     }
   });
@@ -191,7 +191,7 @@ describe('Chat : filtre d’affichage', () => {
   });
 });
 
-describe('Le Coffre : élimination à tour de rôle', () => {
+describe('Le Coffre : élimination par tours', () => {
   const who = ['a', 'b', 'c'];
   const T = P(coffre, 3, { who, solo: false });
   const [x, y, z] = T.order;
@@ -203,30 +203,47 @@ describe('Le Coffre : élimination à tour de rôle', () => {
     assert.equal(P(coffre, 3, { who, solo: true }).mode, 'solo');
     assert.equal(P(coffre, 3, { who: ['a'], solo: false }).mode, 'solo');
   });
-  test('derive : à qui le tour, quel nombre, quand ; le nombre s’allonge à chaque réussite', () => {
+  test('derive : chacun son nombre, de même longueur, dans l’ordre ; le tour suivant s’allonge', () => {
     const d0 = derive(T, {}, 1000);
-    assert.equal(d0.mover, x); assert.equal(d0.len, C_START); assert.equal(d0.start, 1000 + C_LEAD); assert.equal(d0.num, numberFor(T.seed, T.i, C_START, 0));
+    assert.equal(d0.mover, x); assert.equal(d0.round, 0); assert.equal(d0.len, C_START); assert.equal(d0.start, 1000 + C_LEAD);
+    assert.equal(d0.num, numberFor(T.seed, T.i, C_START, 0));
     const d1 = derive(T, { 0: { [x]: e('o', 5000) } }, 1000);
-    assert.equal(d1.mover, y); assert.equal(d1.len, C_START + 1); assert.equal(d1.start, 5000 + PAUSE_MS); assert.equal(d1.num, numberFor(T.seed, T.i, C_START + 1, 1));
+    assert.equal(d1.mover, y); assert.equal(d1.len, C_START, 'même longueur pour tout le monde au même tour'); assert.equal(d1.start, 5000 + PAUSE_MS);
+    assert.notEqual(d1.num, d0.num, 'un nombre différent pour chaque joueur');
+    const d3 = derive(T, { 0: { [x]: e('o', 5000) }, 1: { [y]: e('o', 9000) }, 2: { [z]: e('o', 13000) } }, 1000);
+    assert.equal(d3.mover, x); assert.equal(d3.round, 1); assert.equal(d3.len, C_START + 1);
+    assert.deepEqual(d3.played, {});
   });
-  test('derive : un échec élimine, la longueur ne bouge pas, le joueur suivant continue', () => {
-    const d = derive(T, { 0: { [x]: e('o', 5000) }, 1: { [y]: e('x', 9000) } }, 1000);
-    assert.deepEqual(d.out, { [y]: 1 }); assert.equal(d.failLen[y], C_START + 1);
-    assert.equal(d.mover, z); assert.equal(d.len, C_START + 1); assert.deepEqual(d.alive.sort(), [x, z].sort());
-    const d2 = derive(T, { 0: { [x]: e('o', 5000) }, 1: { [y]: e('x', 9000) }, 2: { [z]: e('o', 12000) } }, 1000);
-    assert.equal(d2.mover, x, 'le tour revient en sautant l’éliminé');
+  test('derive : un échec élimine, les autres finissent le tour, l’éliminé saute les tours suivants', () => {
+    const d = derive(T, { 0: { [x]: e('x', 5000) } }, 1000);
+    assert.deepEqual(d.out, { [x]: 0 }); assert.equal(d.mover, y); assert.equal(d.len, C_START);
+    const d2 = derive(T, { 0: { [x]: e('x', 5000) }, 1: { [y]: e('o', 9000) }, 2: { [z]: e('o', 13000) } }, 1000);
+    assert.equal(d2.round, 1); assert.equal(d2.mover, y); assert.deepEqual(d2.alive.sort(), [y, z].sort());
   });
-  test('derive : seule l’entrée du joueur dont c’est le tour compte ; fin quand il reste un joueur', () => {
+  test('derive : seule l’entrée du joueur dont c’est le tour compte', () => {
     assert.equal(derive(T, { 0: { [y]: e('o', 5000) } }, 1000).n, 0);
-    const end = derive(T, { 0: { [x]: e('x', 3000) }, 1: { [y]: e('x', 5000) } }, 1000);
-    assert.equal(end.over, true); assert.equal(end.winner, z);
   });
-  test('verdictOf : le classement vient du journal (éliminé, dernier en lice, encore en lice), pas du client', () => {
-    const end = derive(T, { 0: { [x]: e('x', 3000) }, 1: { [y]: e('x', 5000) } }, 1000);
-    assert.deepEqual(verdictOf(end, x), { o: 0, l: C_START }); assert.deepEqual(verdictOf(end, y), { o: 1, l: C_START });
-    assert.equal(verdictOf(end, z).o, WIN_MS);
+  test('derive : fin quand il ne reste qu’un joueur à la fin d’un tour, ou que tout le monde échoue au même tour', () => {
+    const one = derive(T, { 0: { [x]: e('x', 3000) }, 1: { [y]: e('x', 5000) } }, 1000);
+    assert.equal(one.over, false, 'le dernier doit quand même jouer son nombre'); assert.equal(one.mover, z);
+    const win = derive(T, { 0: { [x]: e('x', 3000) }, 1: { [y]: e('x', 5000) }, 2: { [z]: e('o', 7000) } }, 1000);
+    assert.equal(win.over, true); assert.equal(win.winner, z);
+    const tie = derive(T, { 0: { [x]: e('x', 3000) }, 1: { [y]: e('x', 5000) }, 2: { [z]: e('x', 7000) } }, 1000);
+    assert.equal(tie.over, true); assert.equal(tie.winner, null); assert.deepEqual(tie.alive, []);
+  });
+  test('derive : à 5 joueurs et plus, le nombre grandit de 2 chiffres par tour', () => {
+    const P5 = P(coffre, 3, { who: ['a', 'b', 'c', 'd', 'e'], solo: false });
+    const log = {};
+    P5.order.forEach((u, k) => { log[k] = { [u]: e('o', 1000 * (k + 2)) }; });
+    assert.equal(derive(P5, log, 1000).len, C_START + 2);
+  });
+  test('verdictOf : le classement vient du journal ; mêmes tours = ex æquo', () => {
+    const win = derive(T, { 0: { [x]: e('x', 3000) }, 1: { [y]: e('x', 5000) }, 2: { [z]: e('o', 7000) } }, 1000);
+    assert.deepEqual(verdictOf(win, x), { o: 0, l: C_START }); assert.deepEqual(verdictOf(win, y), { o: 0, l: C_START });
+    assert.equal(verdictOf(win, z).o, WIN_MS);
     const mid = derive(T, { 0: { [x]: e('x', 3000) } }, 1000);
     assert.equal(verdictOf(mid, y).o, CAP_MS, 'encore en lice quand le temps s’arrête');
+    assert.equal(compareKeys(coffre.score(verdictOf(win, x), T).key, coffre.score(verdictOf(win, y), T).key), 0, 'éliminés au même tour : ex æquo');
   });
   test('score : dernier en lice > éliminé plus tard > éliminé plus tôt ; payload vide = absent', () => {
     const win = coffre.score({ o: WIN_MS, l: 6 }, T), late = coffre.score({ o: 9, l: 7 }, T), early = coffre.score({ o: 1, l: 4 }, T);

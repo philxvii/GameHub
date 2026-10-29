@@ -768,3 +768,28 @@ html.chat-dock #app { margin-right: 344px; }
 .rv .lv-hide { opacity: .5; font-style: italic; }
 .v-how { margin: 0 0 12px; font-size: 14px; font-weight: 600; opacity: .85; }
 .res-row .pts small { font-family: inherit; font-size: 13px; font-weight: 800; opacity: .6; }
+
+/* Le Coffre par tours : qui joue, et quand */
+.cf-order { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 4px 0 8px; }
+.cf-chip { display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; background: rgba(241, 230, 207, .08); border: 2px solid transparent; transition: background 250ms var(--ios), border-color 250ms var(--ios), opacity 250ms var(--ios); }
+.cf-chip b { font-size: 14px; }
+.cf-chip small { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .65; }
+.cf-av { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--pc); border: 2px solid var(--ink); color: var(--ink); font-family: var(--display); font-size: 13px; }
+.cf-chip.now { background: var(--mustard); color: var(--ink); border-color: var(--ink); box-shadow: 0 3px 0 var(--ink); }
+.cf-chip.now small { opacity: 1; }
+.cf-chip.ok { border-color: rgba(127, 224, 168, .55); }
+.cf-chip.ok small { color: #7fe0a8; opacity: 1; }
+.cf-chip.ko { border-color: rgba(255, 154, 134, .6); }
+.cf-chip.ko small { color: #ff9a86; opacity: 1; }
+.cf-chip.out { opacity: .4; text-decoration: line-through; }
+.cf-chip.out small { text-decoration: none; }
+.cf-banner { margin: 2px 0 8px; text-align: center; font-family: var(--display); text-transform: uppercase; font-size: clamp(24px, 3.2vw, 40px); line-height: 1; min-height: 1.1em; }
+.cf-banner.me { color: var(--mustard); animation: pulseMe 1100ms var(--ios) infinite alternate; }
+.cf-banner.end { color: var(--mustard); }
+@keyframes pulseMe { from { transform: scale(1); } to { transform: scale(1.04); } }
+html.calm .cf-banner.me, .cf-banner.me:where(*) { animation-play-state: running; }
+.cf-typed { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; min-height: 54px; margin: 6px 0 2px; }
+.cf-slot { width: 40px; height: 52px; display: grid; place-items: center; border-radius: 10px; background: rgba(241, 230, 207, .08); border: 2px dashed rgba(241, 230, 207, .25); font-family: var(--display); font-size: 30px; }
+.cf-slot.on { background: var(--cream); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink); animation: popDigit 160ms var(--ios); }
+@keyframes popDigit { from { transform: translateY(-6px); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cf-banner.me, .cf-slot.on { animation: none; } }

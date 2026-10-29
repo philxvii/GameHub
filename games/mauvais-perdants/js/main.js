@@ -351,7 +351,7 @@ const DEMOS = {
   bac: ['🔤 Une lettre', '✍️ Un mot par case', '🏆 Le plus original'],
   calcul: ['➕ Une opération', '⚡ Réponds vite', '🏆 Meilleur total'],
   chemin: ['👀 Cases allumées', '👆 Reproduis l’ordre', '🏆 Niveau le plus haut'],
-  coffre: ['🔢 Le même nombre pour tous', '⌨️ À tour de rôle, on le retape', '💀 Faux : éliminé'],
+  coffre: ['🔢 Ton nombre, rien que pour toi', '⌨️ Tu le tapes, les autres te regardent', '💀 Faux : éliminé'],
   damier: ['💡 Cases allumées', '🧠 Retiens-les', '👆 Retrouve-les'],
   dejavu: ['📝 Un mot', '🤔 Déjà vu ?', '✅ Oui ou non'],
   dictee: ['📜 Une phrase', '⌨️ Recopie-la', '🏁 Premier arrivé'],
@@ -489,7 +489,7 @@ const VIEWS = {
           progress: (x, sub) => room.progress(sub === undefined ? k : `${k}.${sub}`, x),
           // L'Étiquette : le prix que chaque autre joueur a écrit pour le produit `idx` (null = rien).
           // Le Coffre en élimination : journal des tours partagé, et qui est encore en ligne.
-          turn: { me: room.me, log: () => room.s.turns || {}, write: (n, u, r) => room.turn(m.tid, m.rk, n, u, r), online: u => room.online(u), names: () => namesOf(mm) },
+          turn: { me: room.me, log: () => room.s.turns || {}, write: (n, u, r) => room.turn(m.tid, m.rk, n, u, r), online: u => room.online(u), names: () => namesOf(mm), color: u => pcol((mm.roster[u] || {}).c), typing: (n, d) => room.typing(n, d), typed: u => (room.s.typing || {})[u] || null },
           peers: idx => contenders(mm).filter(u => u !== room.me && u !== GHOST).map(u => {
             const pr = room.s.prog[u], names = namesOf(mm);
             const cents = pr && pr.k.startsWith(`${k}.${idx}`) ? parseInt(pr.k.slice(`${k}.${idx}`.length), 36) : 0;
@@ -787,6 +787,8 @@ function rivalsPanel(m) {
   return {
     el,
     update(mm) {
+      // Coffre par tours : l'ordre de passage au-dessus du jeu dit déjà tout (qui joue, qui a réussi, qui est éliminé).
+      el.hidden = g === 'coffre' && p.mode === 'turns';
       const rows = race(mm, g, p);
       const mine = rows.find(r => r.u === room.me);
       myBest = mine && mine.v !== null && mine.v !== undefined ? mine.v : myBest;

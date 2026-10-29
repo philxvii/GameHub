@@ -90,9 +90,9 @@ export class Room {
       this.beat();
     }));
     this.beatTimer = setInterval(() => this.beat(), BEAT_MS);
-    for (const k of ['hostUid', 'phase', 'coord', 'cfg', 'players', 'presence', 'ready', 'prog', 'match']) {
+    for (const k of ['hostUid', 'phase', 'coord', 'cfg', 'players', 'presence', 'ready', 'prog', 'match', 'typing']) {
       this.unsubs.push(onValue(ref(db, `${this.base}/${k}`), snap => {
-        this.s[k] = snap.val() || (['players', 'presence', 'ready', 'prog'].includes(k) ? {} : snap.val());
+        this.s[k] = snap.val() || (['players', 'presence', 'ready', 'prog', 'typing'].includes(k) ? {} : snap.val());
         this.loaded.add(k);
         if (k === 'hostUid' && this.s.hostUid) this.seenHost = true;
         if (k === 'hostUid' && !this.s.hostUid && this.seenHost) return this.close('Le salon a été fermé par l’hôte.');
@@ -142,6 +142,8 @@ export class Room {
     if (d.length > 4000) return Promise.reject(userErr('Réponse trop longue.'));
     return set(ref(db, `${this.base}/subs/${tid}/${rk}/${this.me}`), { d, t: serverTimestamp() });
   }
+  // Coffre : les chiffres que je tape en ce moment, visibles des autres (tour n). Écrasé à chaque frappe.
+  typing(n, digits) { return set(ref(db, `${this.base}/typing/${this.me}`), { k: String(n), d: String(digits).slice(0, 24) }).catch(() => {}); }
   // Journal du Coffre (élimination) : une entrée par tour et par joueur, écrite une fois. `uid` = le
   // joueur dont c'est le tour ; un autre membre peut y inscrire l'élimination (r = 'x') si celui-ci a disparu.
   turn(tid, rk, n, uid, r) { return set(ref(db, `${this.base}/turns/${tid}/${rk}/${n}/${uid}`), { r, t: serverTimestamp() }).catch(() => {}); }
