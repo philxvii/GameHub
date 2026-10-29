@@ -180,7 +180,7 @@ button { cursor: pointer; }
 .roster li.empty .tok { background: transparent; border-style: dashed; box-shadow: none; color: var(--mute); animation: breathe 3.2s ease-in-out infinite; }
 .roster li.empty .desk { background: transparent; color: var(--mute); border-style: dashed; box-shadow: none; }
 .roster li.empty .tag { color: var(--mute); }
-.roster li .sticker { position: absolute; top: -10px; right: 2px; z-index: 2; --rot: 8deg; animation: pop 680ms var(--bounce) 700ms both; }
+.roster li .sticker { position: absolute; top: -14px; left: -14px; z-index: 2; --rot: -8deg; animation: pop 680ms var(--bounce) 700ms both; }
 @keyframes seat { 0% { opacity: 0; transform: translateY(-12px); } 100% { opacity: 1; transform: none; } }
 @keyframes breathe { 50% { opacity: .55; } }
 /* au programme : l'hôte choisit les manches, sur une fiche sous le code du plateau */
