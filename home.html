@@ -790,6 +790,11 @@
     mauvaisperdants: { name: 'Mauvais Perdants', pct: 30, soon: [['Un vrai plateau de télé', 'Rideaux, projecteurs et ampoules : une émission, pas un écran.'], ['Un animateur qui existe', 'Gonzague plus grand, plus expressif, plus odieux.'], ['Des finales mises en scène', 'Résultats et podium avec un vrai moment de gloire.']] },
     minigolf: { name: 'Mini Golf', pct: 5, soon: [['Des parcours repensés', 'Des pistes avec du relief et des obstacles.'], ['Un tir plus précis', 'Viser et doser la puissance, sans approximation.'], ['Une partie à plusieurs', 'Voir la balle de chacun rouler sur le green.']] }
   };
+  // Tous les autres jeux peuvent aussi l'avoir, reglee depuis l'admin : eteinte par defaut (-1).
+  document.querySelectorAll('#hub .game-card').forEach(c => {
+    const g = c.dataset.game;
+    if (!WIP[g]) WIP[g] = { name: c.querySelector('.name').textContent, pct: -1, soon: [['', ''], ['', ''], ['', '']] };
+  });
   const wip = document.getElementById('wip');
   const wipFill = document.getElementById('wip-fill'), wipBar = document.getElementById('wip-bar');
   const wipChars = document.getElementById('wip-chars'), wipTeaser = document.getElementById('wip-teaser');
@@ -920,7 +925,7 @@
     wipBar.setAttribute('aria-valuenow', d.pct);
     wipFill.style.transition = 'none'; wipFill.style.clipPath = 'inset(0 100% 0 0 round 99px)'; wipBar.style.setProperty('--p', '0%');
     void wipFill.offsetWidth; wipFill.style.transition = '';
-    document.getElementById('wip-next').innerHTML = d.soon.map(([t, s]) => `<li><b>${t}</b><span>${s}</span></li>`).join('');
+    document.getElementById('wip-next').innerHTML = d.soon.filter(([t]) => t).map(([t, s]) => `<li><b>${t}</b><span>${s}</span></li>`).join('');
     wipImg.src = card.querySelector('.front img').src;
     wipTeaser.hidden = g !== 'quiestce'; wipPoster.hidden = g === 'quiestce';
     wip.classList.toggle('q', g === 'quiestce');
