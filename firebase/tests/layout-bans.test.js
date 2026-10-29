@@ -71,6 +71,9 @@ describe('Bannis du site', () => {
     await assertSucceeds(set(ref(admin, 'bans/eve'), { at: 1, name: 'Eve', why: 'insultes' }));
     await assertSucceeds(get(ref(admin, 'bans')));
     await assertFails(get(ref(eve, 'bans/eve')));
+    await assertSucceeds(get(ref(eve, 'bans/eve/at')));   // sa propre date : l'écran « Accès suspendu »
+    await assertFails(get(ref(eve, 'bans/eve/why')));
+    await assertFails(get(ref(bob, 'bans/eve/at')));
     await assertFails(remove(ref(eve, 'bans/eve')));
     await assertFails(set(ref(bob, 'bans/eve'), { at: 1 }));
     await assertFails(set(ref(admin, 'bans/bob'), { name: 'Bob' }));   // date obligatoire

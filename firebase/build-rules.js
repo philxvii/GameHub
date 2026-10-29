@@ -225,7 +225,8 @@ const rules = {
     $uid: {
       '.write': ADMIN,
       '.validate': "newData.hasChildren(['at'])",
-      at: { '.validate': 'newData.isNumber()' },
+      // Le banni lit sa seule date (jamais le motif) : c'est ce qui lui montre l'écran « Accès suspendu ».
+      at: { '.read': 'auth != null && auth.uid === $uid', '.validate': 'newData.isNumber()' },
       name: { '.validate': SHORT_TEXT(40) },
       why: { '.validate': SHORT_TEXT(120) },
       $other: { '.validate': false },

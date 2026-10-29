@@ -71,8 +71,9 @@
     '@keyframes mx-drift{0%,100%{transform:translateY(0) rotateX(4deg) rotateY(-9deg)}50%{transform:translateY(-12px) rotateX(2deg) rotateY(9deg)}}',
     '#mx .mx-status{display:inline-flex;align-items:center;gap:10px;padding:7px 15px 7px 13px;border:1px solid var(--border2);border-radius:999px;background:var(--surface);font-size:13.5px;font-weight:500;color:var(--muted)}',
     '#mx .mx-status i{width:7px;height:7px;border-radius:50%;background:var(--brand);animation:mx-pulse 2.4s ease-out infinite}',
+    '#mx[data-kind=banned] .mx-status i{background:var(--err);animation:none}',
     '@keyframes mx-pulse{0%{box-shadow:0 0 0 0 rgba(255,90,60,.55)}70%,100%{box-shadow:0 0 0 9px rgba(255,90,60,0)}}',
-    '#mx h1{margin:24px 0 0;font-weight:600;font-size:clamp(46px,6vw,88px);line-height:.98;letter-spacing:-.045em}',
+    '#mx h1{margin:24px 0 0;font-family:inherit;text-transform:none;font-weight:600;font-size:clamp(46px,6vw,88px);line-height:.98;letter-spacing:-.045em}',
     '#mx p{margin-top:20px;max-width:420px;font-size:18px;color:var(--muted);letter-spacing:-.005em}',
     '#mx .mx-bar{position:relative;width:min(230px,62vw);height:3px;margin-top:40px;border-radius:3px;background:var(--border2)}',
     '#mx .mx-bar::before{content:"";position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--brand);animation:mx-roll-fill 3.2s cubic-bezier(.65,0,.35,1) infinite alternate}',
@@ -170,7 +171,9 @@
     locked: ['On revient vite.', 'Une petite maintenance est en cours. Les parties reprennent dès que tout est prêt.', 'Maintenance en cours'],
     error: ['Site indisponible.', 'Impossible de vérifier l\'état du site pour le moment. Vérifiez votre connexion, puis réessayez.', 'Vérification impossible'],
     hidden: ['Jeu indisponible.', 'Ce jeu n\'est pas accessible pour le moment.', 'Jeu masqué'],
+    banned: ['Accès suspendu.', 'Ce compte n\'a plus accès au site. S\'il s\'agit d\'une erreur, contactez l\'administrateur.', 'Compte banni'],
   };
+  var TITLE = { locked: 'Site en maintenance', error: 'Site indisponible', hidden: 'Jeu indisponible', banned: 'Accès suspendu' };
 
   // Vide la page et la garde vide : seul l'écran reste, même si un script du jeu
   // ou quelqu'un remet des éléments.
@@ -211,9 +214,12 @@
         }).observe(document.body, { childList: true });
       }
       var t = TEXT[kind];
-      document.title = kind === 'error' ? 'Site indisponible' : kind === 'hidden' ? 'Jeu indisponible' : 'Site en maintenance';
-      var home = new URL('../home.html', base).href, link = kind === 'locked' ? 'span' : 'a';
-      var href = function (label) { return kind === 'locked' ? '' : ' href="' + home + '"' + (label ? ' aria-label="' + label + '"' : ''); };
+      document.title = TITLE[kind];
+      mx.dataset.kind = kind;
+      // Maintenance et bannissement ferment tout le site : le logo ne ramène nulle part.
+      var shut = kind === 'locked' || kind === 'banned';
+      var home = new URL('../home.html', base).href, link = shut ? 'span' : 'a';
+      var href = function (label) { return shut ? '' : ' href="' + home + '"' + (label ? ' aria-label="' + label + '"' : ''); };
       mx.innerHTML =
         '<header class="mx-wrap mx-top">' +
           '<' + link + ' class="mx-logo"' + href('GameHub, accueil') + '>' + LOGO + '<span aria-label="GameHub">' + WORD + '</span></' + link + '>' +
@@ -228,7 +234,7 @@
             ? '<div class="mx-actions"><button class="mx-pill" type="button" data-mx="retry">Réessayer</button></div>'
             : kind === 'hidden'
             ? '<div class="mx-actions"><button class="mx-pill" type="button" data-mx="home">Retour aux jeux</button></div>'
-            : '<div class="mx-admin" hidden>' +
+            : kind === 'banned' ? '' : '<div class="mx-admin" hidden>' +
                 '<button class="mx-btn mx-main" type="button" data-mx="login">Se connecter avec Google</button>' +
                 '<button class="mx-btn mx-main" type="button" data-mx="reopen" hidden>Réactiver le site</button>' +
                 '<button class="mx-btn" type="button" data-mx="enter" hidden>Entrer quand même (admin)</button>' +
@@ -392,6 +398,22 @@
       .then(function (v) { clearTimeout(t); return v === true; }, function (err) { clearTimeout(t); throw err; });
   }
 
+  // Compte banni (bans/<uid>) : un banni ne peut lire que la date de son propre bannissement
+  // (règle bans/$uid/at), ce qui suffit à le reconnaître. Pas de compte, règle pas encore
+  // publiée, base lente ou injoignable : on ne bannit jamais sur un doute.
+  function isBanned() {
+    return Promise.race([
+      loadFb().then(function (m) {
+        return m[0].auth.authStateReady().then(function () {
+          var u = m[0].auth.currentUser;
+          if (!u) return false;
+          return m[1].get(m[1].ref(m[0].db, 'bans/' + u.uid + '/at')).then(function (s) { return s.exists(); });
+        });
+      }),
+      new Promise(function (ok) { setTimeout(function () { ok(false); }, 5000); }),
+    ]).catch(function () { return false; });
+  }
+
   // Jeu masqué : fermé pour les visiteurs, ouvert pour l'admin (cookie du Worker ou compte Google connecté).
   function hiddenGame() {
     workerAdmin().then(function (ok) { return ok || fbAdmin().catch(function () { return false; }); }).then(function (ok) {
@@ -423,10 +445,12 @@
         store(sessionStorage, ADMIN_HINT, null);
         return isHidden(first).then(function (hid) {
           if (hid) { if (state !== 'admin') hiddenGame(); }
-          else {
+          else if (state === 'admin') { open(false); watchHidden(); }
+          else return isBanned().then(function (ban) {
+            if (ban) { lock('banned'); return; }
             if (state !== 'open') open(false);
             watchHidden();
-          }
+          });
         }, function () { if (first) lock('error'); });
       } else if (state === 'pending' || state === 'open') {
         if (store(sessionStorage, ADMIN_HINT) === '1') verifyAdmin();
