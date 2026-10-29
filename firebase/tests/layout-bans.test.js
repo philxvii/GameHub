@@ -127,6 +127,8 @@ describe('Exclusion d’une partie', () => {
       // L'admin retire eve et la marque exclue, en une écriture.
       await assertSucceeds(update(ref(admin, `${prefix}/${code}`), { 'members/eve': null, 'banned/eve': true }));
       await assertFails(get(ref(eve, `${prefix}/${code}`)));
+      await assertSucceeds(get(ref(eve, `${prefix}/${code}/banned/eve`)));   // sa propre ligne : écran « Exclu de la partie »
+      await assertFails(get(ref(bob, `${prefix}/${code}/banned/eve`)));
       await assertFails(set(ref(eve, `${prefix}/${code}/members/eve`), true));
       await assertSucceeds(set(ref(bob, `${prefix}/${code}/members/bob`), true));
     });

@@ -71,7 +71,7 @@
     '@keyframes mx-drift{0%,100%{transform:translateY(0) rotateX(4deg) rotateY(-9deg)}50%{transform:translateY(-12px) rotateX(2deg) rotateY(9deg)}}',
     '#mx .mx-status{display:inline-flex;align-items:center;gap:10px;padding:7px 15px 7px 13px;border:1px solid var(--border2);border-radius:999px;background:var(--surface);font-size:13.5px;font-weight:500;color:var(--muted)}',
     '#mx .mx-status i{width:7px;height:7px;border-radius:50%;background:var(--brand);animation:mx-pulse 2.4s ease-out infinite}',
-    '#mx[data-kind=banned] .mx-status i{background:var(--err);animation:none}',
+    '#mx[data-kind=banned] .mx-status i,#mx[data-kind=excluded] .mx-status i{background:var(--err);animation:none}',
     '@keyframes mx-pulse{0%{box-shadow:0 0 0 0 rgba(255,90,60,.55)}70%,100%{box-shadow:0 0 0 9px rgba(255,90,60,0)}}',
     '#mx h1{margin:24px 0 0;font-family:inherit;text-transform:none;font-weight:600;font-size:clamp(46px,6vw,88px);line-height:.98;letter-spacing:-.045em}',
     '#mx p{margin-top:20px;max-width:420px;font-size:18px;color:var(--muted);letter-spacing:-.005em}',
@@ -173,7 +173,20 @@
     hidden: ['Jeu indisponible.', 'Ce jeu n\'est pas accessible pour le moment.', 'Jeu masqué'],
     banned: ['Accès suspendu.', 'Ce compte n\'a plus accès au site. S\'il s\'agit d\'une erreur, contactez l\'administrateur.', 'Compte banni'],
   };
-  var TITLE = { locked: 'Site en maintenance', error: 'Site indisponible', hidden: 'Jeu indisponible', banned: 'Accès suspendu' };
+  TEXT.excluded = ['Vous avez été exclu.', 'Vous ne pouvez plus rejoindre cette partie. Retournez à l\'accueil pour en lancer ou en rejoindre une autre.', 'Exclu de la partie'];
+  var TITLE = { locked: 'Site en maintenance', error: 'Site indisponible', hidden: 'Jeu indisponible', banned: 'Accès suspendu', excluded: 'Exclu de la partie' };
+
+  // Exclu de la partie en cours (événement de shared/firebase.js) : l'écran apparaît sur place,
+  // sans recharger, et le contrôle de maintenance ne rouvre plus la page.
+  var excluded = false;
+  function excludeScreen() {
+    if (excluded || state === 'admin') return;
+    excluded = true;
+    state = 'locked';
+    lock('excluded');
+  }
+  window.addEventListener('gh:excluded', excludeScreen);
+  if (window.__ghExcluded) excludeScreen();
 
   // Vide la page et la garde vide : seul l'écran reste, même si un script du jeu
   // ou quelqu'un remet des éléments.
@@ -232,8 +245,8 @@
           (kind === 'locked' ? '<div class="mx-bar" aria-hidden="true"><i>' + LOGO + '</i></div>' : '') +
           (kind === 'error'
             ? '<div class="mx-actions"><button class="mx-pill" type="button" data-mx="retry">Réessayer</button></div>'
-            : kind === 'hidden'
-            ? '<div class="mx-actions"><button class="mx-pill" type="button" data-mx="home">Retour aux jeux</button></div>'
+            : kind === 'hidden' || kind === 'excluded'
+            ? '<div class="mx-actions"><button class="mx-pill" type="button" data-mx="home">' + (kind === 'excluded' ? 'Retour à l\'accueil' : 'Retour aux jeux') + '</button></div>'
             : kind === 'banned' ? '' : '<div class="mx-admin" hidden>' +
                 '<button class="mx-btn mx-main" type="button" data-mx="login">Se connecter avec Google</button>' +
                 '<button class="mx-btn mx-main" type="button" data-mx="reopen" hidden>Réactiver le site</button>' +
@@ -438,7 +451,7 @@
 
   var busy = false;
   function check(first) {
-    if (busy) return;
+    if (busy || excluded) return;
     busy = true;
     read(first ? 3 : 1).then(function (v) {
       if (v === false || v === null) {               // ouvert (ou jamais réglé)

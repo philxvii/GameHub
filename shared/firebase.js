@@ -10,7 +10,7 @@
 // existe et si l'on peut encore y entrer.
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, connectDatabaseEmulator, ref, get, set, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, connectDatabaseEmulator, ref, get, set, remove, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, connectAuthEmulator, onAuthStateChanged, signInAnonymously, signInWithPopup, linkWithPopup, signInWithCredential, GoogleAuthProvider }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
@@ -72,6 +72,22 @@ export function ensureAuth() {
 
 export const isDenied = e => /permission/i.test(String(e && (e.code || e.message) || e));
 
+// Exclu d'une partie pour de bon (<préfixe>/<code>/banned/<uid>, lisible par l'intéressé seul) :
+// on écoute ce nœud dès qu'on ouvre la partie ; l'écran « Exclu de la partie » est dans
+// shared/maintenance.js, qui écoute l'événement.
+let unwatch = null, watchedKey = null;
+function watchExclusion(prefix, code, uid) {
+  const key = `${prefix}/${code}`;
+  if (watchedKey === key) return;
+  if (unwatch) unwatch();
+  watchedKey = key;
+  unwatch = onValue(ref(db, `${key}/banned/${uid}`), s => {
+    if (!s.exists()) return;
+    window.__ghExcluded = true;
+    window.dispatchEvent(new Event('gh:excluded'));
+  }, () => {});
+}
+
 // Un code libre : `gen` est le générateur du jeu, on évite tout code déjà pris.
 export async function freeRoomCode(prefix, gen) {
   await ensureAuth();
@@ -99,6 +115,7 @@ const preview = phase => ({ exists: () => true, val: () => ({ phase, players: []
 export async function openRoom(prefix, code, joinable = phase => phase === 'lobby') {
   const me = await ensureAuth();
   const base = `${prefix}/${code}`;
+  watchExclusion(prefix, code, me.uid);
   try {
     const snap = await get(ref(db, base));
     // Lisible sans être membre : règles de transition (encore ouvertes par code). On

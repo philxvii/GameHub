@@ -35,7 +35,8 @@ const HUB_ID = { games: 'undercover', banqueroll: 'banqueroll', p4: 'puissance4'
 const openFor = prefix => `${OPEN} && root.child('hub').child('hidden').child('${HUB_ID[prefix]}').val() !== true && !root.child('bans').child(auth.uid).exists()`;
 // Exclu d'une partie par l'admin (<préfixe>/<code>/banned/<uid>) : ne peut plus y rentrer.
 const NOT_BANNED = prefix => `!root.child('${prefix}').child($code).child('banned').child(auth.uid).exists()`;
-const BANNED = { $uid: { '.validate': 'newData.val() === true' } };
+// L'exclu lit sa propre ligne : c'est ce qui lui montre l'écran « Exclu de la partie ».
+const BANNED = { $uid: { '.read': 'auth != null && auth.uid === $uid', '.validate': 'newData.val() === true' } };
 const NAME ="newData.isString() && newData.val().length >= 1 && newData.val().length <= 30 && !newData.val().contains('<')";
 
 function gameRules(prefix, { code, joinAnyPhase, texts }) {
@@ -455,6 +456,17 @@ function mpRules() {
         '.write': `${OWN} && !data.exists() && ${CUR} && ${M}.child('step').val() === 'play' && ${ROSTER}`,
         '.validate': 'newData.val() === now',
       } } },
+    },
+    // Coffre : les chiffres qu'un joueur est en train de taper, lus par les autres. Chacun n'écrit que le sien,
+    // des chiffres seulement (24 au plus) ; la clé `k` est le numéro du tour.
+    typing: {
+      $uid: {
+        '.write': OWN,
+        '.validate': "newData.hasChildren(['k', 'd'])",
+        k: { '.validate': "newData.isString() && newData.val().matches(/^[0-9]{1,3}$/)" },
+        d: { '.validate': "newData.isString() && newData.val().matches(/^[0-9]{0,24}$/)" },
+        $other: { '.validate': false },
+      },
     },
     // Chat de salon : texte libre, 140 caractères, un message par entrée (jamais modifié ni effacé par un joueur).
     // Le nom affiché est celui de la fiche du joueur. Pas de balise. Le coordinateur vide tout en fin de partie.

@@ -301,6 +301,7 @@
         },
         "banned": {
           "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
             ".validate": "newData.val() === true"
           }
         },
@@ -356,6 +357,7 @@
         },
         "banned": {
           "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
             ".validate": "newData.val() === true"
           }
         },
@@ -390,6 +392,7 @@
         },
         "banned": {
           "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
             ".validate": "newData.val() === true"
           }
         },
@@ -424,6 +427,7 @@
         },
         "banned": {
           "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
             ".validate": "newData.val() === true"
           }
         },
@@ -476,6 +480,7 @@
         },
         "banned": {
           "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
             ".validate": "newData.val() === true"
           }
         },
@@ -510,6 +515,7 @@
         },
         "banned": {
           "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
             ".validate": "newData.val() === true"
           }
         },
@@ -544,6 +550,7 @@
         },
         "banned": {
           "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
             ".validate": "newData.val() === true"
           }
         },
@@ -578,6 +585,7 @@
         },
         "banned": {
           "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
             ".validate": "newData.val() === true"
           }
         },
@@ -612,6 +620,7 @@
         },
         "banned": {
           "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
             ".validate": "newData.val() === true"
           }
         },
@@ -798,6 +807,7 @@
         },
         "banned": {
           "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
             ".validate": "newData.val() === true"
           }
         },
@@ -1034,6 +1044,21 @@
                 ".write": "auth != null && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('mauvaisperdants').val() !== true && !root.child('bans').child(auth.uid).exists() && auth.uid === $uid && root.child('mp').child($code).child('members').child(auth.uid).exists() && !data.exists() && $tid === root.child('mp').child($code).child('match').child('tid').val() && $rk === root.child('mp').child($code).child('match').child('rk').val() && root.child('mp').child($code).child('match').child('step').val() === 'play' && root.child('mp').child($code).child('match').child('roster').child($uid).exists()",
                 ".validate": "newData.val() === now"
               }
+            }
+          }
+        },
+        "typing": {
+          "$uid": {
+            ".write": "auth != null && root.child('hub').child('settings').child('maintenance').val() !== true && root.child('hub').child('hidden').child('mauvaisperdants').val() !== true && !root.child('bans').child(auth.uid).exists() && auth.uid === $uid && root.child('mp').child($code).child('members').child(auth.uid).exists()",
+            ".validate": "newData.hasChildren(['k', 'd'])",
+            "k": {
+              ".validate": "newData.isString() && newData.val().matches(/^[0-9]{1,3}$/)"
+            },
+            "d": {
+              ".validate": "newData.isString() && newData.val().matches(/^[0-9]{0,24}$/)"
+            },
+            "$other": {
+              ".validate": false
             }
           }
         },
