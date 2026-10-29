@@ -1,6 +1,6 @@
 // Génère database.rules.phase2.json (phase 2 : comptes anonymes, membres, hôte, admin)
 // et database.rules.transition.json (phase 1 + secrets d'Undercover + admin).
-// Les huit jeux partagent le même modèle ; seuls le format du code, la phase où l'on
+// Les neuf jeux partagent le même modèle ; seuls le format du code, la phase où l'on
 // peut entrer et, pour Undercover, les nœuds secrets diffèrent.
 //
 //   node build-rules.js        # puis npm test
@@ -21,6 +21,7 @@ const GAMES = {
   rl:         { code: CODE, joinAnyPhase: true },               // Roulette : on s'assoit à tout moment
   mg:         { code: CODE },
   uno:        { code: CODE },
+  ec:         { code: CODE },                                    // Échecs
 };
 
 const ADMIN = "auth != null && root.child('admins').child(auth.uid).val() === true";
@@ -29,7 +30,7 @@ const OPEN = "root.child('hub').child('settings').child('maintenance').val() !==
 // Jeu masqué par l'admin (hub/hidden/<id>) : fermé comme en maintenance, mais pour ce jeu seul.
 // Les pages d'un jeu sont publiques (dépôt public) : seule la base peut vraiment l'interdire.
 // Identifiant du jeu dans hub/hidden, par nœud de la base (liste GAMES de home.html).
-const HUB_ID = { games: 'undercover', banqueroll: 'banqueroll', p4: 'puissance4', qec2: 'quiestce', bn: 'bataille', rl: 'roulette', mg: 'minigolf', uno: 'uno', ms: 'minisubway', mp: 'mauvaisperdants' };
+const HUB_ID = { games: 'undercover', banqueroll: 'banqueroll', p4: 'puissance4', qec2: 'quiestce', bn: 'bataille', rl: 'roulette', mg: 'minigolf', uno: 'uno', ec: 'echecs', ms: 'minisubway', mp: 'mauvaisperdants' };
 // Compte banni du site par l'admin (bans/<uid>) : plus aucun accès aux parties. Toujours évalué
 // après `auth != null`.
 const openFor = prefix => `${OPEN} && root.child('hub').child('hidden').child('${HUB_ID[prefix]}').val() !== true && !root.child('bans').child(auth.uid).exists()`;
@@ -564,6 +565,7 @@ console.log('database.rules.phase2.json écrit');
 const phase1 = JSON.parse(readFileSync(new URL('./database.rules.json', import.meta.url), 'utf8')).rules;
 const transition = { ...phase1, admins: rules.admins, ucHost: rules.ucHost, ucSecret: rules.ucSecret, wr: rules.wr };
 for (const prefix of Object.keys(GAMES)) {
+  if (!phase1[prefix]) continue;                 // jeu né après la phase 1 (Échecs) : aucun ancien client
   const room = { ...phase1[prefix].$code };
   room['.write'] = `${room['.write']} || (${ADMIN})`;
   // Sinon un ancien client pourrait se déclarer hôte d'une nouvelle partie et lire ucHost.

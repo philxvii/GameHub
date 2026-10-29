@@ -18,7 +18,7 @@
 -->
 <script>
   (function () {
-    var GAMES = ['banqueroll', 'bataille-navale', 'mini-golf', 'mini-subway', 'puissance4', 'qui-est-ce', 'roulette', 'mauvais-perdants', 'undercover', 'uno', 'wikirace'];
+    var GAMES = ['banqueroll', 'bataille-navale', 'mini-golf', 'mini-subway', 'puissance4', 'qui-est-ce', 'roulette', 'mauvais-perdants', 'undercover', 'uno', 'wikirace', 'echecs'];
     var m = location.pathname.toLowerCase().match(/^\/([a-z0-9-]+)(?:\.html|\/|\/index\.html)?$/);
     if (m && GAMES.indexOf(m[1]) !== -1) location.replace('/games/' + m[1] + '/' + location.search + location.hash);
   })();

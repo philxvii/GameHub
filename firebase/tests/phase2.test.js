@@ -34,7 +34,7 @@ beforeEach(async () => {
 
 const GAMES = {
   games: 'LOUP-42', banqueroll: 'ROLL-17', p4: 'DISC-42', qec2: 'FACE-33',
-  bn: 'NAVY-21', rl: 'SPIN-55', mg: 'GOLF-12', uno: 'WILD-90',
+  bn: 'NAVY-21', rl: 'SPIN-55', mg: 'GOLF-12', uno: 'WILD-90', ec: 'ROQUE-42',
 };
 const lobby = code => ({ code, phase: 'lobby', hostUid: 'alice', members: { alice: true }, players: [{ name: 'Alice' }] });
 
@@ -363,7 +363,7 @@ describe('Maintenance', () => {
 // Jeu masqué par l'admin (hub/hidden/<id>) : la base le ferme comme en maintenance, pour ce jeu seul.
 // Les pages des jeux sont publiques : sans cette règle, un jeu masqué restait entièrement jouable.
 describe('Jeu masqué', () => {
-  const HUB = { games: 'undercover', banqueroll: 'banqueroll', p4: 'puissance4', qec2: 'quiestce', bn: 'bataille', rl: 'roulette', mg: 'minigolf', uno: 'uno' };
+  const HUB = { games: 'undercover', banqueroll: 'banqueroll', p4: 'puissance4', qec2: 'quiestce', bn: 'bataille', rl: 'roulette', mg: 'minigolf', uno: 'uno', ec: 'echecs' };
   for (const [P, code] of Object.entries(GAMES)) {
     test(`${P} : masqué, ni créer, ni rejoindre, ni lire, ni jouer ; l'admin si ; les autres jeux restent ouverts`, async () => {
       await seed(`${P}/${code}`, { ...lobby(code), members: { alice: true, bob: true } });

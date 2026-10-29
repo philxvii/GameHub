@@ -22,9 +22,9 @@ export function isEnded(g, f) {
   return ENDED.test(f.phase || '');
 }
 
-// Identifiant stable : la même partie n'est archivée qu'une fois. Puissance 4 enchaîne des manches sous le même code.
+// Identifiant stable : la même partie n'est archivée qu'une fois. Puissance 4 et les Échecs enchaînent des manches sous le même code.
 export function archiveId(g, code, f) {
-  return `${g.db}-${code}-${num(f.createdAt)}${g.id === 'puissance4' ? '-' + (f.gameNum || 1) : ''}`.slice(0, 90);
+  return `${g.db}-${code}-${num(f.createdAt)}${g.id === 'puissance4' || g.id === 'echecs' ? '-' + (f.gameNum || 1) : ''}`.slice(0, 90);
 }
 
 // Places 1, 2, 3… ; deux scores identiques partagent la place.
@@ -100,6 +100,15 @@ const SUMMARY = {
     rows.forEach((r, i) => { r.r = r.w ? 1 : i + 1; });
     const won = rows.find(r => r.w);
     return { win: won ? `${won.n} aligne quatre` : 'Match nul', sub: d.gameNum > 1 ? `Manche n° ${d.gameNum}` : '', rows, k: [] };
+  },
+
+  echecs(d) {
+    const res = d.result || {}, w = res.winner, plies = (Array.isArray(d.moves) ? d.moves : Object.values(d.moves || {})).length;
+    const why = { mate: 'par échec et mat', resign: 'par abandon', time: 'au temps' }[res.reason] || '';
+    const rows = slots(d.players).map((p, i) => p && { n: p.name, s: `${num(p.score)} pt${num(p.score) > 1 ? 's' : ''}`, w: w === i }).filter(Boolean).sort((a, b) => b.w - a.w);
+    rows.forEach((r, i) => { r.r = w === -1 ? 1 : r.w ? 1 : i + 1; });
+    const won = rows.find(r => r.w);
+    return { win: won ? `${won.n} gagne ${why}`.trim() : 'Partie nulle', sub: `${many(Math.ceil(plies / 2), 'coup')}${d.gameNum > 1 ? ` · partie n° ${d.gameNum}` : ''}`, rows, k: [] };
   },
 
   quiestce(d) {
