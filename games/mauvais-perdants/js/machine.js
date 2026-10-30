@@ -23,6 +23,9 @@ export const STEPS = ['intro', 'count', 'play', 'judge', 'vote', 'reveal', 'boar
 export const INTRO_MS = 12000;
 export const COUNT_MS = 3000;
 export const GRACE_MS = 2500;
+// Épreuves où l'on peut réfléchir longtemps sans que la progression bouge (Petit Bac, Compte est bon, Cadenas, Mot brouillé,
+// Dans l'ordre, La Question, Les Paires) : on n'y déclare jamais un joueur « inactif », il serait compté absent alors qu'il joue.
+export const NO_STALL = ['bac', 'compte', 'cadenas', 'anagramme', 'ordre', 'quiz', 'paires'];
 export const STALL_MS = 25000;       // joueur en ligne sans aucun progrès : on ne l'attend plus (sauf Petit Bac)         // tolérance réseau après l'échéance (aussi dans les règles)
 export const JUDGE_MAX_MS = 12000;
 export const VOTE_MS = 18000;
@@ -59,7 +62,7 @@ export function decide(m, f) {
       return null;
     case 'play':
       // Fini ou inactif : chacun a soit envoyé, soit n'a plus rien fait depuis STALL_MS (au moins un envoi).
-      const stalled = gameOf(m) === 'bac' ? new Set() : (f.stalled || new Set());
+      const stalled = NO_STALL.includes(gameOf(m)) ? new Set() : (f.stalled || new Set());
       const doneOrIdle = new Set([...f.submitted, ...stalled]);
       if (now >= m.end + GRACE_MS || everyone(f.submitted) || (f.submitted.size > 0 && everyone(doneOrIdle))) {
         return gameOf(m) === 'bac' && m.i < TIEBREAK_I

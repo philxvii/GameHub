@@ -3,7 +3,7 @@
 // le temps cumulé sur les bonnes réponses (le plus court gagne). Une erreur ne coûte rien de plus, mais pas de
 // seconde chance : la question suivante arrive. Le temps est mesuré sur l'appareil.
 
-import { arr, int, roundRng } from './_deps.js';
+import { arr, int, roundRng, half } from './_deps.js';
 
 export const QUESTIONS = 10, LIMIT_MS = 12000, MIN_MS = 250;
 
@@ -66,9 +66,9 @@ export const BANK = [
 ];
 
 // Dix questions tirées de la graine, réponses mélangées : { q, c: [4 réponses], a: indice de la bonne }.
-export function questions(seed, i) {
+export function questions(seed, i, room) {
   const r = roundRng(seed, i, 'quiz');
-  return r.shuffle(BANK.map((_, k) => k)).slice(0, QUESTIONS).map(k => {
+  return r.shuffle(half(BANK, room)).slice(0, QUESTIONS).map(k => {
     const [q, good, ...bad] = BANK[k];
     const order = r.shuffle([0, 1, 2, 3]);
     const all = [good, ...bad];
@@ -82,7 +82,7 @@ export default {
   playMs: 130000,
   unit: 'bonnes réponses, puis temps sur les bonnes',
   eligible: () => true,
-  params(seed, i) { return { qs: questions(seed, i), limit: LIMIT_MS }; },
+  params(seed, i, room) { return { qs: questions(seed, i, room), limit: LIMIT_MS }; },
   ghost: () => ({ key: [-6, 560], label: '6 bonnes réponses' }),
   tieText: () => 'Égalité au dixième de seconde sur les bonnes réponses.',
   score(payload, p) {

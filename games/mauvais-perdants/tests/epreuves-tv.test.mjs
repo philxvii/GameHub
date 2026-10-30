@@ -9,6 +9,8 @@ import { apply, replay as ctReplay, puzzle, COUNT } from '../js/rounds/compte.js
 import { sets, BANK as ODRE, SIZE, SETS } from '../js/rounds/ordre.js';
 import { PICK_ORDER, drawPlan, encodePicks, decodePicks } from '../js/draw.js';
 import { compareKeys } from '../js/rounds/contract.js';
+import { readFileSync } from 'node:fs';
+import { decide, NO_STALL } from '../js/machine.js';
 
 const SEED = 'TELEJEUX';
 const IDS = ['quiz', 'cadenas', 'paires', 'compte', 'ordre'];
@@ -163,6 +165,55 @@ describe('Dans l’ordre', () => {
     assert.ok(reversed.stats.good < SETS * SIZE);
     assert.equal(dup.stats.good, 0);
     assert.ok(compareKeys(perfect.key, reversed.key) < 0);
+    assert.equal(r.score({}, p).idle, true);
+  });
+});
+
+describe('page du jeu', () => {
+  test('aucun identifiant HTML en double (le sélecteur de manches avait le même id que le nombre de candidats)', () => {
+    const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+    const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]);
+    const dup = ids.filter((x, k) => ids.indexOf(x) !== k);
+    assert.deepEqual(dup, []);
+  });
+});
+
+describe('deux parties qui se suivent : jamais le même contenu', () => {
+  const room = tid => ({ tid, who: ['a', 'b'], solo: false });
+  const keys = {
+    quiz: p => p.qs.map(q => q.q),
+    ordre: p => p.sets.map(s => s.q + s.unit),
+    prix: p => p.items.map(i => i.code),
+    dictee: p => [p.phrase],
+  };
+  test('graines différentes, numéros de partie consécutifs : aucun élément en commun', () => {
+    for (const [id, key] of Object.entries(keys)) {
+      for (let k = 0; k < 60; k++) {
+        const a = key(round(id).params(`G${k}`, 1, room(`t${40 + k}`))), b = key(round(id).params(`H${k}`, 3, room(`t${41 + k}`)));
+        assert.deepEqual(a.filter(x => b.includes(x)), [], `${id} : ${a} / ${b}`);
+      }
+    }
+  });
+  test('sans numéro de partie connu (tests, solo ancien) : aucune restriction, rien ne casse', () => {
+    for (const id of Object.keys(keys)) assert.ok(keys[id](round(id).params(SEED, 0, {})).length > 0, id);
+  });
+});
+
+describe('joueur qui réfléchit : jamais compté absent', () => {
+  const F = (o = {}) => ({ now: 1000, online: new Set(['a', 'b']), ready: new Set(), voted: new Set(), submitted: new Set(), judged: false, needsVote: true, tiebreak: null, skip: false, ...o });
+  const base = id => ({ tid: 't1', rk: 'r0', i: 0, step: 'play', at: 0, end: 90000, plan: [{ g: id }], roster: { a: {}, b: {} }, seq: 1 });
+  test('épreuves de réflexion : un joueur sans progrès depuis 25 s n’est pas écarté', () => {
+    for (const id of ['compte', 'cadenas', 'quiz', 'ordre', 'paires', 'anagramme', 'bac']) {
+      assert.ok(NO_STALL.includes(id), id);
+      assert.equal(decide(base(id), F({ now: 40000, submitted: new Set(['a']), stalled: new Set(['b']) })), null, `${id} : on attend b`);
+    }
+  });
+  test('épreuves continues : un joueur figé depuis 25 s n’est plus attendu (comme avant)', () => {
+    assert.equal(decide(base('gong'), F({ now: 40000, submitted: new Set(['a']), stalled: new Set(['b']) })).step, 'reveal');
+  });
+  test('Compte : « Je m’arrête là » sans opération est une manche jouée, un rendu vide est absent', () => {
+    const r = round('compte'), p = { nums: [3, 4, 5, 6, 7, 10], target: 17 };
+    assert.equal(r.score({ s: [], ms: 20000 }, p).idle, false);
     assert.equal(r.score({}, p).idle, true);
   });
 });

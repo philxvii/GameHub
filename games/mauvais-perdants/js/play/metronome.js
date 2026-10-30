@@ -49,7 +49,7 @@ export default function mount(root, { p, submit, progress, sfx }) {
     line.textContent = gaps.length < p.taps - 1 ? `Il manquait des touches. Écart ≈ ${err} ms.` : err <= 30 ? `Métronome humain : ${err} ms d’écart !` : `Écart moyen : ${err} ms`;
     err <= 40 ? sfx.good() : sfx.bad();
     k++;
-    progress(k, `${k - 1}${Math.min(9999, err).toString(36)}`);
+    progress(k, `${k - 1}${(gaps.length ? gaps.reduce((a, g) => a + g, 0) / gaps.length : 0) > per ? 'p' : 'n'}${Math.min(9999, err).toString(36)}`);
     if (k >= RHYTHMS) { alive = false; setTimeout(() => submit(payload()), 1500); return; }
     setTimeout(() => { if (alive) round(); }, 1500);
   }

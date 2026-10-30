@@ -2,7 +2,7 @@
 // dates, distances…), les mêmes pour tous, présentés dans le même désordre. Chaque élément à sa bonne place = un
 // point (30 au plus) ; à égalité, le plus rapide. Les valeurs sont des ordres de grandeur connus et stables.
 
-import { arr, int, roundRng } from './_deps.js';
+import { arr, int, roundRng, half } from './_deps.js';
 
 export const SETS = 6, SIZE = 5;
 
@@ -18,13 +18,14 @@ export const BANK = [
   ['Du plus lent au plus rapide', 'vitesse en kilomètres par heure', [['Un escargot', 0.05], ['Un piéton', 5], ['Un cycliste', 20], ['Un guépard', 110], ['Un avion de ligne', 900]]],
   ['Du moins haut au plus haut sommet', 'altitude en mètres', [['Le Ben Nevis', 1345], ['Le mont Fuji', 3776], ['Le mont Blanc', 4805], ['Le Kilimandjaro', 5895], ['L’Everest', 8849]]],
   ['Du plus petit au plus grand diamètre', 'diamètre en kilomètres', [['Mercure', 4879], ['Mars', 6779], ['La Terre', 12742], ['Saturne', 116460], ['Jupiter', 139820]]],
+  ['Du plus ancien au plus récent jeu vidéo', 'année de sortie', [['Pong', 1972], ['Space Invaders', 1978], ['Pac-Man', 1980], ['Super Mario Bros.', 1985], ['Minecraft', 2011]]],
   ['Du plus ancien au plus récent film', 'année de sortie', [['Le Parrain', 1972], ['Star Wars', 1977], ['Jurassic Park', 1993], ['Titanic', 1997], ['Matrix', 1999]]],
 ];
 
 // Séries tirées de la graine : { q, unit, items: [{ n, v }] } dans un ordre mélangé ; truth = indices triés par valeur.
-export function sets(seed, i) {
+export function sets(seed, i, room) {
   const r = roundRng(seed, i, 'ordre');
-  return r.shuffle(BANK.map((_, k) => k)).slice(0, SETS).map(k => {
+  return r.shuffle(half(BANK, room)).slice(0, SETS).map(k => {
     const [q, unit, all] = BANK[k];
     const picked = all.length > SIZE ? r.shuffle(all.map((_, x) => x)).slice(0, SIZE).map(x => all[x]) : all;
     const items = r.shuffle(picked.map(([n, v]) => ({ n, v })));
@@ -39,7 +40,7 @@ export default {
   playMs: 90000,
   unit: 'éléments mis à leur bonne place',
   eligible: () => true,
-  params(seed, i) { return { sets: sets(seed, i) }; },
+  params(seed, i, room) { return { sets: sets(seed, i, room) }; },
   ghost: () => ({ key: [-16, 110], label: '16 sur 30 bien placés' }),
   tieText: () => 'Égalité au nombre de places, puis à la seconde près.',
   score(payload, p) {

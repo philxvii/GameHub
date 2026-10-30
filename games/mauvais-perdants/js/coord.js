@@ -115,7 +115,11 @@ export class Coordinator {
     const recent = prev && prev.plan ? prev.plan.map(x => x.g) : (this.lastPlan || []);
     const plan = drawPlan(seed, { devices: players.map(p => p.dev), solo, ai: !!aiBase() }, recent, decodePicks((room.s.cfg || {}).v), decodeCount((room.s.cfg || {}).v));
     // Revanche : numéro suivant ; nouveau salon ou retour au salon : numéro neuf (jamais réutilisé d'affilée).
-    const tid = `t${prev && prev.tid ? (Number(prev.tid.slice(1)) % 9999) + 1 : 1 + Math.floor(Math.random() * 9999)}`;
+    // Numéro de partie : toujours le précédent + 1 (même après un retour au salon), car sa parité répartit les contenus
+    // (questions, séries, produits, phrases) en deux moitiés : deux parties qui se suivent ne partagent rien.
+    const lastTid = prev && prev.tid ? prev.tid : this.lastTid;
+    const tid = `t${lastTid ? (Number(lastTid.slice(1)) % 9999) + 1 : 1 + Math.floor(Math.random() * 9999)}`;
+    this.lastTid = tid;
     this.lastPlan = plan.map(x => x.g);
     await room.clearRoundData();
     await room.write({
@@ -146,6 +150,7 @@ export class Coordinator {
   async backToLobby() {
     const cur = this.room.s.match;
     if (cur && cur.plan) this.lastPlan = cur.plan.map(x => x.g);
+    if (cur && cur.tid) this.lastTid = cur.tid;
     await this.room.clearRoundData();
     await this.room.write({ match: null, phase: 'lobby' });
   }

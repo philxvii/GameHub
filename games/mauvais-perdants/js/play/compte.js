@@ -45,14 +45,14 @@ export default function mount(root, { p, submit, progress, sfx }) {
     steps.push([a, k, op]); last = performance.now(); sfx.good();
     list = list.filter((_, i) => i !== a && i !== k).concat(v);
     a = -1; op = null;
-    progress(steps.length);
+    progress(steps.length, `${steps.length}${Math.min(99999, gap()).toString(36)}`);   // son écart au total
     draw();
     if (v === p.target) { line.textContent = 'Le compte est bon !'; finish(1100); }
     else if (steps.length >= MAX_STEPS || list.length < 2) finish(900);
   }
   function pickOp(o) { if (done || a < 0) return; op = op === o ? null : o; draw(); }
   function finish(delay = 0) { if (done) return; done = true; draw(); setTimeout(() => { if (alive) { alive = false; submit(payload()); } }, delay); }
-  const payload = () => ({ s: steps, ms: Math.round(last - t0) });
+  const payload = () => ({ s: steps, ms: Math.round((steps.length ? last : performance.now()) - t0) });
   draw();
   return { partial: payload, destroy() { alive = false; } };
 }

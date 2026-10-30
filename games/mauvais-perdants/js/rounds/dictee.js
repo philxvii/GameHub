@@ -3,7 +3,7 @@
 // majuscules ne comptent pas (« e » vaut « é ») : aucun clavier n'est avantagé.
 // Manche retirée du tirage si le salon mêle claviers tactiles et physiques.
 
-import { int, secs, roundRng, fold } from './_deps.js';
+import { int, secs, roundRng, fold, half } from './_deps.js';
 
 export const PHRASES = [
   'Le jury a délibéré pendant trois secondes et il regrette déjà.',
@@ -36,9 +36,9 @@ export default {
   unit: 'temps pour recopier la phrase',
   // Équité : tous au clavier tactile, ou tous au clavier physique.
   eligible: room => new Set(room.devices || []).size <= 1,
-  params(seed, i) {
+  params(seed, i, room) {
     const r = roundRng(seed, i, 'dictee');
-    return { phrase: r.pick(PHRASES) };
+    return { phrase: PHRASES[r.pick(half(PHRASES, room))] };
   },
   // 45 mots/min sur la phrase tirée.
   ghost: p => { const ms = Math.round((loose(p.phrase).length / 5) / 45 * 60000); return { key: [0, Math.round(ms / 100)], label: `${secs(ms)} · 45 mots/min` }; },

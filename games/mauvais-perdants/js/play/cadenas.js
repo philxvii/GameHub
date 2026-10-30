@@ -56,7 +56,7 @@ export default function mount(root, { p, submit, progress, sfx }) {
     const row = h('li', { class: 'cd-row', 'aria-label': g.split('').map((c, k) => `${c} ${NAME[mk[k]]}`).join(', ') },
       ...[...g].map((c, k) => h('span', { class: `cd-tile big ${mk[k]}`, style: { animationDelay: `${k * 90}ms` }, text: c })));
     hist.prepend(row);
-    progress(guesses.length);
+    progress(guesses.length, `${(guesses.length - 1) % 10}${g}`);   // son dernier essai
     if (f.b === LEN) { reveal(true); sfx.good(); msg.textContent = `Ouvert en ${guesses.length} essai${guesses.length > 1 ? 's' : ''} !`; draw(); setTimeout(() => { if (alive) { alive = false; submit(payload()); } }, 1500); return; }
     if (guesses.length >= MAX_TRIES) { reveal(false); sfx.bad(); msg.textContent = `Raté : voici le code.`; draw(); setTimeout(() => { if (alive) { alive = false; submit(payload()); } }, 2000); return; }
     sfx.tick();

@@ -59,7 +59,7 @@ export default function mount(root, { p, submit, progress, sfx }) {
     good += ok; pts.textContent = String(good);
     line.textContent = ok === SIZE ? 'Dans l’ordre, parfait !' : `${ok} sur ${SIZE} à la bonne place. Le bon ordre est affiché.`;
     ok >= 3 ? sfx.good() : sfx.bad();
-    progress(k + 1);
+    progress(k + 1, `${k}${order.join('')}`);          // l'ordre qu'il a choisi
     k++;
     setTimeout(() => {
       if (!alive) return;

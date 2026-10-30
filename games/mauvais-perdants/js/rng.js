@@ -40,6 +40,12 @@ export function rng(seed) {
 }
 
 // Sous-graine stable d'une manche : tournoi + rang + jeu (+ suffixe éventuel).
+// Parité du numéro de partie (t12 → 0, t13 → 1) ; -1 si on ne la connaît pas. Le numéro de partie augmente de 1 à chaque
+// partie d'un même salon : en piochant dans une moitié de banque (indices pairs ou impairs) selon cette parité, deux
+// parties qui se suivent n'ont JAMAIS un seul contenu en commun (questions, séries, produits, phrases).
+export const gameParity = room => { const t = room && room.tid; const n = t ? Number(String(t).replace(/\D/g, '')) : NaN; return Number.isFinite(n) ? n % 2 : -1; };
+export const half = (list, room) => { const par = gameParity(room); return list.map((_, k) => k).filter(k => par < 0 || k % 2 === par); };
+
 export const roundRng = (seed, index, gameId, extra = '') => rng(hash(`${seed}:${index}:${gameId}:${extra}`));
 
 // Graine de tournoi lisible (débogage, reproduction d'une session de test).

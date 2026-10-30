@@ -46,7 +46,7 @@ export default function mount(root, { p, submit, progress, sfx }) {
     num.classList.add(err <= 150 ? 'ok' : err <= 500 ? 'near' : 'far');
     line.textContent = timeout ? 'Pas de STOP : essai perdu.' : err <= 50 ? `Presque parfait : ${err} ms d’écart !` : `${t > target ? 'Trop long' : 'Trop court'} de ${fmt(err)}`;
     err <= 150 ? sfx.good() : sfx.bad();
-    progress(k + 1, `${k}${Math.min(99999, err).toString(36)}`);
+    progress(k + 1, `${k}${t > target ? 'p' : 'n'}${Math.min(99999, err).toString(36)}`);
     k++;
     if (k >= p.targets.length) { alive = false; setTimeout(() => submit(payload()), 1600); return; }
     setTimeout(() => { if (alive) attempt(); }, 1700);

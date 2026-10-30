@@ -72,7 +72,7 @@ export default {
     const steps = arr(payload && payload.s, MAX_STEPS).map(x => (Array.isArray(x) ? x.slice(0, 3) : null));
     const { best, made } = replay(p.nums, p.target, steps);
     const ms = Math.max(int(payload && payload.ms, 0, 600000, 600000), made * 800);
-    const idle = made === 0;
+    const idle = !(payload && Array.isArray(payload.s));   // rendu sans rien jouer : absent ; « Je m'arrête là » sans opération : manche jouée
     return { idle, key: [best, Math.round(ms / 1000)], label: best === 0 ? 'le compte est bon' : `à ${best} du compte`, valid: true, stats: { best, made, ms } };
   },
 };

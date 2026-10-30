@@ -14,6 +14,8 @@ import { derive } from './rounds/coffre.js';
 import { chat } from './chat.js';
 import { round, FAMILIES } from './rounds/index.js';
 import { COLORS as INK } from './rounds/encre.js';
+import { marks as cadMarks } from './rounds/cadenas.js';
+import { CARDS as PR_CARDS } from './rounds/paires.js';
 import { accepts as anaOk } from './rounds/anagramme.js';
 import { gameOf, contenders, COUNT_MS } from './machine.js';
 import { TIEBREAK_I, MIN_ROUNDS, MAX_ROUNDS, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks, decodeCount, clampRounds, roundsOf } from './draw.js';
@@ -355,7 +357,7 @@ function renderPicks() {
   const host = room.isHost;
   drawPicks($('#picks'), chosen, host ? id => { const now = flip(decodePicks((room.s.cfg || {}).v), id); if (now) setPicks([...now]); } : null);
   const count = decodeCount((room.s.cfg || {}).v);
-  drawCount($('#count'), count, host ? n => setPicks([...chosen], n) : null);
+  drawCount($('#rounds-count'), count, host ? n => setPicks([...chosen], n) : null);
   $('#picks-note').textContent = programmeNote(chosen.size, count) + (host ? '' : ' Choix de l’hôte.');
   $('#picks-all').hidden = !host || chosen.size === PICK_ORDER.length;
 }
@@ -796,6 +798,7 @@ const PROG = {
   metronome: v => [`${v}/3`, v / 3, `${v} tempo${v > 1 ? 's' : ''} sur 3 joué${v > 1 ? 's' : ''}`],
 };
 // État de chaque candidat : valeur, part de la borne (0 à 1), texte, fini ou non.
+const TRAILS = {};
 function race(mm, g, p) {
   const vals = contenders(mm).map(u => { const pr = room.s.prog[u]; return pr && pr.k.split('.')[0] === tag(mm) ? pr.v : null; });
   const best = Math.max(1, ...vals.filter(v => v !== null));
@@ -810,8 +813,11 @@ function race(mm, g, p) {
     }
     const [txt, frac, say] = v === null ? ['', 0, 'n’a pas encore commencé'] : PROG[g](v, p);
     const pr = room.s.prog[u], pre = `${tag(mm)}.`;
-    const sub = pr && pr.k.startsWith(pre) ? pr.k.slice(pre.length) : null;      // « indice du nuage + réponse en base 36 »
-    return { u, v, txt, say, sub, frac: Math.max(0, Math.min(1, frac === null ? v / best : frac)), done: !!room.s.subs[u], on: room.online(u) };
+    const sub = pr && pr.k.startsWith(pre) ? pr.k.slice(pre.length) : null;
+    // Mémoire des actions reçues, dans l'ordre : de quoi rejouer son écran (Paires, Cadenas).
+    const tk = `${tag(mm)}|${u}`, trail = (TRAILS[tk] = TRAILS[tk] || []);
+    if (sub && trail[trail.length - 1] !== sub) trail.push(sub);      // « indice du nuage + réponse en base 36 »
+    return { u, v, txt, say, sub, trail, frac: Math.max(0, Math.min(1, frac === null ? v / best : frac)), done: !!room.s.subs[u], on: room.online(u) };
   });
 }
 
@@ -834,6 +840,49 @@ function spectate(g, p, r) {
     const gr = p.rounds[Math.min(r.v, p.rounds.length - 1)];
     return h('div', { class: 'mini-odd', style: { gridTemplateColumns: `repeat(${gr.n}, 1fr)` } }, Array.from({ length: gr.n * gr.n }, (_, c) => h('i', { class: c === gr.cell ? 'odd' : '', text: c === gr.cell ? gr.odd : gr.base })));
   }
+  if (g === 'quiz' && r.sub && p.qs[Number(r.sub[0])]) {
+    const q = p.qs[Number(r.sub[0])], pick = r.sub[1];
+    return h('div', { class: 'mini-quiz' }, h('b', { text: q.q }), h('div', { class: 'mq-ans' }, q.c.map((t, x) => h('span', { class: `${x === q.a ? 'ok' : ''}${String(x) === pick ? ' pick' : ''}${String(x) === pick && x !== q.a ? ' ko' : ''}`, text: t }))));
+  }
+  if (g === 'cadenas' && r.trail && r.trail.length) {
+    return h('div', { class: 'mini-cad' }, r.trail.slice(-5).map(s => { const gs = s.slice(1), mk = cadMarks(p.secret, gs); return h('div', { class: 'mc-row' }, [...gs].map((ch, k) => h('i', { class: `cd-tile ${mk[k]}`, text: ch }))); }));
+  }
+  if (g === 'paires' && r.trail && r.trail.length) {
+    // On rejoue ses cartes retournées contre la disposition commune : trouvées, retournée en ce moment, cachées.
+    const done = new Set(); let pending = -1;
+    for (const s of r.trail) {
+      const c = parseInt(s.slice(1), 36);
+      if (!(c >= 0 && c < PR_CARDS) || done.has(c)) continue;
+      if (pending < 0) { pending = c; continue; }
+      if (c === pending) continue;
+      if (p.cards[c] === p.cards[pending]) { done.add(c); done.add(pending); }
+      pending = -1;
+    }
+    return h('div', { class: 'mini-paires' }, Array.from({ length: PR_CARDS }, (_, c) => h('i', { class: done.has(c) ? 'done' : c === pending ? 'up' : '' })));
+  }
+  if (g === 'compte' && r.sub) {
+    const gap = parseInt(r.sub.slice(1), 36), steps = Number(r.sub[0]);
+    return h('div', { class: 'mini-screen' }, h('b', { text: `Total ${p.target}` }), h('small', { text: gap === 0 ? ' : le compte est bon !' : ` : à ${gap} du compte, ${steps} opération${steps > 1 ? 's' : ''}` }));
+  }
+  if (g === 'ordre' && r.sub && p.sets[Number(r.sub[0])]) {
+    const s = p.sets[Number(r.sub[0])], ord = [...r.sub.slice(1)].map(Number);
+    return h('div', { class: 'mini-ordre' }, h('small', { text: s.q }), ord.map((x, pos) => h('span', { class: s.truth[pos] === x ? 'ok' : 'ko', text: `${pos + 1}. ${(s.items[x] || {}).n || ''}` })));
+  }
+  if ((g === 'chrono' || g === 'metronome') && r.sub) {
+    const i = Number(r.sub[0]), sign = r.sub[1] === 'p' ? 1 : -1, err = parseInt(r.sub.slice(2), 36);
+    const span = g === 'chrono' ? ((p.targets[i] || 6000) / 2) : ((p.periods[i] || 600) / 2);
+    const pos = Math.max(2, Math.min(98, 50 + sign * Math.min(1, err / span) * 48));
+    return h('div', { class: 'mini-gauge', 'aria-label': 'Son écart' }, h('div', { class: 'mg-bar' }, h('i', { class: 'mg-mid' }), h('i', { class: 'mg-dot', style: { left: `${pos}%` } })),
+      h('small', { text: `${g === 'chrono' ? 'Essai' : 'Tempo'} ${i + 1} : ${err === 0 ? 'pile' : sign > 0 ? (g === 'chrono' ? 'trop long' : 'trop lent') : (g === 'chrono' ? 'trop court' : 'trop vite')}, ${g === 'chrono' ? (err / 1000).toFixed(2).replace('.', ',') + ' s' : err + ' ms'}` }));
+  }
+  if (g === 'gong' && r.sub) {
+    const idx = Number(r.sub[0]), ms = parseInt(r.sub.slice(1), 36);
+    return h('div', { class: 'mini-screen' }, h('b', { text: `${ms} ms` }), h('small', { text: ` signal ${idx + 1} sur ${p.trials}` }));
+  }
+  if (g === 'chemin' && p.seq) {
+    const n = Math.min(p.seq.length, Math.max(1, (r.v || 0) + 1));
+    return h('div', { class: 'mini-chemin' }, Array.from({ length: 9 }, (_, c) => { const at = p.seq.slice(0, n).indexOf(c); return h('i', { class: at >= 0 ? 'on' : '', text: at >= 0 ? String(at + 1) : '' }); }));
+  }
   return h('span');
 }
 
@@ -849,10 +898,10 @@ function liveExtra(el, g, p, r, mine, open = false) {
     if (guess > 0 && (open || idx < myCount) && p.clouds[idx]) kids = [h('span', { class: 'lv-say', text: `Nuage ${idx + 1} : il a mis ${guess}` }), h('span', { class: 'lv-true', text: ` (c’était ${p.clouds[idx].n})` })];
     else if (guess > 0) kids = [h('span', { class: 'lv-hide', text: 'Sa réponse s’affichera quand tu auras répondu.' })];
   }
-  else if (open && !r.ghost && r.v !== null && r.v !== undefined && ['tir', 'calcul', 'dejavu', 'encre', 'anagramme', 'intrus'].includes(g)) kids = [spectate(g, p, r)];
+  else if (open && !r.ghost && r.v !== null && r.v !== undefined && ['tir', 'calcul', 'dejavu', 'encre', 'anagramme', 'intrus', 'quiz', 'cadenas', 'paires', 'compte', 'ordre', 'chrono', 'metronome', 'gong', 'chemin'].includes(g)) kids = [spectate(g, p, r)];
   else if ((g === 'chrono' || g === 'metronome') && r.sub && !r.ghost) {
     // « indice de l'essai + écart en ms (base 36) » : visible une fois qu'on a joué le même essai (ou fini).
-    const i = Number(r.sub[0]), err = parseInt(r.sub.slice(1), 36), myCount = mine && mine.v ? mine.v : 0;
+    const i = Number(r.sub[0]), err = parseInt(r.sub.slice(2), 36), myCount = mine && mine.v ? mine.v : 0;
     if (open || i < myCount) kids = [h('span', { class: 'lv-say', text: `${g === 'chrono' ? 'Essai' : 'Tempo'} ${i + 1} : ${g === 'chrono' ? (err / 1000).toFixed(2).replace('.', ',') + ' s' : err + ' ms'} d’écart` }), h('span', { class: err <= (g === 'chrono' ? 150 : 40) ? 'lv-win' : 'lv-true', text: err <= (g === 'chrono' ? 150 : 40) ? ' (quasi parfait)' : '' })];
     else kids = [h('span', { class: 'lv-hide', text: 'Son écart s’affichera quand tu auras joué cet essai.' })];
   }

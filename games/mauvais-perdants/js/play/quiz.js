@@ -38,7 +38,7 @@ export default function mount(root, { p, submit, progress, sfx }) {
     if (ok) { good++; score.textContent = String(good); sfx.good(); } else sfx.bad();
     [...list.children].forEach((b, x) => { b.disabled = true; if (x === cur.a) b.classList.add('ok'); else if (x === c) b.classList.add('ko'); });
     barFill.style.transition = 'none';
-    progress(k + 1);
+    progress(k + 1, `${k}${c < 0 ? 'z' : c}`);          // sa réponse : visible des autres une fois leur manche finie
     k++;
     setTimeout(() => {
       if (!alive) return;

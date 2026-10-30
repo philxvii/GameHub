@@ -1059,3 +1059,31 @@ html.calm .cf-banner.me, .cf-banner.me:where(*) { animation-play-state: running;
 .cd-verdict { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; padding: 10px 16px; border-radius: 16px; background: rgba(241, 230, 207, .1); }
 .cd-verdict small { font-size: 13px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; opacity: .75; }
 .cd-code { display: inline-flex; gap: 8px; }
+
+/* Le jeu de l'adversaire, rejoué sur l'écran d'attente */
+.mini-quiz { margin-top: 6px; padding: 8px 12px; border-radius: 12px; background: rgba(241, 230, 207, .1); font-size: 13px; line-height: 1.3; }
+.mini-quiz b { display: block; margin-bottom: 6px; font-size: 14px; }
+.mq-ans { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.mq-ans span { padding: 4px 8px; border-radius: 8px; background: rgba(241, 230, 207, .08); font-weight: 600; }
+.mq-ans span.ok { background: #3fbf6a; color: var(--ink); }
+.mq-ans span.pick { outline: 2px solid var(--cream); }
+.mq-ans span.ko { background: #ff9a86; color: var(--ink); }
+.mini-cad { display: grid; gap: 4px; margin-top: 6px; }
+.mc-row { display: flex; gap: 4px; }
+.mini-cad .cd-tile { width: 26px; height: 26px; font-size: 15px; }
+.mini-paires { display: grid; grid-template-columns: repeat(4, 22px); gap: 4px; margin-top: 6px; }
+.mini-paires i { height: 22px; border-radius: 5px; background: var(--brown-3); border: 1.5px solid rgba(241, 230, 207, .25); }
+.mini-paires i.done { background: #3fbf6a; border-color: var(--ink); }
+.mini-paires i.up { background: var(--mustard); border-color: var(--ink); animation: dm-in 300ms var(--ios); }
+.mini-ordre { display: grid; gap: 3px; margin-top: 6px; font-size: 12.5px; font-weight: 700; }
+.mini-ordre small { opacity: .7; font-weight: 700; }
+.mini-ordre span { padding: 3px 8px; border-radius: 7px; }
+.mini-ordre span.ok { background: #3fbf6a; color: var(--ink); } .mini-ordre span.ko { background: #ff9a86; color: var(--ink); }
+.mini-gauge { margin-top: 8px; }
+.mg-bar { position: relative; height: 10px; border-radius: 5px; background: rgba(241, 230, 207, .14); }
+.mg-mid { position: absolute; left: 50%; top: -3px; width: 2px; height: 16px; background: var(--cream); opacity: .7; }
+.mg-dot { position: absolute; top: -3px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--mustard); border: 2px solid var(--ink); transition: left 500ms var(--ios); }
+.mini-gauge small { display: block; margin-top: 8px; font-size: 12px; opacity: .8; }
+.mini-chemin { display: grid; grid-template-columns: repeat(3, 26px); gap: 4px; margin-top: 6px; }
+.mini-chemin i { height: 26px; border-radius: 6px; background: rgba(241, 230, 207, .1); display: grid; place-items: center; font-style: normal; font-family: var(--display); font-size: 14px; }
+.mini-chemin i.on { background: var(--mustard); color: var(--ink); }

@@ -9,7 +9,7 @@ import { scoreBac } from './petitbac.js';
 
 export const GHOST = 'gonzague';
 export const isSolo = m => !!(m.roster && m.roster[GHOST]);
-export const roomInfo = m => ({ devices: Object.entries(m.roster || {}).filter(([u]) => u !== GHOST).map(([, p]) => p.dev), solo: isSolo(m), who: contenders(m).filter(u => u !== GHOST) });
+export const roomInfo = m => ({ devices: Object.entries(m.roster || {}).filter(([u]) => u !== GHOST).map(([, p]) => p.dev), solo: isSolo(m), who: contenders(m).filter(u => u !== GHOST), tid: m.tid });
 export const paramsOf = m => {
   const g = gameOf(m);
   return round(g).params(m.seed, m.i, roomInfo(m));

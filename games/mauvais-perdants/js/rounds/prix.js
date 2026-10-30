@@ -7,7 +7,7 @@
 // crédit affiché dans le jeu). Prix = médiane des relevés non promotionnels en France depuis
 // juin 2024 (au moins 14 relevés par produit), relevés le 27/10/2026.
 
-import { arr, num, roundRng } from './_deps.js';
+import { arr, num, roundRng, half } from './_deps.js';
 
 export const ITEMS_PER_ROUND = 5;
 export const GUESS_MS = 12000, SHOW_MS = 7000, LEAD_MS = 600;
@@ -81,9 +81,9 @@ export const CATALOG = [
   ['fun-ticket', "Un ticket de métro", "RATP", "Paris, à l’unité", 2.5, '🎫', "Tarif RATP du ticket à l’unité (estimation)."],
 ];
 
-export function items(seed, i) {
+export function items(seed, i, room) {
   const r = roundRng(seed, i, 'prix');
-  return r.shuffle(CATALOG.map((c, k) => k)).slice(0, ITEMS_PER_ROUND).map(k => {
+  return r.shuffle(half(CATALOG, room)).slice(0, ITEMS_PER_ROUND).map(k => {
     const [code, name, brand, qty, price, emoji, source] = CATALOG[k];
     return { code, name, brand, qty, price, emoji, source: source || SRC_OPEN_PRICES };
   });
@@ -120,7 +120,7 @@ export default {
   playMs: LEAD_MS + ITEMS_PER_ROUND * SLOT_MS + 2000,
   unit: 'écart moyen au vrai prix',
   eligible: () => true,
-  params(seed, i) { return { items: items(seed, i) }; },
+  params(seed, i, room) { return { items: items(seed, i, room) }; },
   // Écart moyen de 25 % : 5 × ln(1,25).
   ghost: () => ({ key: [Math.round(ITEMS_PER_ROUND * Math.log(1.25) * 100)], label: 'écart 25 %' }),
   tieText: () => 'Égalité à 1 % d’écart près.',

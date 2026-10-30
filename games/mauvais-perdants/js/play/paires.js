@@ -35,6 +35,7 @@ export default function mount(root, { p, submit, progress, sfx }) {
   function flip(c) {
     if (!alive || busy || cards[c].classList.contains('up') || cards[c].classList.contains('done')) return;
     flips.push(c); last = performance.now(); sfx.tick();
+    progress(matched, `${(flips.length % 36).toString(36)}${c.toString(36)}`);   // la carte qu'il retourne
     cards[c].classList.add('up');
     if (first < 0) { first = c; return; }
     tries++; tr.textContent = String(tries);
@@ -42,7 +43,7 @@ export default function mount(root, { p, submit, progress, sfx }) {
     if (p.cards[a] === p.cards[c]) {
       matched++; pr.textContent = `${matched} / ${PAIRS}`; sfx.good();
       setTimeout(() => { cards[a].classList.add('done'); cards[c].classList.add('done'); busy = false; }, 350);
-      progress(matched);
+      progress(matched, `${(flips.length % 36).toString(36)}${c.toString(36)}`);
       if (matched >= PAIRS) { alive = false; setTimeout(() => submit(payload()), 1200); }
     } else {
       setTimeout(() => { cards[a].classList.remove('up'); cards[c].classList.remove('up'); busy = false; }, 850);
