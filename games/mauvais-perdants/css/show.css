@@ -707,6 +707,14 @@ html.calm *, html.calm *::before, html.calm *::after { animation-duration: 1ms !
 .dm-big.dm-phrase { font-size: 24px; text-transform: none; letter-spacing: 0; }
 .dm-big.dm-hid { opacity: .4; letter-spacing: .2em; }
 .dm-lab { font-weight: 800; font-size: 14px; opacity: .8; }
+.dm-shelf { display: grid; gap: 4px; justify-items: center; padding: 6px 12px; border-radius: 12px; border: 2px dashed rgba(241, 230, 207, .4); min-width: min(100%, 300px); }
+.dm-shelf small { font-size: 11px; font-weight: 800; opacity: .75; }
+.dm-chips { display: flex; gap: 6px; min-height: 24px; }
+.dm-chip { padding: 2px 10px; border-radius: 999px; background: rgba(241, 230, 207, .18); font-weight: 800; font-size: 14px; animation: dm-in 350ms var(--ios); transition: background 250ms var(--ios), color 250ms; }
+.dm-chip.lit { background: var(--mustard); color: var(--ink); }
+.dm-big.dm-word { font-size: 30px; padding: 6px 22px; min-width: 150px; }
+.dm-t.dm-yes { background: var(--mustard); }
+.dm-t.dm-yes.ok, .dm-t.ok { background: #7fe0a8; }
 .dm-t { display: grid; place-items: center; min-width: 46px; height: 46px; padding: 0 12px; border-radius: 10px; border: 2px solid var(--ink); background: var(--cream); color: var(--ink); font-family: var(--display); font-size: 20px; text-transform: uppercase; transition: background 200ms var(--ios), transform 200ms var(--ios), color 200ms; }
 .dm-t.lit { background: var(--mustard); transform: scale(1.08); }
 .dm-t.ok { background: #7fe0a8; }

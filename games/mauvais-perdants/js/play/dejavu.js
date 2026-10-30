@@ -11,13 +11,13 @@ export default function mount(root, { p, submit, progress, sfx }) {
   const lifeBox = h('span');
   const word = h('div', { class: 'word', 'aria-live': 'polite' });
   const fb = h('div', { class: 'feedback' });
-  const seen = h('button', { class: 'btn btn-brass', type: 'button' }, 'Déjà vu', h('span', { class: 'kbd', text: 'déjà passé · touche V' }));
-  const fresh = h('button', { class: 'btn btn-main', type: 'button' }, 'Nouveau', h('span', { class: 'kbd', text: '1re fois · touche N' }));
+  const seen = h('button', { class: 'btn btn-brass', type: 'button' }, 'Déjà vu', h('span', { class: 'kbd', text: 'il est déjà passé · touche V' }));
+  const fresh = h('button', { class: 'btn btn-main', type: 'button' }, 'Nouveau', h('span', { class: 'kbd', text: 'première fois · touche N' }));
   const hint = h('div', { class: 'state-line' });
   root.append(h('div', { class: 'play-head' }, h('span', {}, 'Bonnes réponses ', sc), lifeBox), hint, word, fb, h('div', { class: 'dv-actions' }, seen, fresh));
   const draw = () => {
     word.textContent = p.words[k].w; lifeBox.replaceChildren(livesEl(lives, LIVES));
-    hint.textContent = k === 0 ? 'Premier mot : tu ne l’as jamais vu, donc « Nouveau ».' : 'Ce mot est-il déjà apparu plus tôt dans cette manche ?';
+    hint.textContent = k === 0 ? 'Premier mot : tu ne l’as jamais vu, touche « Nouveau ».' : 'Ce mot est-il déjà passé plus tôt ? Oui : « Déjà vu ». Non : « Nouveau ».';
   };
   function answer(v) {
     if (!alive || locked) return;

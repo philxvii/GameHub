@@ -85,14 +85,22 @@ const SPECS = {
     }
   },
   dejavu: {
-    say: ['Un mot que tu n’as jamais vu : « Nouveau ».', 'Un mot déjà passé plus tôt : « Déjà vu ».', '3 erreurs et c’est fini. Le plus de bonnes réponses gagne.'],
+    say: ['Les mots arrivent un par un. Premier mot, « pomme » : tu ne l’as jamais vu, touche « Nouveau ».', '« chaise » : encore jamais vu, donc « Nouveau ». Retiens chaque mot, ils s’empilent dans ta mémoire.', '« pomme » revient ! Tu l’as déjà vu plus tôt : touche « Déjà vu ».', 'Bonne réponse : +1. 3 erreurs et c’est fini. Le plus de bonnes réponses gagne.'],
     async run(d) {
-      const word = d.put(BIG('')), no = T('Nouveau'), yes = T('Déjà vu');
+      const shelf = h('div', { class: 'dm-shelf' }, h('small', { text: 'Dans ta mémoire (invisible dans le vrai jeu)' }));
+      const chips = h('div', { class: 'dm-chips' }); shelf.append(chips);
+      d.put(shelf);
+      const word = d.put(BIG('', 'dm-word')), no = T('Nouveau'), yes = T('Déjà vu', 'dm-yes');
       d.put(h('div', { class: 'dm-row' }, no, yes));
-      const ask = async (w, btn) => { word.textContent = w; await d.wait(900); await d.tap(btn); btn.classList.add('ok'); await d.wait(450); btn.classList.remove('ok'); };
-      d.step(0); await ask('pomme', no); await ask('chaise', no);
-      d.step(1); await ask('pomme', yes);
-      d.step(2); d.put(BADGE('❤️ ❤️ ❤️')); await d.wait(2000);
+      const chip = w => chips.append(h('span', { class: 'dm-chip', text: w }));
+      const ask = async (w, btn, remember) => {
+        word.textContent = w; await d.wait(1100); await d.tap(btn); btn.classList.add('ok'); await d.wait(500);
+        btn.classList.remove('ok'); if (remember) chip(w);
+      };
+      d.step(0); await ask('pomme', no, true);
+      d.step(1); await ask('chaise', no, true);
+      d.step(2); chips.firstChild.classList.add('lit'); await ask('pomme', yes, false);
+      d.step(3); d.put(BADGE('+1 · bien vu !')); await d.wait(2200);
     }
   },
   dictee: {
