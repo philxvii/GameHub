@@ -105,7 +105,7 @@ $('#btn-create').addEventListener('click', e => busy(e.currentTarget, async () =
   const scene = $('#scene').checked;
   const name = scene ? 'Scène' : readName();
   if (!name) return;
-  enter(await createRoom({ name, scene, roast: 'soft', crude: false, v: encodePicks(homePicks()) }));
+  enter(await createRoom({ name, scene, roast: 'soft', crude: false, v: encodePicks(homePicks(), homeCount()) }));
 }));
 // Solo : un salon privé, lancé aussitôt (duel contre un score de référence).
 let autoSolo = false;
@@ -113,7 +113,7 @@ $('#btn-solo').addEventListener('click', e => busy(e.currentTarget, async () => 
   const name = readName();
   if (!name) return;
   autoSolo = true;
-  enter(await createRoom({ name, scene: false, roast: 'soft', crude: false, v: encodePicks(homePicks()) }));
+  enter(await createRoom({ name, scene: false, roast: 'soft', crude: false, v: encodePicks(homePicks(), homeCount()) }));
 }));
 $('#btn-join').addEventListener('click', e => busy(e.currentTarget, async () => {
   const scene = $('#scene-join').checked;
