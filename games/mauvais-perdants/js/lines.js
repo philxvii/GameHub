@@ -116,6 +116,11 @@ export const LINES = {
     L(c => c.g === 'chrono' && `Le Chrono caché. Vous prétendez avoir le sens du temps. Vous êtes en retard à tout.`),
     L(c => c.g === 'intrus' && `L'Intrus. Un seul signe n'est pas comme les autres. Vous le reconnaîtrez : c'est le seul qui ne vous ressemble pas.`),
     L(c => c.g === 'anagramme' && `Le Mot brouillé. Des lettres en vrac, comme vos arguments. Remettez-les en ordre.`),
+    L(c => c.g === 'quiz' && `La Question. Quatre réponses, une bonne. Douze secondes. Même pas besoin de réfléchir, il suffit de savoir.`),
+    L(c => c.g === 'cadenas' && `Le Cadenas. Quatre chiffres, tous différents, et dix essais. Je vous regarde chercher, c'est mon passe-temps préféré.`),
+    L(c => c.g === 'paires' && `Les Paires. Seize cartes, huit paires. Une mémoire de poisson rouge suffirait. On va voir.`),
+    L(c => c.g === 'compte' && `Le Compte est bon. Six nombres, un total, et quatre opérations. Vos professeurs de maths seraient fiers. Ou pas.`),
+    L(c => c.g === 'ordre' && `Dans l'ordre. Cinq choses à ranger. Le plus petit d'abord, le plus grand ensuite. Facile. Sauf pour vous.`),
     L(c => c.g === 'metronome' && `Le Métronome. Quatre battements, puis le silence. Tenez le rythme. Je sais, c'est dur sans moi pour vous guider.`),
   ],
   round_win: [

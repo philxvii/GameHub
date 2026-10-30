@@ -40,7 +40,7 @@ describe('contrat des manches', () => {
     assert.equal(new Set(ROUNDS.map(r => r.id)).size, ROUNDS.length);
     assert.deepEqual(new Set(ROUNDS.map(r => r.family)), new Set(['vitesse', 'espace', 'memoire', 'mots', 'chiffres']));
     for (const r of ROUNDS) {
-      assert.ok(r.title && r.verb && r.rules.length >= 2 && r.playMs >= 20000 && r.playMs <= ({ coffre: 180000, prix: 100000 }[r.id] || 90000), r.id);
+      assert.ok(r.title && r.verb && r.rules.length >= 2 && r.playMs >= 20000 && r.playMs <= ({ coffre: 180000, prix: 100000, quiz: 130000, cadenas: 100000 }[r.id] || 90000), r.id);
       assert.equal(typeof r.params, 'function'); assert.equal(typeof r.eligible, 'function'); assert.equal(typeof r.tieText, 'function');
     }
   });

@@ -775,6 +775,11 @@ function mInfo(m, uid, names) { return { name: names[uid], c: (m.roster[uid] || 
 // Dans l'unité de la manche ; barre relative à la borne (ou au meilleur).
 // [valeur courte, part de la barre, phrase « où il en est »]
 const PROG = {
+  quiz: v => [`${v}/10`, v / 10, `${v} question${v > 1 ? 's' : ''} sur 10 répondue${v > 1 ? 's' : ''}`],
+  cadenas: v => [`${v}/10`, v / 10, `${v} essai${v > 1 ? 's' : ''} sur 10 tenté${v > 1 ? 's' : ''}`],
+  paires: v => [`${v}/8`, v / 8, `${v} paire${v > 1 ? 's' : ''} sur 8 trouvée${v > 1 ? 's' : ''}`],
+  compte: v => [`${v}`, null, `${v} opération${v > 1 ? 's' : ''} faite${v > 1 ? 's' : ''}`],
+  ordre: v => [`${v}/6`, v / 6, `${v} série${v > 1 ? 's' : ''} sur 6 classée${v > 1 ? 's' : ''}`],
   gong: (v, p) => [`${v}/${p.trials}`, v / p.trials, `${v} signal${v > 1 ? 'x' : ''} sur ${p.trials} joué${v > 1 ? 's' : ''}`],
   tir: v => [`${v}/20`, v / 20, `${v} cible${v > 1 ? 's' : ''} touchée${v > 1 ? 's' : ''} sur 20`],
   dictee: (v, p) => { const pc = Math.round(100 * v / p.phrase.length); return [`${pc} %`, v / p.phrase.length, `phrase recopiée à ${pc} %`]; },

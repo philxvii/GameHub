@@ -18,8 +18,13 @@ import chrono from './chrono.js';
 import intrus from './intrus.js';
 import anagramme from './anagramme.js';
 import metronome from './metronome.js';
+import quiz from './quiz.js';
+import cadenas from './cadenas.js';
+import paires from './paires.js';
+import compte from './compte.js';
+import ordre from './ordre.js';
 
-export const ROUNDS = [gong, tir, dictee, chemin, numeros, damier, coffre, dejavu, bac, calcul, nuage, prix, encre, chrono, intrus, anagramme, metronome];
+export const ROUNDS = [gong, tir, dictee, chemin, numeros, damier, coffre, dejavu, bac, calcul, nuage, prix, encre, chrono, intrus, anagramme, metronome, quiz, cadenas, paires, compte, ordre];
 export const BY_ID = Object.fromEntries(ROUNDS.map(r => [r.id, r]));
 export const round = id => BY_ID[id] || null;
 export { FAMILIES, compareKeys, ABSENT, MAX_PAYLOAD } from './contract.js';

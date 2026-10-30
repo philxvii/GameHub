@@ -113,7 +113,7 @@ async function tournamentDone(devs, tid, ms = 9 * 60000) {
     assert.equal(await A.p.eval(`return document.querySelector('.logo').textContent;`), 'MauvaisPerdants');
   });
   await check('créer un salon (code court et lisible)', async () => {
-    await A.p.eval(`window.__mpSeed = 'MULTI001'; document.querySelector('#name').value = 'Alice'; document.querySelector('#btn-create').click(); return 1;`);
+    await A.p.eval(`window.__mpSeed = 'MULTI001'; localStorage.setItem('mp-picks', '4097'); document.querySelector('#name').value = 'Alice'; document.querySelector('#btn-create').click(); return 1;`);
     code = await waitFor(A.p, `return window.__mp.room && window.__mp.room.code;`);
     assert.match(code, /^[A-Z]{3,5}-[0-9]{2}$/);
   });

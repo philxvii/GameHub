@@ -11,6 +11,15 @@ site** (univers, palette, typographies, matière, boutons, tout diffère), son l
 développeurs et de testeurs, jamais généré par une IA. **Rien n'est produit avant qu'un dossier
 `games/<jeu>/DIRECTION.md` ait été écrit et validé par l'utilisateur** : épuré, fluide, typographie choisie.
 
+## Lecture obligatoire avant de créer ou modifier un jeu ou une épreuve : le guide des mini-jeux
+
+**Avant tout nouveau jeu, toute nouvelle épreuve, ou toute modification de la façon de jouer, lis
+[docs/GUIDE-MINI-JEUX.md](docs/GUIDE-MINI-JEUX.md)** (après la charte) : les consignes du propriétaire
+(cartes animées explicatives, bilan clair, voir l'adversaire sans pouvoir le copier, anti-triche, sources des
+données, interface épurée et fluide), la recherche sur ce qui rend un mini-jeu clair et rejouable, la recette
+technique et la liste à cocher. Enregistre-en l'essentiel dans ta mémoire persistante et complète le guide
+quand l'utilisateur donne une nouvelle consigne.
+
 ## Reprise en cours : Mauvais Perdants
 
 Le nouveau jeu `games/mauvais-perdants/` est en ligne sur roulia.me ; prochaine étape : refonte

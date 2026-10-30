@@ -89,7 +89,7 @@ async function tournament(devs, seed, shotPrefix) {
   await loadRules();
   const devs = [await device('A'), await device('B'), await device('C')];
   const [A, B, C] = devs;
-  await A.p.eval(`document.querySelector('#name').value = 'Ana'; document.querySelector('#btn-create').click(); return 1;`);
+  await A.p.eval(`localStorage.setItem('mp-picks', '4097'); document.querySelector('#name').value = 'Ana'; document.querySelector('#btn-create').click(); return 1;`);
   const code = await waitFor(A.p, `return window.__mp.room && window.__mp.room.code;`);
   for (const [d, n] of [[B, 'Basile'], [C, 'Coline']]) {
     await d.p.eval(`document.querySelector('#name').value = ${js(n)}; document.querySelector('#code').value = ${js(code)}; document.querySelector('#btn-join').click(); return 1;`);

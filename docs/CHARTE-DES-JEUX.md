@@ -6,6 +6,9 @@ persistante (les huit règles de la section 1, le niveau de référence de la se
 l'obligation de plan de la section 4). Relis-le au début de chaque session. Il y a eu des
 reproches : un jeu fait sans cette charte est refusé et refait.
 
+> **Avant de créer un jeu ou une épreuve, lis aussi [GUIDE-MINI-JEUX.md](GUIDE-MINI-JEUX.md)** : les consignes
+> du propriétaire sur la clarté des règles, la concurrence entre joueurs et la recherche qui les fonde.
+
 ## 0. Ce qu'on construit
 
 GameHub n'est pas un tas de mini-jeux : c'est un site où **chaque jeu est un petit monde**,

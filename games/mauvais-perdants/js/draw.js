@@ -29,7 +29,7 @@ export const eligibleRounds = room => ROUNDS.filter(r => r.eligible(room || {}))
 // Manches choisies par l'hôte, rangées dans cfg.v (le seul champ libre autorisé par les règles
 // de la base pour cfg) : 1 = toutes ; sinon 2 + masque de bits, dans l'ordre FIXE ci-dessous.
 // Une nouvelle manche s'ajoute toujours EN FIN de liste (les masques déjà écrits restent justes).
-export const PICK_ORDER = ['gong', 'tir', 'dictee', 'chemin', 'numeros', 'damier', 'coffre', 'dejavu', 'bac', 'calcul', 'nuage', 'prix', 'encre', 'chrono', 'intrus', 'anagramme', 'metronome'];
+export const PICK_ORDER = ['gong', 'tir', 'dictee', 'chemin', 'numeros', 'damier', 'coffre', 'dejavu', 'bac', 'calcul', 'nuage', 'prix', 'encre', 'chrono', 'intrus', 'anagramme', 'metronome', 'quiz', 'cadenas', 'paires', 'compte', 'ordre'];
 export const MIN_PICKS = 1;
 // Nombre de manches du tournoi (hors départage) : la longueur du tirage, 1 à MAX_ROUNDS.
 // Le départage garde l'indice TIEBREAK_I, quel que soit ce nombre.

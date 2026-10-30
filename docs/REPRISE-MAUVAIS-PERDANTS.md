@@ -225,3 +225,12 @@ banqueroll (briefing), mini-subway (intro), home.html, `shared/admin-audience.js
 `docs/CLOUDFLARE-NAVIGATION.md`. Elles appartiennent à l'utilisateur et ne viennent pas de
 cette branche ; elles n'ont pas été poussées. `games/banqueroll/ai-host/src/persona.js` est
 privé et non versionné : à copier à la main si besoin.
+
+- 30/10 : **cinq épreuves jeu télé** ajoutées (La Question `quiz`, Le Cadenas `cadenas`, Les Paires `paires`,
+  Le Compte est bon `compte`, Dans l'ordre `ordre`) : `js/rounds/`, `js/play/`, cartes animées dans `js/ui/demos.js`,
+  tests `tests/epreuves-tv.test.mjs`. Guide des mini-jeux : `docs/GUIDE-MINI-JEUX.md` (à lire avant tout jeu/épreuve).
+  **Bogue corrigé** : `coord.js` ne voyait pas la progression des joueurs dont la clé `prog` porte un suffixe (« tag.indice »,
+  utilisé par plusieurs épreuves) : ils étaient pris pour des absents après 25 s. Les tests navigateur (`rounds.cjs`,
+  `multi.cjs`) limitent le salon aux 12 premières épreuves (`mp-picks` = 4097) : `bot.js` ne sait pas jouer aux dix
+  dernières. `multi.cjs` échoue à « C revient dans l'émission » sur `main` aussi (changement d'une autre session sur
+  les candidats partis) : à reprendre.

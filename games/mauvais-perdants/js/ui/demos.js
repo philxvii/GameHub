@@ -194,6 +194,64 @@ const SPECS = {
       d.step(2); d.put(BADGE('+10 · +10 · +5 · +10')); await d.wait(2200);
     }
   },
+  quiz: {
+    say: ['Une question s’affiche, avec quatre réponses.', 'Touche la bonne le plus vite possible. Pas de seconde chance.', 'Dix questions : le plus de bonnes réponses gagne, puis le plus rapide.'],
+    async run(d) {
+      d.step(0); d.put(BIG('Capitale de l’Australie ?', 'dm-phrase'));
+      const ans = ['Sydney', 'Canberra', 'Perth', 'Melbourne'].map(t => T(t, 'dm-ans')); d.put(GRID(2, ans)); await d.wait(1700);
+      d.step(1); await d.tap(ans[1]); ans[1].classList.add('ok'); await d.wait(900);
+      d.step(2); d.put(BADGE('8 bonnes · 21,4 s')); await d.wait(2100);
+    }
+  },
+  cadenas: {
+    say: ['Un code de quatre chiffres, tous différents.', 'Tu essaies : un jeton plein = bien placé, un creux = bon chiffre mal placé.', 'Ouvre le cadenas en un minimum d’essais.'],
+    async run(d) {
+      const row = h('div', { class: 'dm-row' }, ['?', '?', '?', '?'].map(c => T(c, 'dm-sym'))); d.put(row);
+      const pegs = d.put(h('div', { class: 'dm-pegs' }));
+      d.step(0); await d.wait(1500);
+      const guess = (g, b, m) => { [...g].forEach((c, k) => { row.children[k].textContent = c; }); pegs.replaceChildren(...Array.from({ length: b }, () => h('i', { class: 'peg b' })), ...Array.from({ length: m }, () => h('i', { class: 'peg m' }))); };
+      d.step(1); guess('1234', 1, 2); await d.wait(1700);
+      guess('3140', 2, 1); await d.wait(1500);
+      guess('3416', 4, 0); [...row.children].forEach(c => c.classList.add('ok'));
+      d.step(2); d.put(BADGE('Ouvert en 3 essais')); await d.wait(2200);
+    }
+  },
+  paires: {
+    say: ['Seize cartes face cachée.', 'Retourne-en deux : identiques, elles restent.', 'Le moins de coups pour toutes les trouver gagne.'],
+    async run(d) {
+      const cells = Array.from({ length: 12 }, () => T('7', 'dm-t off')); d.put(GRID(4, cells));
+      const show = (i, txt) => { cells[i].textContent = txt; cells[i].classList.remove('off'); cells[i].classList.add('lit'); };
+      const hide = i => { cells[i].textContent = '7'; cells[i].classList.add('off'); cells[i].classList.remove('lit'); };
+      d.step(0); await d.wait(1300);
+      d.step(1); await d.tap(cells[1]); show(1, 'A'); await d.tap(cells[6]); show(6, 'B'); await d.wait(800); hide(1); hide(6);
+      await d.tap(cells[1]); show(1, 'A'); await d.tap(cells[9]); show(9, 'A'); await d.wait(400);
+      [1, 9].forEach(i => { cells[i].classList.remove('lit'); cells[i].classList.add('ok'); });
+      d.step(2); d.put(BADGE('Fini en 14 coups')); await d.wait(2200);
+    }
+  },
+  compte: {
+    say: ['Six nombres et un total à atteindre.', 'Touche deux nombres et une opération : ils fusionnent.', 'Le plus proche du total gagne.'],
+    async run(d) {
+      d.step(0); d.put(h('div', { class: 'dm-lab', text: 'Le total : 23' }));
+      const row = h('div', { class: 'dm-row' }, [3, 7, 2, 9].map(v => T(String(v), 'dm-sym'))); d.put(row); await d.wait(1700);
+      d.step(1); await d.tap(row.children[0]); row.children[0].classList.add('lit');
+      await d.tap(row.children[1]); row.children[0].classList.remove('lit');
+      row.children[0].textContent = '21'; row.children[1].remove(); d.put(BADGE('3 × 7 = 21')); await d.wait(1300);
+      await d.tap(row.children[0]); await d.tap(row.children[1]); row.children[0].textContent = '23'; row.children[1].remove();
+      row.children[0].classList.add('ok');
+      d.step(2); d.put(BADGE('Le compte est bon')); await d.wait(2200);
+    }
+  },
+  ordre: {
+    say: ['Cinq éléments en désordre.', 'Touche-les du plus petit au plus grand.', 'Chaque élément à la bonne place rapporte un point.'],
+    async run(d) {
+      d.step(0); d.put(h('div', { class: 'dm-lab', text: 'Du plus petit au plus grand monument' }));
+      const items = ['Tour Eiffel', 'Arc de triomphe', 'Statue de la Liberté'].map(t => T(t, 'dm-ans')); d.put(h('div', { class: 'dm-col' }, items)); await d.wait(1700);
+      d.step(1);
+      for (const [k, i] of [[1, 1], [2, 2], [3, 0]]) { await d.tap(items[i]); items[i].classList.add('ok'); items[i].dataset.r = String(k); await d.wait(250); }
+      d.step(2); d.put(BADGE('3 sur 3 bien placés')); await d.wait(2200);
+    }
+  },
   coffre: {
     say: ['C’est ton tour : tu reçois TON nombre. Retiens-le.', 'Tape-le pendant que les autres te regardent.', 'Exact : le nombre s’allonge au tour suivant. Faux ou trop lent : éliminé.'],
     async run(d) {

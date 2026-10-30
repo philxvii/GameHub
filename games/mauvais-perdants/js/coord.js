@@ -183,8 +183,10 @@ export class Coordinator {
     if (!this.seen || this.seen.key !== `${m.tid}:${m.rk}:${m.step}`) this.seen = { key: `${m.tid}:${m.rk}:${m.step}`, at: {}, v: {} };
     const stalled = new Set();
     if (m.step === 'play') for (const u of contenders(m)) {
+      // La clé de progression peut porter un suffixe (« tag.indice… » : réponse partagée aux autres) : seul le tag compte,
+      // et un changement de clé OU de valeur est un progrès (sinon un joueur qui avance est pris pour un absent).
       const pr = s.prog && s.prog[u];
-      const v = pr && pr.k === tag ? pr.v : null;
+      const v = pr && String(pr.k).split('.')[0] === tag ? `${pr.k}|${pr.v}` : null;
       if (!(u in this.seen.at) || this.seen.v[u] !== v) { this.seen.at[u] = now0; this.seen.v[u] = v; }
       if (now0 - this.seen.at[u] >= STALL_MS) stalled.add(u);
     }

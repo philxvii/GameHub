@@ -23,8 +23,13 @@ import chrono from './chrono.js';
 import intrus from './intrus.js';
 import anagramme from './anagramme.js';
 import metronome from './metronome.js';
+import quiz from './quiz.js';
+import cadenas from './cadenas.js';
+import paires from './paires.js';
+import compte from './compte.js';
+import ordre from './ordre.js';
 
-export const PLAY = { gong, tir, dictee, chemin, numeros, damier, coffre, dejavu, bac, calcul, nuage, prix, encre, chrono, intrus, anagramme, metronome };
+export const PLAY = { gong, tir, dictee, chemin, numeros, damier, coffre, dejavu, bac, calcul, nuage, prix, encre, chrono, intrus, anagramme, metronome, quiz, cadenas, paires, compte, ordre };
 
 export function mountPlay(el, { gameId, params, startAt, endAt, now, send, progress, peers, turn, doneText, save, finished }) {
   clear(el);
