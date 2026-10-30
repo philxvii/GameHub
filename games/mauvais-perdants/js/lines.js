@@ -16,21 +16,24 @@
 
 const L = (fn, flags = '') => ({ fn, flags });
 
+// Nombre de manches annoncé (5 par défaut, jusqu'à 10 au choix de l'hôte).
+const N = c => c.total || 5;
+
 export const LINES = {
   welcome: [
     L(c => `Bonsoir, je suis Gonzague Stentor, et ce soir, comme tous les soirs, je suis la meilleure chose qui vous soit arrivée.`),
-    L(c => `${c.n} candidats, cinq manches, zéro excuse. Le tableau d'affichage est prêt à vous juger. Moi aussi.`),
+    L(c => `${c.n} candidats, ${N(c)} manches, zéro excuse. Le tableau d'affichage est prêt à vous juger. Moi aussi.`),
     L(c => `Bonsoir, bonsoir. ${c.n} candidats ce soir. J'ai vu les dossiers : je suggère qu'on baisse un peu les attentes.`),
     L(c => `Bienvenue dans Mauvais Perdants, l'émission qui fabrique des mauvais perdants. Le classement ne pardonne rien, et moi encore moins.`),
     L(c => `${c.n} candidats. Statistiquement, l'un d'entre vous va gagner. Les autres vont apprendre l'humilité en direct.`),
-    L(c => `Installez-vous. Cinq manches, un seul vainqueur, et beaucoup de choses que vous regretterez d'avoir dites avant.`),
+    L(c => `Installez-vous. ${N(c)} manches, un seul vainqueur, et beaucoup de choses que vous regretterez d'avoir dites avant.`),
     L(c => `Mesdames et messieurs, voici ce soir… ce qu'on avait sous la main. Applaudissez quand même, c'est gratuit.`, 'h'),
-    L(c => `Je vois des visages pleins d'espoir. C'est mignon. On va arranger ça en cinq manches.`, 'h'),
+    L(c => `Je vois des visages pleins d'espoir. C'est mignon. On va arranger ça en ${N(c)} manches.`, 'h'),
     L(c => `Bonsoir à tous ! Je promets d'être juste. Juste méchant, mais juste.`, 's'),
-    L(c => `Cinq manches pour briller. Ou pour vous ridiculiser avec constance. Les deux font de l'audience.`),
+    L(c => `${N(c)} manches pour briller. Ou pour vous ridiculiser avec constance. Les deux font de l'audience.`),
   ],
   solo_welcome: [
-    L(c => `${c.P}, seul face à moi. Cinq manches, et à chaque fois mon score à battre. Je joue très bien. Surtout contre les autres.`),
+    L(c => `${c.P}, seul face à moi. ${N(c)} manches, et à chaque fois mon score à battre. Je joue très bien. Surtout contre les autres.`),
     L(c => `Un duel, ${c.P} ? Contre Gonzague Stentor ? J'admire le courage. Je doute du reste.`),
     L(c => `Entraînement privé avec le maître. ${c.P}, prends des notes : je ne répéterai pas.`, 's'),
     L(c => `Personne n'a voulu jouer avec toi, ${c.P} ? Ne t'en fais pas, moi, je suis payé pour.`, 'h'),

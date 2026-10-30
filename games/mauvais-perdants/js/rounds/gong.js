@@ -22,8 +22,8 @@ export default {
     const r = roundRng(seed, i, 'gong');
     // Salon mêlant tactile et souris : la tranche d'égalité s'élargit (latence matérielle).
     const mixed = new Set(room.devices || []).size > 1;
-    // Départage (après la 5e manche) : 3 signaux seulement.
-    return { delays: Array.from({ length: 14 }, () => r.int(1300, 3300)), bucket: mixed ? 30 : 15, trials: i >= 5 ? 3 : TRIALS };
+    // Départage (indice 10 = TIEBREAK_I de draw.js, après la dernière manche possible) : 3 signaux seulement.
+    return { delays: Array.from({ length: 14 }, () => r.int(1300, 3300)), bucket: mixed ? 30 : 15, trials: i >= 10 ? 3 : TRIALS };
   },
   ghost: p => ({ key: [Math.round(290 / p.bucket), 0], label: '290 ms' }),
   tieText: p => `Temps comparés par tranches de ${p.bucket} ms (même tranche = égalité), puis moins de faux départs.`,

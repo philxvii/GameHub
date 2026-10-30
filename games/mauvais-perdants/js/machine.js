@@ -17,7 +17,7 @@
 //            présents ont touché « Suite »).
 
 import { round } from './rounds/index.js';
-import { ROUNDS_PER_TOURNAMENT, roundsOf } from './draw.js';
+import { TIEBREAK_I, roundsOf } from './draw.js';
 
 export const STEPS = ['intro', 'count', 'play', 'judge', 'vote', 'reveal', 'board', 'final'];
 export const INTRO_MS = 12000;
@@ -37,10 +37,10 @@ export const NEXT = {
 export const allowed = (from, to) => (NEXT[from] || []).includes(to);
 
 // Départage : Gong (3 signaux), ou Calcul express (20 s) si le Gong est retiré pour ce salon.
-export const gameOf = m => (m.i >= ROUNDS_PER_TOURNAMENT ? (m.tbg || 'gong') : m.plan[m.i].g);
-export const playMsOf = m => (m.i >= ROUNDS_PER_TOURNAMENT ? (gameOf(m) === 'gong' ? 16000 : 20000) : round(gameOf(m)).playMs);
+export const gameOf = m => (m.i >= TIEBREAK_I ? (m.tbg || 'gong') : m.plan[m.i].g);
+export const playMsOf = m => (m.i >= TIEBREAK_I ? (gameOf(m) === 'gong' ? 16000 : 20000) : round(gameOf(m)).playMs);
 // Joueurs concernés par la manche en cours (départage : les seuls ex æquo).
-export const contenders = m => (m.i >= ROUNDS_PER_TOURNAMENT && m.tb ? Object.keys(m.tb) : Object.keys(m.roster || {}));
+export const contenders = m => (m.i >= TIEBREAK_I && m.tb ? Object.keys(m.tb) : Object.keys(m.roster || {}));
 
 // f : { now, online:Set, ready:Set, next:Set, submitted:Set, stalled:Set, judged:bool, needsVote:bool, voted:Set,
 //       tiebreak: null|[uids], skip:bool }
@@ -62,7 +62,7 @@ export function decide(m, f) {
       const stalled = gameOf(m) === 'bac' ? new Set() : (f.stalled || new Set());
       const doneOrIdle = new Set([...f.submitted, ...stalled]);
       if (now >= m.end + GRACE_MS || everyone(f.submitted) || (f.submitted.size > 0 && everyone(doneOrIdle))) {
-        return gameOf(m) === 'bac' && m.i < ROUNDS_PER_TOURNAMENT
+        return gameOf(m) === 'bac' && m.i < TIEBREAK_I
           ? { step: 'judge', at: now, end: now + JUDGE_MAX_MS, action: 'judge' }
           : { step: 'reveal', at: now, end: now + revealMs(contenders(m).length), action: 'score' };
       }
@@ -81,14 +81,14 @@ export function decide(m, f) {
       return null;
     case 'reveal':
       if (f.skip || now >= m.end) {
-        if (m.i >= ROUNDS_PER_TOURNAMENT) return { step: 'final', at: now, end: now, action: 'final' };
+        if (m.i >= TIEBREAK_I) return { step: 'final', at: now, end: now, action: 'final' };
         return { step: 'board', at: now, end: now + BOARD_MS };
       }
       return null;
     case 'board':
       if (f.skip || now >= m.end || everyone(f.next || new Set())) {
         if (m.i + 1 < roundsOf(m)) return { step: 'intro', at: now, end: now + INTRO_MS, i: m.i + 1 };
-        if (f.tiebreak) return { step: 'intro', at: now, end: now + INTRO_MS, i: ROUNDS_PER_TOURNAMENT, tb: f.tiebreak };
+        if (f.tiebreak) return { step: 'intro', at: now, end: now + INTRO_MS, i: TIEBREAK_I, tb: f.tiebreak };
         return { step: 'final', at: now, end: now, action: 'final' };
       }
       return null;

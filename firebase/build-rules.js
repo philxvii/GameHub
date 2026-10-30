@@ -406,7 +406,7 @@ function mpRules() {
       '.validate': "newData.hasChildren(['tid', 'rk', 'step', 'at', 'end', 'seed', 'plan', 'roster'])",
       tid: { '.validate': "newData.isString() && newData.val().matches(/^t[0-9]{1,4}$/)" },
       rk: { '.validate': "newData.isString() && newData.val().matches(/^r[0-9]$/)" },
-      i: { '.validate': 'newData.isNumber() && newData.val() >= 0 && newData.val() <= 5' },
+      i: { '.validate': 'newData.isNumber() && newData.val() >= 0 && newData.val() <= 10' },
       step: { '.validate': "newData.isString() && newData.val().matches(/^(intro|count|play|judge|vote|reveal|board|final)$/)" },
       at: { '.validate': NUM }, end: { '.validate': NUM }, seq: { '.validate': NUM },
       seed: { '.validate': "newData.isString() && newData.val().matches(/^[A-Z0-9]{4,16}$/)" },

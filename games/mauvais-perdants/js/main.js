@@ -16,7 +16,7 @@ import { round, FAMILIES } from './rounds/index.js';
 import { COLORS as INK } from './rounds/encre.js';
 import { accepts as anaOk } from './rounds/anagramme.js';
 import { gameOf, contenders, COUNT_MS } from './machine.js';
-import { ROUNDS_PER_TOURNAMENT, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks, roundsOf } from './draw.js';
+import { TIEBREAK_I, MIN_ROUNDS, MAX_ROUNDS, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks, decodeCount, clampRounds, roundsOf } from './draw.js';
 import { standings, MIN_PLAYERS, MAX_PLAYERS, FINAL_MULT } from './scoring.js';
 import { mountPlay } from './play/index.js';
 import { cleanName, validName } from './text.js';
@@ -291,14 +291,24 @@ function renderLobby() {
     $('#btn-start').textContent = !room.isCoord ? 'Reprise de la coordination…' : n < MIN_PLAYERS ? 'Jouer en solo' : 'Lancer le tournoi';
   }
 }
-// Au programme : les épreuves que l'on veut jouer, une seule suffit. Jusqu'à cinq, on les joue
-// toutes ; au-delà, cinq sont tirées au sort. Choisies dès l'accueil (mémorisées sur l'appareil),
+// Au programme : les épreuves que l'on veut jouer, une seule suffit, et le nombre de manches voulu (2 à 10).
+// Autant d'épreuves cochées que de manches (ou moins), on les joue toutes ; au-delà, le nombre voulu est tiré au sort. Choisies dès l'accueil (mémorisées sur l'appareil),
 // modifiables par l'hôte au salon ; rangées dans cfg.v (voir draw.js).
 const PICKS_SHOWN = PICK_ORDER.filter(id => round(id)).sort((a, b) => Object.keys(FAMILIES).indexOf(round(a).family) - Object.keys(FAMILIES).indexOf(round(b).family));
-function programmeNote(n) {
+function programmeNote(n, count) {
   if (n === 1) return 'Une seule épreuve : rien que celle-là.';
-  if (n <= ROUNDS_PER_TOURNAMENT) return `${n} épreuves, toutes jouées, dans un ordre tiré au sort.`;
-  return `${n === PICK_ORDER.length ? 'Toutes les épreuves' : `${n} épreuves`} : ${ROUNDS_PER_TOURNAMENT} seront tirées au sort.`;
+  if (n <= count) return `${n} épreuves, toutes jouées, dans un ordre tiré au sort.${n < count ? ` Pour ${count} manches, coche-en ${count - n} de plus.` : ''}`;
+  return `${n === PICK_ORDER.length ? 'Toutes les épreuves' : `${n} épreuves`} : ${count} seront tirées au sort.`;
+}
+// Sélecteur du nombre de manches : − 5 + ; `set(n)` reçoit la nouvelle valeur (absent : lecture seule).
+function drawCount(box, count, set) {
+  const mk = (txt, label, d) => {
+    const b = h('button', { type: 'button', class: 'count-btn', text: txt, 'aria-label': label });
+    b.addEventListener('click', () => set && set(clampRounds(count + d)));
+    b.disabled = !set || count + d < MIN_ROUNDS || count + d > MAX_ROUNDS;
+    return b;
+  };
+  box.replaceChildren(h('span', { class: 'count-label', text: 'Manches' }), mk('−', 'Une manche de moins', -1), h('output', { class: 'count-n', text: String(count), 'aria-live': 'polite' }), mk('+', 'Une manche de plus', 1));
 }
 // Dessine les cases dans `box` ; `toggle(id)` reçoit le clic (absent : lecture seule).
 function drawPicks(box, chosen, toggle) {
@@ -322,26 +332,31 @@ const flip = (set, id) => {
 };
 // Accueil : le choix vit sur l'appareil jusqu'à la création du plateau.
 const homePicks = () => decodePicks(store.get('mp-picks'));
+const homeCount = () => decodeCount(store.get('mp-picks'));
 function renderHomePicks() {
   const chosen = new Set(homePicks());
-  drawPicks($('#home-picks'), chosen, id => { const now = flip(chosen, id); if (now) { store.set('mp-picks', String(encodePicks([...now]))); renderHomePicks(); } });
-  $('#home-picks-note').textContent = programmeNote(chosen.size);
+  drawPicks($('#home-picks'), chosen, id => { const now = flip(chosen, id); if (now) { store.set('mp-picks', String(encodePicks([...now], homeCount()))); renderHomePicks(); } });
+  drawCount($('#home-count'), homeCount(), n => { store.set('mp-picks', String(encodePicks(chosen, n))); renderHomePicks(); });
+  $('#home-picks-note').textContent = programmeNote(chosen.size, homeCount());
   $('#home-picks-all').hidden = chosen.size === PICK_ORDER.length;
 }
-$('#home-picks-all').addEventListener('click', () => { store.set('mp-picks', null); renderHomePicks(); });
+$('#home-picks-all').addEventListener('click', () => { store.set('mp-picks', String(encodePicks(PICK_ORDER, homeCount()))); renderHomePicks(); });
 renderHomePicks();
 // Salon : l'hôte peut encore changer d'avis ; les autres voient la sélection.
-function setPicks(ids) {
+function setPicks(ids, count) {
   if (!room || !room.isHost) return;
   const c = room.s.cfg || {};
-  store.set('mp-picks', String(encodePicks(ids)));
-  room.setCfg({ roast: c.roast || 'soft', crude: !!c.crude, v: encodePicks(ids) }).catch(() => toast('Réglage refusé. Réessaie.'));
+  const v = encodePicks(ids, count === undefined ? decodeCount(c.v) : count);
+  store.set('mp-picks', String(v));
+  room.setCfg({ roast: c.roast || 'soft', crude: !!c.crude, v }).catch(() => toast('Réglage refusé. Réessaie.'));
 }
 function renderPicks() {
   const chosen = new Set(decodePicks((room.s.cfg || {}).v));
   const host = room.isHost;
   drawPicks($('#picks'), chosen, host ? id => { const now = flip(decodePicks((room.s.cfg || {}).v), id); if (now) setPicks([...now]); } : null);
-  $('#picks-note').textContent = programmeNote(chosen.size) + (host ? '' : ' Choix de l’hôte.');
+  const count = decodeCount((room.s.cfg || {}).v);
+  drawCount($('#count'), count, host ? n => setPicks([...chosen], n) : null);
+  $('#picks-note').textContent = programmeNote(chosen.size, count) + (host ? '' : ' Choix de l’hôte.');
   $('#picks-all').hidden = !host || chosen.size === PICK_ORDER.length;
 }
 $('#picks-all').addEventListener('click', () => setPicks(PICK_ORDER));
@@ -380,8 +395,9 @@ function renderShow() {
 }
 
 function renderPips(m) {
+  $('#pips').classList.toggle('many', roundsOf(m) > 6);
   const keys = m.plan.map((p, k) => `${k}:${p.g}`);
-  if (m.i >= ROUNDS_PER_TOURNAMENT) keys.push('tb');
+  if (m.i >= TIEBREAK_I) keys.push('tb');
   keyed($('#pips'), keys, k => h('li', { title: k === 'tb' ? 'Départage' : round(k.split(':')[1]).title, text: k === 'tb' ? '⚡' : String(Number(k.split(':')[0]) + 1) })).forEach((li, k) => {
     if (k >= roundsOf(m)) return setClass(li, 'pip now');
     setClass(li, `pip${k < m.i || (k === m.i && ['reveal', 'board', 'final'].includes(m.step)) ? ' done' : ''}${k === m.i && m.step !== 'final' ? ' now' : ''}${k === roundsOf(m) - 1 && k > 0 ? ' x2' : ''}`);
@@ -427,7 +443,7 @@ const tag = m => `${m.tid}:${m.rk}`;
 const VIEWS = {
   // La carte d'épreuve est distribuée ; à droite, qui est prêt, et les deux décisions du joueur.
   intro(deck, m) {
-    const tb = m.i >= ROUNDS_PER_TOURNAMENT;
+    const tb = m.i >= TIEBREAK_I;
     const def = round(gameOf(m));
     const p = paramsOf(m);
     const fam = FAMILIES[def.family];
@@ -578,7 +594,7 @@ const VIEWS = {
 
   // Le verdict de la manche : les places tombent du dernier au premier, puis le parcours.
   reveal(deck, m) {
-    if (m.i >= ROUNDS_PER_TOURNAMENT) return tiebreakView(deck, m);
+    if (m.i >= TIEBREAK_I) return tiebreakView(deck, m);
     const res = (m.res || {})[m.i];
     const def = round(gameOf(m));
     const names = namesOf(m);
@@ -956,7 +972,7 @@ function parcours(m, prev, cur, names) {
 }
 
 function tiebreakView(deck, m) {
-  const det = parse((m.det || {})[ROUNDS_PER_TOURNAMENT] || '') || {};
+  const det = parse((m.det || {})[TIEBREAK_I] || '') || {};
   const names = namesOf(m);
   const wrap = h('div', { class: 'verdict-wrap' }, h('div', { class: 'v-head' }, h('h2', { text: `Départage : ${round(gameOf(m)).title}` })));
   const list = h('div', { class: 'results' });
@@ -1064,7 +1080,7 @@ function openMenu() {
   const box = clear($('#menu-round'));
   if (m && m.step !== 'final') {
     const def = round(gameOf(m));
-    box.append(h('h3', { text: m.i >= ROUNDS_PER_TOURNAMENT ? 'Départage' : `Manche ${m.i + 1} sur ${roundsOf(m)}` }), h('p', { class: 'sheet-title', text: def.title }), h('ol', { class: 'round-rules' }, def.rules.map(t => h('li', { text: t }))));
+    box.append(h('h3', { text: m.i >= TIEBREAK_I ? 'Départage' : `Manche ${m.i + 1} sur ${roundsOf(m)}` }), h('p', { class: 'sheet-title', text: def.title }), h('ol', { class: 'round-rules' }, def.rules.map(t => h('li', { text: t }))));
   } else box.append(h('h3', { text: 'Mauvais Perdants' }), h('p', { class: 'fine', text: 'Les épreuves que vous voulez, un seul gagnant.' }));
   $('#opt-calm').checked = calmPref();
   $('#opt-full').checked = !!document.fullscreenElement;

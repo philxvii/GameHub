@@ -2,7 +2,7 @@
 // utilisé par le coordinateur, et par tous les clients pour l'écran de fin.
 
 import { gameOf, contenders } from './machine.js';
-import { ROUNDS_PER_TOURNAMENT, roundsOf } from './draw.js';
+import { TIEBREAK_I, roundsOf } from './draw.js';
 import { round } from './rounds/index.js';
 import { rankRound, standings, tiebreakOrder, awards, FINAL_MULT } from './scoring.js';
 import { scoreBac } from './petitbac.js';
@@ -35,7 +35,7 @@ export function computeRound(m, subs, boasts) {
     // Réponse automatique vide (le joueur n'a rien touché) : absent, 0 point.
     return { uid, present: !s.idle, key: s.key };
   });
-  if (m.i >= ROUNDS_PER_TOURNAMENT) {
+  if (m.i >= TIEBREAK_I) {
     return { res: null, order: tiebreakOrder(entries), scored };
   }
   const ranked = rankRound(entries, who.length, new Set(Object.keys(boasts || {})), m.i === roundsOf(m) - 1 && m.i > 0 ? FINAL_MULT : 1);
@@ -67,7 +67,7 @@ export function computeBac(m, prep, final, boasts) {
 export function finalSummary(m) {
   const roster = Object.keys(m.roster || {});
   const names = namesOf(m);
-  const tbDet = parse((m.det || {})[ROUNDS_PER_TOURNAMENT] || '');
+  const tbDet = parse((m.det || {})[TIEBREAK_I] || '');
   const rows = standings(roster, m.res || {}, roundsOf(m), tbDet && tbDet.order);
   const extra = {};
   m.plan.forEach((p, i) => {

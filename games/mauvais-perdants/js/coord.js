@@ -8,7 +8,7 @@
 // point ne peut pas être compté deux fois.
 
 import { decide, contenders, gameOf, INTRO_MS, allowed, STALL_MS } from './machine.js';
-import { drawPlan, decodePicks, ROUNDS_PER_TOURNAMENT, roundsOf } from './draw.js';
+import { drawPlan, decodePicks, decodeCount, TIEBREAK_I, roundsOf } from './draw.js';
 import { round, TIEBREAK } from './rounds/index.js';
 import { rankRound, standings, needsTiebreak, tiebreakOrder, awards, FINAL_MULT, MIN_PLAYERS } from './scoring.js';
 import { prepare, aiItems, triage, resolve, scoreBac, voteList } from './petitbac.js';
@@ -89,7 +89,7 @@ export class Coordinator {
     const names = m ? namesOf(m) : {};
     const reply = await hostLine({
       code: this.room.code, roast: cfg.roast, crude: !!cfg.crude, event: line.ev || '', facts: line.facts || '',
-      round: m && m.i < ROUNDS_PER_TOURNAMENT ? round(gameOf(m)).title : '', roundNo: m ? m.i + 1 : 0,
+      round: m && m.i < TIEBREAK_I ? round(gameOf(m)).title : '', roundNo: m ? m.i + 1 : 0,
       players: totals.map(r => ({ name: names[r.uid], total: r.total, place: r.place })), localLine: line.text,
     });
     const now = this.room.s.match;
@@ -113,7 +113,7 @@ export class Coordinator {
     const seed = (typeof window !== 'undefined' && window.__mpSeed) || newSeed();
     // Les manches de la partie précédente : celle qui vient de finir, ou, après un retour au salon (match effacé), celle mémorisée.
     const recent = prev && prev.plan ? prev.plan.map(x => x.g) : (this.lastPlan || []);
-    const plan = drawPlan(seed, { devices: players.map(p => p.dev), solo, ai: !!aiBase() }, recent, decodePicks((room.s.cfg || {}).v));
+    const plan = drawPlan(seed, { devices: players.map(p => p.dev), solo, ai: !!aiBase() }, recent, decodePicks((room.s.cfg || {}).v), decodeCount((room.s.cfg || {}).v));
     // Revanche : numéro suivant ; nouveau salon ou retour au salon : numéro neuf (jamais réutilisé d'affilée).
     const tid = `t${prev && prev.tid ? (Number(prev.tid.slice(1)) % 9999) + 1 : 1 + Math.floor(Math.random() * 9999)}`;
     this.lastPlan = plan.map(x => x.g);
@@ -128,7 +128,7 @@ export class Coordinator {
       const rows = standings(Object.keys(prev.roster), prev.res, roundsOf(prev));
       const pn = namesOf(prev);
       await this.sayType('rematch', { champ: pn[rows[0].uid], last: pn[rows[rows.length - 1].uid] });
-    } else await this.sayType(solo ? 'solo_welcome' : 'welcome', { n: names.length, P: players[0].name });
+    } else await this.sayType(solo ? 'solo_welcome' : 'welcome', { n: names.length, P: players[0].name, total: plan.length });
     await this.introLine();
   }
   // Exclure un candidat parti : il sort du tournoi (plus attendu, plus classé) et devient spectateur.
@@ -153,7 +153,7 @@ export class Coordinator {
   async introLine() {
     const m = this.room.s.match;
     if (!m) return;
-    if (m.i >= ROUNDS_PER_TOURNAMENT) {
+    if (m.i >= TIEBREAK_I) {
       const names = namesOf(m);
       return this.sayType('tiebreak', { names: (m.tb ? Object.keys(m.tb) : []).map(u => names[u]).join(' et ') });
     }
@@ -242,7 +242,7 @@ export class Coordinator {
   // Réponses de la manche : relues à la source (pas seulement l'abonnement local).
   async score(m) {
     const [subs, boasts] = await Promise.all([this.room.readSubs(m.tid, m.rk), this.room.readBoasts(m.tid, m.rk)]);
-    if (gameOf(m) === 'bac' && m.i < ROUNDS_PER_TOURNAMENT) {
+    if (gameOf(m) === 'bac' && m.i < TIEBREAK_I) {
       const st = this.bacState(m, subs);
       const votes = await this.room.readVotes(m.tid, m.rk);
       const final = resolve(st.prep, st.tri, votes, contenders(m));
@@ -355,7 +355,7 @@ export class Coordinator {
       const ev = roundEvents(g, rows, names, roster.length, { lastRound, streaks, bac: bacInfo });
       return this.say(speakFor(ev, { ...cfg, used: this.used }, 2));
     }
-    if (after.step === 'reveal' && before.i >= ROUNDS_PER_TOURNAMENT) return null;
+    if (after.step === 'reveal' && before.i >= TIEBREAK_I) return null;
     if (after.step === 'board') {
       const prev = standings(roster, Object.fromEntries(Object.entries(after.res || {}).filter(([k]) => Number(k) < before.i)), roundsOf(after));
       const cur = standings(roster, after.res || {}, roundsOf(after));
@@ -363,7 +363,7 @@ export class Coordinator {
       return this.say(speakFor(boardEvents(prev, cur, names, before.i, roundsOf(after)), { ...cfg, used: this.used }, 1));
     }
     if (after.step === 'final') {
-      const tbDet = parse((after.det || {})[ROUNDS_PER_TOURNAMENT] || '');
+      const tbDet = parse((after.det || {})[TIEBREAK_I] || '');
       const rows = standings(roster, after.res || {}, roundsOf(after), tbDet && tbDet.order);
       if (isSolo(after)) return this.say(soloFinal(rows, names, { ...cfg, used: this.used }));
       const winners = rows.filter(r => r.place === 1);

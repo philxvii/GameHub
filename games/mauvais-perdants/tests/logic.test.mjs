@@ -19,7 +19,7 @@ import nuage, { errorOf, MISSING } from '../js/rounds/nuage.js';
 import prix, { CATALOG, parsePrice, ITEMS_PER_ROUND, slotAt, GUESS_MS, SLOT_MS, LEAD_MS } from '../js/rounds/prix.js';
 import bac from '../js/rounds/bac.js';
 import { rankRound, slotPoints, standings, needsTiebreak, tiebreakOrder, awards, FINAL_MULT } from '../js/scoring.js';
-import { drawPlan, eligibleRounds, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks, roundsOf } from '../js/draw.js';
+import { drawPlan, eligibleRounds, PICK_ORDER, MIN_PICKS, encodePicks, decodePicks, decodeCount, roundsOf, MAX_ROUNDS, TIEBREAK_I } from '../js/draw.js';
 import { decide, allowed, NEXT, GRACE_MS, INTRO_MS, COUNT_MS, gameOf, playMsOf, STALL_MS } from '../js/machine.js';
 import { prepare, aiItems, parseJudge, triage, resolve, scoreBac, voteList } from '../js/petitbac.js';
 import { mask } from '../js/chat.js';
@@ -80,7 +80,7 @@ describe('Le Gong', () => {
   test('salon mixte tactile/souris : tranche élargie à 30 ms ; départage : 3 signaux', () => {
     assert.equal(P(gong, 0, { devices: ['touch', 'mouse'] }).bucket, 30);
     assert.equal(P(gong, 0, { devices: ['mouse', 'mouse'] }).bucket, 15);
-    assert.equal(P(gong, 5).trials, 3);
+    assert.equal(P(gong, 10).trials, 3);
     assert.ok(p.delays.every(d => d >= 1300 && d <= 3300));
   });
 });
@@ -434,6 +434,34 @@ describe('Tirage des cinq manches', () => {
     assert.equal(drawPlan('P-vide', { devices: ['touch', 'mouse'] }, [], ['gong']).length, 5);
     assert.equal(roundsOf({ plan: [] }), 5);
   });
+
+  test('nombre de manches au choix : 2 à 10, mémorisé avec les épreuves, jamais de doublon', () => {
+    assert.equal(decodeCount(undefined), 5);
+    assert.equal(decodeCount(1), 5, 'ancienne valeur : 5');
+    assert.equal(decodeCount(encodePicks(PICK_ORDER)), 5);
+    for (const n of [2, 3, 4, 6, 7, 8, 9, 10]) {
+      const v = encodePicks(PICK_ORDER, n);
+      assert.equal(decodeCount(v), n);
+      assert.deepEqual(decodePicks(v), PICK_ORDER, 'le masque survit au nombre');
+      const some = ['gong', 'tir', 'prix'];
+      assert.deepEqual(decodePicks(encodePicks(some, n)).sort(), some.slice().sort());
+      assert.equal(decodeCount(encodePicks(some, n)), n);
+    }
+    assert.equal(decodeCount(encodePicks(PICK_ORDER, 99)), MAX_ROUNDS, 'au-delà du maximum : le maximum');
+    assert.equal(decodeCount(encodePicks(PICK_ORDER, 1)), 5);
+    assert.ok(TIEBREAK_I >= MAX_ROUNDS);
+    for (const n of [2, 3, 4, 5, 6, 8, 10]) {
+      for (let s = 0; s < 60; s++) {
+        const plan = drawPlan(`N${n}-${s}`, { devices: ['mouse', 'mouse'] }, [], null, n);
+        assert.equal(plan.length, n, `${n} manches demandées`);
+        assert.equal(new Set(plan.map(x => x.g)).size, n, 'jamais deux fois la même manche');
+        if (n >= 3) assert.ok(plan[0].g !== 'bac' && plan[n - 1].g !== 'bac');
+        assert.equal(roundsOf({ plan }), n);
+      }
+    }
+    // Moins d'épreuves cochées que de manches voulues : toutes jouées, pas une de plus.
+    assert.equal(drawPlan('N-peu', { devices: ['mouse', 'mouse'] }, [], ['tir', 'prix', 'chemin'], 8).length, 3);
+  });
 });
 
 describe('L’Étiquette (prix)', () => {
@@ -518,9 +546,9 @@ describe('Machine à états', () => {
     assert.equal(decide({ ...b, i: 1, rk: 'r1', end: 99999 }, F({ now: 200, next: new Set(['a', 'b']) })).step, 'intro', 'tous ont touché « Suite »');
     assert.equal(decide({ ...b, i: 1, rk: 'r1', end: 99999 }, F({ now: 200, next: new Set(['a']) })), null);
     const t = decide(b, F({ now: 200, tiebreak: ['a', 'b'] }));
-    assert.equal(playMsOf({ ...b, i: 5, tbg: 'calcul' }), 20000); assert.equal(gameOf({ ...b, i: 5, tbg: 'calcul' }), 'calcul'); assert.equal(gameOf({ ...b, i: 5 }), 'gong');
-    assert.equal(t.step, 'intro'); assert.equal(t.i, 5); assert.deepEqual(t.tb, ['a', 'b']);
-    assert.equal(decide({ ...b, i: 5, rk: 'r5', step: 'reveal', end: 100, tb: { a: true, b: true } }, F({ now: 200 })).step, 'final');
+    assert.equal(playMsOf({ ...b, i: 10, tbg: 'calcul' }), 20000); assert.equal(gameOf({ ...b, i: 10, tbg: 'calcul' }), 'calcul'); assert.equal(gameOf({ ...b, i: 10 }), 'gong');
+    assert.equal(t.step, 'intro'); assert.equal(t.i, 10); assert.deepEqual(t.tb, ['a', 'b']);
+    assert.equal(decide({ ...b, i: 10, rk: 'r10', step: 'reveal', end: 100, tb: { a: true, b: true } }, F({ now: 200 })).step, 'final');
     assert.equal(decide({ ...b, step: 'final' }, F({ now: 9e9 })), null);
   });
 });

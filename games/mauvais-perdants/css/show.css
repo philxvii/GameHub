@@ -928,3 +928,13 @@ html.calm .cf-banner.me, .cf-banner.me:where(*) { animation-play-state: running;
 .mp-row small { font-size: 12px; opacity: .75; }
 .mp-row.gone small, .mp-row.away small { color: var(--mustard); opacity: 1; font-weight: 700; }
 .btn-sm { min-height: 36px; padding: 4px 12px; font-size: 14px; }
+
+/* Nombre de manches : un petit compteur de plateau, − 5 + */
+.count { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; }
+.count-label { font-weight: 800; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; margin-right: 4px; }
+.count-btn { width: 44px; height: 44px; border-radius: 11px; border: var(--line); background: var(--cream); color: var(--ink); font-family: var(--display); font-size: 24px; line-height: 1; box-shadow: 0 3px 0 var(--ink); transition: transform 200ms var(--ios), box-shadow 200ms var(--ios); }
+.count-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.count-btn:disabled { opacity: .35; box-shadow: none; }
+.count-n { min-width: 36px; text-align: center; font-family: var(--display); font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; }
+.pips.many { gap: 4px; flex-wrap: wrap; justify-content: center; }
+.pips.many .pip { width: 28px; height: 30px; font-size: 14px; border-radius: 8px; }

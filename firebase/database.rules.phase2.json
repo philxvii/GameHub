@@ -964,7 +964,7 @@
             ".validate": "newData.isString() && newData.val().matches(/^r[0-9]$/)"
           },
           "i": {
-            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5"
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10"
           },
           "step": {
             ".validate": "newData.isString() && newData.val().matches(/^(intro|count|play|judge|vote|reveal|board|final)$/)"

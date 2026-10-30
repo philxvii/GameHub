@@ -1,4 +1,4 @@
-// Tirage des cinq manches. Module PUR.
+// Tirage des manches du tournoi. Module PUR.
 //
 // Règles (affichées dans le salon) :
 //  - une manche par famille : vitesse, espace, mémoire, mots, chiffres — cinq tâches
@@ -9,15 +9,19 @@
 //  - à la revanche, on évite les manches du tournoi précédent quand c'est possible ;
 //  - le Petit Bac (la plus longue, et la seule jugée) n'ouvre ni ne clôt le tournoi : il ne
 //    vaut jamais double ;
-//  - l'hôte choisit les manches proposées, une seule suffit : moins de cinq choisies, le
-//    tournoi les joue toutes, une fois chacune, dans un ordre tiré au sort ; plus de cinq,
-//    cinq sont tirées comme ci-dessus. Si l'équité les retire toutes, on revient au tirage complet ;
+//  - l'hôte choisit les manches proposées (une seule suffit) et leur nombre (2 à 10, 5 par défaut) :
+//    autant de manches choisies que demandé ou moins, le tournoi les joue toutes, une fois chacune,
+//    dans un ordre tiré au sort ; davantage, le nombre voulu est tiré comme ci-dessus. Si l'équité les retire toutes, on revient au tirage complet ;
 //  - aucune pondération cachée : seule la graine décide, et elle est enregistrée.
 
 import { ROUNDS, FAMILIES } from './rounds/index.js';
 import { rng, hash } from './rng.js';
 
-export const ROUNDS_PER_TOURNAMENT = 5;
+export const ROUNDS_PER_TOURNAMENT = 5; // nombre de manches par défaut
+export const MIN_ROUNDS = 2;
+export const MAX_ROUNDS = 10;
+// Indice du départage dans match.res / match.det / match.i : toujours après la dernière manche possible.
+export const TIEBREAK_I = MAX_ROUNDS;
 export const FAMILY_ORDER = Object.keys(FAMILIES);
 
 export const eligibleRounds = room => ROUNDS.filter(r => r.eligible(room || {}));
@@ -27,16 +31,21 @@ export const eligibleRounds = room => ROUNDS.filter(r => r.eligible(room || {}))
 // Une nouvelle manche s'ajoute toujours EN FIN de liste (les masques déjà écrits restent justes).
 export const PICK_ORDER = ['gong', 'tir', 'dictee', 'chemin', 'numeros', 'damier', 'coffre', 'dejavu', 'bac', 'calcul', 'nuage', 'prix', 'encre', 'chrono', 'intrus', 'anagramme', 'metronome'];
 export const MIN_PICKS = 1;
-// Nombre de manches du tournoi (hors départage) : la longueur du tirage, 1 à 5.
-// Le départage garde l'indice ROUNDS_PER_TOURNAMENT, quel que soit ce nombre.
-export const roundsOf = m => Math.min(ROUNDS_PER_TOURNAMENT, ((m && m.plan) || []).length) || ROUNDS_PER_TOURNAMENT;
-export function encodePicks(ids) {
+// Nombre de manches du tournoi (hors départage) : la longueur du tirage, 1 à MAX_ROUNDS.
+// Le départage garde l'indice TIEBREAK_I, quel que soit ce nombre.
+export const roundsOf = m => Math.min(MAX_ROUNDS, ((m && m.plan) || []).length) || ROUNDS_PER_TOURNAMENT;
+// cfg.v = masque des épreuves + COUNT_STEP × nombre de manches voulu (0 = le défaut, 5). Les anciennes
+// valeurs (< COUNT_STEP) restent donc valables. COUNT_STEP est fixe : il ne dépend pas de PICK_ORDER.
+const COUNT_STEP = 2 ** 24;
+export function encodePicks(ids, count = 0) {
   const set = new Set(ids);
-  if (PICK_ORDER.every(id => set.has(id))) return 1;
-  return 2 + PICK_ORDER.reduce((m, id, k) => (set.has(id) ? m + 2 ** k : m), 0);
+  const mask = PICK_ORDER.every(id => set.has(id)) ? 1 : 2 + PICK_ORDER.reduce((m, id, k) => (set.has(id) ? m + 2 ** k : m), 0);
+  return mask + (clampRounds(count) === ROUNDS_PER_TOURNAMENT ? 0 : clampRounds(count) * COUNT_STEP);
 }
+export const clampRounds = c => (Number.isInteger(Number(c)) && Number(c) >= MIN_ROUNDS ? Math.min(MAX_ROUNDS, Number(c)) : ROUNDS_PER_TOURNAMENT);
+export const decodeCount = v => { const n = Math.floor(Number(v) / COUNT_STEP); return n >= MIN_ROUNDS ? clampRounds(n) : ROUNDS_PER_TOURNAMENT; };
 export function decodePicks(v) {
-  const n = Number(v);
+  const n = Number(v) % COUNT_STEP;
   if (!Number.isInteger(n) || n < 2 || n >= 2 + 2 ** PICK_ORDER.length) return PICK_ORDER.slice();
   const mask = n - 2;
   const ids = PICK_ORDER.filter((id, k) => Math.floor(mask / 2 ** k) % 2 === 1);
@@ -48,12 +57,12 @@ function noAdjacent(list) {
   return true;
 }
 
-export function drawPlan(seed, room = {}, recent = [], allowed = null) {
+export function drawPlan(seed, room = {}, recent = [], allowed = null, count = ROUNDS_PER_TOURNAMENT) {
   const r = rng(hash(`plan:${seed}`));
   const eligible = eligibleRounds(room);
   const chosen = allowed ? eligible.filter(x => allowed.includes(x.id)) : eligible;
   // Choix court : on joue exactement les manches choisies. Rien de jouable : tirage complet.
-  if (chosen.length && chosen.length < ROUNDS_PER_TOURNAMENT) {
+  if (chosen.length && chosen.length < Math.min(count, ROUNDS_PER_TOURNAMENT)) {
     const few = r.shuffle(chosen.map(x => ({ g: x.id, f: x.family })));
     if (few.length > 2 && few[0].g === 'bac') few.push(few.shift());
     return few;
@@ -71,12 +80,17 @@ export function drawPlan(seed, room = {}, recent = [], allowed = null) {
     picks.push({ g: choice.id, f: fam });
   }
   // Famille vide : compléter avec une manche restante, de préférence jamais jouée récemment.
-  while (picks.length < ROUNDS_PER_TOURNAMENT) {
+  while (picks.length < count) {
     const left = pool.filter(x => !picks.some(p => p.g === x.id));
     if (!left.length) break;
     const fresh = left.filter(x => !recent.includes(x.id));
     const choice = r.pick(fresh.length ? fresh : left);
     picks.push({ g: choice.id, f: choice.family });
+  }
+  // Moins de manches que de familles : on en garde au hasard (le Petit Bac ne reste pas s'il y en a moins de trois).
+  if (picks.length > count) {
+    const keep = r.shuffle(picks.filter(p => count >= 3 || p.g !== 'bac'));
+    picks.splice(0, picks.length, ...(keep.length >= count ? keep.slice(0, count) : r.shuffle(picks).slice(0, count)));
   }
   // Ordre : mélange, sans deux familles consécutives ni Petit Bac en ouverture.
   let order = r.shuffle(picks);
