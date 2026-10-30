@@ -630,6 +630,7 @@ const VIEWS = {
     if (m.i === roundsOf(m) - 1 && m.i > 0) wrap.append(h('p', { class: 'tied-note', text: `Manche décisive : points de place ×${FINAL_MULT}.` }));
     if (gameOf(m) === 'bac') wrap.append(bacTable(m, names));
     if (gameOf(m) === 'anagramme') wrap.append(anagrammeTable(m, names));
+    if (gameOf(m) === 'cadenas') wrap.append(h('div', { class: 'cd-verdict' }, h('small', { text: 'Le code était' }), h('span', { class: 'cd-code', 'aria-label': paramsOf(m).secret.split('').join(' ') }, [...paramsOf(m).secret].map(ch => h('i', { class: 'cd-tile big b', text: ch })))));
     // Du dernier au premier ; le vainqueur arrive détaché, après un court temps d'arrêt.
     const order = els.slice().reverse();
     const step = reduced() ? 0 : Math.min(640, 2800 / order.length);

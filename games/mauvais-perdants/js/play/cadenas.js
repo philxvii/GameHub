@@ -33,11 +33,18 @@ export default function mount(root, { p, submit, progress, sfx }) {
   root.append(h('div', { class: 'play-head' }, h('span', { text: 'Devine le code à 4 chiffres' }), tries), legend, h('div', { class: 'cd-wrap' }, h('div', { class: 'cd-main' }, slots, msg, pad), hist));
 
   function draw() {
-    [...slots.children].forEach((s, k) => { s.textContent = cur[k] || ''; s.classList.toggle('on', k === cur.length && !over); s.classList.toggle('full', !!cur[k]); });
+    if (!over) [...slots.children].forEach((s, k) => { s.textContent = cur[k] || ''; s.classList.toggle('on', k === cur.length && !over); s.classList.toggle('full', !!cur[k]); });
     for (const d in keys) { keys[d].disabled = cur.includes(d) || over; keys[d].dataset.k = known[d] || ''; }
     go.disabled = cur.length < LEN || over;
     [...tries.children].forEach((x, k) => x.classList.toggle('on', k < guesses.length));
     tries.setAttribute('aria-label', `Essais restants : ${MAX_TRIES - guesses.length}`);
+  }
+  // Fin de manche : le code se dévoile en grand, tuile par tuile, à la place de la saisie.
+  function reveal(won) {
+    over = true;
+    slots.className = 'cd-slots cd-final';
+    slots.replaceChildren(...[...p.secret].map((c, k) => h('span', { class: `cd-tile big ${won ? 'b' : 'x'}`, style: { animationDelay: `${k * 120}ms` }, text: c })));
+    slots.setAttribute('aria-label', `Le code était ${p.secret}`);
   }
   function type(d) { if (over || cur.length >= LEN || cur.includes(d)) return; cur += d; msg.textContent = ''; draw(); }
   function back() { if (over) return; cur = cur.slice(0, -1); draw(); }
@@ -50,8 +57,8 @@ export default function mount(root, { p, submit, progress, sfx }) {
       ...[...g].map((c, k) => h('span', { class: `cd-tile big ${mk[k]}`, style: { animationDelay: `${k * 90}ms` }, text: c })));
     hist.prepend(row);
     progress(guesses.length);
-    if (f.b === LEN) { over = true; sfx.good(); msg.textContent = `Ouvert en ${guesses.length} essai${guesses.length > 1 ? 's' : ''} !`; draw(); setTimeout(() => { if (alive) { alive = false; submit(payload()); } }, 1500); return; }
-    if (guesses.length >= MAX_TRIES) { over = true; sfx.bad(); msg.textContent = `Raté : le code était ${p.secret}`; draw(); setTimeout(() => { if (alive) { alive = false; submit(payload()); } }, 2000); return; }
+    if (f.b === LEN) { reveal(true); sfx.good(); msg.textContent = `Ouvert en ${guesses.length} essai${guesses.length > 1 ? 's' : ''} !`; draw(); setTimeout(() => { if (alive) { alive = false; submit(payload()); } }, 1500); return; }
+    if (guesses.length >= MAX_TRIES) { reveal(false); sfx.bad(); msg.textContent = `Raté : voici le code.`; draw(); setTimeout(() => { if (alive) { alive = false; submit(payload()); } }, 2000); return; }
     sfx.tick();
     msg.textContent = f.b ? `${f.b} chiffre${f.b > 1 ? 's' : ''} à la bonne place. Encore ${MAX_TRIES - guesses.length} essai${MAX_TRIES - guesses.length > 1 ? 's' : ''}.` : `Aucun à la bonne place. Encore ${MAX_TRIES - guesses.length} essai${MAX_TRIES - guesses.length > 1 ? 's' : ''}.`;
     draw();
