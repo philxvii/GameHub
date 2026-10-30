@@ -1,5 +1,5 @@
 // Le Cadenas — déduction, façon Mastermind. Un code secret de quatre chiffres tous différents, le même pour tous.
-// À chaque essai, le cadenas répond : combien de chiffres sont bien placés, combien sont bons mais mal placés.
+// À chaque essai, chaque chiffre se colore : vert (bien placé), jaune (dans le code, mal placé), gris (absent).
 // Dix essais au plus. Le moins d'essais gagne ; à égalité, le plus rapide. Le score est RECALCULÉ en rejouant les
 // essais envoyés : un client qui annoncerait « trouvé en 1 coup » sans que ses essais le prouvent n'y gagne rien.
 
@@ -17,6 +17,12 @@ export function feedback(secret, guess) {
   let b = 0, m = 0;
   for (let k = 0; k < LEN; k++) { if (guess[k] === secret[k]) b++; else if (secret.includes(guess[k])) m++; }
   return { b, m };
+}
+
+// Couleur de chaque chiffre de l'essai : 'b' vert (bien placé), 'm' jaune (dans le code, mal placé), 'x' gris (absent).
+// Les chiffres du code étant tous différents, il n'y a aucune ambiguïté.
+export function marks(secret, guess) {
+  return [...guess].map((c, k) => (c === secret[k] ? 'b' : secret.includes(c) ? 'm' : 'x'));
 }
 
 export const validGuess = g => typeof g === 'string' && /^[0-9]{4}$/.test(g) && new Set(g).size === LEN;
@@ -37,7 +43,7 @@ export function replay(secret, guesses) {
 
 export default {
   id: 'cadenas', family: 'espace', title: 'Le Cadenas', verb: 'Déchiffre',
-  rules: ['Un code de quatre chiffres tous différents, le même pour tout le monde.', 'À chaque essai : combien de chiffres bien placés, combien bons mais mal placés.', 'Dix essais au plus. Le moins d’essais gagne ; à égalité, le plus rapide.'],
+  rules: ['Un code de quatre chiffres tous différents, le même pour tout le monde.', 'Chaque essai colore tes chiffres : vert = bien placé, jaune = dans le code mais mal placé, gris = pas dans le code.', 'Dix essais au plus. Le moins d’essais gagne ; à égalité, le plus rapide.'],
   playMs: 100000,
   unit: 'nombre d’essais pour ouvrir le cadenas',
   eligible: () => true,

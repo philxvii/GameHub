@@ -204,16 +204,16 @@ const SPECS = {
     }
   },
   cadenas: {
-    say: ['Un code de quatre chiffres, tous différents.', 'Tu essaies : un jeton plein = bien placé, un creux = bon chiffre mal placé.', 'Ouvre le cadenas en un minimum d’essais.'],
+    say: ['Un code de quatre chiffres, tous différents. À toi de le deviner.', 'Tu essaies : vert = bien placé, jaune = dans le code mais mal placé, gris = pas dans le code.', 'Ouvre le cadenas en un minimum d’essais.'],
     async run(d) {
-      const row = h('div', { class: 'dm-row' }, ['?', '?', '?', '?'].map(c => T(c, 'dm-sym'))); d.put(row);
-      const pegs = d.put(h('div', { class: 'dm-pegs' }));
-      d.step(0); await d.wait(1500);
-      const guess = (g, b, m) => { [...g].forEach((c, k) => { row.children[k].textContent = c; }); pegs.replaceChildren(...Array.from({ length: b }, () => h('i', { class: 'peg b' })), ...Array.from({ length: m }, () => h('i', { class: 'peg m' }))); };
-      d.step(1); guess('1234', 1, 2); await d.wait(1700);
-      guess('3140', 2, 1); await d.wait(1500);
-      guess('3416', 4, 0); [...row.children].forEach(c => c.classList.add('ok'));
-      d.step(2); d.put(BADGE('Ouvert en 3 essais')); await d.wait(2200);
+      const mkRow = () => { const r = h('div', { class: 'dm-row' }, ['?', '?', '?', '?'].map(c => T(c, 'dm-sym'))); return r; };
+      const a = mkRow(), b = mkRow(), c = mkRow();
+      d.step(0); d.put(h('div', { class: 'dm-col' }, [a, b, c])); await d.wait(1600);
+      const show = (row, g, marks) => { [...g].forEach((ch, k) => { row.children[k].textContent = ch; row.children[k].classList.add(`mk-${marks[k]}`); }); };
+      d.step(1); show(a, '3051', 'bxxm'); await d.wait(1600);
+      show(b, '3142', 'bmmb'); await d.wait(1600);
+      show(c, '3412', 'bbbb'); await d.wait(300);
+      d.step(2); d.put(BADGE('Ouvert en 3 essais')); await d.wait(2300);
     }
   },
   paires: {

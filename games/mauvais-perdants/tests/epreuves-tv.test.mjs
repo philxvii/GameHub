@@ -3,7 +3,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { round } from '../js/rounds/index.js';
 import { QUESTIONS, BANK } from '../js/rounds/quiz.js';
-import { feedback, validGuess, replay as cadReplay, LEN, MAX_TRIES } from '../js/rounds/cadenas.js';
+import { feedback, marks, validGuess, replay as cadReplay, LEN, MAX_TRIES } from '../js/rounds/cadenas.js';
 import { replay as prReplay, layout, PAIRS } from '../js/rounds/paires.js';
 import { apply, replay as ctReplay, puzzle, COUNT } from '../js/rounds/compte.js';
 import { sets, BANK as ODRE, SIZE, SETS } from '../js/rounds/ordre.js';
@@ -59,6 +59,12 @@ describe('Le Cadenas', () => {
     assert.deepEqual(feedback('1234', '1567'), { b: 1, m: 0 });
     assert.deepEqual(feedback('1234', '2178'), { b: 0, m: 2 });
     assert.ok(validGuess('1234') && !validGuess('1123') && !validGuess('12a4') && !validGuess('123'));
+  });
+  test('couleur de chaque chiffre : vert bien placé, jaune mal placé, gris absent', () => {
+    assert.deepEqual(marks('3412', '3051'), ['b', 'x', 'x', 'm']);
+    assert.deepEqual(marks('3412', '3142'), ['b', 'm', 'm', 'b']);
+    assert.deepEqual(marks('3412', '3412'), ['b', 'b', 'b', 'b']);
+    assert.deepEqual(marks('3412', '0567'), ['x', 'x', 'x', 'x']);
   });
   test('code de quatre chiffres tous différents, rejeu : un essai invalide est ignoré', () => {
     const p = round('cadenas').params(SEED, 0);

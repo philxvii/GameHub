@@ -1026,3 +1026,31 @@ html.calm .cf-banner.me, .cf-banner.me:where(*) { animation-play-state: running;
 .rv > div { min-width: 0; }
 .od-list { gap: 6px; }
 .od-item { padding: 9px 16px; }
+
+/* Le Cadenas v2 : retour chiffre par chiffre (vert, jaune, gris) */
+.cd-pips { display: flex; gap: 5px; align-items: center; }
+.cd-pips i { width: 12px; height: 12px; border-radius: 50%; background: rgba(241, 230, 207, .22); transition: background 250ms var(--ios), transform 250ms var(--ios); }
+.cd-pips i.on { background: var(--mustard); transform: scale(.8); }
+.cd-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: center; margin: 2px 0 8px; font-size: 13px; font-weight: 700; opacity: .9; }
+.cd-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.cd-tile { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--ink); font-family: var(--display); font-style: normal; }
+.cd-tile.b, .dm-t.mk-b { background: #3fbf6a; color: var(--ink); }
+.cd-tile.m, .dm-t.mk-m { background: var(--mustard); color: var(--ink); }
+.cd-tile.x, .dm-t.mk-x { background: #5b4639; color: var(--cream); }
+.cd-tile.big { width: clamp(46px, 7vw, 60px); height: clamp(46px, 7vw, 60px); border-radius: 12px; font-size: clamp(26px, 4vw, 34px); box-shadow: 0 3px 0 var(--ink); animation: cd-flip 420ms var(--ios) both; }
+@keyframes cd-flip { from { transform: rotateX(90deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.cd-row { justify-content: center; gap: 8px; padding: 6px 10px; background: none; }
+.cd-key[data-k="b"] { background: #3fbf6a; }
+.cd-key[data-k="m"] { background: var(--mustard); }
+.cd-key[data-k="x"] { background: #5b4639; color: rgba(241, 230, 207, .55); box-shadow: none; }
+.dm-t.mk-b, .dm-t.mk-m, .dm-t.mk-x { transform: none; }
+@media (prefers-reduced-motion: reduce) { .cd-tile.big { animation: none; } }
+
+/* Le Cadenas : à gauche on joue, à droite l'historique des essais (sur téléphone : en dessous) */
+.cd-wrap { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 300px); gap: 28px; justify-content: center; align-items: start; }
+.cd-wrap .cd-pad, .cd-wrap .cd-hist { max-width: none; margin: 6px 0; }
+.cd-wrap .cd-hist { max-height: min(56vh, 520px); align-content: start; }
+.cd-wrap .cd-row { justify-content: flex-start; }
+.cd-tile.big { width: clamp(40px, 5.2vw, 52px); height: clamp(40px, 5.2vw, 52px); font-size: clamp(22px, 3vw, 30px); }
+.cd-wrap .cd-hist:empty::before { content: 'Tes essais apparaîtront ici.'; display: block; padding: 18px; border-radius: 12px; border: 2px dashed rgba(241, 230, 207, .22); font-size: 13px; font-weight: 700; opacity: .6; text-align: center; }
+@media (max-width: 900px) { .cd-wrap { grid-template-columns: minmax(0, 440px); } .cd-wrap .cd-hist { max-height: 30vh; } }

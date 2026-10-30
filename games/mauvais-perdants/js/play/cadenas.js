@@ -1,17 +1,23 @@
-// Le Cadenas : quatre chiffres tous différents, dix essais. Après chaque essai, deux jetons disent combien de chiffres
-// sont bien placés (jeton plein) et combien sont bons mais mal placés (jeton creux). Clavier ou pavé à l'écran.
+// Le Cadenas : quatre chiffres tous différents, dix essais. Chaque essai colore tes chiffres, comme au Wordle :
+// vert = bien placé, jaune = dans le code mais mal placé, gris = pas dans le code. Le pavé retient ce que tu sais déjà.
 
 import { h } from '../ui/dom.js';
 import { keyHandler } from './index.js';
-import { LEN, MAX_TRIES, feedback } from '../rounds/cadenas.js';
+import { LEN, MAX_TRIES, feedback, marks } from '../rounds/cadenas.js';
+
+const NAME = { b: 'bien placé', m: 'mal placé', x: 'pas dans le code' };
+const RANK = { x: 1, m: 2, b: 3 };
 
 export default function mount(root, { p, submit, progress, sfx }) {
   const guesses = [];
+  const known = {};                                   // chiffre -> meilleur état connu
   let cur = '', alive = true, t0 = performance.now(), last = t0, over = false;
-  const tries = h('b', { text: `0 / ${MAX_TRIES}` });
+  const tries = h('div', { class: 'cd-pips', 'aria-label': `Essais restants : ${MAX_TRIES}` }, Array.from({ length: MAX_TRIES }, () => h('i')));
   const slots = h('div', { class: 'cd-slots', 'aria-label': 'Ton essai' }, Array.from({ length: LEN }, () => h('span', { class: 'cd-slot' })));
   const hist = h('ol', { class: 'cd-hist', 'aria-label': 'Essais précédents' });
   const msg = h('div', { class: 'state-line' });
+  const legend = h('div', { class: 'cd-legend', 'aria-hidden': 'true' },
+    h('span', {}, h('i', { class: 'cd-tile b' }), 'bien placé'), h('span', {}, h('i', { class: 'cd-tile m' }), 'mal placé'), h('span', {}, h('i', { class: 'cd-tile x' }), 'pas dans le code'));
   const pad = h('div', { class: 'cd-pad', role: 'group', 'aria-label': 'Pavé numérique' });
   const keys = {};
   [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].forEach(d => {
@@ -24,29 +30,30 @@ export default function mount(root, { p, submit, progress, sfx }) {
   del.addEventListener('pointerdown', e => { e.preventDefault(); back(); });
   go.addEventListener('pointerdown', e => { e.preventDefault(); validate(); });
   pad.append(del, go);
-  root.append(h('div', { class: 'play-head' }, h('span', {}, 'Essais ', tries), h('span', { text: 'Chiffres tous différents' })), slots, msg, pad, hist);
+  root.append(h('div', { class: 'play-head' }, h('span', { text: 'Devine le code à 4 chiffres' }), tries), legend, h('div', { class: 'cd-wrap' }, h('div', { class: 'cd-main' }, slots, msg, pad), hist));
 
   function draw() {
     [...slots.children].forEach((s, k) => { s.textContent = cur[k] || ''; s.classList.toggle('on', k === cur.length && !over); s.classList.toggle('full', !!cur[k]); });
-    for (const d in keys) keys[d].disabled = cur.includes(d) || over;
+    for (const d in keys) { keys[d].disabled = cur.includes(d) || over; keys[d].dataset.k = known[d] || ''; }
     go.disabled = cur.length < LEN || over;
+    [...tries.children].forEach((x, k) => x.classList.toggle('on', k < guesses.length));
+    tries.setAttribute('aria-label', `Essais restants : ${MAX_TRIES - guesses.length}`);
   }
   function type(d) { if (over || cur.length >= LEN || cur.includes(d)) return; cur += d; msg.textContent = ''; draw(); }
   function back() { if (over) return; cur = cur.slice(0, -1); draw(); }
   function validate() {
     if (over || cur.length < LEN) return;
-    const g = cur, f = feedback(p.secret, g);
+    const g = cur, mk = marks(p.secret, g), f = feedback(p.secret, g);
     guesses.push(g); last = performance.now(); cur = '';
-    tries.textContent = `${guesses.length} / ${MAX_TRIES}`;
-    const row = h('li', { class: 'cd-row' }, h('span', { class: 'cd-guess', text: g.split('').join(' ') }),
-      h('span', { class: 'cd-pegs', 'aria-label': `${f.b} bien placé${f.b > 1 ? 's' : ''}, ${f.m} mal placé${f.m > 1 ? 's' : ''}` },
-        ...Array.from({ length: f.b }, () => h('i', { class: 'peg b' })), ...Array.from({ length: f.m }, () => h('i', { class: 'peg m' }))),
-      h('small', { text: `${f.b} bien · ${f.m} mal` }));
+    mk.forEach((m, k) => { if (!known[g[k]] || RANK[m] > RANK[known[g[k]]]) known[g[k]] = m; });
+    const row = h('li', { class: 'cd-row', 'aria-label': g.split('').map((c, k) => `${c} ${NAME[mk[k]]}`).join(', ') },
+      ...[...g].map((c, k) => h('span', { class: `cd-tile big ${mk[k]}`, style: { animationDelay: `${k * 90}ms` }, text: c })));
     hist.prepend(row);
     progress(guesses.length);
-    if (f.b === LEN) { over = true; sfx.good(); msg.textContent = `Ouvert en ${guesses.length} essai${guesses.length > 1 ? 's' : ''} !`; draw(); setTimeout(() => { if (alive) { alive = false; submit(payload()); } }, 1400); return; }
-    if (guesses.length >= MAX_TRIES) { over = true; sfx.bad(); msg.textContent = `Le code était ${p.secret}`; draw(); setTimeout(() => { if (alive) { alive = false; submit(payload()); } }, 1800); return; }
+    if (f.b === LEN) { over = true; sfx.good(); msg.textContent = `Ouvert en ${guesses.length} essai${guesses.length > 1 ? 's' : ''} !`; draw(); setTimeout(() => { if (alive) { alive = false; submit(payload()); } }, 1500); return; }
+    if (guesses.length >= MAX_TRIES) { over = true; sfx.bad(); msg.textContent = `Raté : le code était ${p.secret}`; draw(); setTimeout(() => { if (alive) { alive = false; submit(payload()); } }, 2000); return; }
     sfx.tick();
+    msg.textContent = f.b ? `${f.b} chiffre${f.b > 1 ? 's' : ''} à la bonne place. Encore ${MAX_TRIES - guesses.length} essai${MAX_TRIES - guesses.length > 1 ? 's' : ''}.` : `Aucun à la bonne place. Encore ${MAX_TRIES - guesses.length} essai${MAX_TRIES - guesses.length > 1 ? 's' : ''}.`;
     draw();
   }
   const offKey = keyHandler(e => {
